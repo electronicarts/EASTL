@@ -1,0 +1,340 @@
+
+
+[AutoExpand]
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; EASTL                                          ;
+;                                                ;
+; Due to weaknesses in the VC debugger, you      ;
+; may find that you need to tweak the spacing    ;
+; in the templates specified below or your app's ;
+; template instantiations.                       ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+eastl::vector<*>{
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            size: $e.mpEnd-$e.mpBegin,
+            capacity: $e.mpCapacity-$e.mpBegin,
+
+            #array
+            (
+                expr :  ($e.mpBegin)[$i],  
+                size :  $e.mpEnd-$e.mpBegin
+            )
+        )
+    )
+    
+    preview
+    ( 
+        #( 
+            "[", 
+            $e.mpEnd - $e.mpBegin,
+            "](", 
+            
+            #array
+            (
+                expr :  ($e.mpBegin)[$i],  
+                size :  $e.mpEnd-$e.mpBegin
+            ), 
+            ")"
+        )
+    )
+}
+
+
+; Same as eastl::vector
+eastl::fixed_vector<*>{
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            size: $e.mpEnd-$e.mpBegin,
+            capacity: $e.mpCapacity-$e.mpBegin,
+ 
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            )
+        )
+    )
+   
+    preview
+    (
+        #(
+            "[",
+            $e.mpEnd - $e.mpBegin,
+            "] {",
+           
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            ),
+            "}"
+        )
+    )
+}
+
+ 
+
+; Same as eastl::vector
+eastl::vector_set<*>{
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            size: $e.mpEnd-$e.mpBegin,
+            capacity: $e.mpCapacity-$e.mpBegin,
+ 
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            )
+        )
+    )
+   
+    preview
+    (
+        #(
+            "[",
+            $e.mpEnd - $e.mpBegin,
+            "] (",
+           
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            ),
+            ")"
+        )
+    )
+}
+
+ 
+; Same as eastl::vector
+eastl::vector_map<*>{
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            size: $e.mpEnd-$e.mpBegin,
+            capacity: $e.mpCapacity-$e.mpBegin,
+ 
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            )
+        )
+    )
+   
+    preview
+    (
+        #(
+            "[",
+            $e.mpEnd - $e.mpBegin,
+            "] (",
+           
+            #array
+            (
+                expr :  ($e.mpBegin)[$i], 
+                size :  $e.mpEnd-$e.mpBegin
+            ),
+            ")"
+        )
+    )
+}
+
+
+eastl::basic_string<char,*>{
+    preview([$e.mpBegin,s8])
+        stringview([$e.mpBegin,s8b])
+}
+
+
+eastl::basic_string<wchar_t,*>{
+    preview([$e.mpBegin,su])
+        stringview([$e.mpBegin,sub])
+}
+
+
+eastl::hashtable<*>{
+    preview
+    (
+        #(
+            "elements=", $e.mnElementCount
+        )
+    )
+
+    children
+    (
+        #(
+            #array
+            (
+                expr:    &$e.mpBucketArray[$i],
+                size:    $e.mnBucketCount
+            ) : #(
+                #list
+                (
+                    head: $e,
+                    next: mpNext
+                ) : $e.mValue
+            )
+        )
+    )
+}
+
+
+eastl::list<*,*>{
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            #list
+            (
+                head: $e.mNode.mpNext,
+                next: mpNext,
+                skip: &$e.mNode
+            ) : (eastl::ListNode<$T1> *)&($e)
+        )
+    )
+ 
+    preview
+    (
+        #(
+            "(", 
+          
+            #list
+            (
+                head: $e.mNode.mpNext,
+                next: mpNext,
+                skip: &$e.mNode
+            ) : ((eastl::ListNode<$T1> *)&($e))->mValue,
+         
+            ")"
+        )
+    )                  
+}
+
+
+eastl::intrusive_list<*>{
+	children
+	(
+		#(
+			[raw members]: [$e,!],
+			#list
+			(
+				head: $e.mAnchor.mpNext,
+				next: mpNext,
+				skip: &$e
+			) : ($T1 *)&$e
+		)
+	)
+}
+
+
+eastl::set<*,*,*>|eastl::fixed_set<*,*,*,*,*>|eastl::multiset<*,*,*>{
+    preview
+    (
+        #(
+            "[", $e.mnSize, "] {",
+            #tree
+            (
+                head : (eastl::rbtree_node_base*)(($e.mAnchor.mpNodeParent.value) & ~1u),
+                skip : $e.mAnchor,
+                size : $e.mnSize,
+                left : mpNodeLeft,
+                right : mpNodeRight
+            ) : ((eastl::rbtree_node<$T1> *)&$e)->mValue,
+            "}"
+        ) : ((eastl::rbtree_node<$T1> *)&$e)->mValue
+    )                           
+    
+
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            #tree
+            (
+                head : (eastl::rbtree_node_base*)(($e.mAnchor.mpNodeParent.value) & ~1u),
+                skip : $e.mAnchor, 
+                size : $e.mnSize,
+                left : mpNodeLeft, 
+                right : mpNodeRight
+            ) : ((eastl::rbtree_node<$T1> *)&$e)->mValue
+        )
+    )
+}
+
+
+
+
+eastl::map<*,*,*,*>|eastl::multimap<*,*,*,*>|eastl::fixed_map<*,*,*,*,*,*>{ 
+    preview
+    (
+        #(
+            "[", $e.mnSize, "] {",
+            #tree
+            (
+                head : (eastl::rbtree_node_base*)(($e.mAnchor.mpNodeParent.value) & ~1u),
+                skip : $e.mAnchor,
+                size : $e.mnSize,
+                left : mpNodeLeft,
+                right : mpNodeRight
+            ) : ((eastl::rbtree_node<eastl::pair<$T1 const ,$T2> > *)&$e)->mValue,
+            "}"
+        ) : ((eastl::rbtree_node<eastl::pair<$T1 const ,$T2> > *)&$e)->mValue
+    ) 
+
+    children
+    (
+        #(
+            [raw members]: [$e,!],
+            #tree
+            (
+                head : (eastl::rbtree_node_base*)(($e.mAnchor.mpNodeParent.value) & ~1u),
+                skip : $e.mAnchor, 
+                size : $e.mnSize,
+                left : mpNodeLeft, 
+                right : mpNodeRight
+            ) : ((eastl::rbtree_node<eastl::pair<$T1 const ,$T2> > *)&$e)->mValue
+        )
+    )
+}
+
+
+
+eastl::pair<*,*>{
+	preview
+	(
+		#(
+			"(",
+			[$e.first],
+			",",
+			[$e.second],
+			")"
+		)
+	)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

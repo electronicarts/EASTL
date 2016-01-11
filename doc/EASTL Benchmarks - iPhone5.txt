@@ -1,0 +1,207 @@
+****************************************************************************************
+EASTL Benchmark test results
+****************************************************************************************
+
+EASTL version: 2.00.00
+Platform: iPhone on ARM
+Compiler: clang4.2 (clang-425.0.28)
+Allocator: PPMalloc::GeneralAllocator. Thread safety enabled.
+Build: Full optimization. Inlining enabled.
+
+Values are ticks and time to complete tests; smaller values are better.
+
+Test                                                    clang libc++                     EASTL        Ratio  Difference?
+---------------------------------------------------------------------------------------------------------------------
+algorithm/adj_find/vector<TestObject>      |         23905  996.0 us |         24693    1.0 ms |       0.97          
+algorithm/copy/vector<LargePOD>            |         15740  655.8 us |         15556  648.2 us |       1.01          
+algorithm/copy/vector<uint32_t>            |            13  541.0 ns |           481   20.0 us |       0.03         -
+algorithm/copy_backward/vector<LargePOD>   |         15799  658.3 us |         16415  684.0 us |       0.96          
+algorithm/copy_backward/vector<uint32_t>   |            13  541.0 ns |           179    7.5 us |       0.07         -
+algorithm/count/vector<uint64_t>           |         20789  866.2 us |         20254  843.9 us |       1.03          
+algorithm/equal_range/vector<uint64_t>     |        465548   19.4 ms |       1561757   65.1 ms |       0.30         -
+algorithm/fill/bool[]                      |           131    5.5 us |           131    5.5 us |       1.00          
+algorithm/fill/char[]/'d'                  |           130    5.4 us |           131    5.5 us |       0.99          
+algorithm/fill/vector<char>/'d'            |           130    5.4 us |           131    5.5 us |       0.99          
+algorithm/fill/vector<char>/0              |           130    5.4 us |           130    5.4 us |       1.00          
+algorithm/fill/vector<uint64_t>            |          4385  182.7 us |          4389  182.9 us |       1.00          
+algorithm/fill/vector<void*>               |           981   40.9 us |           967   40.3 us |       1.01          
+algorithm/fill_n/bool[]                    |           131    5.5 us |           130    5.4 us |       1.01          
+algorithm/fill_n/char[]                    |           131    5.5 us |           130    5.4 us |       1.01          
+algorithm/fill_n/vector<uint64_t>          |          5642  235.1 us |          5641  235.0 us |       1.00          
+algorithm/find_end/string/end              |          1516   63.2 us |          2482  103.4 us |       0.61         -
+algorithm/find_end/string/middle           |         11938  497.4 us |         19751  823.0 us |       0.60         -
+algorithm/find_end/string/none             |         24028    1.0 ms |         40080    1.7 ms |       0.60         -
+algorithm/lex_cmp/schar[]                  |         13311  554.6 us |          1893   78.9 us |       7.03         +
+algorithm/lex_cmp/vector<TestObject>       |         26989    1.1 ms |         25381    1.1 ms |       1.06          
+algorithm/lex_cmp/vector<uchar>            |         12589  524.5 us |          1897   79.0 us |       6.64         +
+algorithm/lower_bound/vector<TestObject>   |        942173   39.3 ms |        965947   40.2 ms |       0.98          
+algorithm/min_element/vector<TestObject>   |         30456    1.3 ms |         28143    1.2 ms |       1.08          
+algorithm/rand_shuffle/vector<uint64_t>    |        505834   21.1 ms |        484532   20.2 ms |       1.04          
+algorithm/reverse/list<TestObject>         |          7400  308.3 us |          7685  320.2 us |       0.96          
+algorithm/reverse/vector<TestObject>       |          7075  294.8 us |          7203  300.1 us |       0.98          
+algorithm/search/string<char>              |         16694  695.6 us |         31344    1.3 ms |       0.53         -
+algorithm/search_n/string<char>            |         12285  511.9 us |         11817  492.4 us |       1.04          
+algorithm/unique/vector<TestObject>        |         51594    2.1 ms |         53184    2.2 ms |       0.97          
+algorithm/unique/vector<uint32_t>          |         12989  541.2 us |         10455  435.6 us |       1.24          
+algorithm/unique/vector<uint64_t>          |         29810    1.2 ms |         29444    1.2 ms |       1.01          
+algorithm/upper_bound/vector<uint32_t>     |        410610   17.1 ms |        461926   19.2 ms |       0.89          
+
+bitset<1500>/>>=/1                         |        496931   20.7 ms |        433836   18.1 ms |       1.15          
+bitset<1500>/count                         |        652307   27.2 ms |        602283   25.1 ms |       1.08          
+bitset<1500>/flip                          |        342913   14.3 ms |        328031   13.7 ms |       1.05          
+bitset<1500>/reset                         |         89035    3.7 ms |         89004    3.7 ms |       1.00          
+bitset<1500>/set()                         |         90901    3.8 ms |         93871    3.9 ms |       0.97          
+bitset<1500>/set(i)                        |         15447  643.6 us |         15449  643.7 us |       1.00          
+bitset<1500>/test                          |         39038    1.6 ms |         22238  926.6 us |       1.76         +
+
+bitset<15>/>>=/1                           |         15865  661.0 us |         15447  643.6 us |       1.03          
+bitset<15>/count                           |         32115    1.3 ms |         32292    1.3 ms |       0.99          
+bitset<15>/flip                            |         17915  746.5 us |         17915  746.5 us |       1.00          
+bitset<15>/reset                           |         14829  617.9 us |         14829  617.9 us |       1.00          
+bitset<15>/set()                           |         14829  617.9 us |         14831  618.0 us |       1.00          
+bitset<15>/set(i)                          |         15449  643.7 us |         15447  643.6 us |       1.00          
+bitset<15>/test                            |         22239  926.6 us |         22336  930.7 us |       1.00          
+
+bitset<35>/>>=/1                           |         53723    2.2 ms |         20386  849.4 us |       2.64         +
+bitset<35>/count                           |         56498    2.4 ms |         42608    1.8 ms |       1.33         +
+bitset<35>/flip                            |         35203    1.5 ms |         18995  791.5 us |       1.85         +
+bitset<35>/reset                           |         16783  699.3 us |         16680  695.0 us |       1.01          
+bitset<35>/set()                           |         17144  714.3 us |         16681  695.0 us |       1.03          
+bitset<35>/set(i)                          |         15446  643.6 us |         15448  643.7 us |       1.00          
+bitset<35>/test                            |         37982    1.6 ms |         22236  926.5 us |       1.71         +
+
+bitset<75>/>>=/1                           |         64938    2.7 ms |         55576    2.3 ms |       1.17          
+bitset<75>/count                           |         69463    2.9 ms |         68630    2.9 ms |       1.01          
+bitset<75>/flip                            |         42611    1.8 ms |         45867    1.9 ms |       0.93          
+bitset<75>/reset                           |         16063  669.3 us |         16064  669.3 us |       1.00          
+bitset<75>/set()                           |         22239  926.6 us |         16681  695.0 us |       1.33         +
+bitset<75>/set(i)                          |         15446  643.6 us |         15447  643.6 us |       1.00          
+bitset<75>/test                            |         37981    1.6 ms |         22237  926.5 us |       1.71         +
+
+deque<ValuePair>/erase                     |        823387   34.3 ms |        608398   25.3 ms |       1.35         +
+deque<ValuePair>/find                      |         38220    1.6 ms |         29603    1.2 ms |       1.29         +
+deque<ValuePair>/insert                    |        676820   28.2 ms |        477143   19.9 ms |       1.42         +
+deque<ValuePair>/iteration                 |         13879  578.3 us |         13058  544.1 us |       1.06          
+deque<ValuePair>/operator[]                |        141669    5.9 ms |         38099    1.6 ms |       3.72         +
+deque<ValuePair>/push_back                 |         78424    3.3 ms |         60230    2.5 ms |       1.30         +
+deque<ValuePair>/push_front                |         75580    3.1 ms |         59750    2.5 ms |       1.26          
+deque<ValuePair>/sort                      |       1326662   55.3 ms |       1294655   53.9 ms |       1.02          
+
+hash_map<string, uint32_t>/clear           |         89848    3.7 ms |        141577    5.9 ms |       0.63         -
+hash_map<string, uint32_t>/count           |         57046    2.4 ms |         44314    1.8 ms |       1.29         +
+hash_map<string, uint32_t>/erase pos       |         15500  645.8 us |         16031  668.0 us |       0.97          
+hash_map<string, uint32_t>/erase range     |          6066  252.8 us |          8387  349.5 us |       0.72         -
+hash_map<string, uint32_t>/erase val       |         83774    3.5 ms |        123408    5.1 ms |       0.68         -
+hash_map<string, uint32_t>/find            |         53005    2.2 ms |         43969    1.8 ms |       1.21          
+hash_map<string, uint32_t>/find_as/char*   |        343339   14.3 ms |         44064    1.8 ms |       7.79         +
+hash_map<string, uint32_t>/insert          |        166099    6.9 ms |        377233   15.7 ms |       0.44         -
+hash_map<string, uint32_t>/iteration       |         26056    1.1 ms |          6280  261.7 us |       4.15         +
+hash_map<string, uint32_t>/operator[]      |        126748    5.3 ms |         45173    1.9 ms |       2.81         +
+
+hash_map<uint32_t, TestObject>/clear       |         76761    3.2 ms |         74166    3.1 ms |       1.03          
+hash_map<uint32_t, TestObject>/count       |          5704  237.7 us |          6351  264.6 us |       0.90          
+hash_map<uint32_t, TestObject>/erase pos   |         10105  421.0 us |          9233  384.7 us |       1.09          
+hash_map<uint32_t, TestObject>/erase range |          4647  193.6 us |          4379  182.5 us |       1.06          
+hash_map<uint32_t, TestObject>/erase val   |         54657    2.3 ms |         54888    2.3 ms |       1.00          
+hash_map<uint32_t, TestObject>/find        |          8769  365.4 us |         10320  430.0 us |       0.85          
+hash_map<uint32_t, TestObject>/insert      |         78006    3.3 ms |         64780    2.7 ms |       1.20          
+hash_map<uint32_t, TestObject>/iteration   |         10288  428.7 us |          4181  174.2 us |       2.46         +
+hash_map<uint32_t, TestObject>/operator[]  |         38152    1.6 ms |         11332  472.2 us |       3.37         +
+
+heap (uint32_t[])/make_heap                |         39956    1.7 ms |         37784    1.6 ms |       1.06          
+heap (uint32_t[])/pop_heap                 |        562846   23.5 ms |        555734   23.2 ms |       1.01          
+heap (uint32_t[])/push_heap                |         96384    4.0 ms |         89646    3.7 ms |       1.08          
+heap (uint32_t[])/sort_heap                |        427344   17.8 ms |        426115   17.8 ms |       1.00          
+
+heap (vector<TestObject>)/make_heap        |        360942   15.0 ms |        279750   11.7 ms |       1.29         +
+heap (vector<TestObject>)/pop_heap         |       2174123   90.6 ms |       1860624   77.5 ms |       1.17          
+heap (vector<TestObject>)/push_heap        |        318619   13.3 ms |        311454   13.0 ms |       1.02          
+heap (vector<TestObject>)/sort_heap        |       1449815   60.4 ms |       1120718   46.7 ms |       1.29         +
+
+list<TestObject>/ctor(it)                  |       1327323   55.3 ms |       1116544   46.5 ms |       1.19          
+list<TestObject>/ctor(n)                   |        137972    5.7 ms |        107749    4.5 ms |       1.28          
+list<TestObject>/erase                     |       7736645  322.4 ms |       7222498  300.9 ms |       1.07          
+list<TestObject>/find                      |        272828   11.4 ms |         98311    4.1 ms |       2.78         +
+list<TestObject>/insert                    |       1443457   60.1 ms |        981364   40.9 ms |       1.47         +
+list<TestObject>/push_back                 |       1327658   55.3 ms |       1037485   43.2 ms |       1.28          
+list<TestObject>/remove                    |       4542961  189.3 ms |       2113341   88.1 ms |       2.15         +
+list<TestObject>/reverse                   |        247521   10.3 ms |        127275    5.3 ms |       1.94         +
+list<TestObject>/size/1                    |          2059   85.8 us |          1348   56.2 us |       1.53         +
+list<TestObject>/size/10                   |         10402  433.4 us |          1348   56.2 us |       7.72         +
+list<TestObject>/size/100                  |         60418    2.5 ms |          1347   56.1 us |      44.85         +
+list<TestObject>/splice                    |        360181   15.0 ms |        149966    6.2 ms |       2.40         +
+
+map<TestObject, uint32_t>/clear            |          8441  351.7 us |          8964  373.5 us |       0.94          
+map<TestObject, uint32_t>/count            |         52693    2.2 ms |         40627    1.7 ms |       1.30         +
+map<TestObject, uint32_t>/equal_range      |         92016    3.8 ms |         64816    2.7 ms |       1.42         +
+map<TestObject, uint32_t>/erase/key        |        107633    4.5 ms |         83653    3.5 ms |       1.29         +
+map<TestObject, uint32_t>/erase/pos        |          8392  349.7 us |          8031  334.6 us |       1.04          
+map<TestObject, uint32_t>/erase/range      |          4574  190.6 us |          4626  192.8 us |       0.99          
+map<TestObject, uint32_t>/find             |         55386    2.3 ms |         42534    1.8 ms |       1.30         +
+map<TestObject, uint32_t>/insert           |        115335    4.8 ms |        103705    4.3 ms |       1.11          
+map<TestObject, uint32_t>/iteration        |          4347  181.1 us |          3724  155.2 us |       1.17          
+map<TestObject, uint32_t>/lower_bound      |         54035    2.3 ms |         55225    2.3 ms |       0.98          
+map<TestObject, uint32_t>/operator[]       |         61389    2.6 ms |         61771    2.6 ms |       0.99          
+map<TestObject, uint32_t>/upper_bound      |         53119    2.2 ms |         52812    2.2 ms |       1.01          
+
+set<uint32_t>/clear                        |          8643  360.1 us |          8270  344.6 us |       1.05          
+set<uint32_t>/count                        |         46996    2.0 ms |         34758    1.4 ms |       1.35         +
+set<uint32_t>/equal_range                  |         83769    3.5 ms |         59818    2.5 ms |       1.40         +
+set<uint32_t>/erase range                  |          4561  190.0 us |          4928  205.3 us |       0.93          
+set<uint32_t>/erase/pos                    |          7686  320.3 us |          8154  339.8 us |       0.94          
+set<uint32_t>/erase/val                    |         97955    4.1 ms |         75812    3.2 ms |       1.29         +
+set<uint32_t>/find                         |         46814    2.0 ms |         34819    1.5 ms |       1.34         +
+set<uint32_t>/insert                       |         91932    3.8 ms |         89615    3.7 ms |       1.03          
+set<uint32_t>/iteration                    |          4026  167.8 us |          3679  153.3 us |       1.09          
+set<uint32_t>/lower_bound                  |         44198    1.8 ms |         44781    1.9 ms |       0.99          
+set<uint32_t>/upper_bound                  |         44681    1.9 ms |         44808    1.9 ms |       1.00          
+
+sort/q_sort/TestObject[]                   |         81575    3.4 ms |         82050    3.4 ms |       0.99          
+sort/q_sort/TestObject[]/sorted            |         22862  952.6 us |         20965  873.5 us |       1.09          
+sort/q_sort/vector<TestObject>             |         83253    3.5 ms |         85098    3.5 ms |       0.98          
+sort/q_sort/vector<TestObject>/sorted      |         23191  966.3 us |         21261  885.9 us |       1.09          
+sort/q_sort/vector<ValuePair>              |         40289    1.7 ms |         42528    1.8 ms |       0.95          
+sort/q_sort/vector<ValuePair>/sorted       |         10738  447.4 us |          9978  415.8 us |       1.08          
+sort/q_sort/vector<uint32>                 |         32153    1.3 ms |         29938    1.2 ms |       1.07          
+sort/q_sort/vector<uint32>/sorted          |          6683  278.5 us |          6232  259.7 us |       1.07          
+
+string<char16_t>/compare                   |       5012293  208.8 ms |       3732905  155.5 ms |       1.34         +
+string<char16_t>/erase/pos,n               |         11474  478.1 us |         11311  471.3 us |       1.01          
+string<char16_t>/find/p,pos,n              |       9286309  386.9 ms |       3950594  164.6 ms |       2.35         +
+string<char16_t>/find_first_not_of/p,pos,n |           803   33.5 us |           925   38.5 us |       0.87          
+string<char16_t>/find_first_of/p,pos,n     |         82213    3.4 ms |         84770    3.5 ms |       0.97          
+string<char16_t>/find_last_of/p,pos,n      |         14457  602.4 us |         11166  465.3 us |       1.29         +
+string<char16_t>/insert/pos,p              |         11879  495.0 us |         11839  493.3 us |       1.00          
+string<char16_t>/iteration                 |       6105186  254.4 ms |       4866198  202.8 ms |       1.25          
+string<char16_t>/operator[]                |         11330  472.1 us |          3798  158.3 us |       2.98         +
+string<char16_t>/push_back                 |         49159    2.0 ms |         33174    1.4 ms |       1.48         +
+string<char16_t>/replace/pos,n,p,n         |         17546  731.1 us |         17883  745.1 us |       0.98          
+string<char16_t>/reserve                   |       6556509  273.2 ms |          2148   89.5 us |     100.00         +
+string<char16_t>/rfind/p,pos,n             |          3230  134.6 us |          2870  119.6 us |       1.13          
+string<char16_t>/size                      |           186    7.8 us |           193    8.0 us |       0.96          
+string<char16_t>/swap                      |          3849  160.4 us |          4582  190.9 us |       0.84          
+
+string<char8_t>/compare                    |        840915   35.0 ms |        830604   34.6 ms |       1.01          
+string<char8_t>/erase/pos,n                |          5060  210.8 us |          4933  205.5 us |       1.03          
+string<char8_t>/find/p,pos,n               |       3874775  161.4 ms |       4561889  190.1 ms |       0.85          
+string<char8_t>/find_first_not_of/p,pos,n  |          1187   49.5 us |          1046   43.6 us |       1.13          
+string<char8_t>/find_first_of/p,pos,n      |         90512    3.8 ms |         84814    3.5 ms |       1.07          
+string<char8_t>/find_last_of/p,pos,n       |         12115  504.8 us |         10461  435.9 us |       1.16          
+string<char8_t>/insert/pos,p               |          4870  202.9 us |          4927  205.3 us |       0.99          
+string<char8_t>/iteration                  |         26095    1.1 ms |         20721  863.4 us |       1.26          
+string<char8_t>/operator[]                 |         11281  470.0 us |          6601  275.0 us |       1.71         +
+string<char8_t>/push_back                  |         43759    1.8 ms |         33572    1.4 ms |       1.30         +
+string<char8_t>/replace/pos,n,p,n          |         11601  483.4 us |         11031  459.6 us |       1.05          
+string<char8_t>/reserve                    |        390865   16.3 ms |           977   40.7 us |     100.00         +
+string<char8_t>/rfind/p,pos,n              |          6273  261.4 us |          2898  120.8 us |       2.16         +
+string<char8_t>/size                       |           186    7.8 us |           181    7.5 us |       1.03          
+string<char8_t>/swap                       |          3927  163.6 us |          4583  191.0 us |       0.86          
+
+vector<uint64>/erase                       |        293997   12.2 ms |        287042   12.0 ms |       1.02          
+vector<uint64>/insert                      |        300771   12.5 ms |        300785   12.5 ms |       1.00          
+vector<uint64>/iteration                   |         16491  687.1 us |          8643  360.1 us |       1.91         +
+vector<uint64>/operator[]                  |         14059  585.8 us |          9137  380.7 us |       1.54         +
+vector<uint64>/push_back                   |         48030    2.0 ms |         45529    1.9 ms |       1.05          
+vector<uint64>/sort                        |        575583   24.0 ms |        568422   23.7 ms |       1.01          
+
+sum                                        |      67499027    2.81 s |      48028159    2.00 s |       1.41         +

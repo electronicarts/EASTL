@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>EASTL Gotchas</title>
+	<meta content="text/html; charset=us-ascii" http-equiv="content-type">
+	<meta name="author" content="Paul Pedriana">
+	<meta name="description" content="Desciptions of potential pitfalls that exist in EASTL.">
+    <link type="text/css" rel="stylesheet" href="EASTLDoc.css">
+    <style type="text/css">
+<!--
+.style1 {color: #FF0000}
+.style2 {color: #009933}
+-->
+    </style>
+</head>
+<body>
+<h1>EASTL Gotchas</h1>
+<p> There are some cases where the EASTL design results in "gotchas" or behavior that isn't necessarily what the new user
+  would expect. These are all situations in which this behavior may be undesirable. One might ask, "Why not change EASTL
+  to make these gotchas go away?" The answer is that in each case making the gotchas go away would either be impossible
+  or would compromise the functionality of the library.</p>
+<h2>Summary</h2>
+<p>The descriptions here are intentionally terse; this is to make them easier to visually scan.</p>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="1" cellspacing="1">
+<tbody>
+<tr>
+<td style="width: 28px;">1</td>
+<td><a href="#Gotchas.1">map::operator[] can create elements.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">2</td>
+<td><a href="#Gotchas.2">char* converts to string silently.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">3</td>
+<td><a href="#Gotchas.3">char* is compared by ptr and not by contents.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">4</td>
+<td><a href="#Gotchas.4">Iterators can be invalidated by container mutations.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">5</td>
+<td><a href="#Gotchas.5">Vector resizing may cause ctor/dtor cascades.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">6</td>
+<td><a href="#Gotchas.6">Vector and string insert/push_back/resize can reallocate.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">7</td>
+<td><a href="#Gotchas.7">Deriving from containers may not work.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">8</td>
+<td><a href="#Gotchas.8">set::iterator is const_iterator.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">9</td>
+<td><a href="#Gotchas.9">Inserting elements means copying by value.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">10</td>
+<td><a href="#Gotchas.10">Containers of pointers can leak if you aren't careful.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">11</td>
+<td><a href="#Gotchas.11">Containers of auto_ptrs can crash.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">12</td>
+<td><a href="#Gotchas.12">Remove algorithms don't actually remove elements.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">13</td>
+<td><a href="#Gotchas.13">list::size() is O(n).</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">14</td>
+<td><a href="#Gotchas.14">vector and deque::size() may incur integer division.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">15</td>
+<td><a href="#Gotchas.15">Be careful making custom Compare functions.</a></td>
+</tr>
+<tr>
+<td style="width: 28px;">16</td>
+<td><a href="#Gotchas.16">Comparisons involving floating point are dangerous.</a></td>
+</tr>
+<tr>
+  <td style="width: 28px;">17</td>
+  <td><a href="#Gotchas.17">Writing beyond string::size and vector::size is dangerous. </a></td>
+</tr>
+<tr>
+  <td style="width: 28px;">18</td>
+  <td><a href="#Gotchas.18">Container operator=() doesn't copy allocators. </a></td>
+</tr>
+</tbody>
+</table>
+<h2>  Detail</h2>
+<p class="faq-question"><a name="Gotchas.1"></a>1
+map::operator[] can create elements.</p>
+<p class="faq-answer">By design, map operator[] creates a value for you if it isn't already present. The reason for this is that the alternative behavior would be to throw an exception, and such behavior isn't desirable. The resolution is to simply use the map::find function instead of operator[].</p>
+<p class="faq-question"><a name="Gotchas.2"></a>2
+char* converts to string silently.</p>
+<p class="faq-answer">The string class has a non-explicit constructor that takes char* as an argument. Thus if you pass char* to a function that takes a string object, a temporary string will be created. In some cases this is undesirable behavior but the user may not notice it right away, as the compiler gives no warnings. The reason that the string constructor from char* is not declared explicit is that doing so would prevent the user from expressions such as: string s = &quot;hello&quot;. In this example, no temporary string object is created, but the syntax is not possible if the char* constructor is declared explicit. Thus a decision to make the string char* constructor explicit involves tradeoffs.</p>
+<p class="faq-answer">There is an EASTL configuration option called EASTL_STRING_EXPLICIT which makes the string char* ctor explicit and avoids the behaviour described above.</p>
+<p class="faq-question"><a name="Gotchas.3"></a>3
+char* is compared by ptr and not by contents.</p>
+<p class="faq-answer">If you have a set of strings declared as set&lt;char*&gt;, the find function will compare via the pointer value and not the string contents. The workaround is to make a set of string objects or, better, to supply a custom string comparison function to the set. The workaround is not to declare a global operator&lt; for type char*, as that could cause other systems to break.</p>
+<p class="faq-question"><a name="Gotchas.4"></a>4 Iterators can be invalidated by container mutations</p>
+<p class="faq-answer">With some containers, modifications of them may invalidate iterators into them. With other containers, modifications of them only an iterator if the modification involves the element that iterator refers to. Containers in the former category include vector, deque, basic_string (string), vector_map, vector_multimap, vector_set, and vector_multiset. Containers in the latter category include list, slist, map, multimap, multiset, all hash containers, and all intrusive containers.</p>
+<p class="faq-question"><a name="Gotchas.5"></a>5 Vector resizing may cause ctor/dtor cascades.</p>
+<p>If elements are inserted into a vector in middle of the sequence, the elements from the insertion point to the end will be copied upward. This will necessarily cause a series of element constructions and destructions as the elements are copied upward. Similarly, if an element is appended to a vector but the vector capacity is exhausted and needs to be reallocated, the entire vector will undergo a construction and destruction pass as the values are copied to the new storage. This issue exists for deque as well, though to a lesser degree. For vector, the resolution is to reserve enough space in your vector to prevent such reallocation. For deque the resolution is to set its subarray size to enough to prevent such reallocation. Another solution that can often be used is to take advantage of the has_trivial_relocate type trait, which can cause such moves to happen via memcpy instead of via ctor/dtor calls. If your class can be safely memcpy'd, you can use EASTL_DECLARE_TRIVIAL_RELOCATE to tell the compiler it can be memcpy'd. Note that built-in scalars (e.g. int) already are automatically memcpy'd by EASTL.</p>
+<p class="faq-question"><a name="Gotchas.6"></a>6
+Vector and string insert/push_back/resize can reallocate.</p>
+<p>If you create an empty vector and use push_back to insert 100 elements, the vector will reallocate itself at least three or four times during the operation. This can be an undesirable thing. The best thing to do if possible is to reserve the size you will need up front in the vector constructor or before you add any elements.</p>
+<p class="faq-question"><a name="Gotchas.7"></a>7
+Deriving from containers may not work.</p>
+<p>EASTL containers are not designed with the guarantee that they can be arbitrarily subclassed. This is by design and is done for performance reasons, as such guarantees would likely involve making containers use virtual functions. However, some types of subclassing can be successful and EASTL does such subclassing internally to its advantage. The primary problem with subclassing results when a parent class function calls a function that the user wants to override. The parent class cannot see the overridden function and silent unpredictable behavior will likely occur. If your derived container acts strictly as a wrapper for the container then you will likely be able to successfully subclass it.</p>
+<p class="faq-question"><a name="Gotchas.8"></a>8 
+set::iterator is const_iterator.</p>
+<p class="faq-answer">The reason this is so is that a set is an ordered container and changing the value referred to by an iterator could make the set be out of order. Thus, set and multiset iterators are always const_iterators. If you need to change the value and are sure the change will not alter the container order, use const_cast or declare mutable member variables for your contained object. This resolution is the one blessed by the C++ standardization committee. This issue is addressed in more detail in the EASTL FAQ.</p>
+<p class="faq-question"><a name="Gotchas.9"></a>9
+Inserting elements means copying by value.</p>
+<p class="faq-answer">When you insert an element into a (non-intrusive) container, the container makes a copy of the element. There is no provision to take over ownership of an object from the user. The exception to this is of course when you use a container of pointers instead of a container of values. See the entry below regarding containers of pointers. Intrusive containers (e.g. intrusive_list) do in fact take over the user-provided value, and thus provide another advantage over regular containers in addition to avoiding memory allocation.</p>
+<p class="faq-question"><a name="Gotchas.10"></a>10
+  Containers of pointers can leak if you aren't careful.</p>
+<p class="faq-answer">Containers of points don't know or care about the possibility that the pointer may have been allocated and need to be freed. Thus if you erase such elements from a container they are not freed. The resolution is to manually free the pointers when removing them or to instead use a container of smart pointers (shared smart pointers, in particular). This issue is addressed in more detail in the EASTL FAQ and the auto_ptr-related entry below.</p>
+<p class="faq-question"><a name="Gotchas.11"></a>11
+Containers of auto_ptrs can crash</p>
+<p class="faq-answer">We suggested above that the user can use a container of smart pointers to automatically manage contained pointers. However, you don't want to use auto_ptr, as auto_ptrs cannot be safely assigned to each other; doing so results in a stale pointer and most likely a crash.</p>
+<p class="faq-question"><a name="Gotchas.12"></a>12
+Remove algorithms don't actually remove elements.</p>
+<p class="faq-answer">Algorithms such as remove, remove_if, remove_heap, and unique do not erase elements from the sequences they work on. Instead, they return an iterator to the new end of the sequence and the user must call erase with that iterator in order to actually remove the elements from the container. This behavior exists because algorithms work on sequences via iterators and don't know how to work with containers. Only the container can know how to best erase its own elements. In each case, the documentation for the algorithm reminds the user of this behavior. Similarly, the copy algorithm copies elements from one sequence to another and doesn't modify the size of the destination sequence. So the destination must hold at least as many items as the source, and if it holds more items, you may want to erase the items at the end after the copy.</p>
+<p class="faq-question"><a name="Gotchas.13"></a>13 
+list::size() is O(n).</p>
+<p class="faq-answer">By this we mean that calling size() on a list will iterate the list and add the size as it goes. Thus, getting the size of a list is not a fast operation, as it requires traversing the list and counting the nodes. We could make list::size() be fast by having a member mSize variable. There are reasons for having such functionality and reasons for not having such functionality. We currently choose to not have a member mSize variable as it would add four bytes to the class, add&nbsp;processing to functions such as insert and erase, and would only serve to improve the size function, but no other function. The alternative&nbsp;argument is that the C++ standard states that std::list&nbsp;should be an O(1) operation (i.e. have a member size variable), most C++ standard library list implementations do so, the size is but an integer which is quick to update, and many users expect to have a fast size function. All of this applies to slist and intrusive_list as well.</p>
+<p class="faq-answer">Note that EASTL's config.h file has an option in it to cause list and slist to cache their size with an mSize variable and thus make size() O(1). This option is disabled by default.</p>
+<p class="faq-question">  <a name="Gotchas.14"></a>14 
+  vector and deque::size() may incur integer division.</p>
+<p class="faq-answer">Some containers (vector and deque in particular) calculate their size by pointer subtraction. For example, the implementation of vector::size() is 'return mpEnd - mpBegin'. This looks like a harmless subtraction, but if the size of the contained object is not an even power of two then the compiler will likely need to do an integer division to calculate the value of the subtracted pointers. One might suggest that vector use mpBegin and mnSize as member variables instead of mpBegin and mpEnd, but that would incur costs in other vector operations. The suggested workaround is to iterate a vector instead of using a for loop and operator[] and for those cases where you do use a for loop and operator[], get the size once at the beginning of the loop instead of repeatedly during the condition test.</p>
+<p class="faq-question"><a name="Gotchas.15"></a>15
+  Be careful making custom Compare functions.
+</p>
+<p class="faq-answer">A Compare function compares two values and returns true if the first is less than the second. This is easy to understand for integers and strings, but harder to get right for more complex structures. Many a time have people decided to come up with a fancy mechanism for comparing values and made mistakes. The FAQ has a couple entries related to this. See http://blogs.msdn.com/oldnewthing/archive/2003/10/23/55408.aspx for a story about how this can go wrong by being overly clever.</p>
+<p class="faq-question">  <a name="Gotchas.16"></a>16 
+  Comparisons involving floating point are dangerous.</p>
+<p class="faq-answer">Floating point comparisons between two values that are very nearly equal can result in inconsistent results. Similarly, floating point comparisons between NaN values will always generate inconsistent results, as NaNs by definition always compare as non-equal. You thus need to be careful when using comparison functions that work with floating point values. Conversions to integral values may help the problem, but not necessarily.</p>
+<p class="faq-question"><a name="Gotchas.17" id="Gotchas.17"></a>17 Writing beyond string::size and vector::size is dangerous.</p>
+<p>A trick that often comes to mind when working with strings is to set the string capacity to some maximum value, strcpy data into it, and then resize the string when done. This can be done with EASTL, but only if you resize the string to the maximum value and not reserve the string to the maximum value. The reason is that when you resize a string from size (n) to size (n + count), the count characters are zeroed and overwrite the characters that you strcpyd. </p>
+<p class="faq-answer">The following code is broken: </p>
+<p class="code-example">string mDataDir;<br>
+  <br>
+  mDataDir.<span class="style1">reserve</span>(kMaxPathLength);<br>
+  strcpy(&amp;mDataDir[0], &quot;blah/blah/blah&quot;);<br>
+mDataDir.resize(strlen(&amp;mDataDir[0])); // Overwrites your blah/... with 00000...</p>
+<p class="faq-answer">This following code is OK: </p>
+<p class="code-example">string mDataDir;<br>
+  <br>
+  mDataDir.<span class="style2">resize</span>(kMaxPathLength);<br>
+  strcpy(&amp;mDataDir[0], &quot;blah/blah/blah&quot;);<br>
+mDataDir.resize(strlen(&amp;mDataDir[0]));</p>
+<p class="faq-question"><a name="Gotchas.18" id="Gotchas.18"></a>18 Container operator=() doesn't copy allocators.
+</p>
+<p class="faq-answer">EASTL container assignment (e.g. vector::operator=(const vector&amp;)) doesn't copy the allocator. There are good and bad reasons for doing this, but that's how it acts. So you need to beware that you need to assign the allocator separately or make a container subclass which overrides opeator=() and does this. </p>
+<br>
+<hr style="width: 100%; height: 2px;">
+End of document<br>
+<br>
+<br>
+<br>
+<br>
+</body>
+</html>

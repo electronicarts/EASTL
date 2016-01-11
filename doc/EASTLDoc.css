@@ -1,0 +1,86 @@
+body 
+{
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: 12pt;
+}
+
+h1
+{
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	display: block;
+	background-color: #BBCCDD;
+	border: 2px solid #000000;
+	font-size: 16pt;
+	font-weight: bold;
+	padding: 6px;
+}
+
+h2 
+{
+	font-size: 14pt;
+	font-family: Verdana;
+	border-bottom: 2px solid black;
+}
+
+h3
+{
+	font-family: Verdana;
+	font-size: 13pt;
+	font-weight: bold;
+}
+
+.code-example 
+{
+	display: block;
+	background-color: #D1DDE9;
+	margin-left: 3em;
+	margin-right: 3em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	padding: 8px;
+	border: 2px solid #7993C8;
+	font-family: "Courier New", Courier, mono;
+	font-size: 10pt;
+	white-space: pre;
+}
+
+.code-example-span 
+{
+	font-family: "Courier New", Courier, mono;
+	font-size: 10pt;
+	white-space: pre;
+}
+
+.code-example-comment
+{
+	background-color: #e0e0f0; 
+	padding: 0px 0px; 
+	font-family: "Courier New", Courier, mono; 
+	font-size: 10pt; 
+	white-space: pre; 
+	color: #999999; 
+	margin: auto auto; 
+}
+
+
+.faq-question
+{
+	background-color: #D9E2EC;
+	font-size: 12pt;
+	font-weight: bold;
+	margin-top: 0em;
+	padding-left:5px;
+	padding-right:8px;
+	padding-top:2px;
+	padding-bottom:3px;
+	margin-bottom: 0.5em;
+}
+
+.faq-answer
+{
+	display: block;
+	margin: 4pt 1em 0.8em;
+}
+.indented {
+	margin-left: 50px;
+}

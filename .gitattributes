@@ -1,0 +1,3 @@
+# Auto detect text files and perform LF normalization
+# http://git-scm.com/docs/gitattributes
+* text=auto
