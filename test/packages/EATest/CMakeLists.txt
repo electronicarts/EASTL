@@ -1,0 +1,25 @@
+#-------------------------------------------------------------------------------------------
+# Copyright (C) Electronic Arts Inc.  All rights reserved.
+#-------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------------------
+# Library definition 
+#-------------------------------------------------------------------------------------------
+file(GLOB EATEST_SOURCES "source/*.cpp")
+add_library(EATest ${EATEST_SOURCES})
+
+#-------------------------------------------------------------------------------------------
+# Include directories 
+#-------------------------------------------------------------------------------------------
+target_include_directories(EATest PUBLIC include)
+target_link_libraries(EATest EABase)
+target_link_libraries(EATest EAStdC)
+target_link_libraries(EATest EASTL)
+target_link_libraries(EATest EAMain)
+target_link_libraries(EATest EAThread)
+
+#-------------------------------------------------------------------------------------------
+# Defines 
+#-------------------------------------------------------------------------------------------
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+

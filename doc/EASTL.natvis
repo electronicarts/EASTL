@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+     This is a Microsoft natvis file, which allows visualization of complex variables in the
+     Microsoft debugger starting with VS2012. It's a successor to the AutoExp.dat file format. 
+
+     This file needs to go into your C:\Users\<user>\Documents\Visual Studio 2011\Visualizers\
+     folder. Microsoft documentation states that it should go into a 2012 folder, but testing 
+     in June of 2013 suggests that it still needs to be the 2011 folder.
+
+     You don't need to restart Visual Studio to use it, you just need to restart the debug 
+     session. You can have multiple .natvis files and they will all be used.
+-->
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="eastl::shared_ptr&lt;*&gt;">
+	<DisplayString>{mpValue}</DisplayString>
+	<Expand>
+		<ExpandedItem>mpValue</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::weak_ptr&lt;*&gt;">
+	<DisplayString>{((mpRefCount &amp;&amp; mpRefCount-&gt;mRefCount) ? mpValue : nullptr)}</DisplayString>
+	<Expand>
+		<ExpandedItem>mpRefCount &amp;&amp; mpRefCount-&gt;mRefCount ? mpValue : nullptr</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::array&lt;*,*&gt;">
+	<DisplayString Condition="$T2 == 0">[{$T2}] {{}}</DisplayString>
+	<DisplayString Condition="$T2 == 1">[{$T2}] {{ {*mValue} }}</DisplayString>
+	<DisplayString Condition="$T2 == 2">[{$T2}] {{ {*mValue}, {*(mValue+1)} }}</DisplayString>
+	<DisplayString Condition="$T2 == 3">[{$T2}] {{ {*mValue}, {*(mValue+1)}, {*(mValue+2)} }}</DisplayString>
+	<DisplayString Condition="$T2 == 4">[{$T2}] {{ {*mValue}, {*(mValue+1)}, {*(mValue+2)}, {*(mValue+3)} }}</DisplayString>
+	<DisplayString Condition="$T2 == 5">[{$T2}] {{ {*mValue}, {*(mValue+1)}, {*(mValue+2)}, {*(mValue+3)}, {*(mValue+4)} }}</DisplayString>
+	<DisplayString Condition="$T2 == 6">[{$T2}] {{ {*mValue}, {*(mValue+1)}, {*(mValue+2)}, {*(mValue+3)}, {*(mValue+4)}, {*(mValue+5)} }}</DisplayString>
+	<DisplayString Condition="$T2 &gt; 6">[{$T2}] {{ {*mValue}, {*(mValue+1)}, {*(mValue+2)}, {*(mValue+3)}, {*(mValue+4)}, {*(mValue+5)}, ... }}</DisplayString>
+	<Expand>
+        <Item Name="[size]">$T2</Item>
+        <ArrayItems>
+            <Size>$T2</Size>
+            <ValuePointer>mValue</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::basic_string&lt;char,*&gt;">
+	<DisplayString>{mpBegin,s}</DisplayString>
+	<Expand>
+		<Item Name="length">mpEnd-mpBegin</Item>
+		<Item Name="capacity">mpCapacity-mpBegin</Item>
+		<Item Name="value">mpBegin,sb</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
+	<DisplayString>{mpBegin,su}</DisplayString>
+	<Expand>
+		<Item Name="length">mpEnd-mpBegin</Item>
+		<Item Name="capacity">mpCapacity-mpBegin</Item>
+		<Item Name="value">mpBegin,sub</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::pair&lt;*&gt;">
+	<DisplayString>({first}, {second})</DisplayString>
+    <Expand>
+        <Item Name="first">first</Item>
+        <Item Name="second">second</Item>
+    </Expand>
+</Type>
+
+<Type Name="eastl::VectorBase&lt;*&gt;">
+	<DisplayString Condition="mpEnd == mpBegin">[{mpEnd - mpBegin}] {{}}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 1">[{mpEnd - mpBegin}] {{ {*mpBegin} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 2">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 3">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 4">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 5">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin == 6">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)}, {*(mpBegin+5)} }}</DisplayString>
+	<DisplayString Condition="mpEnd - mpBegin &gt; 6">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)}, {*(mpBegin+5)}, ... }}</DisplayString>
+    <Expand>
+        <Item Name="[size]">mpEnd - mpBegin</Item>
+        <Item Name="[capacity]">mpCapacity - mpBegin</Item>
+        <ArrayItems>
+            <Size>mpEnd - mpBegin</Size>
+            <ValuePointer>mpBegin</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::DequeBase&lt;*,*,*&gt;">
+	<DisplayString Condition="mItBegin.mpCurrent == mItEnd.mpCurrent">
+		[0] {{}}
+	</DisplayString>
+	<DisplayString Condition="(mItEnd.mpCurrentArrayPtr - mItBegin.mpCurrentArrayPtr) * $T3 + (mItEnd.mpCurrent-mItEnd.mpBegin) - (mItBegin.mpCurrent-mItBegin.mpBegin) == 1">
+		[1] {{ {*mItBegin.mpCurrent} }}
+	</DisplayString>
+	<DisplayString Condition="(mItEnd.mpCurrentArrayPtr - mItBegin.mpCurrentArrayPtr) * $T3 + (mItEnd.mpCurrent-mItEnd.mpBegin) - (mItBegin.mpCurrent-mItBegin.mpBegin) != 0">
+		[{(mItEnd.mpCurrentArrayPtr - mItBegin.mpCurrentArrayPtr) * $T3 + (mItEnd.mpCurrent-mItEnd.mpBegin) - (mItBegin.mpCurrent-mItBegin.mpBegin)}] 
+		{{ 
+			{*mItBegin.mpCurrent}, 
+			... 
+		}}
+	</DisplayString>
+	<Expand>
+		<Item Name="[size]">(mItEnd.mpCurrentArrayPtr - mItBegin.mpCurrentArrayPtr) * $T3 + (mItEnd.mpCurrent-mItEnd.mpBegin) - (mItBegin.mpCurrent-mItBegin.mpBegin)</Item>
+		<IndexListItems>
+            <Size>(mItEnd.mpCurrentArrayPtr - mItBegin.mpCurrentArrayPtr) * $T3 + (mItEnd.mpCurrent-mItEnd.mpBegin) - (mItBegin.mpCurrent-mItBegin.mpBegin)</Size>
+            <ValueNode>mItBegin.mpCurrentArrayPtr[(mItBegin.mpCurrent-mItBegin.mpBegin + $i) / $T3][(mItBegin.mpCurrent-mItBegin.mpBegin + $i) % $T3]</ValueNode>
+        </IndexListItems>
+	</Expand>
+</Type>
+
+<Type Name="eastl::DequeIterator&lt;*&gt;">
+	<DisplayString>{*mpCurrent}</DisplayString>
+	<Expand>
+		<Item Name="Value">*mpCurrent</Item>
+		<Item Name="Previous" Condition="mpCurrent == mpBegin">*(*(mpCurrentArrayPtr-1) + (mpEnd-mpBegin) - 1)</Item>
+		<Item Name="Previous" Condition="mpCurrent != mpBegin">*(mpCurrent-1)</Item>
+		<Item Name="Next" Condition="mpCurrent+1 == mpEnd">**(mpCurrentArrayPtr+1)</Item>
+		<Item Name="Next" Condition="mpCurrent+1 != mpEnd">*(mpCurrent+1)</Item>
+		<Item Name="Begin">mpCurrent == mpBegin</Item>
+		<Item Name="End">mpCurrent+1 == mpEnd</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::queue&lt;*&gt;">
+	<AlternativeType Name="eastl::priority_queue&lt;*&gt;" />
+	<AlternativeType Name="eastl::stack&lt;*&gt;" />
+	<DisplayString>{c}</DisplayString>
+	<Expand>
+		<ExpandedItem>c</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::ListBase&lt;*&gt;">
+	<DisplayString Condition="mNode.mpNext == &amp;mNode">
+		[0] {{}}
+	</DisplayString>
+    <DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext == &amp;mNode">
+		[1] {{ {((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue} }}
+	</DisplayString>
+	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext == &amp;mNode">
+		[2] 
+		{{ 
+			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue} 
+		}}
+	</DisplayString>
+	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext != &amp;mNode">
+		[?] 
+		{{ 
+			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue}, 
+			...
+		}}
+	</DisplayString>
+	<Expand>
+		<Synthetic Name="NOTE!">
+		  <DisplayString>Content of lists will repeat indefinitely. Keep that in mind!</DisplayString> 
+		</Synthetic>  
+        <LinkedListItems>
+            <HeadPointer>mNode.mpNext</HeadPointer>
+            <NextPointer>mpNext</NextPointer>
+            <ValueNode>((eastl::ListNode&lt;$T1&gt;*)this)-&gt;mValue</ValueNode>
+        </LinkedListItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::ListNode&lt;*&gt;">
+	<DisplayString>{mValue}</DisplayString>
+	<Expand>
+		<Item Name="Value">mValue</Item>
+		<Item Name="Next">*(eastl::ListNode&lt;$T1&gt;*)mpNext</Item>
+		<Item Name="Previous">*(eastl::ListNode&lt;$T1&gt;*)mpPrev</Item>
+		<Synthetic Name="NOTE!">
+		  <DisplayString>Content of lists will repeat indefinitely. Keep that in mind!</DisplayString> 
+		</Synthetic>  
+		<Synthetic Name="List">
+		  <DisplayString>The rest of the list follows:</DisplayString> 
+		</Synthetic>
+        <LinkedListItems>
+            <HeadPointer>(eastl::ListNode&lt;$T1&gt;*)mpNext-&gt;mpNext</HeadPointer>
+            <NextPointer>(eastl::ListNode&lt;$T1&gt;*)mpNext</NextPointer>
+            <ValueNode>mValue</ValueNode>
+        </LinkedListItems>
+	</Expand>
+</Type>
+
+<Type Name="eastl::ListIterator&lt;*&gt;">
+	<DisplayString>{*mpNode}</DisplayString>
+	<Expand>
+		<ExpandedItem>mpNode</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::SListBase&lt;*&gt;">
+	<DisplayString Condition="mNode.mpNext == 0">
+		[0] {{}}
+	</DisplayString>
+    <DisplayString Condition="mNode.mpNext != 0 &amp;&amp; mNode.mpNext-&gt;mpNext == 0">
+		[1] 
+		{{ 
+			{((eastl::SListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue} 
+		}}
+	</DisplayString>
+	<DisplayString Condition="mNode.mpNext != 0 &amp;&amp; mNode.mpNext-&gt;mpNext != 0 &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext == 0">
+		[2] 
+		{{ 
+			{((eastl::SListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
+			{((eastl::SListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue} 
+		}}
+	</DisplayString>
+	<DisplayString Condition="mNode.mpNext != 0 &amp;&amp; mNode.mpNext-&gt;mpNext != 0 &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext != 0">
+		[?] 
+		{{ 
+			{((eastl::SListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
+			{((eastl::SListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue},
+			...
+		}}
+	</DisplayString>
+	<Expand>
+        <LinkedListItems>
+            <HeadPointer>mNode.mpNext</HeadPointer>
+            <NextPointer>mpNext</NextPointer>
+            <ValueNode>((eastl::SListNode&lt;$T1&gt;*)this)-&gt;mValue</ValueNode>
+        </LinkedListItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::SListNode&lt;*&gt;">
+	<DisplayString>{mValue}</DisplayString>
+	<Expand>
+		<Item Name="Value">mValue</Item>
+		<Item Name="Next">*(eastl::SListNode&lt;$T1&gt;*)mpNext</Item>
+		<Synthetic Name="List">
+		  <DisplayString>The rest of the list follows:</DisplayString> 
+		</Synthetic>
+		<LinkedListItems>
+            <HeadPointer>mpNext == nullptr ? nullptr : (eastl::SListNode&lt;$T1&gt;*)mpNext-&gt;mpNext</HeadPointer>
+            <NextPointer>(eastl::SListNode&lt;$T1&gt;*)mpNext</NextPointer>
+            <ValueNode>mValue</ValueNode>
+        </LinkedListItems>
+	</Expand>
+</Type>
+
+<Type Name="eastl::SListIterator&lt;*&gt;">
+	<DisplayString>{*mpNode}</DisplayString>
+	<Expand>
+		<ExpandedItem>*mpNode</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::intrusive_list_base">
+	<DisplayString Condition="mAnchor.mpNext == &amp;mAnchor">[0] {{}}</DisplayString>
+    <DisplayString Condition="mAnchor.mpNext != &amp;mAnchor &amp;&amp; mAnchor.mpNext-&gt;mpNext == &amp;mAnchor">[1] {{ {mAnchor.mpNext} }}</DisplayString>
+	<DisplayString Condition="mAnchor.mpNext != &amp;mAnchor &amp;&amp; mAnchor.mpNext-&gt;mpNext != &amp;mAnchor">[?] {{ {mAnchor.mpNext}, ... }}</DisplayString>
+	<Expand>
+		<Synthetic Name="NOTE!">
+		  <DisplayString>Content of intrusive lists will repeat indefinitely. Keep that in mind!</DisplayString> 
+		</Synthetic>  
+        <LinkedListItems>
+            <HeadPointer>mAnchor.mpNext</HeadPointer>
+            <NextPointer>mpNext</NextPointer>
+            <ValueNode>*this</ValueNode>
+        </LinkedListItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::intrusive_list_iterator&lt;*&gt;">
+	<DisplayString>{*mpNode}</DisplayString>
+	<Expand>
+		<ExpandedItem>*mpNode</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::set&lt;*&gt;">
+	<AlternativeType Name="eastl::multiset&lt;*&gt;" />
+    <DisplayString Condition="mnSize == 0">
+		[0] {{}}
+	</DisplayString>
+	<DisplayString Condition="mnSize == 1">
+		[1] 
+		{{ 
+			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
+		}}
+	</DisplayString>
+	<DisplayString Condition="mnSize &gt; 1">
+		[{mnSize}] 
+		{{ 
+			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
+			...
+		}}
+	</DisplayString>
+    <Expand>
+		<Item Name="[size]">mnSize</Item>
+        <TreeItems>
+            <Size>mnSize</Size>
+            <HeadPointer>mAnchor.mpNodeParent</HeadPointer>
+            <LeftPointer>mpNodeLeft</LeftPointer>
+            <RightPointer>mpNodeRight</RightPointer>
+            <ValueNode>((eastl::rbtree_node&lt;$T1&gt;*)this)-&gt;mValue</ValueNode>
+        </TreeItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::rbtree&lt;*,*&gt;">
+	<DisplayString Condition="mnSize == 0">
+		[0] {{}}
+	</DisplayString>
+	<DisplayString Condition="mnSize == 1">
+		[1] 
+		{{ 
+			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
+		}}
+	</DisplayString>
+	<DisplayString Condition="mnSize &gt; 1">
+		[{mnSize}] 
+		{{ 
+			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
+			...
+		}}
+	</DisplayString>
+    <Expand>
+		<Item Name="[size]">mnSize</Item>
+        <TreeItems>
+            <Size>mnSize</Size>
+            <HeadPointer>mAnchor.mpNodeParent</HeadPointer>
+            <LeftPointer>mpNodeLeft</LeftPointer>
+            <RightPointer>mpNodeRight</RightPointer>
+            <ValueNode>((eastl::rbtree_node&lt;$T2&gt;*)this)-&gt;mValue</ValueNode>
+        </TreeItems>
+    </Expand>
+</Type>
+
+<Type Name="eastl::rbtree_node&lt;*&gt;">
+	<DisplayString>{mValue}</DisplayString>
+	<Expand>
+		<Item Name="Value">mValue</Item>
+		<Synthetic Name="NOTE!">
+		  <DisplayString>It is possible to expand parents that do not exist.</DisplayString> 
+		</Synthetic>
+		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
+		<Item Name="Left">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeLeft</Item>
+		<Item Name="Right">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeRight</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::rbtree_iterator&lt;*&gt;">
+	<DisplayString>{*mpNode}</DisplayString>
+	<Expand>
+		<ExpandedItem>mpNode</ExpandedItem>
+	</Expand>
+</Type>
+
+
+<Type Name="eastl::hashtable&lt;*&gt;">
+    <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
+	<DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
+	<Expand>
+		<ArrayItems>
+            <Size>mnBucketCount</Size>
+            <ValuePointer>mpBucketArray</ValuePointer>
+        </ArrayItems>
+	</Expand>
+</Type>
+
+<Type Name="eastl::hash_node&lt;*&gt;">
+	<DisplayString Condition="this != 0 &amp;&amp; mpNext != 0"> {mValue}, {*mpNext}</DisplayString>
+	<DisplayString Condition="this != 0 &amp;&amp; mpNext == 0"> {mValue}</DisplayString>
+	<DisplayString Condition="this == 0"></DisplayString>
+	<Expand>
+		<LinkedListItems>
+            <HeadPointer>this</HeadPointer>
+            <NextPointer>mpNext</NextPointer>
+            <ValueNode>mValue</ValueNode>
+        </LinkedListItems>
+	</Expand>
+</Type>
+
+<Type Name="eastl::hashtable_iterator_base&lt;*&gt;">
+	<DisplayString>{mpNode-&gt;mValue}</DisplayString>
+	<Expand>
+		<ExpandedItem>mpNode-&gt;mValue</ExpandedItem>
+	</Expand>
+</Type>
+
+
+</AutoVisualizer>

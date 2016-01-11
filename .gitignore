@@ -1,0 +1,7 @@
+tags
+**/*.swp
+**/*.swo
+.swp
+.swo
+-.d
+eastl_build_out

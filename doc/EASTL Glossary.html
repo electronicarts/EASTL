@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>EASTL Glossary</title>
+	<meta content="text/html; charset=us-ascii" http-equiv="content-type">
+	<meta name="author" content="Paul Pedriana">
+	<meta name="description" content="Definitions of common terms related to EASTL.">
+    <link type="text/css" rel="stylesheet" href="EASTLDoc.css">
+</head>
+<body>
+<h1>EASTL Glossary</h1>
+<p>This document provides definitions to various terms related to EASTL. Items that are capitalized are items that are
+used as template parameters.</p>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td>adapter</td>
+<td>An adapter is something that encapsulates a component to provide another interface, such as a C++ class which makes
+a stack out of a list.</td>
+</tr>
+<tr>
+<td style="width: 150px; vertical-align: top;">algorithm<br></td>
+<td style="vertical-align: top;">Algorithms are standalone functions which manipulate data which usually but not
+necessarily comes from a container. Some algorithms change the data while others don't. Examples are reverse, sort,
+find, and remove.<br></td>
+</tr>
+<tr>
+<td>associative container</td>
+<td>An associative container is a variable-sized container that supports efficient retrieval of elements (values) based
+on keys. It supports insertion and removal of elements, but differs from a sequence in that it does not provide a
+mechanism for inserting an element at a specific position. Associative containers include map, multimap, set, multiset,
+hash_map, hash_multimap, hash_set, hash_multiset.</td>
+</tr>
+<tr>
+<td>array</td>
+<td>An array is a C++ container which directly implements a C-style fixed array but which adds STL container semantics
+to it.</td>
+</tr>
+<tr>
+<td>basic_string</td>
+<td>A templated string class which is usually used to store char or wchar_t strings.</td>
+</tr>
+<tr>
+<td>begin</td>
+<td>The function used by all conventional containers to return the first item in the container.</td>
+</tr>
+<tr>
+<td>BidirectionalIterator</td>
+<td>An input iterator which is like ForwardIterator except it can be read in a backward direction as well.</td>
+</tr>
+<tr>
+<td>BinaryOperation&nbsp;</td>
+<td>A function which takes two arguments and returns a value (which will usually be assigned to a third object).</td>
+</tr>
+<tr>
+<td>BinaryPredicate</td>
+<td>A function which takes two arguments and returns true if some criteria is met (e.g. they are equal).</td>
+</tr>
+<tr>
+<td>binder1st, binder2nd</td>
+<td>These are function objects which convert one function object into another. &nbsp;In particular, they implement a
+binary function whereby you can specify one of the arguments.This is a somewhat abstract concept but has its uses.</td>
+</tr>
+<tr>
+<td>bit vector</td>
+<td>A specialized container that acts like vector&lt;bool&gt; but is implemented via one bit per entry. STL
+vector&lt;bool&gt; is usually implemented as a bit vector but EASTL avoids this in favor of a specific bit vector
+container.</td>
+</tr>
+<tr>
+<td>bitset</td>
+<td>An extensible yet efficient implementation of bit flags. Not strictly a conventional STL container and not the same
+thing as vector&lt;bool&gt; or a bit_vector, both of which are formal iterate-able containers.</td>
+</tr>
+<tr>
+<td>capacity</td>
+<td>Refers to the amount of total storage available in an array-based container such as vector, string, and array.
+Capacity is always &gt;= container size and is &gt; size in order to provide extra space for a container to grow
+into.</td>
+</tr>
+<tr>
+<td>const_iterator</td>
+<td>An iterator whose iterated items are cannot be modified. A const_iterator is akin to a const pointer such as 'const
+char*'.</td>
+</tr>
+<tr>
+<td>container</td>
+<td>A container is an object that stores other objects (its elements), and that has methods for accessing its elements.
+In particular, every type that is a model of container has an associated iterator type that can be used to iterate
+through the container's elements.</td>
+</tr>
+<tr>
+<td>copy constructor</td>
+<td>A constructor for a type which takes another object of that type as its argument. For a hypothetical Widget class,
+the copy constructor is of the form Widget(const Widget&amp; src);</td>
+</tr>
+<tr>
+<td>Compare</td>
+<td>A function which takes two arguments and returns the lesser of the two.</td>
+</tr>
+<tr>
+<td>deque</td>
+<td>The name deque is pronounced "deck" and stands for "double-ended queue."<br>
+<br>
+A deque is very much like a vector: like vector, it is a sequence that supports random access to elements, constant
+time insertion and removal of elements at the end of the sequence, and linear time insertion and removal of elements in
+the middle.<br>
+<br>
+The main way in which deque differs from vector is that deque also supports constant time insertion and removal of
+elements at the beginning of the sequence. Additionally, deque does not have any member functions analogous to vector's
+capacity() and reserve(), and does not provide the guarantees on iterator validity that are associated with those
+member functions.</td>
+</tr>
+<tr>
+<td>difference_type</td>
+<td>The typedef'd type used by all conventional containers and iterators to define the distance between two iterators.
+It is usually the same thing as the C/C++ ptrdiff_t data type.</td>
+</tr>
+<tr>
+<td>empty</td>
+<td>The function used by all conventional containers to tell if a container has a size of zero. In many cases empty is
+more efficient than checking for size() == 0.</td>
+</tr>
+<tr>
+<td>element</td>
+<td>An element refers to a member of a container.</td>
+</tr>
+<tr>
+<td>end</td>
+<td>The function used by all conventional containers to return one-past the last item in the container.</td>
+</tr>
+<tr>
+<td>equal_range</td>
+<td>equal_range is a version of binary search: it attempts to find the element value in an ordered range [first, last).
+The value returned by equal_range is essentially a combination of the values returned by lower_bound and upper_bound:
+it returns a pair of iterators i and j such that i is the first position where value could be inserted without
+violating the ordering and j is the last position where value could be inserted without violating the ordering. It
+follows that every element in the range [i, j) is equivalent to value, and that [i, j) is the largest subrange of
+[first, last) that has this property.</td>
+</tr>
+<tr>
+<td>explicit instantiation</td>
+<td>Explicit instantiation lets you create an instantiation of a templated class or function without actually using it
+in your code. Since this is useful when you are creating library files that use templates for distribution,
+uninstantiated template definitions are not put into object files.&nbsp;An example of the syntax for explicit
+instantiation is:<br>
+<small><span style="font-family: Courier New;">&nbsp; &nbsp;</span></small> <small><span style=
+"font-family: Courier New;">template class vector&lt;char&gt;;<br>
+&nbsp; &nbsp; template void min&lt;int&gt;(int, int);<br>
+&nbsp; &nbsp; template void min(int, int);</span></small></td>
+</tr>
+<tr>
+<td>ForwardIterator</td>
+<td>An input iterator which is like InputIterator except it can be reset back to the beginning.</td>
+</tr>
+<tr>
+<td>Function</td>
+<td>A function which takes one argument and applies some operation to the target.</td>
+</tr>
+<tr>
+<td>function object, functor</td>
+<td>A function object or functor is a&nbsp;class that has the function-call operator (<tt>operator()</tt>)
+defined.</td>
+</tr>
+<tr>
+<td>Generator</td>
+<td>A function which takes no arguments and returns a value (which will usually be assigned to an object).</td>
+</tr>
+<tr>
+<td>hash_map, hash_multimap, hash_set, hash_multiset</td>
+<td>The hash containers are implementations of map, multimap, set, and multiset via a hashtable instead of via a tree.
+Searches are O(1) (fast) but the container is not sorted.</td>
+</tr>
+<tr>
+<td>heap</td>
+<td>A heap is a data structure which is not necessarily sorted but is organized such that the highest priority item is
+at the top. A heap is synonymous with a priority queue and has numerous applications in computer science.</td>
+</tr>
+<tr>
+<td>InputIterator</td>
+<td>An input iterator (iterator you read from) which allows reading each element only once and only in a forward
+direction.</td>
+</tr>
+<tr>
+<td>intrusive_list, intrusive_hash_map, etc.</td>
+<td>Intrusive containers are containers which don't allocate memory but instead use their contained object to manage
+the container's memory. While list allocates nodes (with mpPrev/mpNext pointers) that contain the list items,
+intrusive_list doesn't allocate nodes but instead the container items have the mpPrev/mpNext pointers.</td>
+</tr>
+<tr>
+<td>intrusive_ptr</td>
+<td>intrusive_ptr is a smart pointer which doesn't allocate memory but instead uses the contained object to manage
+lifetime via addref and release functions.</td>
+</tr>
+<tr>
+<td>iterator</td>
+<td>An iterator is the fundamental entity of reading and enumerating values in a&nbsp;container. Much like a pointer
+can be used to walk through a character array, an iterator is used to walk through a linked list.</td>
+</tr>
+<tr>
+<td>iterator category</td>
+<td>An iterator category defines the functionality the iterator provides. The conventional iterator categories are
+InputIterator, ForwardIterator, BidirectionalIterator, RandomAccessIterator, and OutputIterator. See the definitions of
+each of these for more information.Iterator category is synonymous with <span style=
+"font-style: italic;">iterator_tag</span>.</td>
+</tr>
+<tr>
+<td>iterator_tag</td>
+<td>See <span style="font-style: italic;">iterator category</span>.</td>
+</tr>
+<tr>
+<td>key_type, Key</td>
+<td>A Key or key_type is the identifier used by associative (a.k.a. dictionary) containers (e.g. map, hash_map) to
+identify the type used to index the mapped_type. If you have a dictionary of strings that you access by an integer id,
+the ids are the keys and the strings are the mapped types.</td>
+</tr>
+<tr>
+<td>lexicographical compare</td>
+<td>A lexicographical compare is a comparison of two containers that compares them element by element, much like the C
+strcmp function compares two strings.</td>
+</tr>
+<tr>
+<td>linked_ptr</td>
+<td>A linked_ptr is a shared smart pointer which implements object lifetime via a linked list of all linked_ptrs that
+are referencing the object. linked_ptr, like intrusive_ptr, is a non-memory-allocating alternative to shared_ptr.</td>
+</tr>
+<tr>
+<td>list</td>
+<td>A list is a doubly linked list. It is a sequence that supports both forward and backward traversal, and (amortized)
+constant time insertion and removal of elements at the beginning or the end, or in the middle. Lists have the important
+property that insertion and splicing do not invalidate iterators to list elements, and that even removal invalidates
+only the iterators that point to the elements that are removed. The ordering of iterators may be changed (that is,
+list&lt;T&gt;::iterator might have a different predecessor or successor after a list operation than it did before), but
+the iterators themselves will not be invalidated or made to point to different elements unless that invalidation or
+mutation is explicit.</td>
+</tr>
+<tr>
+<td>lower_bound</td>
+<td>lower_bound is a version of binary search: it attempts to find the element value in an ordered range [first, last).
+Specifically, it returns the first position where value could be inserted without violating the ordering.</td>
+</tr>
+<tr>
+<td>map</td>
+<td>Map is a sorted associative container that associates objects of type Key with objects of type T. Map is a pair
+associative container, meaning that its value type is pair&lt;const Key, T&gt;. It is also a unique associative
+container, meaning that no two elements have the same key. It is implemented with a tree structure.</td>
+</tr>
+<tr>
+<td>mapped_type</td>
+<td>A mapped_type is a typedef used by associative containers to identify the container object which is accessed by a
+key. If you have a dictionary of strings that you access by an integer id, the ids are the keys and the strings are the
+mapped types.</td>
+</tr>
+<tr>
+<td>member template</td>
+<td>A member template is a templated function of a templated class. Thus with a member template function there are two
+levels of templating -- the class and the function.</td>
+</tr>
+<tr>
+<td>multimap,&nbsp;</td>
+<td>Multimap is a sorted associative&nbsp;container that associates objects of type Key with objects of type T.
+multimap is a pair associative container, meaning that its value type is pair&lt;const Key, T&gt;. It is also a
+multiple associative container, meaning that there is no limit on the number of elements with the same key.It is
+implemented with a tree structure.</td>
+</tr>
+<tr>
+<td>multiset</td>
+<td>Multiset is a sorted associative container that stores objects of type Key. Its value type, as well as its key
+type, is Key. It is also a multiple associative container, meaning that two or more elements may be identical.&nbsp;It
+is implemented with a tree structure.</td>
+</tr>
+<tr>
+<td>node</td>
+<td>A node is a little holder class used by many containers to hold the contained items. A linked-list, for example,
+defines a node which has three members: mpPrev, mpNext, and T (the contained object).</td>
+</tr>
+<tr>
+<td>npos</td>
+<td>npos is used by the string class to identify a non-existent index. Some string functions return npos to indicate
+that the function failed.</td>
+</tr>
+<tr>
+<td>rel_ops</td>
+<td>rel_ops refers to "relational operators" and is a set of templated functions which provide operator!= for classes
+that&nbsp; have only operator== and provide operator &gt; for classes that have only operator &lt;, etc. Unfortunately,
+rel_ops have a habit of polluting the global operator space and creating conflicts. They must be used with
+discretion.</td>
+</tr>
+<tr>
+<td>reverse_iterator</td>
+<td>A reverse_iterator is an iterator which wraps a bidirectional or random access iterator and allows the iterator to
+be read in reverse direction. The difference between using reverse_iterators and just decrementing regular iterators is
+that reverse_iterators use operator++ to move backwards and thus work in any algorithm that calls ++ to move through a
+container.</td>
+</tr>
+<tr>
+<td>OutputIterator</td>
+<td>An output iterator (iterator you write to) which allows writing each element only once in only in a forward
+direction.</td>
+</tr>
+<tr>
+<td>POD</td>
+<td>POD means Plain Old Data. It refers to C++ classes which act like built-in types and C structs. These are useful to
+distinguish because some algorithms can be made more efficient when they can detect that they are working with PODs
+instead of regular classes.&nbsp;</td>
+</tr>
+<tr>
+<td>Predicate</td>
+<td>A function which takes one argument returns true if the argument meets some criteria.</td>
+</tr>
+<tr>
+<td>priority_queue</td>
+<td>A priority_queue is an adapter container which implements a heap via a random access container such as vector or
+deque.</td>
+</tr>
+<tr>
+<td>queue</td>
+<td>A queue is an adapter container which implements a FIFO (first-in, first-out) container with which you can add
+items to the back and get items from the front.</td>
+</tr>
+<tr>
+<td>RandomAccessIterator</td>
+<td>An input iterator which can be addressed like an array. It is a superset of all other input iterators.</td>
+</tr>
+<tr>
+<td>red-black tree</td>
+<td>A red-black tree is a binary tree which has the property of being always balanced. The colors red and black are
+somewhat arbitrarily named monikers for nodes used to measure the balance of the tree. Red-black trees are considered
+the best all-around data structure for sorted containers.</td>
+</tr>
+<tr>
+<td>scalar</td>
+<td>A scalar is a data type which is implemented via a numerical value. In C++ this means integers, floating point
+values, enumerations, and pointers.&nbsp;</td>
+</tr>
+<tr>
+<td>scoped_ptr</td>
+<td>A scoped_ptr is a smart pointer which is the same as C++ auto_ptr except that it cannot be copied.</td>
+</tr>
+<tr>
+<td>set</td>
+<td>Set is a sorted associative container that stores objects of type Key. Its value type, as well as its key type, is
+Key. It is also a unique associative container, meaning that no two elements are the same.It is implemented with a tree
+structure.</td>
+</tr>
+<tr>
+<td>sequence</td>
+<td>A sequence is a variable-sized container whose elements are arranged in a strict linear (though not necessarily
+contiguous) order. It supports insertion and removal of elements. Sequence containers include vector, deque, array,
+list, slist.</td>
+</tr>
+<tr>
+<td>size</td>
+<td>All conventional containers have a size member function which returns the count of elements in the container. The
+efficiency of the size function differs between containers.</td>
+</tr>
+<tr>
+<td>size_type</td>
+<td>The type that a container uses to define its size and counts. This is similar to the C/C++ size_t type but may be
+specialized for the container.</td>
+</tr>
+<tr>
+<td>skip list</td>
+<td>A skip-list is a type of container which is an alternative to a binary tree for finding data.</td>
+</tr>
+<tr>
+<td>shared_ptr</td>
+<td>A shared_ptr is a smart pointer which allows multiple references (via multiple shared_ptrs) to the same object.
+When the last shared_ptr goes away, the pointer is freed. shared_ptr is implemented via a shared count between all
+instances.</td>
+</tr>
+<tr>
+<td>slist</td>
+<td>An slist is like a list but is singly-linked instead of doubly-linked. It can only be iterated in a
+forward-direction.</td>
+</tr>
+<tr>
+<td>smart pointer</td>
+<td>Smart pointer is a term that identifies a family of utility classes which store pointers and free them when the
+class instance goes out of scope. Examples of smart pointers are shared_ptr, linked_ptr, intrusive_ptr, and
+scoped_ptr.</td>
+</tr>
+<tr>
+<td>splice</td>
+<td>Splicing refers to the moving of a subsequence of one Sequence into another Sequence.</td>
+</tr>
+<tr>
+<td>stack</td>
+<td>A stack is a adapter container which implements LIFO (last-in, first, out) access via another container such as a
+list or deque.</td>
+</tr>
+<tr>
+<td>STL</td>
+<td>Standard Template Library.&nbsp;</td>
+</tr>
+<tr>
+<td>StrictWeakOrdering</td>
+<td>A BinaryPredicate that compares two objects, returning true if the first precedes the second. Like Compare but has
+additional requirements. Used for sorting routines.<br>
+<br>
+This predicate must satisfy the standard mathematical definition of a strict weak ordering. A StrictWeakOrdering has to
+behave the way that "less than" behaves: if a is less than b then b is not less than a, if a is less than b and b is
+less than c then a is less than c, and so on.</td>
+</tr>
+<tr>
+<td>string</td>
+<td>See basic_string.</td>
+</tr>
+<tr>
+<td>T</td>
+<td>T is the template parameter name used by most containers to identify the contained element type.&nbsp;</td>
+</tr>
+<tr>
+<td>template parameter</td>
+<td>A template parameter is the templated type used to define a template function or class. In the declaration
+'template &lt;typename T&gt; class vector{ },' &nbsp;T is a template parameter.</td>
+</tr>
+<tr>
+<td>template specialization</td>
+<td>A template specialization is a custom version of a template which overrides the default version and provides
+alternative functionality, often for the purpose of providing improved or specialized functionality.</td>
+</tr>
+<tr>
+<td>treap</td>
+<td>A tree-like structure implemented via a heap. This is an alternative to a binary tree (e.g. red-black tree),
+skip-list, and sorted array as a mechanism for a fast-access sorted container.</td>
+</tr>
+<tr>
+<td>type traits</td>
+<td>Type traits are properties of types. If you have a templated type T and you want to know if it is a pointer, you
+would use the is_pointer type trait. If you want to know if the type is a POD, you would use the is_pod type trait.
+Type traits are very useful for allowing the implementation of optimized generic algorithms and for asserting that
+types have properties expected by the function or class contract. For example, you can use type_traits to tell if a
+type can be copied via memcpy instead of a slower element-by-element copy.</td>
+</tr>
+<tr>
+<td>typename</td>
+<td>Typename is a C++ keyword used in templated function implementations which identifies to the compiler that the
+following expression is a type and not a value. It is used extensively in EASTL, particularly in the algorithms.</td>
+</tr>
+<tr>
+<td>UnaryOperation</td>
+<td>A function which takes one argument and returns a value (which will usually be assigned to second object).</td>
+</tr>
+<tr>
+<td>upper_bound</td>
+<td>upper_bound is a version of binary search: it attempts to find the element value in an ordered range [first, last).
+Specifically, it returns the last position where value could be inserted without violating the ordering.</td>
+</tr>
+<tr>
+<td>value_type, Value</td>
+<td>A value_type is a typedef used by all containers to identify the elements they contain. In most cases value_type is
+simply the same thing as the user-supplied T template parameter. The primary exception is the associative containers
+whereby value_type is the pair of key_type and mapped_type.</td>
+</tr>
+<tr>
+<td>vector</td>
+<td>A vector is a Sequence that supports random access to elements, constant time insertion and removal of elements at
+the end, and linear time insertion and removal of elements at the beginning or in the middle. The number of elements in
+a vector may vary dynamically; memory management is automatic. Vector is the simplest of the container classes, and in
+many cases the most efficient.</td>
+</tr>
+<tr>
+<td>vector_map,&nbsp;vector_multimap,&nbsp;vector_set,&nbsp;vector_multiset</td>
+<td>These are containers that implement the functionality of map, multimap, set, and multiset via a vector or deque
+instead of a tree. They use less memory and find items faster, but are slower to modify and modification invalidates
+iterators.</td>
+</tr>
+<tr>
+<td>weak_ptr</td>
+<td>A weak_ptr is an adjunct to shared_ptr which doesn't increment the reference on the contained object but can safely
+tell you if the object still exists and access it if so. It has uses in preventing circular references in
+shared_ptrs.</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<hr style="width: 100%; height: 2px;">
+End of document<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</body>
+</html>

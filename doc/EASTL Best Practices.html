@@ -1,0 +1,1001 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <title>EASTL Best Practices</title>
+	<meta content="text/html; charset=us-ascii" http-equiv="content-type">
+	<meta name="author" content="Paul Pedriana">
+	<meta name="description" content="Best practices for EASTL usage">
+    <link type="text/css" rel="stylesheet" href="EASTLDoc.css">
+    <style type="text/css">
+<!--
+.style1 {font-size: 12pt}
+-->
+    </style>
+</head>
+<body>
+<h1>EASTL Best Practices</h1>
+<p>In this document we discuss best practices for using EASTL. The primary emphasis is on performance with a secondary
+  emphasis on correctness and maintainability. Some best practices apply only to some situations, and these will be
+  pointed out as we go along. In order to be easily digestible, we present these practices as a list of items in the tone
+  of the Effective C++ series of books.</p>
+<h2>Summary</h2>
+<p>The descriptions here are intentionally terse; this is to make them easier to visually scan.</p>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="1" cellspacing="1">
+<tbody>
+<tr>
+<td style="width: 28px;">1</td>
+<td><a href="#Best.1">Consider intrusive containers.</a></td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="#Best.2">Consider fixed-size containers.</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="#Best.3">Consider custom allocators.</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="#Best.4">Consider hash tables instead of maps.</a></td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="#Best.5">Consider a vector_map (a.k.a. sorted vector) for unchanging data.</a></td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="#Best.6">Consider slist instead of list.</a></td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="#Best.7">Avoid redundant end() and size() in loops.</a></td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="#Best.8">Iterate containers instead of using operator[].</a></td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="#Best.9">Learn to use the string class appropriately.</a></td>
+</tr>
+<tr>
+<td>10</td>
+<td><a href="#Best.10">Cache list size if you want size() to be O(1).</a></td>
+</tr>
+<tr>
+<td>11</td>
+<td><a href="#Best.11">Use empty() instead of size() when possible.</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td><a href="#Best.12">Know your container efficiencies.</a></td>
+</tr>
+<tr>
+<td>13</td>
+<td><a href="#Best.13">Use vector::reserve.</a></td>
+</tr>
+<tr>
+<td>14</td>
+<td><a href="#Best.14">Use&nbsp;vector::set_capacity to trim memory usage.</a></td>
+</tr>
+<tr>
+<td>15</td>
+<td><a href="#Best.15">Use swap() instead of a manually implemented version.</a></td>
+</tr>
+<tr>
+<td>16</td>
+<td><a href="#Best.16">Consider storing pointers instead of objects.</a></td>
+</tr>
+<tr>
+<td>17</td>
+<td><a href="#Best.17">Consider smart pointers instead of raw pointers.</a></td>
+</tr>
+<tr>
+<td>18</td>
+<td><a href="#Best.18">Use iterator pre-increment instead of post-increment.</a></td>
+</tr>
+<tr>
+<td>19</td>
+<td><a href="#Best.19">Make temporary references so the code can be traced/debugged.</a></td>
+</tr>
+<tr>
+<td>20</td>
+<td><a href="#Best.20">Consider bitvector or bitset instead of vector&lt;bool&gt;.</a></td>
+</tr>
+<tr>
+<td>21</td>
+<td><a href="#Best.21">Vectors can be treated as contiguous memory.</a></td>
+</tr>
+<tr>
+<td>22</td>
+<td><a href="#Best.22">Search&nbsp;hash_map&lt;string&gt; via find_as() instead of find().</a></td>
+</tr>
+<tr>
+<td>23</td>
+<td><a href="#Best.23">Take advantage of type_traits (e.g. <small style=
+"font-family: Courier New;">EASTL_DECLARE_TRIVIAL_RELOCATE</small>).</a></td>
+</tr>
+<tr>
+<td>24</td>
+<td><a href="#Best.24">Name containers to track memory usage.</a></td>
+</tr>
+<tr>
+<td>25</td>
+<td><a href="#Best.25">Learn the algorithms.</a></td>
+</tr>
+<tr>
+<td>26</td>
+<td><a href="#Best.26">Pass and return containers by reference instead of value.</a></td>
+</tr>
+<tr>
+<td>27</td>
+<td><a href="#Best.27">Consider using reset() for fast container teardown.</a></td>
+</tr>
+<tr>
+<td>28</td>
+<td><a href="#Best.28">Consider using fixed_substring instead of copying strings.</a></td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><a href="#Best.29">Consider using vector::push_back(void).</a></td>
+</tr>
+</tbody>
+</table>
+<h2>Detail</h2>
+<p class="faq-question"><a name="Best.1"></a>1
+  Consider intrusive containers.
+</p>
+<p class="faq-answer">Intrusive containers (such as intrusive_list) differ from regular containers (such as list) in that they use the stored objects to manage the linked list instead of using nodes allocated from a memory heap. The result is better usage of memory. Additionally intrusive_list objects can be removed from their list without knowing what list they belong to. To make an intrusive_list of Widgets, you have Widget inherit from intrusive_list_node or simply have mpPrev/mpNext member variables.</p>
+<p class="faq-answer">To create an intrusive_list container, you can use the following code:</p>
+<p class="code-example">class Widget : public intrusive_list_node<br>
+{ };<br>
+<br>
+intrusive_list&lt;Widget&gt; widgetList;<br>
+widgetList.push_back(someWidget);</p>
+<p></p>
+<p class="faq-question"><a name="Best.2"></a>2
+  Consider fixed-size containers.
+</p>
+<p class="faq-answer">Fixed-size containers (such as fixed_list) are variations of regular containers (such as list) in that they allocate from a fixed block of local memory instead of allocating from a generic heap. The result is better usage of memory due to reduced fragmentation, better cache behavior, and faster allocation/deallocation. The presence of fixed-size containers negate the most common complaint that people have about STL: that it fragments the heap or &quot;allocates all over the place.&quot;</p>
+<p class="faq-answer">EASTL fixed containers include:</p>
+<ul>
+  <li>fixed_list</li>
+  <li>fixed_slist</li>
+  <li>fixed_vector</li>
+  <li>fixed_string</li>
+  <li>fixed_map</li>
+  <li>fixed_multimap</li>
+  <li>fixed_set</li>
+  <li>fixed_multiset</li>
+  <li>fixed_hash_map</li>
+  <li>fixed_hash_multimap</li>
+  <li>fixed_hash_set</li>
+  <li>fixed_hash_multiset</li>
+</ul>
+<p class="faq-answer">To create a fixed_set, you can use the following code:</p>
+<p class="code-example">fixed_set&lt;int, 25&gt; intSet; // Create a set capable of holding 250 elements.<br>
+intSet.push_back(37);</p>
+<p></p>
+<p class="faq-question"><a name="Best.3"></a>3
+  Consider custom allocators.
+</p>
+<p class="faq-answer">While EASTL provides fixed-size containers in order to control container memory usage, EASTL lets you assign a custom allocator to any container. This lets you define your own memory pool. EASTL has a more flexible and powerful mechanism of doing this that standard STL, as EASTL understands object alignment requirements, allows for debug naming, allows for sharing allocators across containers, and allows dynamic allocator assignment.</p>
+<p class="faq-answer">To create a list container that uses your custom allocator and uses block naming, you can use the following code:</p>
+<p class="code-example">list&lt;int&gt; intList(pSomeAllocator, &quot;graphics/intList&quot;);<br>
+intList.push_back(37);</p>
+<p class="faq-question"><a name="Best.4"></a>4
+Consider hash tables instead of maps.</p>
+<p class="faq-answer">Hash containers (such as hash_map) provide the same interface as associative containers (such as map) but have faster lookup and use less memory. The primary disadvantage relative to associative containers is that hash containers are not sorted.</p>
+<p class="faq-answer">To make a hash_map (dictionary) of integers to strings, you can use the following code:</p>
+<p class="code-example">hash_map&lt;int, const char*&gt; stringTable;<br>
+stringTable[37] = &quot;hello&quot;;</p>
+<p class="faq-question"><a name="Best.5"></a>5
+  Consider a vector_map (a.k.a. sorted vector) for unchanging data.
+</p>
+<p class="faq-answer">You can improve speed, memory usage, and cache behavior by using a vector_map instead of a map (or vector_set instead of set, etc.). The primary disadvantage of vector_map is that insertions and removal of elements is O(n) instead of O(1). However, if your associative container is not going to be changing much or at all, you can benefit from using a vector_map. Consider calling reserve on the vector_map in order to set the desired capacity up front.</p>
+<p class="faq-answer">To make a vector_set, you can use the following code:</p>
+<p class="code-example">vector_set&lt;int&gt; intSet(16); // Create a vector_set with an initial capacity of 16.<br>
+intSet.insert(37);</p>
+<p class="faq-answer">Note that you can use containers other than vector to implement vector_set. Here's how you do it with deque:</p>
+<p class="code-example">vector_set&lt;int, less&lt;int&gt;, EASTLAllocatorType, deque&lt;int&gt; &gt; intSet;<br>
+intSet.insert(37);</p>
+<p class="faq-question"><a name="Best.6"></a>6
+  Consider slist instead of list.
+</p>
+<p class="faq-answer">An slist is a singly-linked list; it is much like a list except that it can only be traversed in a forward direction and not a backward direction. The benefit is that each node is 4 bytes instead of 8 bytes. This is a small improvement, but if you don't need reverse iteration then it can be an improvement. There's also intrusive_slist as an option.</p>
+<p class="faq-answer">To make an slist, you can use the following code:</p>
+<p class="code-example">slist&lt;int&gt; intSlist;<br>
+intSlist.push_front(37);</p>
+<p class="faq-question"><a name="Best.7"></a>7
+Avoid redundant end() and size() in loops.</p>
+<p class="faq-answer">Instead of writing code like this:<br>
+</p>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>for(deque&lt;int&gt;::iterator it = d.begin(); <span style="color: rgb(204, 0, 0);">it != d.end()</span>; ++it)<br>
+&nbsp;&nbsp;&nbsp; ...</small></div>
+<span class="faq-answer">write code like this:<br>
+</span>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>for(deque&lt;int&gt;::iterator it = d.begin(), itEnd = d.end(); <span style="color: rgb(51, 204, 0);">it != itEnd</span>; ++it)<br>
+&nbsp;&nbsp;&nbsp; ...</small></div>
+<span class="faq-answer">The latter avoids a function call and return of an object (which in deque's case happens to be more than just a pointer). The above only works when the container is unchanged or for containers that have a constant end value. But "constant end value" we mean containers which can be modified but end always remains the same.</span><br>
+<table style="text-align: left; width: 600px; margin-left: 40px;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="text-align: center;">Constant begin</td>
+      <td style="text-align: center;">Non-constant begin</td>
+      <td style="text-align: center;">Constant end</td>
+      <td style="text-align: center;">Non-constant end</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">array<sup>1</sup></td>
+      <td style="vertical-align: top;">string<br>
+        vector<br>
+        deque<br>
+        intrusive_list<br>
+        intrusive_slist<br>
+        vector_map<br>
+        vector_multimap<br>
+        vector_set<br>
+        vector_multiset<br>
+        bit_vector<br>
+        hash_map<br>
+        hash_multimap<br>
+        hash_set<br>
+        hash_multiset<br>
+        intrusive_hash_map<br>
+        intrusive_hash_multimap<br>
+        intrusive_hash_set<br>
+        intrusive_hash_multiset</td>
+      <td style="vertical-align: top;">array<br>
+        list<br>
+        slist<br>
+        intrusive_list<br>
+        intrusive_slist<br>
+        map<br>
+        multimap<br>
+        set<br>
+        multiset<br>
+        hash_map<sup>2</sup><br>
+        hash_multimap<sup>2</sup><br>
+        hash_set<sup>2</sup><br>
+        hash_multiset<sup>2</sup><br>
+        intrusive_hash_map<br>
+        intrusive_hash_multimap<br>
+        intrusive_hash_set<br>
+        intrusive_hash_multiset</td>
+      <td style="vertical-align: top;">string<br>
+        vector<br>
+        deque<br>
+        vector_map<br>
+        vector_multimap<br>
+        vector_set<br>
+        vector_multiset<br>
+        bit_vector<br></td>
+    </tr>
+  </tbody>
+</table>
+<div style="margin-left: 40px;"><sup>1</sup> Arrays can be neither resized nor reallocated.<br>
+    <sup>2</sup> Constant end if the hashtable can't/won't re-hash. Non-constant if it can re-hash.</div>
+<p class="faq-question">  <a name="Best.8"></a>8
+Iterate containers instead of using operator[].
+</p>
+<p class="faq-answer">It's faster to iterate random access containers via iterators than via operator[], though operator[] usage may look simpler.</p>
+<p class="faq-answer">Instead of doing this:</p>
+<p class="code-example">for(unsigned i = 0, iEnd = intVector.size(); i != iEnd; ++i)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;intVector[i] = 37;</p>
+<p class="faq-answer">you can execute more efficiently by doing this:</p>
+<p class="code-example">for(vector&lt;int&gt;::iterator it = intVector.begin(), itEnd = intVector.end(); it != itEnd; ++it)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*it = 37;</p>
+<p class="faq-question">  <a name="Best.9"></a>9
+Learn to use the string class appropriately.</p>
+<p class="faq-answer">Oddly enough, the most mis-used STL container is easily the string class. The tales of string abuse could rival the 1001 Arabian Nights. Most of the abuses involve doing things in a harder way than need be. In examining the historical mis-uses of string, it is clear that many of the problems stem from the user thinking in terms of C-style string operations instead of object-oriented strings. This explains why statements such as&nbsp;<small><span style="font-family: Courier New;">strlen(s.c_str())</span></small> are so common, whereas the user could just use <small><span style="font-family: Courier New;">s.length()</span></small> instead and be both clearer and more efficient.<br>
+<br>
+Here we provide a table of actual collected examples of things done and how they could have been done instead.</p>
+<table style="text-align: left; width: 90%; margin-left: 40px;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="font-weight: bold;">What was written</td>
+      <td style="font-weight: bold;">What could have been written</td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+        s = s.Left(i) + '+' + s.Right(s.length() - i - 1);<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s[i] = '+';</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  string s(""); // This is the most commonly found misuse.<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>string s;</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  s = "";<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s.clear();</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+        s.c_str()[0] = 'u';<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s[0] = 'u';</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+        len = strlen(s.c_str());<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>len = s.length();</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  s = string("u");<br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s = "u";</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  puts(s + string("u"));<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>puts(s + "u");</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  string s(" ");<br>
+        puts(s.c_str());<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>puts(" ");</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+  s.sprintf("u");<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s = "u";</small></td>
+    </tr>
+    <tr>
+      <td class="style1" style="font-family: Courier New;"><small><br>
+        char array[32];<br>
+        sprintf(array, "%d", 10);<br>
+        s = string(array);<br>
+        <br>
+      </small></td>
+      <td class="style1" style="font-family: Courier New;"><small>s.sprintf("%d", 10);</small></td>
+    </tr>
+  </tbody>
+</table>
+<p class="faq-answer"><br>
+The chances are that if you want to do something with a string, there is a very basic way to do it. You don't want your code to appear in a future version of the above table.</p>
+<p class="faq-question">  <a name="Best.10"></a>10
+Cache list size if you want list::size() to be O(1).</p>
+<p class="faq-answer">EASTL's list, slist, intrusive_list, and intrusive_slist containers have a size() implementation which is O(n). That is, these containers don't keep a count (cache) of the current list size and when you call the size() function they iterate the list. This is by design and the reasoning behind it has been deeply debated and considered (and is discussed in the FAQ and the list header file). In summary, list doesn't cache its size because the only function that would benefit is the size function while many others would be negatively impacted and the memory footprint would be negatively impacted, yet list::size is not a very frequently called function in well-designed code. At the same time, nothing prevents the user from caching the size himself, though admittedly it adds some tedium and risk to the code writing process.<br>
+  <br>
+Here's an example of caching the list size manually:<br>
+</p>
+<div class="code-example" style="margin-left: 40px;"><small><span style="font-family: Courier New;">list&lt;int&gt; intList;<br>
+  size_t &nbsp; &nbsp;n = 0;<br>
+  <br>
+  intList.push_back(37);<br>
+  ++n;<br>
+  intList.pop_front();<br>
+  --n;</span></small></div>
+<p class="faq-question">  <a name="Best.11"></a>11
+Use empty() instead of size() when possible.
+</p>
+<p class="faq-answer">All conventional containers have both an empty function and a size function. For all containers empty() executes with O(1) (constant time) efficiency. However, this is not so for size(), as some containers need to calculate the size and others need to do pointer subtraction (which may involve integer division) to find the size.</p>
+<p class="faq-question"><a name="Best.12"></a>12
+Know your container efficiencies.</p>
+<p class="faq-answer">The above two practices lead us to this practice, which is a generalization of the above.
+  We present a table of basic information for the conventional EASTL containers. The values are described at the
+  bottom.</p>
+<table style="width: 90%; margin-left: 40px;" border="1" cellpadding="1" cellspacing="1">
+  <tbody>
+    <tr>
+      <td style="width: 15%; vertical-align: top; height: 13px; font-weight: bold;"><p>Container</p></td>
+      <td style="text-align: center;">empty() efficiency</td>
+      <td style="text-align: center; font-weight: bold;">size() efficiency</td>
+      <td style="text-align: center; font-weight: bold;">operator[] efficiency</td>
+      <td style="font-weight: bold; text-align: center;" height="13" valign="top" width="16%"><p>insert() efficiency</p></td>
+      <td style="font-weight: bold; text-align: center;" height="13" valign="top" width="16%"><p>erase() efficiency</p></td>
+      <td style="font-weight: bold; text-align: center;" height="13" valign="top" width="7%"><p>find() efficiency</p></td>
+      <td style="font-weight: bold; text-align: center;" height="13" valign="top" width="10%"><p>sort efficiency</p></td>
+    </tr>
+    <tr>
+      <td>slist</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">O(n)</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">O(1)</td>
+      <td style="text-align: center;">O(1)</td>
+      <td style="text-align: center;">O(n)</td>
+      <td style="text-align: center;">O(n+)</td>
+    </tr>
+    <tr>
+      <td height="13" valign="top" width="15%"><p>list</p></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;" height="13" valign="top" width="16%"><p>1</p></td>
+      <td style="text-align: center;" height="13" valign="top" width="16%"><p>1</p></td>
+      <td style="text-align: center;" height="13" valign="top" width="7%"><p>n</p></td>
+      <td style="text-align: center;" height="13" valign="top" width="10%"><p>n log(n)</p></td>
+    </tr>
+    <tr>
+      <td>intrusive_slist</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">n+</td>
+    </tr>
+    <tr>
+      <td>intrusive_list</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>array</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>vector</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>vector_set</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>vector_multiset</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>vector_map</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>vector_multimap</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>deque</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at begin or end,<br>
+        else n / 2</td>
+      <td style="text-align: center;">1&nbsp;at begin or end,<br>
+        else n / 2</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>bit_vector</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>string, cow_string</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1<sup>a</sup></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">1&nbsp;at end, else n</td>
+      <td style="text-align: center;">n</td>
+      <td style="text-align: center;">n log(n)</td>
+    </tr>
+    <tr>
+      <td>set</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>multiset</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>map</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>multimap</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">log(n)</td>
+      <td style="text-align: center;">1</td>
+    </tr>
+    <tr>
+      <td>hash_set</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>hash_multiset</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1<br></td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>hash_map</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>hash_multimap</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>intrusive_hash_set</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>intrusive_hash_multiset</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>intrusive_hash_map</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+    <tr>
+      <td>intrusive_hash_multimap</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">1</td>
+      <td style="text-align: center;">-</td>
+    </tr>
+  </tbody>
+</table>
+<p class="faq-answer"><br>
+  Notes:
+</p>
+<ul>
+  <li>- means that the operation does not exist.</li>
+  <li>1 means amortized constant time. Also known as O(1)</li>
+  <li>n means time proportional to the container size. Also known as O(n)</li>
+  <li>log(n) means time proportional to the natural logarithm of the container size. Also known as O(log(n))</li>
+  <li>n log(n) means time proportional to log(n) times the size of the container. Also known as O(n log(n))</li>
+  <li>n+ means that the time is at least n, and possibly higher.</li>
+  <li>Inserting at the end of a vector may cause the vector to be resized; resizing a vector is O(n). However, the amortized time complexity for vector insertions at the end is constant.</li>
+  <li>Sort assumes the usage of the best possible sort for a large container of random data. Some sort algorithms (e.g. quick_sort) require random access iterators and so the sorting of some containers requires a different sort algorithm. We do not include bucket or radix sorts, as they are always O(n).</li>
+  <li><sup>a</sup> vector, deque, string size is O(1) but involves pointer subtraction and thus&nbsp;integer division and so is not as efficient as containers that store the size directly.</li>
+</ul>
+<p class="faq-question"><a name="Best.13"></a>13
+Use vector::reserve.</p>
+<p class="faq-answer">You can prevent vectors (and strings) from reallocating as you add items by specifying up front how many items you will be requiring. You can do this in the constructor or by calling the reserve function at any time. The capacity function returns the amount of space which is currently reserved.<br>
+  <br>
+Here's how you could specify reserved capacity in a vector:<br>
+</p>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>vector&lt;Widget&gt; v(37); &nbsp; // Reserve space to hold up to 37 items.<br>
+&nbsp; &nbsp; or<br>
+vector&lt;Widget&gt; v; &nbsp; &nbsp; &nbsp; // This empty construction causes to memory to be allocated or reserved.<br>
+  v.reserve(37);<br>
+</small></div>
+<span class="faq-answer">The EASTL vector (and string) implementation looks like this:</span>
+<span class="code-example"><small>template &lt;typename T&gt;<br>
+  class vector {<br>
+&nbsp;&nbsp;&nbsp; T* mpBegin; &nbsp; &nbsp; // Beginning of used element memory.<br>
+&nbsp; &nbsp; T* mpEnd; &nbsp; &nbsp; &nbsp; // End of used element memory.<br>
+&nbsp; &nbsp; T* mpCapacity; &nbsp;// End of storage capacity. Is &gt;= mpEnd<br>
+  </small> <small>}</small></span><small>  </small><span class="faq-answer">
+Another approach to being efficient with vector memory usage is to use fixed_vector.</span>
+  <p class="faq-question"><a name="Best.14"></a>14
+Use vector::set_capacity to trim memory usage.</p>
+<p class="faq-answer">A commonly asked question about vectors and strings is, "How do I reduce the capacity of a vector?" The conventional solution for std STL is to use the somewhat non-obvious trick of using <small><span style=
+"font-family: Courier New;">vector&lt;Widget&gt;(v).swap(v)</span></small>. EASTL provides the same functionality via a member function called set_capacity() which is present in both the vector and string classes.&nbsp;<br>
+  <br>
+An example of reducing a vector is the following:</p>
+<span class="code-example"><small>vector&lt;Widget&gt; v;<br>
+...<br>
+</small> <small>v.set_capacity();</small></span><small>  </small><span class="faq-answer">
+An example of resizing to zero and completely freeing the memory of a vector is the following:<br>
+</span>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>vector&lt;Widget&gt; v;<br>
+  ...<br>
+  </small> <small>v.set_capacity(0);</small></div>
+<p class="faq-question"><a name="Best.15"></a>15 Use swap() instead of a manually implemented version.</p>
+<p class="faq-answer">The generic swap algorithm provides a basic version for any kind of object. However, each EASTL container provides a specialization of swap which is optimized for that container. For example, the list container implements swap by simply swapping the internal member pointers and not by moving individual elements.</p>
+<p class="faq-question">  <a name="Best.16"></a>16
+Consider storing pointers instead of objects.</p>
+<p class="faq-answer">There are times when storing pointers to objects is more efficient or useful than storing objects directly in containers. It can be more efficient to store pointers when the objects are big and the container may need to construct, copy, and destruct objects during sorting or resizing. Moving pointers is usually faster than moving objects. It can be useful to store pointers instead of objects when somebody else owns the objects or the objects are in another container. It might be useful for a Widget to be in a list and in a hash table at the same time.</p>
+<p class="faq-question"><a name="Best.17"></a>17
+  Consider smart pointers instead of raw pointers.
+</p>
+<p class="faq-answer">If you take the above recommendation and store objects as pointers instead of as objects, you may want to consider storing them as smart pointers instead of as regular pointers. This is particularly useful for when you want to delete the object when it is removed from the container. Smart pointers will automatically delete the pointed-to object when the smart pointer is destroyed. Otherwise, you will have to be careful about how you work with the list so that you don't generate memory leaks. Smart pointers implement a shared reference count on the stored pointer, as so any operation you do on a smart pointer container will do the right thing. Any pointer can be stored in a smart pointer, and custom new/delete mechanisms can work with smart pointers. The primary smart pointer is shared_ptr.</p>
+<p class="faq-answer">Here is an example of creating and using a shared_ptr:</p>
+<p class="code-example">typedef shared_ptr&lt;Widget&gt; WPtr;<br>
+  list&lt;WPtr&gt; wList;<br>
+  <br>
+  wList.push_back(WPtr(new Widget)); // The user may&nbsp;have operator new/delete overrides.<br>
+wList.pop_back();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Implicitly deletes the Widget.</p>
+<p class="faq-answer">Here is an example of creating and using a shared_ptr that uses a custom allocation and deallocation mechanism:</p>
+<p class="code-example">typedef shared_ptr&lt;Widget, EASTLAllocatorType, WidgetDelete&gt; WPtr; // WidgetDelete is a custom destroyer.<br>
+  list&lt;WPtr&gt; wList;<br>
+  <br>
+  wList.push_back(WPtr(WidgetCreate(Widget))); // WidgetCreate is a custom allocator.<br>
+wList.pop_back(); &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Implicitly calls WidgetDelete.</p>
+<p class="faq-question"><a name="Best.18"></a>18
+  Use iterator pre-increment instead of post-increment.
+</p>
+<p class="faq-answer">Pre-increment (e.g. ++x) of iterators is better than post-increment (x++) when the latter is not specifically needed. It is common to find code that uses post-incrementing when it could instead use pre-incrementing; presumably this is due to post-increment looking a little better visually. The problem is that the latter constructs a temporary object before doing the increment. With built-in types such as pointers and integers, the compiler will recognize that the object is a trivial built-in type and that the temporary is not needed, but the compiler cannot do this for other types, even if the compiler sees that the temporary is not used; this is because the constructor may have important side effects and the compiler would be broken if it didn't construct the temporary object.</p>
+<p class="faq-answer">EASTL iterators are usually not trivial types and so it's best not to hope the compiler will do the best thing. Thus you should always play it safe an use pre-increment of iterators whenever post-increment is not required.</p>
+<p class="faq-answer">Here is an example of using iterator pre-increment; for loops like this should always use pre-increment:</p>
+<p class="code-example">for(set&lt;int&gt;::iterator it(intSet.begin()), itEnd(intSet.end()); it != itEnd; ++it)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;*it = 37;</p>
+<p class="faq-question">  <a name="Best.19"></a>19
+  Make temporary references so the code can be traced/debugged.
+</p>
+<p class="faq-answer">Users want to be able to inspect or modify variables which are referenced by iterators. While EASTL containers and iterators are designed to make this easier than other STL implementations, it makes things very easy if the code explicitly declares a reference to the iterated element. In addition to making the variable easier to debug, it also makes code easier to read and makes the debug (and possibly release) version of the application run more efficiently.</p>
+<p class="faq-answer">Instead of doing this:</p>
+<p class="code-example">for(list&lt;Widget&gt;::iterator it = wl.begin(), itEnd = wl.end(); it != itEnd; ++it) {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;(*it).x = 37;<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;(*it).y = 38;<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;(*it).z = 39;<br>
+  }</p>
+<p class="faq-answer">Consider doing this:</p>
+<p class="code-example">for(list&lt;Widget&gt;::iterator it = wl.begin(), itEnd = wl.end(); it != itEnd; ++it) {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;Widget&amp; w = *it; // The user can easily inspect or modify w here.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;w.x = 37;<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;w.y = 38;<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;w.z = 39;<br>
+  }</p>
+<p class="faq-question"><a name="Best.20"></a>20
+  Consider bitvector or bitset instead of vector&lt;bool&gt;. </p>
+<p class="faq-answer">In EASTL, a vector of bool is exactly that. It intentionally does not attempt to make a specialization which implements a packed bit array. The bitvector class is specifically designed for this purpose. There are arguments either way, but if vector&lt;bool&gt; were allowed to be something other than an array of bool, it would go against user expectations and prevent users from making a true array of bool. There's a mechanism for specifically getting the bit packing, and it is bitvector.</p>
+<p class="faq-answer">Additionally there is bitset, which is not a conventional iterateable container but instead acts like bit flags. bitset may better suit your needs than bitvector if you need to do flag/bit operations instead of array operations. bitset does have an operator[], though.</p>
+<p class="faq-question">  <a name="Best.21"></a>21
+Vectors can be treated as contiguous memory.</p>
+<p class="faq-answer">EASTL vectors (and strings) guarantee that elements are present in a linear contiguous array. This means that you can use a vector as you would a C-style array by using the vector data() member function or by using &amp;v[0].</p>
+<p class="faq-answer">To use a vector as a pointer to an array, you can use the following code:</p>
+<p class="code-example">struct Widget {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;uint32_t x;<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;uint32_t y;<br>
+  };<br>
+  <br>
+  vector&lt;Widget&gt; v;<br>
+  <br>
+  quick_sort((uint64_t*)v.data(), (uint64_t*)(v.data() + v.size()));</p>
+<p class="faq-question"><a name="Best.22"></a>22
+Search&nbsp;hash_map&lt;string&gt; via find_as() instead of find(). </p>
+<p class="faq-answer">EASTL hash tables offer a bonus function called find_as when lets you search a hash table by something other than the container type. This is particularly useful for hash tables of string objects that you want to search for by string literals (e.g. &quot;hello&quot;) or char pointers. If you search for a string via the find function, your string literal will necessarily be converted to a temporary string object, which is inefficient.</p>
+<p class="faq-answer">To use find_as, you can use the following code:</p>
+<p class="code-example">hash_map&lt;string, int&gt; hashMap;<br>
+  hash_map&lt;string, int&gt;::iterator it = hashMap.find_as(&quot;hello&quot;); // Using default hash and compare.</p>
+<p class="faq-question">  <a name="Best.23"></a>23
+Take advantage of type_traits (e.g. <small style=
+"font-family: Courier New;">EASTL_DECLARE_TRIVIAL_RELOCATE</small>).</p>
+<p class="faq-answer">EASTL includes a fairly serious type traits library that is on par with the one found in Boost but offers some additional performance-enhancing help as well. The type_traits library provides information about class <span style="font-style: italic;">types</span>, as opposed to class instances. For example, the is_integral type trait tells if a type is one of int, short, long, char, uint64_t, etc.<br>
+  <br>
+There are three primary uses of type traits:</p>
+<ul>
+  <li>Allowing for optimized operations on some data types.</li>
+  <li>Allowing for different logic pathways based on data types.</li>
+  <li>Allowing for compile-type assertions about data type expectations.</li>
+</ul>
+<span class="faq-answer">Most of the type traits are automatically detected and implemented by the compiler. However, EASTL&nbsp;allows for the user to explicitly give the compiler hints about type traits that the compiler cannot know, via the EASTL_DECLARE declarations. If the user has a class that is relocatable (i.e. can safely use memcpy to copy values), the user can use the EASTL_DECLARE_TRIVIAL_RELOCATE declaration to tell the compiler that the class can be copied via memcpy. This will automatically significantly speed up some containers and algorithms that use that class.<br>
+<br>
+Here is an example of using type traits to tell if a value is a floating point value or not:<br>
+</span>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>template &lt;typename T&gt;<br>
+  DoSomething(T t) {<br>
+&nbsp; &nbsp; assert(is_floating_point&lt;T&gt;::value);<br>
+  }</small></div>
+<span class="faq-answer">Here is an example of declaring a class as relocatable and using it in a vector.<br>
+</span>
+<div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>EASTL_DECLARE_TRIVIAL_RELOCATE(Widget); // Usually you put this at the Widget class declaration.<br>
+  vector&lt;Widget&gt; wVector;<br>
+  wVector.erase(wVector.begin()); &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; // This operation will be optimized via using memcpy.</small></div>
+<span class="faq-answer">The following is a full list of the currently recognized type traits. Most of these are implemented as of this writing, but if there is one that is missing, feel free to contact the maintainer of this library and request that it be completed.</span>
+<ul>
+  <li>is_void</li>
+  <li>is_integral</li>
+  <li>is_floating_point</li>
+  <li>is_arithmetic</li>
+  <li>is_fundamental</li>
+  <li>is_const</li>
+  <li>is_volatile</li>
+  <li>is_abstract</li>
+  <li>is_signed</li>
+  <li>is_unsigned</li>
+  <li>is_array</li>
+  <li>is_pointer</li>
+  <li>is_reference</li>
+  <li>is_member_object_pointer</li>
+  <li>is_member_function_pointer</li>
+  <li>is_member_pointer</li>
+  <li>is_enum</li>
+  <li>is_union</li>
+  <li>is_class</li>
+  <li>is_polymorphic</li>
+  <li>is_function</li>
+  <li>is_object</li>
+  <li>is_scalar</li>
+  <li>is_compound</li>
+  <li>is_same</li>
+  <li>is_convertible</li>
+  <li>is_base_of</li>
+  <li>is_empty</li>
+  <li>is_pod</li>
+  <li>is_aligned</li>
+  <li>has_trivial_constructor</li>
+  <li>has_trivial_copy</li>
+  <li>has_trivial_assign</li>
+  <li>has_trivial_destructor</li>
+  <li>has_trivial_relocate<sup>1</sup></li>
+  <li>has_nothrow_constructor</li>
+  <li>has_nothrow_copy</li>
+  <li>has_nothrow_assign</li>
+  <li>has_virtual_destructor</li>
+  <li>alignment_of</li>
+  <li>rank</li>
+  <li>extent</li>
+</ul>
+<span class="faq-answer"><sup>1</sup> has_trivial_relocate is not found in Boost nor the C++ standard update proposal. However, it is very useful in allowing for the generation of optimized object moving operations. It is similar to the is_pod type trait, but goes further and allows non-pod classes to be categorized as relocatable. Such categorization is something that no compiler can do, as only the user can know if it is such. Thus <small style=
+"font-family: Courier New;">EASTL_DECLARE_TRIVIAL_RELOCATE</small>&nbsp; is provided to allow the user to give the compiler a hint.</span>
+<p class="faq-question">  <a name="Best.24"></a>24
+Name containers to track memory usage.
+</p>
+<p class="faq-answer">All EASTL containers which allocate memory have a built-in function called set_name and have a constructor argument that lets you specify the container name. This name is used in memory tracking and allows for the categorization and measurement of memory usage. You merely need to supply a name for your containers to use and it does the rest.</p>
+<p class="faq-answer">Here is an example of creating a list and naming it &quot;collision list&quot;:</p>
+<p class="faq-answer"><span class="code-example">list&lt;CollisionData&gt; collisionList(allocator(&quot;collision list&quot;));</span>or<br>
+  <span class="code-example">list&lt;CollisionData&gt; collisionList;<br>
+collisionList.get_allocator().set_name(&quot;collision list&quot;);</span></p>
+<p class="faq-answer">Note that EASTL containers do not copy the name contents but merely copy the name pointer. This is done for simplicity and efficiency. A user can get around this limitation by creating a persistently present string table. Additionally, the user can get around this by declaring static but non-const strings and modifying them at runtime.</p>
+<p class="faq-question"><a name="Best.25"></a>25
+Learn the algorithms.</p>
+<p><span class="faq-answer">EASTL algorithms provide a variety of optimized implementations of fundamental algorithms. Many of the EASTL algorithms are the same as the STL algorithm set, though EASTL adds additional algorithms and additional optimizations not found in STL implementations such as Microsoft's. The copy algorithm, for example, will memcpy data types that have the has_trivial_relocate type trait instead of doing an element-by-element copy.<br>
+  <br>
+  The classifications we use here are not exactly the same as found in the C++ standard; they have been modified to be a little more intuitive. Not all the functions listed here may be yet available in EASTL as you read this. If you want some function then send a request to the maintainer. Detailed documentation for each algorithm is found in algorithm.h or the otherwise corresponding header file for the algorithm.<br>
+  <br>
+  <span style="font-weight: bold;">Search</span></span></p>
+<ul>
+  <li>find, find_if</li>
+  <li>find_end</li>
+  <li>find_first_of</li>
+  <li>adjacent_find</li>
+  <li>binary_search</li>
+  <li>search,&nbsp;search_n</li>
+  <li>lower_bound</li>
+  <li>upper_bound</li>
+  <li>equal_range</li>
+</ul>
+<p class="faq-answer" style="font-weight: bold;">Sort</p>
+<ul>
+  <li>is_sorted</li>
+  <li>quick_sort</li>
+  <li>insertion_sort</li>
+  <li>shell_sort</li>
+  <li>heap_sort</li>
+  <li>merge_sort,&nbsp;merge_sort_buffer</li>
+  <li>merge</li>
+  <li>inplace_merge</li>
+  <li>partial_sort</li>
+  <li>stable_sort</li>
+  <li>partial_sort_copy</li>
+  <li>&lt;other sort functions found in the EASTL bonus directories&gt;</li>
+</ul>
+<p class="faq-answer" style="font-weight: bold;">Modifying</p>
+<ul>
+  <li>fill, fill_n</li>
+  <li>generate,&nbsp;generate_n</li>
+  <li>random_shuffle</li>
+  <li>swap</li>
+  <li>iter_swap</li>
+  <li>swap_ranges</li>
+  <li>remove,&nbsp;remove_if</li>
+  <li>remove_copy,&nbsp;remove_copy_if</li>
+  <li>replace,&nbsp;replace_if</li>
+  <li>replace_copy,&nbsp;replace_copy_if</li>
+  <li>reverse</li>
+  <li>reverse_copy</li>
+  <li>rotate</li>
+  <li>rotate_copy</li>
+  <li>partition</li>
+  <li>stable_partition</li>
+  <li>transform</li>
+  <li>next_permutation</li>
+  <li>prev_permutation</li>
+  <li>unique</li>
+  <li>unique_copy</li>
+</ul>
+<p class="faq-answer" style="font-weight: bold;">Non-Modifying</p>
+<ul>
+  <li>for_each</li>
+  <li>copy</li>
+  <li>copy_backward</li>
+  <li>count,&nbsp;count_if</li>
+  <li>equal</li>
+  <li>mismatch</li>
+  <li>min</li>
+  <li>max</li>
+  <li>min_element</li>
+  <li>max_element</li>
+  <li>lexicographical_compare</li>
+  <li>nth_element</li>
+</ul>
+<p class="faq-answer" style="font-weight: bold;">Heap</p>
+<ul>
+  <li>is_heap</li>
+  <li>make_heap</li>
+  <li>push_heap</li>
+  <li>pop_heap</li>
+  <li>change_heap</li>
+  <li>sort_heap</li>
+  <li>remove_heap</li>
+</ul>
+<p class="faq-answer" style="font-weight: bold;">Set</p>
+<ul>
+  <li>includes</li>
+  <li>set_difference</li>
+  <li>set_symmetric_difference</li>
+  <li>set_intersection</li>
+  <li>set_union</li>
+</ul>
+<p class="faq-question">  <a name="Best.26"></a>26
+Pass and return containers by reference instead of value.</p>
+<p class="faq-answer">If you aren't paying attention you might accidentally write code like this:</p>
+<p class="code-example">void DoSomething(list&lt;Widget&gt; widgetList) {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+}</p>
+<p class="faq-answer">The problem with the above is that widgetList is passed by value and not by reference. Thus the a copy of the container is made and passed instead of a reference of the container being passed. This may seem obvious to some but this happens periodically and the compiler gives no warning and the code will often execute properly, but inefficiently. Of course there are some occasions where you really do want to pass values instead of references.</p>
+<p class="faq-question"><a name="Best.27"></a>27
+Consider using reset() for fast container teardown.</p>
+<p class="faq-answer">EASTL containers have a reset function which unilaterally resets the container to a newly constructed state. The contents of the container are forgotten; no destructors are called and no memory is freed. This is a risky but power function for the purpose of implementing very fast temporary containers. There are numerous cases in high performance programming when you want to create a temporary container out of a scratch buffer area, use the container, and then just &quot;vaporize&quot; it, as it would be waste of time to go through the trouble of clearing the container and destroying and freeing the objects. Such functionality is often used with hash tables or maps and with a stack allocator (a.k.a. linear allocator).</p>
+<p class="faq-answer">Here's an example of usage of the reset function and a PPMalloc-like StackAllocator:</p>
+<p class="code-example">pStackAllocator-&gt;push_bookmark();<br>
+  hash_set&lt;Widget, less&lt;Widget&gt;, StackAllocator&gt; wSet(pStackAllocator);<br>
+&lt;use wSet&gt;<br>
+  wSet.reset();<br>
+  pStackAllocator-&gt;pop_bookmark();</p>
+<p></p>
+<p class="faq-question">  <a name="Best.28"></a>28
+Consider using fixed_substring instead of copying strings.
+</p>
+<p class="faq-answer">EASTL provides a fixed_substring class which uses a reference to a character segment instead of allocating its own string memory. This can be a more efficient way to work with strings under some circumstances.</p>
+<p class="faq-answer">Here's an example of usage of fixed_substring:</p>
+<p class="code-example">basic_string&lt;char&gt;&nbsp;str(&quot;hello world&quot;);<br>
+  fixed_substring&lt;char&gt; sub(str, 6, 5);&nbsp;// sub == &quot;world&quot;</p>
+<p class="faq-answer">fixed_substring can refer to any character array and not just one that derives from a string object.</p>
+<p class="faq-question"><a name="Best.29" id="Best.29"></a>29
+  Consider using vector::push_back(void).</p>
+<p class="faq-answer">EASTL provides an alternative way to insert elements into containers that avoids copy construction and/or the creation of temporaries. Consider the following code:</p>
+<p class="code-example">vector&lt;Widget&gt; widgetArray;<br>
+  widgetArray.push_back(Widget());</p>
+<p class="faq-answer">The standard vector push_back function requires you to supply an object to copy from. This incurs the cost of the creation of a temporary and for some types of classes or situations this cost may be undesirable. It additionally requires that your contained class support copy-construction whereas you may not be able to support copy construction. As an alternative, EASTL provides a push_back(void) function which requires nothing to copy from but instead constructs the object in place in the container. So you can do this:</p>
+<p class="code-example">vector&lt;Widget&gt; widgetArray;<br>
+  widgetArray.push_back();<br>
+widgetArray.back().x = 0; // Example of how to reference the new object. </p>
+<p class="faq-answer">Other containers with such copy-less functions include:</p>
+<p class="code-example">vector::push_back()<br>
+  deque::push_back()<br>
+  deque::push_front()<br>
+  list::push_back()<br>
+  list::push_front()<br>
+  slist::push_front()<br>
+  map::insert(const key_type&amp; key) <br>
+  multimap::insert(const key_type&amp; key) <br>
+  hash_map::insert(const key_type&amp; key) <br>
+  hash_multimap::insert(const key_type&amp; key) </p>
+<p class="faq-answer">Note that the map functions above allow you to insert a default value specified by key alone and not a value_type like with the other map insert functions.</p>
+<hr style="width: 100%; height: 2px;">
+<p>End of document<br>
+<br>
+<br>
+<br>
+<br></p>
+</body>
+</html>

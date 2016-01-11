@@ -1,0 +1,667 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>EASTL Modules</title>
+	<meta content="text/html; charset=us-ascii" http-equiv="content-type">
+	<meta name="author" content="Paul Pedriana">
+	<meta name="description" content="Lists the top-level modules present in EASTL.">
+    <link type="text/css" rel="stylesheet" href="EASTLDoc.css">
+    <style type="text/css">
+<!--
+.style1 {font-size: 10pt}
+-->
+    </style>
+</head>
+<body>
+<h1><font size="+3">EASTL Modules</font></h1>
+<h2>  Introduction</h2>
+<p>We provide here a list of all top-level modules present or planned for future presence in EASTL. In some cases (e.g.
+  algorithm), the module consists of many smaller submodules which are not described in detail here. In those cases you
+  should consult the source code for those modules or consult the detailed documentation for those modules. This document
+is a high level overview and not a detailed document.</p>
+<h2>Module List</h2>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td style="font-weight: bold;">&nbsp;Module</td>
+<td style="font-weight: bold;">Description</td>
+</tr>
+<tr>
+<td>config</td>
+<td>Configuration header. Allows for changing some compile-time options.</td>
+</tr>
+<tr>
+<td>slist<br>
+fixed_slist</td>
+<td>Singly-linked list.<br>
+fixed_slist is a version which is implemented via a fixed block of contiguous memory.</td>
+</tr>
+<tr>
+<td>list<br>
+fixed_list</td>
+<td>Doubly-linked list.</td>
+</tr>
+<tr>
+<td>intrusive_list<br>
+intrusive_slist</td>
+<td>List whereby the contained item provides the node implementation.</td>
+</tr>
+<tr>
+<td>array</td>
+<td>Wrapper for a C-style array which extends it to act like an STL container.</td>
+</tr>
+<tr>
+<td>vector<br>
+fixed_vector</td>
+<td>Resizable array container.</td>
+</tr>
+<tr>
+<td>vector_set<br>
+vector_multiset<br></td>
+<td>Set implemented via a vector instead of a tree. Speed and memory use is improved but resizing is slower.</td>
+</tr>
+<tr>
+<td>vector_map<br>
+vector_multimap<br></td>
+<td>Map implemented via a vector instead of a tree. Speed and memory use is improved but resizing is slower.</td>
+</tr>
+<tr>
+<td style="vertical-align: top;">deque<br></td>
+<td style="vertical-align: top;">Double-ended queue, but also with random access. Acts like a vector but insertions and
+removals are efficient.<br></td>
+</tr>
+<tr>
+<td>bit_vector</td>
+<td>Implements a vector of bool, but the actual storage is done with one bit per bool. Not the same thing as a
+bitset.</td>
+</tr>
+<tr>
+<td>bitset</td>
+<td>Implements an efficient arbitrarily-sized bitfield. Note that this is not strictly the same thing as a vector of
+bool (bit_vector), as it is optimized to act like an arbitrary set of flags and not to be a generic container which can
+be iterated, inserted, removed, etc.</td>
+</tr>
+<tr>
+<td>set<br>
+multiset<br>
+fixed_set<br>
+fixed_multiset<br></td>
+<td>A set is a sorted unique collection, multiset is sorted but non-unique collection.</td>
+</tr>
+<tr>
+<td>map<br>
+multimap<br>
+fixed_map<br>
+fixed_multimap</td>
+<td>A map is a sorted associative collection implemented via a tree. It is also known as dictionary.</td>
+</tr>
+<tr>
+<td>hash_map<br>
+hash_multimap<br>
+fixed_hash_map<br>
+fixed_hash_multimap</td>
+<td>Map implemented via a hash table.</td>
+</tr>
+<tr>
+<td>intrusive_hash_map<br>
+intrusive_hash_multimap<br>
+intrusive_hash_set<br>
+intrusive_hash_multiset</td>
+<td>hash_map whereby the contained item provides the node implementation, much like intrusive_list.</td>
+</tr>
+<tr>
+<td>hash_set<br>
+hash_multiset<br>
+fixed_hash_set<br>
+fixed_hash_map<br></td>
+<td>Set implemented via a hash table.</td>
+</tr>
+<tr>
+<td>basic_string<br>
+fixed_string<br>
+fixed_substring</td>
+<td>basic_string is a character string/array.<br>
+fixed_substring is a string which is a reference to a range within another string or character array.<br>
+cow_string is a string which implements copy-on-write.</td>
+</tr>
+<tr>
+<td>algorithm</td>
+<td>min/max, find, binary_search, random_shuffle, reverse, etc.&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top;">sort<br></td>
+<td style="vertical-align: top;">Sorting functionality, including functionality not in STL. quick_sort, heap_sort,
+merge_sort, shell_sort, insertion_sort, etc.<br></td>
+</tr>
+<tr>
+<td>numeric</td>
+<td>Numeric algorithms: accumulate, inner_product, partial_sum, adjacent_difference, etc.</td>
+</tr>
+<tr>
+<td style="vertical-align: top;">heap<br></td>
+<td style="vertical-align: top;">Heap structure functionality: make_heap, push_heap, pop_heap, sort_heap, is_heap,
+remove_heap, etc.<br></td>
+</tr>
+<tr>
+<td style="vertical-align: top;">stack<br></td>
+<td style="vertical-align: top;">Adapts any container into a stack.<br></td>
+</tr>
+<tr>
+<td style="vertical-align: top;">queue<br></td>
+<td style="vertical-align: top;">Adapts any container into a queue.<br></td>
+</tr>
+<tr>
+<td style="vertical-align: top;">priority_queue<br></td>
+<td style="vertical-align: top;">Implements a conventional priority queue via a heap structure.<br></td>
+</tr>
+<tr>
+<td>type_traits</td>
+<td>Type information, useful for writing optimized and robust code. Also used for implementing optimized containers and
+algorithms.</td>
+</tr>
+<tr>
+<td style="vertical-align: top;">utility<br></td>
+<td style="vertical-align: top;">pair, make_pair, rel_ops, etc.<br></td>
+</tr>
+<tr>
+<td style="vertical-align: top;">functional<br></td>
+<td style="vertical-align: top;">Function objects.<br></td>
+</tr>
+<tr>
+<td style="vertical-align: top;">iterator<br></td>
+<td style="vertical-align: top;">Iteration for containers and algorithms.<br></td>
+</tr>
+<tr>
+<td>smart_ptr</td>
+<td>Smart pointers:&nbsp;shared_ptr, shared_array, weak_ptr, scoped_ptr, scoped_array, linked_ptr, linked_array,
+intrusive_ptr.</td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<h2>Module Behaviour</h2>
+<p>The overhead sizes listed here refer to an optimized release build; debug builds may add some additional overhead. Some
+  of the overhead sizes may be off by a little bit (usually at most 4 bytes). This is because the values reported here
+  are those that refer to when EASTL's container optimizations have been complete. These optimizations may not have been
+  completed as you are reading this.</p>
+<table style="width: 100%;" border="1" cellpadding="1" cellspacing="1">
+<tbody>
+<tr>
+<td style="width: 15%; vertical-align: top; height: 13px; font-weight: bold;">
+<p>Container</p>
+</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="10%">
+<p>Stores</p>
+</td>
+<td style="font-weight: bold; text-align: center;">Container Overhead (32 bit)</td>
+<td style="font-weight: bold; text-align: center;">Container Overhead (64 bit)</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="10%">
+<p>Node Overhead (32 bit)</p>
+</td>
+<td style="font-weight: bold; text-align: center;">Node Overhead (64 bit)</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="9%">
+<p>Iterator category</p>
+</td>
+<td style="text-align: center; font-weight: bold;">size() efficiency</td>
+<td style="text-align: center; font-weight: bold;">operator[] efficiency</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="16%">
+<p>Insert efficiency</p>
+</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="16%">
+<p>Erase via Iterator efficiency</p>
+</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="7%">
+<p>Find efficiency</p>
+</td>
+<td style="font-weight: bold; text-align: center;" height="13" valign="top" width="10%">
+<p>Sort efficiency</p>
+</td>
+</tr>
+<tr>
+<td>slist</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">f</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n+</td>
+</tr>
+<tr>
+<td height="13" valign="top" width="15%">
+<p>list</p>
+</td>
+<td style="text-align: center;" height="13" valign="top" width="10%">
+<p>T</p>
+</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;" height="13" valign="top" width="10%">
+<p>8</p>
+</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;" height="13" valign="top" width="9%">
+<p>b</p>
+</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;" height="13" valign="top" width="16%">
+<p>1</p>
+</td>
+<td style="text-align: center;" height="13" valign="top" width="16%">
+<p>1</p>
+</td>
+<td style="text-align: center;" height="13" valign="top" width="7%">
+<p>n</p>
+</td>
+<td style="text-align: center;" height="13" valign="top" width="10%">
+<p>n log(n)</p>
+</td>
+</tr>
+<tr>
+<td>intrusive_slist</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">f</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">n+</td>
+</tr>
+<tr>
+<td>intrusive_list</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>array</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>vector</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>vector_set</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>vector_multiset</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>vector_map</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>vector_multimap</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>deque</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">84</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at begin or end,<br>
+else n / 2</td>
+<td style="text-align: center;">1&nbsp;at begin or end,<br>
+else n / 2</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>bit_vector</td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>string (all types)</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">r</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">1&nbsp;at end, else n</td>
+<td style="text-align: center;">n</td>
+<td style="text-align: center;">n log(n)</td>
+</tr>
+<tr>
+<td>set</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">28</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>multiset</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">28</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>map</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">28</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>multimap</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">28</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">log(n)</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td>hash_set</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>hash_multiset</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1<br></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>hash_map</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>hash_multimap</td>
+<td style="text-align: center;">Key, T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>intrusive_hash_set</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>intrusive_hash_multiset</td>
+<td style="text-align: center;">T</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>intrusive_hash_map</td>
+<td style="text-align: center;">T <small>(Key == T)</small></td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td>intrusive_hash_multimap</td>
+<td style="text-align: center;">T <small>(Key == T)&nbsp;</small></td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">b</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">-</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>- means that the operation does not exist.</li>
+<li>1 means amortized constant time. Also known as O(1)</li>
+<li>n means time proportional to the container size. Also known as O(n)</li>
+<li>log(n) means time proportional to the natural logarithm of the container size. Also known as O(log(n))</li>
+<li>n log(n) means time proportional to log(n) times the size of the container. Also known as O(n log(n))</li>
+<li>n+ means that the time is at least n, and possibly higher.</li>
+<li>Iterator meanings are: f = forward iterator; b = bidirectional iterator, r = random iterator.</li>
+<li>Overhead indicates approximate per-element overhead memory required in bytes. Overhead doesn't include possible
+additional overhead that may be imposed by the memory heap used to allocate nodes. General heaps tend to have between 4
+and 16 bytes of overhead per allocation, depending on the heap.</li>
+<li>Some overhead values are dependent on the structure alignment characteristics in effect. The values reported here
+are those that would be in effect for a system that requires pointers to be aligned on boundaries of their size and
+allocations with a minimum of 4 bytes (thus one byte values get rounded up to 4).</li>
+<li>Some overhead values are dependent on the size_type used by containers. We assume a size_type of 4 bytes, even for
+64 bit machines, as this is the EASTL default.</li>
+<li>Inserting at the end of a vector may cause the vector to be resized; resizing a vector is O(n). However, the
+amortized time complexity for vector insertions at the end is constant.</li>
+<li>Sort assumes the usage of the best possible sort for a large container of random data. Some sort algorithms (e.g.
+quick_sort) require random access iterators and so the sorting of some containers requires a different sort algorithm.
+We do not include bucket or radix sorts, as they are always O(n).</li>
+<li>Some containers (e.g. deque, hash*) have unusual data structures that make per-container and per-node overhead
+calculations not quite account for all memory.</li>
+</ul>
+<hr style="width: 100%; height: 2px;">
+End of document<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</body>
+</html>

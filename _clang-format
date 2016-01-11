@@ -1,0 +1,31 @@
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+Language                                  : Cpp
+BasedOnStyle                              : Google 
+Standard                                  : Auto
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
+AccessModifierOffset                      : -4
+AlignTrailingComments                     : true
+AllowAllParametersOfDeclarationOnNextLine : false
+AllowShortBlocksOnASingleLine             : true
+AllowShortFunctionsOnASingleLine          : true
+AllowShortIfStatementsOnASingleLine       : false
+AllowShortLoopsOnASingleLine              : false
+BinPackParameters                         : false
+BreakBeforeBraces                         : Allman
+BreakBeforeTernaryOperators               : false
+BreakConstructorInitializersBeforeComma   : true
+ColumnLimit                               : 120 
+Cpp11BracedListStyle                      : true
+DerivePointerAlignment                    : true
+DerivePointerBinding                      : false
+IndentWidth                               : 4
+KeepEmptyLinesAtTheStartOfBlocks          : true
+MaxEmptyLinesToKeep                       : 2
+NamespaceIndentation                      : Inner 
+PointerBindsToType                        : true
+SpacesBeforeTrailingComments              : 1
+SpacesInAngles                            : false
+SpacesInSquareBrackets                    : false
+TabWidth                                  : 4
+UseTab                                    : ForIndentation
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-
