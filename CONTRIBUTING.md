@@ -24,7 +24,7 @@ Your pull request should:
 EASTL uses CMake as its build system.
 
 * Generate build scripts:
-	* cmake -Byour_build_folder -H.
+	* cmake -Byour_build_folder -Htest
 * Navigate to "your_build_folder"
 * Build unit tests for "your_config":
 	* cmake --build . --config your_config 
