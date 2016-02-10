@@ -37,12 +37,12 @@ set build_folder=out
 call cmake -B%build_folder% -Htest
 pushd %build_folder%
 call cmake --build . --config Release
-call ctest -C Release
 call cmake --build . --config Debug
-call ctest -C Debug
 call cmake --build . --config RelWithDebInfo
-call ctest -C RelWithDebInfo
 call cmake --build . --config MinSizeRel
+call ctest -C Release
+call ctest -C Debug
+call ctest -C RelWithDebInfo
 call ctest -C MinSizeRel
 popd
 ```
