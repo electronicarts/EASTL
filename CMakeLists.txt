@@ -9,8 +9,7 @@ file(GLOB EASTL_SOURCES "source/*.cpp")
 add_library(EASTL ${EASTL_SOURCES})
 
 #-------------------------------------------------------------------------------------------
-# Include dirs 
+# Include dirs
 #-------------------------------------------------------------------------------------------
-target_include_directories(EASTL PUBLIC include)
+target_include_directories(EASTL PUBLIC include test/packages/EABase/include/Common)
 target_link_libraries(EASTL EABase)
-

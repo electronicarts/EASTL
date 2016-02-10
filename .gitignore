@@ -5,3 +5,23 @@ tags
 .swo
 -.d
 eastl_build_out
+
+## CMake generated files
+CMakeCache.txt
+cmake_install.cmake
+
+## For Visual Studio Generated projects
+*.sln
+**/*.vcxproj
+**/*.vcxproj.filters
+*.VC.opendb
+*.sdf
+.vs/*
+**/Debug/*
+CMakeFiles/*
+EASTL.dir/**
+RelWithDebInfo/*
+Release/*
+Win32/*
+x64/*
+MinSizeRel/*
