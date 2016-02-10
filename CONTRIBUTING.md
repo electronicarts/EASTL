@@ -31,3 +31,19 @@ EASTL uses CMake as its build system.
 * Run the unit tests for "your_config":
 	* ctest -C your_config
 
+Here is an example batch file.
+```batch
+set build_folder=out
+call cmake -B%build_folder% -Htest
+pushd %build_folder%
+call cmake --build . --config Release
+call ctest -C Release
+call cmake --build . --config Debug
+call ctest -C Debug
+call cmake --build . --config RelWithDebInfo
+call ctest -C RelWithDebInfo
+call cmake --build . --config MinSizeRel
+call ctest -C MinSizeRel
+popd
+```
+
