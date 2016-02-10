@@ -10,7 +10,7 @@ HP STL comes with the following license:
 // The tree insert and erase functions below are based on the original 
 // HP STL tree functions. Use of these functions was been approved by
 // EA legal on November 4, 2005 and the approval documentation is available
-// from the EASTL maintainer or from the EA legal deparatment on request.
+// from the EASTL maintainer or from the EA legal department on request.
 // 
 // Copyright (c) 1994
 // Hewlett-Packard Company
