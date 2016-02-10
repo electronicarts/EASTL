@@ -29,4 +29,4 @@ Significant EASTL contributions were made by (in alphabetical order):
 
 ## License
 
-Modified BSD Licence (3-Clause BSD license) see the file LICENCE in the project root.
+Modified BSD License (3-Clause BSD license) see the file LICENSE in the project root.
