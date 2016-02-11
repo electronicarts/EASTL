@@ -8,7 +8,6 @@ install:
   - tar -xzf cmake-3.4.3-Linux-x86_64.tar.gz
 
 script:
-    - ../cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest
-    - cd build
-    - ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Debug
-    - ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Release
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Debug
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Release
