@@ -2,9 +2,12 @@ language: cpp
 compiler: 
     - gcc
     - clang
+    
+install:
+  - wget -qO- https://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz | tar xvz
 
 script:
-    - cmake -Bbuild -Htest
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest
     - cd build
-    - cmake --build . --config Debug
-    - cmake --build . --config Release
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Debug
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Release
