@@ -1,4 +1,4 @@
-# EA Standard Template Library 
+# EA Standard Template Library
 
 [![Build Status](https://travis-ci.org/electronicarts/EASTL.svg?branch=master)](https://travis-ci.org/electronicarts/EASTL)  [![Join the chat at https://gitter.im/electronicarts/EASTL](https://badges.gitter.im/electronicarts/EASTL.svg)](https://gitter.im/electronicarts/EASTL?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
 
@@ -7,10 +7,13 @@ EASTL stands for Electronic Arts Standard Template Library. It is a C++ template
 
 ## Usage
 
-If you are familiar with the C++ STL or have worked with other templated container/algorithm libraries, you probably don't need to read this. If you have no familiarity with C++ templates at all, then you probably will need more than this document to get you up to speed. In this case, you need to understand that templates, when used properly, are powerful vehicles for the ease of creation of optimized C++ code. A description of C++ templates is outside the scope of this documentation, but there is plenty of such documentation on the Internet. 
+If you are familiar with the C++ STL or have worked with other templated container/algorithm libraries, you probably don't need to read this. If you have no familiarity with C++ templates at all, then you probably will need more than this document to get you up to speed. In this case, you need to understand that templates, when used properly, are powerful vehicles for the ease of creation of optimized C++ code. A description of C++ templates is outside the scope of this documentation, but there is plenty of such documentation on the Internet.
 
 EASTL is suitable for any tools and shipping applications where the functionality of EASTL is useful. Modern compilers are capable of producing good code with templates and many people are using them in both current generation and future generation applications on multiple platforms from embedded systems to servers and mainframes.
 
+## Compiling sources
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on compiling and testing the source.
 
 ## Credits
 
