@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
-
+cmake_minimum_required(VERSION 3.4)
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
@@ -9,8 +9,7 @@ file(GLOB EASTL_SOURCES "source/*.cpp")
 add_library(EASTL ${EASTL_SOURCES})
 
 #-------------------------------------------------------------------------------------------
-# Include dirs 
+# Include dirs
 #-------------------------------------------------------------------------------------------
-target_include_directories(EASTL PUBLIC include)
+target_include_directories(EASTL PUBLIC include ${PROJECT_SOURCE_DIR}/test/packages/EABase/include/Common)
 target_link_libraries(EASTL EABase)
-
