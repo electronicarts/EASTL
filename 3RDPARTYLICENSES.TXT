@@ -1,17 +1,10 @@
-Use of the software in this package is governed by the EA Development Software License,
-found in the accompanying file EA_DEV_SOFTWARE_LICENSE.txt.
-
 Additional licenses also apply to this software package as detailed below.
+
 
 
 HP STL comes with the following license:
 
 ///////////////////////////////////////////////////////////////////////////////
-// The tree insert and erase functions below are based on the original 
-// HP STL tree functions. Use of these functions was been approved by
-// EA legal on November 4, 2005 and the approval documentation is available
-// from the EASTL maintainer or from the EA legal department on request.
-// 
 // Copyright (c) 1994
 // Hewlett-Packard Company
 // 
@@ -44,7 +37,8 @@ Full text of the relevant licenses is included below.
 University of Illinois/NCSA
 Open Source License
 
-Copyright (c) 2009-2015 by the contributors listed in CREDITS.TXT
+Copyright (c) 2009-2015 by the contributors listed at 
+http://llvm.org/svn/llvm-project/libcxx/trunk/CREDITS.TXT
 
 All rights reserved.
 
@@ -85,7 +79,8 @@ SOFTWARE.
 
 ==============================================================================
 
-Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT
+Copyright (c) 2009-2014 by the contributors listed at 
+http://llvm.org/svn/llvm-project/libcxx/trunk/CREDITS.TXT
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

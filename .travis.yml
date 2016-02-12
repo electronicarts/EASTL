@@ -1,10 +1,18 @@
 language: cpp
+
+os:
+  - linux
+  - osx
+  
 compiler: 
     - gcc
     - clang
+    
+install:
+  - wget --no-check-certificate http://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz 
+  - tar -xzf cmake-3.4.3-Linux-x86_64.tar.gz
 
 script:
-    - cmake -Bbuild -Htest
-    - cd build
-    - cmake --build . --config Debug
-    - cmake --build . --config Release
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Debug
+    - ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Release
