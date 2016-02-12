@@ -13,7 +13,7 @@ EASTL is suitable for any tools and shipping applications where the functionalit
 
 ## Compiling sources
 
-Please see CONTRIBUTING.md for details on compiling and testing the source.
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on compiling and testing the source.
 
 ## Credits
 
