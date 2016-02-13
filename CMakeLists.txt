@@ -9,6 +9,11 @@ file(GLOB EASTL_SOURCES "source/*.cpp")
 add_library(EASTL ${EASTL_SOURCES})
 
 #-------------------------------------------------------------------------------------------
+# Compiler Flags
+#-------------------------------------------------------------------------------------------
+set(CMAKE_CXX_STANDARD 11)
+
+#-------------------------------------------------------------------------------------------
 # Include dirs
 #-------------------------------------------------------------------------------------------
 target_include_directories(EASTL PUBLIC include ${PROJECT_SOURCE_DIR}/test/packages/EABase/include/Common)

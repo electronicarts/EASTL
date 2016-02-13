@@ -34,7 +34,12 @@ namespace StdC {
 		/// Stopwatch and implement GetUserDefinedStopwatchCycle or call 
 		/// SetUserDefinedUnitsToStopwatchCyclesRatio in order to allow it 
 		/// to know how to convert units.
-		explicit Stopwatch(int nUnits = kUnitsCycles, bool bStartImmediately = false) { } 
+		explicit Stopwatch(int nUnits = kUnitsCycles, bool bStartImmediately = false)
+			: mnStartTime(0)
+			, mnTotalElapsedTime(0)
+			, mnUnits(0)
+			, mfStopwatchCyclesToUnitsCoefficient(0.f)
+			 { } 
 
 		/// Start
 		/// Starts the stopwatch. Continues where it was last stopped. 
@@ -86,7 +91,7 @@ namespace StdC {
 	public:
 		/// LimitStopwatch
 		/// Constructor
-		LimitStopwatch(int nUnits = kUnitsCycles, uint64_t nLimit = 0, bool bStartImmediately = false) { }
+		LimitStopwatch(int nUnits = kUnitsCycles, uint64_t nLimit = 0, bool bStartImmediately = false) : Stopwatch(), mnEndTime(0) { }
 
 		/// IsTimeUp
 		/// Returns true if the limit has been reached. Highly efficient.
