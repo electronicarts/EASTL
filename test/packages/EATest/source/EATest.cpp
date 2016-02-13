@@ -420,7 +420,7 @@ EATEST_API unsigned ThreadSleepRandom(unsigned nMinSleepMS, unsigned nMaxSleepMS
 ///////////////////////////////////////////////////////////////////////////////
 // GlobalErrorCount
 //
-EA::Thread::AtomicInt32 gGlobalErrorCount((int32_t)0);
+EA::Thread::AtomicInt32 gGlobalErrorCount = 0;
 
 EATEST_API int GetGlobalErrorCount()
 {

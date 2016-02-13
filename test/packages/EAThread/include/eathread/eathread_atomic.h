@@ -21,6 +21,7 @@ namespace Thread {
 
 		AtomicInt() {}
 		AtomicInt(ValueType n) : mValue(n) {} 
+		AtomicInt(const ThisType& n) { mValue = n.mValue.load(); }
 		ValueType GetValue() const { return mValue; }
 		void SetValue(ValueType value) { mValue = value; }
 		ValueType Add(ValueType value) { return (mValue += value); }
