@@ -13,6 +13,7 @@
 #include <EATest/EATest.h>
 #include <eathread/eathread.h>
 #include <eathread/eathread_atomic.h>
+#include <eathread/eathread_thread.h>
 #include <EAStdC/EAString.h>
 #include <EAStdC/EASprintf.h>
 #include <EAStdC/EADateTime.h>
@@ -419,7 +420,7 @@ EATEST_API unsigned ThreadSleepRandom(unsigned nMinSleepMS, unsigned nMaxSleepMS
 ///////////////////////////////////////////////////////////////////////////////
 // GlobalErrorCount
 //
-EA::Thread::AtomicInt32 gGlobalErrorCount = 0;
+EA::Thread::AtomicInt32 gGlobalErrorCount((int32_t)0);
 
 EATEST_API int GetGlobalErrorCount()
 {

@@ -6,6 +6,7 @@
 
 #include <EAAssert/eaassert.h>
 #include <EAStdC/EASprintf.h>
+#include <cwchar>
 
 
 namespace EA {

@@ -342,7 +342,7 @@
 		#ifdef EA_PLATFORM_MICROSOFT
 			return _aligned_malloc(size, alignment);
 		#else
-			return aligned_alloc(alignment, size)
+			return aligned_alloc(alignment, size);
 		#endif
 		}
 
