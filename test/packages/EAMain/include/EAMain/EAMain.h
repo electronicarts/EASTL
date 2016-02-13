@@ -21,8 +21,8 @@ namespace EA
 
         inline ReportFunction GetDefaultReportFunction() 
 		{ 
-			return (ReportFunction)[](const char8_t* pOutput)
-				{ printf("%s", pOutput); }; 
+			return static_cast<ReportFunction>([](const char8_t* pOutput)
+				{ printf("%s", pOutput); }); 
 		}
 
         inline void VReport(const char8_t* pFormat, va_list arguments) 

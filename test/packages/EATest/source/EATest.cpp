@@ -13,6 +13,7 @@
 #include <EATest/EATest.h>
 #include <eathread/eathread.h>
 #include <eathread/eathread_atomic.h>
+#include <eathread/eathread_thread.h>
 #include <EAStdC/EAString.h>
 #include <EAStdC/EASprintf.h>
 #include <EAStdC/EADateTime.h>
