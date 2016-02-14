@@ -12,6 +12,13 @@ add_library(EATest ${EATEST_SOURCES})
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 11)
+if(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+if(APPLE)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdeprecated")
+endif()
+
 
 #-------------------------------------------------------------------------------------------
 # Include directories 
