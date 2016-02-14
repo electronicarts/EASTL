@@ -2,6 +2,7 @@ tags
 **/*.swp
 **/*.swo
 .swp
+*.swp
 .swo
 -.d
 eastl_build_out
