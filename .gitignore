@@ -25,3 +25,4 @@ Release/*
 Win32/*
 x64/*
 MinSizeRel/*
+build/*
