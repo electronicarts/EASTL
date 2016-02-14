@@ -47,3 +47,18 @@ call ctest -C MinSizeRel
 popd
 ```
 
+Here is an example bash file
+```bash
+build_folder=out
+cmake -B$build_folder -Htest
+pushd $build_folder
+cmake --build . --config Release
+cmake --build . --config Debug
+cmake --build . --config RelWithDebInfo
+cmake --build . --config MinSizeRel
+ctest -C Release
+ctest -C Debug
+ctest -C RelWithDebInfo
+ctest -C MinSizeRel
+popd
+```
