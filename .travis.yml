@@ -29,6 +29,6 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest                                      ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Debug                        ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Release                      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/bin/cmake -Bbuild -Htest                                       ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/bin/cmake --build build --config Debug                         ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/bin/cmake --build build --config Release                       ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake -Bbuild -Htest                                       ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build build --config Debug                         ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build build --config Release                       ;fi
