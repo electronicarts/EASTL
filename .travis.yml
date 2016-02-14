@@ -42,6 +42,6 @@ after_success:
 # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/ctest -C Debug  -V                                        ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                       ;fi
 # Run tests (linux)
-# - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Debug -V                      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                    ;fi
+# - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Debug -V                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                    ;fi
 
