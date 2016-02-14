@@ -9,6 +9,7 @@
 #include <EABase/eabase.h>
 #include <EASTL/internal/config.h>
 #include <new>
+#include <stdio.h>
 
 #if !EASTL_OPENSOURCE
 
@@ -342,7 +343,10 @@
 		#ifdef EA_PLATFORM_MICROSOFT
 			return _aligned_malloc(size, alignment);
 		#else
-			return aligned_alloc(alignment, size);
+			void *p = nullptr;
+			alignment = alignment < sizeof( void *) ? sizeof( void *) : alignment;
+			posix_memalign(&p, alignment, size);
+			return p;
 		#endif
 		}
 
