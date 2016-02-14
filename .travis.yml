@@ -2,8 +2,7 @@ language: cpp
 
 os:
   - linux
-  # renable once OSX is ready
-  # - osx
+  - osx
   
 compiler: 
     - gcc
