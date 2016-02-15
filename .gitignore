@@ -6,6 +6,7 @@ tags
 .swo
 -.d
 eastl_build_out
+build.bat
 
 ## CMake generated files
 CMakeCache.txt
@@ -27,3 +28,4 @@ Win32/*
 x64/*
 MinSizeRel/*
 build/*
+Testing/*

@@ -46,6 +46,7 @@ set(SOURCES ${EASTLTEST_SOURCES})
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0) 
 add_definitions(-DEASTL_OPENSOURCE)
+add_definitions(-D_CHAR16T)
 
 #-------------------------------------------------------------------------------------------
 # Executable definition

@@ -20,7 +20,7 @@
 namespace EA {
 namespace Thread {
 
-    constexpr int kThreadPriorityDefault = 0;
+    static EA_CONSTEXPR int kThreadPriorityDefault = 0;
 
     inline bool SetThreadPriority(int priority) 
     {
