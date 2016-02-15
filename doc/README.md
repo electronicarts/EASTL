@@ -1,4 +1,4 @@
 These are all the files on the docs created:
 
-* (Introduction)[./Introduction.md]
-* (Gotchas)[./Gotchas.md]
+* [Introduction](./Introduction.md)
+* [Gotchas](./Gotchas.md)
