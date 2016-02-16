@@ -11,6 +11,12 @@ If you are familiar with the C++ STL or have worked with other templated contain
 
 EASTL is suitable for any tools and shipping applications where the functionality of EASTL is useful. Modern compilers are capable of producing good code with templates and many people are using them in both current generation and future generation applications on multiple platforms from embedded systems to servers and mainframes.
 
+
+## Documentation
+
+Please see [EASTL Introduction](https://rawgit.com/electronicarts/EASTL/master/doc/EASTL%20Introduction.html)
+
+
 ## Compiling sources
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on compiling and testing the source.
