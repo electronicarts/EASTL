@@ -26,7 +26,7 @@ EASTDC_API int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const cha
 EASTDC_API int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments);
 #endif
 
-#if defined(EA_WCHAR_UNIQUE)
+#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 EASTDC_API int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments);
 #endif
 
