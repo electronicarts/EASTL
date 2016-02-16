@@ -12,6 +12,9 @@ build.bat
 CMakeCache.txt
 cmake_install.cmake
 
+## Patch files
+*.patch
+
 ## For Visual Studio Generated projects
 *.sln
 **/*.vcxproj

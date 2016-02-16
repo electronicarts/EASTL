@@ -5,7 +5,6 @@
 #ifndef EAMAIN_EAENTRYPOINTMAIN_INL
 #define EAMAIN_EAENTRYPOINTMAIN_INL
 
-#define EAMain main
 
 namespace EA
 {
@@ -18,5 +17,10 @@ namespace EA
 		}
 	}
 }
+
+
+int EAMain(int argc, char* argv[]);
+int main(int argc, char* argv[])
+    { return EAMain(argc, argv); } 
 
 #endif

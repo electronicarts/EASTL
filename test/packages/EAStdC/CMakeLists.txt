@@ -18,6 +18,9 @@ add_definitions(-D_CHAR16T)
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 11)
+if(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Include directories 
