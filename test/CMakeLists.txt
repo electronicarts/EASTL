@@ -26,16 +26,11 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Libraries 
 #-------------------------------------------------------------------------------------------
-add_subdirectory(packages/EAAssert)
-add_subdirectory(packages/EABase)
-add_subdirectory(packages/EAMain)
-add_subdirectory(packages/EAStdC)
 add_subdirectory(packages/EATest)
-add_subdirectory(packages/EAThread)
 add_subdirectory(../ "${CMAKE_CURRENT_BINARY_DIR}/eastl")
 
 #-------------------------------------------------------------------------------------------
-# Source files 
+# Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLTEST_SOURCES "source/*.cpp")
 set(SOURCES ${EASTLTEST_SOURCES})
@@ -44,9 +39,11 @@ set(SOURCES ${EASTLTEST_SOURCES})
 # Defines 
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0) 
 add_definitions(-DEASTL_OPENSOURCE)
 add_definitions(-D_CHAR16T)
+# Thread support is disabled in order to test our implementation
+add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
+target_compile_definitions(EASTL PUBLIC -DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
@@ -54,12 +51,7 @@ add_definitions(-D_CHAR16T)
 add_executable(EASTLTest ${SOURCES})
 
 set(EASTLTest_Libraries
-    EAAssert
-    EABase
-    EAMain
     EASTL
-    EAStdC
-	EAThread
     EATest)
 target_link_libraries(EASTLTest ${EASTLTest_Libraries})
 
