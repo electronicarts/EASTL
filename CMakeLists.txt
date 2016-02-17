@@ -46,8 +46,7 @@ set(EASTL_Libraries
     EABase
     EAMain
     EAStdC
-    EAThread
-    EATest)
+    EAThread)
 target_link_libraries(EASTL ${EASTL_Libraries})
 
 #-------------------------------------------------------------------------------------------
