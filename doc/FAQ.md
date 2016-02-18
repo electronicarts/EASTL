@@ -538,10 +538,10 @@ The addition of a cow_string class is under consideration for EASTL. There are c
 References
 
 This is a good starting HTML reference on the topic:
-    [http://www.gotw.ca/publications/optimizations.htm]
+    http://www.gotw.ca/publications/optimizations.htm
 
 Here is a well-known Usenet discussion on the topic:
-    [http://groups-beta.google.com/group/comp.lang.c++.moderated/browse_thread/thread/3dc6af5198d0bf7/886c8642cb06e03d]
+    http://groups-beta.google.com/group/comp.lang.c++.moderated/browse_thread/thread/3dc6af5198d0bf7/886c8642cb06e03d
 
 ### Perf.4 Does EASTL cause code bloat, given that it uses templates?
 
@@ -578,7 +578,7 @@ It's important to note that C++ compilers will throw away any templated function
 
 Also, don't be confused by syntax bloat vs. code bloat. In looking at templated libraries such as EASTL you will notice that there is sometimes a lot of text in the definition of a template implementation. But the actual underlying code is what you need to be concerned about.
 
-There is a good Usenet discussion on this topic at: [http://groups.google.com/group/comp.lang.c++.moderated/browse_frm/thread/2b00649a935997f5]
+There is a good Usenet discussion on this topic at: http://groups.google.com/group/comp.lang.c++.moderated/browse_frm/thread/2b00649a935997f5
 
 ### Perf.5 Don't STL and EASTL containers fragment memory?
 
@@ -830,45 +830,54 @@ There is no need to worry. The way most C++ compilers compile templates, they co
 
 Additionally, the debug information for template definitions is usually larger than that for non-templated C++ definitions, which itself is sometimes larger than C defintions due to name decoration.
 
-Perf.13 What are the best compiler settings for EASTL?
+### Perf.13 What are the best compiler settings for EASTL?
 
 We will discuss various aspects of this topic here. As of this writing, more EASTL research on this topic has been done on Microsoft compiler platforms (e.g. Win32) than GCC platforms. Thus currently this discussion focuses on VC++ optimization. Some of the concepts are applicable to GCC, though. EASTL has been sucessfully compiled and tested (the EASTL unit test) on our major development platforms with the highest optimization settings enabled, including GCC's infamous -O3 level.
 
-Optimization Topics
+**Optimization Topics**
 
-Function inlining.
-Optimization for speed vs. optimization for size.
-Link-time code generation (LTCG).
-Profile-guided optimization (PGO).
-Function inlining
+* Function inlining.
+* Optimization for speed vs. optimization for size.
+* Link-time code generation (LTCG).
+* Profile-guided optimization (PGO).
+
+**Function inlining**
+
 EASTL is a template library and inlining is important for optimal speed. Compilers have various options for enabling inlining and those options are discussed in this FAQ in detail. Most users will want to enable some form of inlining when compiling EASTL and other templated libraries. For users that are most concerned about the compiler's inlining increasing code size may want to try the 'inline only functions marked as inline' compiler option. Here is a table of normalized results from the benchmark project (Win32 platform):
-Inlining Disabled	Inline only 'inline'	Inline any
-Application size	100K	86K	86K
-Execution time	100	75	75
+| | Inlining Disabled | Inline only 'inline' | Inline any |
+|--|--|--|--|
+| **Application size** | 100K | 86K | 86K |
+| **Execution time** | 100 | 75 | 75 |
 
 The above execution times are highly simplified versions of the actual benchmark data but convey a sense of the general average behaviour that can be expected. In practice, simple functions such as vector::operator[] will execute much faster with inlining enabled but complex functions such as map::insert may execute no faster within inlining enabled.
 
-Optimization for Speed / Size
+**Optimization for Speed / Size**
+
 Optimization for speed results in the compiler inlining more code than it would otherwise. This results in the inlined code executing faster than if it was not inlined. As mentioned above, basic function inlining can result in smaller code as well as faster code, but after a certain point highly inlined code becomes greater in size than less inlined code and the performance advantages of inlining start to lessen. The EASTL Benchmark project is a medium sized application that is about 80% templated and thus acts as a decent measure of the practical tradeoff between speed and size. Here is a table of normalized results from the benchmark project (Windows platform):
-Size	Speed	Speed + LTCG	Speed + LTCG + PGO
-Application size	80K	100K	98K	98K
-Execution time	100	90	83	75
+| Size | Speed | Speed + LTCG | Speed + LTCG + PGO |
+|--|--|--|--|
+| **Application size** | 80K | 100K | 98K | 98K |
+| **Execution time** | 100 | 90 | 83 | 75 |
 
 What the above table is saying is that if you are willing to have your EASTL code be 20% larger, it will be 10% faster. Note that it doesn't mean that your app will be 20% larger, only the templated code in it like EASTL will be 20% larger.
 
-Link-time code generation (LTCG)
+**Link-time code generation (LTCG)**
+
 LTCG is a mechanism whereby the compiler compiles the application as if it was all in one big .cpp file instead of separate .cpp files that don't see each other. Enabling LTCG optimizations is done by simply setting some compiler and linker settings and results in slower link times. The benchmark results are presented above and for the EASTL Benchmark project show some worthwhile improvement.
 
-Profile-guided optimization (PGO)
+**Profile-guided optimization (PGO)**
+
 PGO is a mechanism whereby the compiler uses profiling information from one or more runs to optimize the compilation and linking of an application. Enabling PGO optimizations is done by setting some linker settings and doing some test runs of the application, then linking the app with the test run results. Doing PGO optimizations is a somewhat time-consuming task but the benchmark results above demonstrate that for the EASTL Benchmark project that PGO is worth the effort.
 
-Problems
+## Problems
 
-Prob.1 I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
+### Prob.1 I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
 
 It may possible that you are seeing floating point roundoff problems. Many STL algorithms require object comparisons to act consistently. However, floating point values sometimes compare differently between uses because in one situation a value might be in 32 bit form in system memory, whereas in anther situation that value might be in an FPU register with a different precision. These are difficult problems to track down and aren't the fault of EASTL or whatever similar library you might be using. There are various solutions to the problem, but the important thing is to find a way to force the comparisons to be consistent.
 
 The code below was an example of this happening, whereby the object pA->mPos was stored in system memory while pB->mPos was stored in a register and comparisons were inconsistent and a crash ensued.
+
+```cpp
 class SortByDistance : public binary_function<WorldTreeObject*, WorldTreeObject*, bool>
 {
 private:
@@ -884,7 +893,11 @@ public:
               < ((WorldObject*)pB)->mPos - mOrigin).GetLength();
     }
 };
+```
+
 Another thing to watch out for is the following mistake:
+
+```cpp
 struct ValuePair
 {
     uint32_t a;
@@ -894,75 +907,94 @@ struct ValuePair
 // Improve speed by casting the struct to uint64_t
 bool operator<(const ValuePair& vp1, const ValuePair& vp2)
     { return *(uint64_t*)&vp1 < *(uint64_t*)&vp2; }
+```
+
 The problem is that the ValuePair struct has 32 bit alignment but the comparison assumes 64 bit alignment. The code above has been observed to crash on the PowerPC 64-based machines. The resolution is to declare ValuePair as having 64 bit alignment.
-Prob.2 I am getting compiler warnings (e.g. C4244, C4242 or C4267) that make no sense. Why?
+
+### Prob.2 I am getting compiler warnings (e.g. C4244, C4242 or C4267) that make no sense. Why?
 
 One cause of this occurs with VC++ when you have code compiled with the /Wp64 (detect 64 bit portability issues) option. This causes pointer types to have a hidden flag called __w64 attached to them by the compiler. So 'ptrdiff_t' is actually known by the compiler as '__w64 int', while 'int' is known by the compilers as simply 'int'. A problem occurs here when you use templates. For example, let's say we have this templated function
+
+``` cpp
 template <typename T>
 T min(const T a, const T b) {
     return b < a ? b : a;
 }
+```
+
 If you compile this code:
+
+```cpp
 ptrdiff_t a = min(ptrdiff_t(0), ptrdiff_t(1));
 int       b = min((int)0, (int)1);
+```
+
 You will get the following warning for the second line, which is somewhat nonsensical:
-warning C4244: 'initializing' : conversion from 'const ptrdiff_t' to 'int', possible loss of data
+
+`warning C4244: 'initializing' : conversion from 'const ptrdiff_t' to 'int', possible loss of data`
+
 This could probably be considered a VC++ bug, but in the meantime you have little choice but to ignore the warning or disable it.
 
-Prob.3 I am getting compiler warning C4530, which complains about exception handling and "unwind semantics." What gives?
+### Prob.3 I am getting compiler warning C4530, which complains about exception handling and "unwind semantics." What gives?
 
 VC++ has a compiler option (/EHsc) that allows you to enable/disable exception handling stack unwinding but still enable try/catch. This is useful because it can save a lot in the way of code generation for your application. Disabling stack unwinding will decrease the size of your executable on at least the Win32 platform by 10-12%.
 
 If you have stack unwinding disabled, but you have try/catch statements, VC++ will generate the following warning:
 
-warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+`warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc`
+
 As of EASTL v1.0, this warning has been disabled within EASTL for EASTL code. However, non-EASTL code such as std STL code may still cause this warning to be triggered. In this case there is not much you can do about this other than to disable the warning.
 
-Prob.4 Why are tree-based EASTL containers hard to read with a debugger?
+### Prob.4 Why are tree-based EASTL containers hard to read with a debugger?
 
-Short answer
+**Short answer**
+
 Maximum performance and design mandates.
 
-Long answer
+**Long answer**
+
 You may notice that when you have a tree-based container (e.g. set, map)  in the debugger that it isn't automatically able to recognize the tree nodes as containing instances of your contained object. You can get the debugger to do what you want with casting statements in the debug watch window, but this is not an ideal solution. The reason this is happening is that node-based containers always use an anonymous node type as the base class for container nodes. This is primarily done for performance, as it allows the node manipulation code to exist as a single non-templated library of functions and it saves memory because containers will have one or two base nodes as container 'anchors' and you don't want to allocate a node of the size of the user data when you can just use a base node. See list.h for an example of this and some additional in-code documentation on this.
 
 Additionally, EASTL has the design mandate that an empty container constructs no user objects. This is both for performance reasons and because it doing so would skew the user's tracking of object counts and might possibly break some expectation the user has about object lifetimes.
 
 Currently this debug issue exists only with tree-based containers. Other node-based containers such as list and slist use a trick to get around this problem in debug builds.
 
-See Debug.2 for more.
+See [Debug.2](#debug-2) for more.
 
-Prob.5 The EASTL source code is sometimes rather complicated looking. Why is that?
+### Prob.5 The EASTL source code is sometimes rather complicated looking. Why is that?
 
-Short answer
+**Short answer**
+
 Maximum performance.
 
-Long answer
+**Long answer**
 EASTL uses templates, type_traits, iterator categories, redundancy reduction, and branch reduction in order to achieve optimal performance. A side effect of this is that there are sometimes a lot of template parameters and multiple levels of function calls due to template specialization. The ironic thing about this is that this makes the code (an optimized build, at least) go faster, not slower. In an optimized build the compiler will see through the calls and template parameters and generate a direct optimized inline version.
 
 As an example of this, take a look at the implementation of the copy implementation in algorithm.h. If you are copying an array of scalar values or other trivially copyable values, the compiler will see how the code directs this to the memcpy function and will generate nothing but a memcpy in the final code. For non-memcpyable data types the compiler will automatically understand that in do the right thing.
 
 EASTL's primary objective is maximal performance, and it has been deemed worthwhile to make the code a little less obvious in order to achieve this goal. Every case where EASTL does something in an indirect way is by design and usually this is for the purpose of achieving the highest possible performance.
 
-Prob.6 When I get compilation errors, they are very long and complicated looking. What do I do?
+### Prob.6 When I get compilation errors, they are very long and complicated looking. What do I do?
 
 Assuming the bugs are all worked out of EASTL, these errors really do indicate that you have something wrong. EASTL is intentionally very strict about types, as it tries to minimize the chance of users errors. Unfortunately, there is no simple resolution to the problem of long compiler errors other than to deal with them. On the other hand, once you've dealt with them a few times, you tend to realize that most of time they are the same kinds of errors and
 
 Top five approaches to dealing with long compilation errors:
 
-Look at the line where the compilation error occurred and ignore the text of the error and just look at obvious things that might be wrong.
-Consider the most common typical causes of templated compilation errors and consider if any of these might be your problem. Usually one of them are.
-Either read through the error (it's not as hard as it may look on the surface) or copy the error to a text file and remove the extraneous
-Compile the code under GCC instead of MSVC, as GCC warnings and errors tend to be more helpful than MSVC's. Possibly also consider compiling an isolated version under Comeau C++'s free online compiler at www.comeaucomputing.com or the Dinkumware online compiler at http://dinkumware.com/exam/.
-Try using an STL filter (http://www.bdsoft.com/tools/stlfilt.html) which automatically boils down template errors to simpler forms. We haven't tried this yet with EASTL. Also there is the more generic TextFilt (http://textfilt.sourceforge.net/).
+1. Look at the line where the compilation error occurred and ignore the text of the error and just look at obvious things that might be wrong.
+2. Consider the most common typical causes of templated compilation errors and consider if any of these might be your problem. Usually one of them are.
+3. Either read through the error (it's not as hard as it may look on the surface) or copy the error to a text file and remove the extraneous
+4. Compile the code under GCC instead of MSVC, as GCC warnings and errors tend to be more helpful than MSVC's. Possibly also consider compiling an isolated version under Comeau C++'s free online compiler at www.comeaucomputing.com or the Dinkumware online compiler at http://dinkumware.com/exam/.
+5. Try using an STL filter (http://www.bdsoft.com/tools/stlfilt.html) which automatically boils down template errors to simpler forms. We haven't tried this yet with EASTL. Also there is the more generic TextFilt (http://textfilt.sourceforge.net/).
+
 Top five causes of EASTL compilation errors:
 
-const-correctness. Perhaps a quarter of container template errors are due to the user not specifying const correctly.
-Missing hash function. hash_map, hash_set, etc. require that you either specify a hash function or one exists for your class. See functional.h for examples of declarations of hash functions for common data types.
-Missing operators. Various containers and algorithms require that certain operators exist for your contained classes. For example, list requires that you can test contained objects for equivalence (i.e. operator==), while map requires that you can test contained objects for "less-ness" (operator <). If you define a Widget class and don't have a way to compare two Widgets, you will get errors when trying to put them into a map.
-Specifying the wrong data type. For example, it is a common mistake to forget that when you insert into a map, you need to insert a pair of objects and not just your key or value type.
-Incorrect template parameters. When declaring a template instantiation (e.g. map<int, int, less<int> >) you simply need to get the template parameters correct. Also note that when you have ">>" next to each other that you need to separate them by one space (e.g. "> >").
-Prob.7 Templates sometimes seem to take a long time to compile. Why do I do about that?
+1. const-correctness. Perhaps a quarter of container template errors are due to the user not specifying const correctly.
+2. Missing hash function. hash_map, hash_set, etc. require that you either specify a hash function or one exists for your class. See functional.h for examples of declarations of hash functions for common data types.
+3. Missing operators. Various containers and algorithms require that certain operators exist for your contained classes. For example, list requires that you can test contained objects for equivalence (i.e. operator==), while map requires that you can test contained objects for "less-ness" (operator <). If you define a Widget class and don't have a way to compare two Widgets, you will get errors when trying to put them into a map.
+4. Specifying the wrong data type. For example, it is a common mistake to forget that when you insert into a map, you need to insert a pair of objects and not just your key or value type.
+5. Incorrect template parameters. When declaring a template instantiation (e.g. map<int, int, less<int> >) you simply need to get the template parameters correct. Also note that when you have ">>" next to each other that you need to separate them by one space (e.g. "> >").
+
+### Prob.7 Templates sometimes seem to take a long time to compile. Why do I do about that?
 
 C++ compilers are generally slower than C compilers, and C++ templates are generally slower to compile than regular C++ code. EASTL has some extra functionality (such as type_traits and algorithm specializations) that is not found in most other template libraries and significantly improves performance and usefulness but adds to the amount of code that needs to be compiled. Ironically, we have a case where more source code generates faster and smaller object code.
 
@@ -970,7 +1002,7 @@ The best solution to the problem is to use pre-compiled headers, which are avail
 
 Some users have been speeding up build times by creating project files that put all the source code in one large .cpp file. This has an effect similar to pre-compiled headers. It can go even faster than pre-compiled headers but has downsides in the way of convenience and portability.
 
-Prob.8 I get the compiler error: "template instantiation depth exceeds maximum of 17. use -ftemplate-depth-NN to increase the maximum".
+### Prob.8 I get the compiler error: "template instantiation depth exceeds maximum of 17. use -ftemplate-depth-NN to increase the maximum".
 
 This is a GCC error that occurs when a templated function calls a templated function which calls a templated function, etc. past a depth of 17. You can use the GCC command line argument -ftemplate-depth-40 (or some other high number) to get around this. As note below, the syntax starting with GCC 4.5 has changed slightly.
 
@@ -978,6 +1010,7 @@ The primary reason you would encounter this with EASTL is type traits that are u
 
 From the GCC documentation:
 
+```
 -ftemplate-depth-n
 
 Set the maximum instantiation depth for template classes to n.
@@ -985,55 +1018,59 @@ A limit on the template instantiation depth is needed to detect
 endless recursions during template class instantiation ANSI/ISO
 C++ conforming programs must not rely on a maximum depth greater than 17.
 Note that starting with GCC 4.5 the syntax is -ftemplate-depth=N instead of -ftemplate-depth-n.
+```
 
-Prob.9 I'm getting errors about min and max while compiling.
+### Prob.9 I'm getting errors about min and max while compiling.
 
 You need to define NOMINMAX under VC++ when this occurs, as it otherwise defines min and max macros that interfere. There may be equivalent issues with other compilers. Also, VC++ has a specific <minmax.h> header file which defines min and max macros but which doesn't pay attention to NOMINMAX and so in that case there is nothing to do but not include that file or to undefine min and max. minmax.h is not a standard file and its min and max macros are not standard C or C++ macros or functions.
 
-Prob.10 C++ / EASTL seems to bloat my .obj files much more than C does.
+### Prob.10 C++ / EASTL seems to bloat my .obj files much more than C does.
 
 There is no need to worry. The way most C++ compilers compile templates, they compile all seen template code into the current .obj module, which results in larger .obj files and duplicated template code in multiple .obj files. However, the linker will (and must) select only a single version of any given function for the application, and these linked functions will usually be located contiguously.
 
-Prob.11 I'm getting compiler errors regarding placement operator new being previously defined.
+### Prob.11 I'm getting compiler errors regarding placement operator new being previously defined.
 
 This can happen if you are attempting to define your own versions of placement new/delete. The C++ language standard does not allow the user to override these functions. Section 18.4.3 of the standard states:
 
-     Placement forms
-     1. These functions are reserved, a C++ program may not define functions that displace the versions in the Standard C++ library.
+> Placement forms
+> 1. These functions are reserved, a C++ program may not define functions that displace the versions in the Standard C++ library.
 
 You may find that #defining __PLACEMENT_NEW_INLINE seems to fix your problems under VC++, but it can fail under some circumstances and is not portable and fails with other compilers, which don't have an equivalent workaround.
 
-Prob.12 I'm getting errors related to wchar_t string  functions such as wcslen().
+### Prob.12 I'm getting errors related to wchar_t string  functions such as wcslen().
 
 EASTL requires EABase-related items that the following be so. If not, then EASTL gets confused about what types it can pass to wchar_t related functions.
 
-The #define EA_WCHAR_SIZE is equal to sizeof(wchar_t).
-If sizeof(wchar_t) == 2, then char16_t is typedef'd to wchar_t.
-If sizeof(wchar_t) == 4, then char32_t is typedef'd to wchar_t.
+* The #define EA_WCHAR_SIZE is equal to sizeof(wchar_t).
+* If sizeof(wchar_t) == 2, then char16_t is typedef'd to wchar_t.
+* If sizeof(wchar_t) == 4, then char32_t is typedef'd to wchar_t.
+
 EABase v2.08 and later automatically does this for most current generation and all next generation platforms. With GCC 2.x, the user may need to predefine EA_WCHAR_SIZE to the appropriate value, due to limitations with the GCC compiler. Note that GCC defaults to sizeof(wchar_t) ==4, but it can be changed to 2 with the -fshort_wchar compiler command line argument. If you are using EASTL without EABase, you will need to make sure the above items are correctly defined.
 
-Prob.13 I'm getting compiler warning C4619: there is no warning number Cxxxx (e.g. C4217).
+### Prob.13 I'm getting compiler warning C4619: there is no warning number Cxxxx (e.g. C4217).
 
 Compiler warning C4619 is a VC++ warning which is saying that the user is attempting to enable or disable a warning which the compiler doesn't recognize. This warning only occurs if the user has the compiler set to enable warnings that are normally disabled, regardless of the warning level. The problem, however, is that there is no easy way for user code to tell what compiler warnings any given compiler version will recognize. That's why Microsoft normally disables this warning.
 
 The only practical solution we have for this is for the user to disable warning 4619 globally or an a case-by-case basis. EA build systems such as nant/framework 2's eaconfig will usually disable 4619. In general, global enabling of 'warnings that are disabled by default' often result in quandrys such as this.
 
-Prob.14 My stack-based fixed_vector is not respecting the object alignment requirements.
+### Prob.14 My stack-based fixed_vector is not respecting the object alignment requirements.
 
 EASTL fixed_* containers rely on the compiler-supplied alignment directives, such as that implemented by EA_PREFIX_ALIGN. This is normally a good thing because it allows the memory to be local with the container. However, as documented by Microsoft at http://msdn2.microsoft.com/en-us/library/83ythb65(VS.71).aspx, this doesn't work for stack variables. The two primary means of working around this are:
 
-Use something like AlignedObject<> from the EAStdC package's EAAllocator.h file.
-Use eastl::vector with a custom allocator and have it provide aligned memory. EASTL automatically recognizes that the objects are aligned and will call the aligned version of your allocator allocate() function. You can get this aligned memory from the stack, if you need it, somewhat like how AlignedObject<> works.
-Prob.15 I am getting compiler errors when using GCC under XCode (Macintosh/iphone).
+* Use something like AlignedObject<> from the EAStdC package's EAAllocator.h file.
+* Use eastl::vector with a custom allocator and have it provide aligned memory. EASTL automatically recognizes that the objects are aligned and will call the aligned version of your allocator allocate() function. You can get this aligned memory from the stack, if you need it, somewhat like how AlignedObject<> works.
+
+### Prob.15 I am getting compiler errors when using GCC under XCode (Macintosh/iphone).
 
 The XCode environment has a compiler option which causes it to evaluate include directories recursively. So if you specify /a/b/c as an include directory, it will consider all directories underneath c to also be include directories. This option is enabled by default, though many XCode users disable it, as it is a somewhat dangerous option. The result of enabling this option with EASTL is that <EASTL/string.h> is used by the compiler when you say #include <string.h>. The solution is to disable this compiler option. It's probably a good idea to disable this option anyway, as it typically causes problems for users yet provides minimal benefits.
 
-Prob.16 I am getting linker errors about Vsnprintf8 or Vsnprintf16.
+### Prob.16 I am getting linker errors about Vsnprintf8 or Vsnprintf16.
 
 EASTL requires the user to provide a function called Vsnprintf8 if the string::sprintf function is used. vsnprintf is not a standard C function, but most C standard libraries provide some form of it, though in some ways their implementations differ, especially in what the return value means. Also, most implementations of vsnprintf are slow, mostly due to mutexes related to locale functionality. And you can't really use vendor vsnprintf on an SPU due to the heavy standard library size. EASTL is stuck because it doesn't want to depend on something with these problems. EAStdC provides a single consistent fast lightweight, yet standards-conforming, implementation in the form of Vsnprintf(char8_t*, ...), but EASTL can't have a dependency on EAStdC. So the user must provide an implementation, even if all it does is call EAStdC's Vsnprintf or the vendor vsnprintf for that matter.
 
 Example of providing Vsnprintf8 via EAStdC:
 
+```cpp
 #include <EAStdC/EASprintf.h>
 
 int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
@@ -1045,8 +1082,11 @@ int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_li
 {
     return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
 }
+```
+
 Example of providing Vsnprintf8 via C libraries:
 
+```cpp
 #include <stdio.h>
 
 int Vsnprintf8(char8_t* p, size_t n, const char8_t* pFormat, va_list arguments)
@@ -1066,26 +1106,32 @@ int Vsnprintf16(char16_t* p, size_t n, const char16_t* pFormat, va_list argument
         return vsnwprintf(p, n, pFormat, arguments); // Won't work on Unix because its libraries implement wchar_t as int32_t.
     #endif
 }
-Prob.17 I am getting compiler errors about UINT64_C or UINT32_C.
+```
+
+### Prob.17 I am getting compiler errors about UINT64_C or UINT32_C.
 
 This is usually an order-of-include problem that comes about due to the implementation of __STDC_CONSTANT_MACROS in C++ Standard libraries. The C++ <stdint.h> header file defineds UINT64_C only if __STDC_CONSTANT_MACROS has been defined by the user or the build system; the compiler doesn't automatically define it. The failure you are seeing occurs because user code is #including a system header before #including EABase and without defining __STDC_CONSTANT_MACROS itself or globally. EABase defines __STDC_CONSTANT_MACROS and #includes the appropriate system header. But if the system header was already previously #included and __STDC_CONSTANT_MACROS was not defined, then UINT64_C doesn't get defined by anybody.
 
 The real solution that the C++ compiler and standard library wants is for the app to globally define __STDC_CONSTANT_MACROS itself in the build.
 
-Prob.18 I am getting a crash with a global EASTL container.
+### Prob.18 I am getting a crash with a global EASTL container.
 
 This usually due to compiler's lack of support for global (and static) C++ class instances. The crash is happening because the global variable exists but its constructor was not called on application startup and it's member data is zeroed bytes. To handle this you need to manually initialize such variables. There are two primary ways:
 
 Failing code:
 
+```cpp
 eastl::list<int> gIntList; // Global variable.
 
 void DoSomething()
 {
     gIntList.push_back(1); // Crash. gIntList was never constructed.
 }
+```
+
 Declaring a pointer solution:
 
+```cpp
 eastl::list<int>* gIntList = NULL;
 
 void DoSomething()
@@ -1095,8 +1141,11 @@ void DoSomething()
 
     gIntList->push_back(1); // Success
 }
+```
+
 Manual constructor call solution:
 
+```cpp
 eastl::list<int> gIntList;
 
 void InitSystem()
@@ -1108,121 +1157,103 @@ void DoSomething()
 {
     gIntList.push_back(1); // Success
 }
-Prob.19 Why doesn't EASTL support passing NULL string functions?
+```
+
+### Prob.19 Why doesn't EASTL support passing NULL string functions?
 
 The primary argument is to make functions safer for use. Why crash on NULL pointer access when you can make the code safe? That's a good argument. The counter argument, which EASTL currently makes, is:
 
-It breaks consistency with the C++ STL library and C libraries, which require strings to be valid.
-It makes the coder slower and bigger for all users, though few need NULL checks.
+> It breaks consistency with the C++ STL library and C libraries, which require strings to be valid.
+>
+> It makes the coder slower and bigger for all users, though few need NULL checks.
 The specification for how to handle NULL is simple for some cases but not simple for others. Operator < below a case where the proper handling of it in a consistent way is not simple, as all comparison code (<, >, ==, !=, >=, <=) in EASTL must universally and consistently handle the case where either or both sides are NULL. A NULL string seems similar to an empty string, but doesn't always work out so simply.
-What about other invalid string pointers? NULL is merely one invalid value of many, with its only distinction being that sometimes it's intentionally NULL (as opposed to being NULL due to not being initialized).
+>
+> What about other invalid string pointers? NULL is merely one invalid value of many, with its only distinction being that sometimes it's intentionally NULL (as opposed to being NULL due to not being initialized).
 How and where to implement the NULL checks in such a way as to do it efficiently is not always simple, given that public functions call public functions.
-It's arguable (and in fact the the intent of the C++ standard library) that using pointers that are NULL is a user/app mistake. If we really want to be safe then we should be using string objects for everything. You may not entirely buy this argument in practice, but on the other hand one might ask why is the caller of EASTL using a NULL pointer in the first place? The answer of course is that somebody gave it to him.
-Debug
+>
+> It's arguable (and in fact the the intent of the C++ standard library) that using pointers that are NULL is a user/app mistake. If we really want to be safe then we should be using string objects for everything. You may not entirely buy this argument in practice, but on the other hand one might ask why is the caller of EASTL using a NULL pointer in the first place? The answer of course is that somebody gave it to him.
 
-Debug.1 How do I set the VC++ debugger to display EASTL container data with tooltips?
+## Debug
 
-See Cont.9
+### Debug.1 How do I set the VC++ debugger to display EASTL container data with tooltips?
 
-Debug.2 How do I view containers if the visualizer/tooltip support is not present?
+See [Cont.9]()
+
+### Debug.2 How do I view containers if the visualizer/tooltip support is not present?
 
 Here is a table of answers about how to manually inspect containers in the debugger.
 
- Container	Approach
-slist
-fixed_slist	slist is a singly-linked list. Look at the slist mNode variable. You can walk the list by looking at mNode.mpNext, etc.
-list
-fixed_list	list is a doubly-linked list. Look at the list mNode variable. You can walk the list forward by looking at mNode.mpNext, etc. and backward by looking at mpPrev, etc.
-intrusive_list
-intrusive_slist†	Look at the list mAnchor node. This lets you walk forward and backward in the list via mpNext and mpPrev.
-array	View the array mValue member in the debugger. It's simply a C style array.
-vector
-fixed_vector	View the vector mpBegin value in the debugger. If the string is long, use ", N" to limit the view length, as with someVector.mpBegin, 32
-vector_set
-vector_multiset
-vector_map
-vector_multimap
-These are containers that are implemented as a sorted vector, deque, or array. They are searched via a standard binary search. You can view them the same way you view a vector or deque.
-deque
-deque is implemented as an array of arrays, where the arrays implement successive equally-sized segments of the deque. The mItBegin deque member points the deque begin() position.
-bitvector	Look at the bitvector mContainer variable. If it's a vector, then see vector above.
-bitset	Look at the bitset mWord variable. The bitset is nothing but one or more uint32_t mWord items.
-set
-multiset
-fixed_set
-fixed_multiset
-The set containers are implemented as a tree of elements. The set mAnchor.mpNodeParent points to the top of the tree; the mAnchor.mpNodeLeft points to the far left node of the tree (set begin()); the mAnchor.mpNodeRight points to the right of the tree (set end()).
-map
-multimap
-fixed_map
-fixed_multimap	The map containers are implemented as a tree of pairs, where pair.first is the map key and pair.second is the map value. The map mAnchor.mpNodeParent points to the top of the tree; the mAnchor.mpNodeLeft points to the far left node of the tree (map begin()); the mAnchor.mpNodeRight points to the right of the tree (map end()).
-hash_map
-hash_multimap
-fixed_hash_map
-fixed_hash_multimap	hash tables in EASTL are implemented as an array of singly-linked lists. The array is the mpBucketArray member. Each element in the list is a pair, where the first element of the pair is the map key and the second is the map value.
-intrusive_hash_map
-intrusive_hash_multimap
-intrusive_hash_set
-intrusive_hash_multiset	intrusive hash tables in EASTL are implemented very similarly to regular hash tables. See the hash_map and hash_set entries for more info.
-hash_set
-hash_multiset
-fixed_hash_set
-fixed_hash_map
-hash tables in EASTL are implemented as an array of singly-linked lists. The array is the mpBucketArray member.
-basic_string
-fixed_string
-fixed_substring	View the string mpBegin value in the debugger. If the string is long, use ", N" to limit the view length, as with someString.mpBegin, 32
-heap
-A heap is an array of data (e.g. EASTL vector) which is organized in a tree whereby the highest priority item is array[0], The next two highest priority items are array[1] and [2]. Underneath [1] in priority are items [3] and [4], and underneath item [2] in priority are items [5] and [6]. etc.
-stack
-View the stack member c value in the debugger. That member will typically be a list or deque.
-queue
-View the queue member c value in the debugger. That member will typically be a list or deque.
-priority_queue
-View the priority_queue member c value in the debugger. That member will typically be a vector or deque which is organized as a heap. See the heap section above for how to view a heap.
-smart_ptr	View the mpValue member.
-Debug.3 The EASTL source code is sometimes rather complicated looking. Why is that?
+| Container | Approach |
+|--|--|
+| slist<br>fixed_slist | slist is a singly-linked list. Look at the slist mNode variable. You can walk the list by looking at mNode.mpNext, etc. |
+| list<br>fixed_list | list is a doubly-linked list. Look at the list mNode variable. You can walk the list forward by looking at mNode.mpNext, etc. and backward by looking at mpPrev, etc. |
+| intrusive_list<br>intrusive_slist† | Look at the list mAnchor node. This lets you walk forward and backward in the list via mpNext and mpPrev. |
+| array | View the array mValue member in the debugger. It's simply a C style array. |
+| vector<br>fixed_vector | View the vector mpBegin value in the debugger. If the string is long, use ", N" to limit the view length, as with someVector.mpBegin, 32 |
+| vector_set<br>vector_multiset<br>vector_map<br>vector_multimap | These are containers that are implemented as a sorted vector, deque, or array. They are searched via a standard binary search. You can view them the same way you view a vector or deque. |
+| deque | deque is implemented as an array of arrays, where the arrays implement successive equally-sized segments of the deque. The mItBegin deque member points the deque begin() position. |
+| bitvector | Look at the bitvector mContainer variable. If it's a vector, then see vector above. |
+| bitset | Look at the bitset mWord variable. The bitset is nothing but one or more uint32_t mWord items. |
+| set<br>multiset<br>fixed_set<br>fixed_multiset | The set containers are implemented as a tree of elements. The set mAnchor.mpNodeParent points to the top of the tree; the mAnchor.mpNodeLeft points to the far left node of the tree (set begin()); the mAnchor.mpNodeRight points to the right of the tree (set end()). |
+| map<br>multimap<br>fixed_map<br>fixed_multimap | The map containers are implemented as a tree of pairs, where pair.first is the map key and pair.second is the map value. The map mAnchor.mpNodeParent points to the top of the tree; the mAnchor.mpNodeLeft points to the far left node of the tree (map begin()); the mAnchor.mpNodeRight points to the right of the tree (map end()). |
+| hash_map<br>hash_multimap<br>fixed_hash_map<br>fixed_hash_multimap | hash tables in EASTL are implemented as an array of singly-linked lists. The array is the mpBucketArray member. Each element in the list is a pair, where the first element of the pair is the map key and the second is the map value. |
+| intrusive_hash_map<br>intrusive_hash_multimap<br>intrusive_hash_set<br>intrusive_hash_multiset | intrusive hash tables in EASTL are implemented very similarly to regular hash tables. See the hash_map and hash_set entries for more info. |
+| hash_set<br>hash_multiset<br>fixed_hash_set<br>fixed_hash_map | hash tables in EASTL are implemented as an array of singly-linked lists. The array is the mpBucketArray member. |
+| basic_string<br>fixed_string<br>fixed_substring | View the string mpBegin value in the debugger. If the string is long, use ", N" to limit the view length, as with someString.mpBegin, 32 |
+| heap | A heap is an array of data (e.g. EASTL vector) which is organized in a tree whereby the highest priority item is array[0], The next two highest priority items are array[1] and [2]. Underneath [1] in priority are items [3] and [4], and underneath item [2] in priority are items [5] and [6]. etc. |
+| stack | View the stack member c value in the debugger. That member will typically be a list or deque. |
+| queue | View the queue member c value in the debugger. That member will typically be a list or deque. |
+| priority_queue | View the priority_queue member c value in the debugger. That member will typically be a vector or deque which is organized as a heap. See the heap section above for how to view a heap. |
+| smart_ptr | View the mpValue member. |
 
-Short answer
+### Debug.3 The EASTL source code is sometimes rather complicated looking. Why is that?
+
+**Short answer**
+
 Maximum performance.
 
-Long answer
+**Long answer**
+
 EASTL uses templates, type_traits, iterator categories, redundancy reduction, and branch reduction in order to achieve optimal performance. A side effect of this is that there are sometimes a lot of template parameters and multiple levels of function calls due to template specialization. The ironic thing about this is that this makes the code (an optimized build, at least) go faster, not slower. In an optimized build the compiler will see through the calls and template parameters and generate a direct optimized inline version.
 
 As an example of this, take a look at the implementation of the copy implementation in algorithm.h. If you are copying an array of scalar values or other trivially copyable values, the compiler will see how the code directs this to the memcpy function and will generate nothing but a memcpy in the final code. For non-memcpyable data types the compiler will automatically understand that in do the right thing.
 
 EASTL's primary objective is maximal performance, and it has been deemed worthwhile to make the code a little less obvious in order to achieve this goal. Every case where EASTL does something in an indirect way is by design and usually this is for the purpose of achieving the highest possible performance.
 
-Debug.4 When I get compilation errors, they are very long and complicated looking. What do I do?
+### Debug.4 When I get compilation errors, they are very long and complicated looking. What do I do?
 
 Assuming the bugs are all worked out of EASTL, these errors really do indicate that you have something wrong. EASTL is intentionally very strict about types, as it tries to minimize the chance of users errors. Unfortunately, there is no simple resolution to the problem of long compiler errors other than to deal with them. On the other hand, once you've dealt with them a few times, you tend to realize that most of time they are the same kinds of errors and
 
 Top five approaches to dealing with long compilation errors:
 
-Look at the line where the compilation error occurred and ignore the text of the error and just look at obvious things that might be wrong.
-Consider the most common typical causes of templated compilation errors and consider if any of these might be your problem. Usually one of them are.
-Either read through the error (it's not as hard as it may look on the surface) or copy the error to a text file and remove the extraneous
-Compile the code under GCC instead of MSVC, as GCC warnings and errors tend to be more helpful than MSVC's. Possibly also consider compiling an isolated version under Comeau C++'s free online compiler at www.comeaucomputing.com or the Dinkumware online compiler at http://dinkumware.com/exam/.
-Try using an STL filter (http://www.bdsoft.com/tools/stlfilt.html) which automatically boils down template errors to simpler forms. We haven't tried this yet with EASTL. Also there is the more generic TextFilt (http://textfilt.sourceforge.net/).
+1.Look at the line where the compilation error occurred and ignore the text of the error and just look at obvious things that might be wrong.
+2. Consider the most common typical causes of templated compilation errors and consider if any of these might be your problem. Usually one of them are.
+3. Either read through the error (it's not as hard as it may look on the surface) or copy the error to a text file and remove the extraneous
+4. Compile the code under GCC instead of MSVC, as GCC warnings and errors tend to be more helpful than MSVC's. Possibly also consider compiling an isolated version under Comeau C++'s free online compiler at www.comeaucomputing.com or the Dinkumware online compiler at http://dinkumware.com/exam/.
+5. Try using an STL filter (http://www.bdsoft.com/tools/stlfilt.html) which automatically boils down template errors to simpler forms. We haven't tried this yet with EASTL. Also there is the more generic TextFilt (http://textfilt.sourceforge.net/).
+
 Top five causes of EASTL compilation errors:
 
-const-correctness. Perhaps a quarter of container template errors are due to the user not specifying const correctly.
-Missing hash function. hash_map, hash_set, etc. require that you either specify a hash function or one exists for your class. See functional.h for examples of declarations of hash functions for common data types.
-Missing operators. Various containers and algorithms require that certain operators exist for your contained classes. For example, list requires that you can test contained objects for equivalence (i.e. operator==), while map requires that you can test contained objects for "less-ness" (operator <). If you define a Widget class and don't have a way to compare two Widgets, you will get errors when trying to put them into a map.
-Specifying the wrong data type. For example, it is a common mistake to forget that when you insert into a map, you need to insert a pair of objects and not just your key or value type.
-Incorrect template parameters. When declaring a template instantiation (e.g. map<int, int, less<int> >) you simply need to get the template parameters correct. Also note that when you have ">>" next to each other that you need to separate them by one space (e.g. "> >").
-Debug.5 How do I measure hash table balancing?
+1. const-correctness. Perhaps a quarter of container template errors are due to the user not specifying const correctly.
+2. Missing hash function. hash_map, hash_set, etc. require that you either specify a hash function or one exists for your class. See functional.h for examples of declarations of hash functions for common data types.
+3. Missing operators. Various containers and algorithms require that certain operators exist for your contained classes. For example, list requires that you can test contained objects for equivalence (i.e. operator==), while map requires that you can test contained objects for "less-ness" (operator <). If you define a Widget class and don't have a way to compare two Widgets, you will get errors when trying to put them into a map.
+4. Specifying the wrong data type. For example, it is a common mistake to forget that when you insert into a map, you need to insert a pair of objects and not just your key or value type.
+5. Incorrect template parameters. When declaring a template instantiation (e.g. map<int, int, less<int> >) you simply need to get the template parameters correct. Also note that when you have ">>" next to each other that you need to separate them by one space (e.g. "> >").
+
+### Debug.5 How do I measure hash table balancing?
 
 The following functionality lets you spelunk hash container layout.
 
-There is the load_factor function which tells you the overall hashtable load, but doesn't tell you if a load is unevenly distributed.
-You can control the load factor and thus the automated bucket redistribution with set_load_factor.
-The local_iterator begin(size_type n) and local_iterator end(size_type) functions lets you iterate each bucket individually. You can use this to examine the elements in a bucket.
-You can use the above to get the size of any bucket, but there is also simply the bucket_size(size_type n) function.
-The bucket_count function tells you the count of buckets. So with this you can completely visualize the layout of the hash table.
-There is also iterator find_by_hash(hash_code_t c), for what it's worth.
+* There is the load_factor function which tells you the overall hashtable load, but doesn't tell you if a load is unevenly distributed.
+* You can control the load factor and thus the automated bucket redistribution with set_load_factor.
+* The local_iterator begin(size_type n) and local_iterator end(size_type) functions lets you iterate each bucket individually. You can use this to examine the elements in a bucket.
+* You can use the above to get the size of any bucket, but there is also simply the bucket_size(size_type n) function.
+* The bucket_count function tells you the count of buckets. So with this you can completely visualize the layout of the hash table.
+* There is also iterator find_by_hash(hash_code_t c), for what it's worth.
+
 The following function draws an ASCII bar graph of the hash table for easy visualization of bucket distribution:
 
+```cpp
 #include <EASTL/hash_map.h>
 #include <EASTL/algorithm.h>
 #include <stdio.h>
@@ -1254,9 +1285,11 @@ void VisualizeHashTableBuckets(const HashTable& h)
 
     YourPrintFunction(" --------------------------------------------------------------------------------\n");
 }
+```
 
 This results in a graph that looks like the following (with one horizontal bar per bucket). This hashtable has a large number of collisions in each of its 10 buckets.
 
+```
    ------------------------------------------------------
  0|********************************************
  1|************************************************
@@ -1270,49 +1303,57 @@ This results in a graph that looks like the following (with one horizontal bar p
  9|**************************************
 10|********************************************
    -----------------------------------------------------
+```
 
-Containers
+## Containers
 
-Cont.1 Why do some containers have "fixed" versions (e.g. fixed_list) but others(e.g. deque) don't have fixed versions?
+### Cont.1 Why do some containers have "fixed" versions (e.g. fixed_list) but others(e.g. deque) don't have fixed versions?
 
 Recall that fixed containers are those that are implemented via a single contiguous block of memory and don't use a general purpose heap to allocate memory from. For example, fixed_list is a list container that implements its list by a user-configurable fixed block of memory. Such containers have an upper limit to how many items they can hold, but have the advantage of being more efficient with memory use and memory access coherency.
 
 The reason why some containers don't have fixed versions is that such functionality doesn't make sense with these containers. Containers which don't have fixed versions include:
 
+```
 array, deque, bitset, stack, queue, priority_queue,
 intrusive_list, intrusive_hash_map, intrusive_hash_set,
 intrusive_hash_multimap, intrusive_hash_multimap,
 vector_map, vector_multimap, vector_set, vector_multiset.
+```
+
 Some of these containers are adapters which wrap other containers and thus there is no need for a fixed version because you can just wrap a fixed container. In the case of intrusive containers, the user is doing the allocation and so there are no memory allocations. In the case of array, the container is a primitive type which doesn't allocate memory. In the case of deque, it's primary purpose for being is to dynamically resize and thus the user would likely be better of using a fixed_vector.
 
-Cont.2 Can I mix EASTL with standard C++ STL?
+### Cont.2 Can I mix EASTL with standard C++ STL?
 
 This is possible to some degree, though the extent depends on the implementation of C++ STL. One of things that makes interoperability is something called iterator categories. Containers and algorithms recognize iterator types via their category and STL iterator categories are not recognized by EASTL and vice versa.
 
 Things that you definitely can do:
 
-#include both EASTL and standard STL headers from the same .cpp file.
-Use EASTL containers to hold STL containers.
-Construct an STL reverse_iterator from an EASTL iterator.
-Construct an EASTL reverse_iterator from an STL iterator.
+* #include both EASTL and standard STL headers from the same .cpp file.
+* Use EASTL containers to hold STL containers.
+* Construct an STL reverse_iterator from an EASTL iterator.
+* Construct an EASTL reverse_iterator from an STL iterator.
+
 Things that you probably will be able to do, though a given std STL implementation may prevent it:
 
-Use STL containers in EASTL algorithms.
-Use EASTL containers in STL algorithms.
-Construct or assign to an STL container via iterators into an EASTL container.
-Construct or assign to an EASTL container via iterators into an STL container.
+* Use STL containers in EASTL algorithms.
+* Use EASTL containers in STL algorithms.
+* Construct or assign to an STL container via iterators into an EASTL container.
+* Construct or assign to an EASTL container via iterators into an STL container.
+
 Things that you would be able to do if the given std STL implementation is bug-free:
 
-Use STL containers to hold EASTL containers. Unfortunately, VC7.x STL has a confirmed bug that prevents this. Similarly, STLPort versions prior to v5 have a similar but.
+* Use STL containers to hold EASTL containers. Unfortunately, VC7.x STL has a confirmed bug that prevents this. Similarly, STLPort versions prior to v5 have a similar but.
+
 Things that you definitely can't do:
 
-Use an STL allocator directly with an EASTL container (though you can use one indirectly).
-Use an EASTL allocator directly with an STL container (though you can use one indirectly).
-Cont.3 Why are there so many containers?
+* Use an STL allocator directly with an EASTL container (though you can use one indirectly).
+* Use an EASTL allocator directly with an STL container (though you can use one indirectly).
+
+### Cont.3 Why are there so many containers?
 
 EASTL has a large number of container types (e.g vector, list, set) and often has a number of variations of given types (list, slist, intrusive_list, fixed_list). The reason for this is that each container is tuned and to a specific need and there is no single container that works for all needs. The more the user is concerned about squeezing the most performance out of their system, the more the individual container variations become significant. It's important to note that having additional container types generally does not mean generating additional code or code bloat. Templates result in generated code regardless of what templated class they come from, and so for the most part you get optimal performance by choosing the optimal container for your needs.
 
-Cont.4 Don't STL and EASTL containers fragment memory?
+### Cont.4 Don't STL and EASTL containers fragment memory?
 
 They only fragment memory if you use them in a way that does so. This is no different from any other type of container used in a dynamic way. There are various solutions to this problem, and EASTL provides additional help as well:
 
@@ -1320,12 +1361,14 @@ For vectors, use the reserve function (or the equivalent constructor) to set asi
 EASTL has "fixed" variations of containers which allow you to specify a fixed block of memory which the container uses for its memory. The container will not allocate any memory with these types of containers and all memory will be cache-friendly due to its locality.
 You can assign custom allocators to containers instead of using the default global allocator. You would typically use an allocator that has its own private pool of memory.
 Where possible, add all a container's elements to it at once up front instead of adding them over time. This avoids memory fragmentation and increase cache coherency.
-Cont.5 I don't see container optimizations for equivalent scalar types such as pointer types. Why?
+
+### Cont.5 I don't see container optimizations for equivalent scalar types such as pointer types. Why?
 
 Metrowerks (and no other, as of this writing) STL has some container specializations for type T* which maps them to type void*. The idea is that a user who declares a list of Widget* and a list of Gadget* will generate only one container: a list of void*. As a result, code generation will be smaller. Often this is done only in optimized builds, as such containers are harder to view in debug builds due to type information being lost.
 
 The addition of this optimization is under consideration for EASTL, though it might be noted that optimizing compilers such as VC++ are already capable of recognizing duplicate generated code and folding it automatically as part of link-time code generation (LTCG) (a.k.a. "whole program optimization"). This has been verified with VC++, as the following code and resulting disassembly demonstrate:
 
+```cpp
 eastl::list<int*>        intPtrList;
 eastl::list<TestObject*> toPtrList;
 
@@ -1337,48 +1380,57 @@ eastl_size_t n2 = toPtrList.size();
 0042D291  push        eax
 0042D292  lea         edx,[esp+24h]
 0042D296  call        eastl::list<TestObject>::size (414180h)
+```
+
 Note that in the above case the compiler folded the two implementations of size() into a single implementation.
-Cont.6 What about alternative container and algorithm implementations (e.g. treaps, skip lists, avl trees)?
+
+### Cont.6 What about alternative container and algorithm implementations (e.g. treaps, skip lists, avl trees)?
 
 EASTL chooses to implement some alternative containers and algorithms and not others. It's a matter of whether or not the alternative provides truly complementary or improved functionality over existing containers. The following is a list of some implemented and non-implemented alternatives and the rationale behind each:
 
 Implemented:
 
-intrusive_list, etc. -- Saves memory and improves cache locality.
-vector_map, etc. -- Saves memory and improves cache locality.
-ring_buffer -- Useful for some types of operations and has no alternative.
-shell_sort -- Useful sorting algorithm.
-sparse_matrix -- Useful for some types of operations and has no alternative.
+* intrusive_list, etc. -- Saves memory and improves cache locality.
+* vector_map, etc. -- Saves memory and improves cache locality.
+* ring_buffer -- Useful for some types of operations and has no alternative.
+* shell_sort -- Useful sorting algorithm.
+* sparse_matrix -- Useful for some types of operations and has no alternative.
+
 Not implemented:
 
-skip lists (alternative to red-black tree) -- These use more memory and usually perform worse than rbtrees.
-treap (alternative to red-black tree) -- These are easier and smaller than rbtrees, but perform worse.
-avl tree (alternative to red-black tree) -- These have slightly better search performance than rbtrees, but significantly worse insert/remove performance.
-btree (alternative to red-black tree) --  These are no better than rbtrees.
+* skip lists (alternative to red-black tree) -- These use more memory and usually perform worse than rbtrees.
+* treap (alternative to red-black tree) -- These are easier and smaller than rbtrees, but perform worse.
+* avl tree (alternative to red-black tree) -- These have slightly better search performance than rbtrees, but significantly worse * * insert/remove performance.
+* btree (alternative to red-black tree) --  These are no better than rbtrees.
+
 If you have an idea of something that should be implemented, please suggest it or even provide at least a prototypical implementation.
 
-Cont.7 Why are tree-based EASTL containers hard to read with a debugger?
+### Cont.7 Why are tree-based EASTL containers hard to read with a debugger?
 
-Short answer
+**Short answer**
+
 Maximum performance and design mandates.
 
-Long answer
+**Long answer**
+
 You may notice that when you have a tree-based container (e.g. set, map)  in the debugger that it isn't automatically able to recognize the tree nodes as containing instances of your contained object. You can get the debugger to do what you want with casting statements in the debug watch window, but this is not an ideal solution. The reason this is happening is that node-based containers always use an anonymous node type as the base class for container nodes. This is primarily done for performance, as it allows the node manipulation code to exist as a single non-templated library of functions and it saves memory because containers will have one or two base nodes as container 'anchors' and you don't want to allocate a node of the size of the user data when you can just use a base node. See list.h for an example of this and some additional in-code documentation on this.
 
 Additionally, EASTL has the design mandate that an empty container constructs no user objects. This is both for performance reasons and because it doing so would skew the user's tracking of object counts and might possibly break some expectation the user has about object lifetimes.
 
 Currently this debug issue exists only with tree-based containers. Other node-based containers such as list and slist use a trick to get around this problem in debug builds.
 
-Cont.8 How do I assign a custom allocator to an EASTL container?
+### Cont.8 How do I assign a custom allocator to an EASTL container?
 
 There are two ways of doing this:
 
-Use the set_allocator function that is present in each container.
-Specify a new allocator type via the Allocator template parameter that is present in each container.
+1. Use the set_allocator function that is present in each container.
+2. Specify a new allocator type via the Allocator template parameter that is present in each container.
+
 For item #1, EASTL expects that you provide an instance of an allocator of the type that EASTL recognizes. This is simple but has the disadvantage that all such allocators must be of the same class. The class would need to have C++ virtual functions in order to allow a given instance to act differently from another instance.
 
 For item #2, you specify that the container use your own allocator class. The advantage of this is that your class can be implemented any way you want and doesn't require virtual functions for differentiation from other instances. Due to the way C++ works your class would necessarily have to use the same member function names as the default allocator class type. In order to make things easier, we provide a skeleton allocator here which you can copy and fill in with your own implementation.
 
+```cpp
 class custom_allocator
 {
 public:
@@ -1460,8 +1512,11 @@ inline bool operator!=(const allocator& a, const allocator& b)
 {
     // Provide a negative comparison here.
 }
+```
+
 Here's an example of how to use the above custom allocator:
 
+```cpp
 // Declare a Widget list and have it default construct.
 list<Widget, custom_allocator> widgetList;
 
@@ -1472,33 +1527,41 @@ list<Widget, custom_allocator> widgetList2(gSomeGlobalAllocator);
 // an underlying implementation after construction.
 list<Widget, custom_allocator> widgetList;
 widgetList.get_allocator().mpIAllocator = new WidgetAllocatorImpl;
-Cont.9 How do I set the VC++ debugger to display EASTL container data with tooltips?
+```
 
-Visual Studio supports this via the AutoExp.dat file, an example of which is present with this documentation.
+### Cont.9 How do I set the VC++ debugger to display EASTL container data with tooltips?
+
+Visual Studio supports this via the AutoExp.dat file, an example of which is [present](./html/AutoExp.dat) with this documentation.
 
 Sometimes the AutoExp.dat doesn't seem to work. Avery Lee's explanation:
 
-If I had to take a guess, the problem is most likely in the cast to the concrete node type. These are always tricky because, for some strange reason, the debugger is whitespace sensitive with regard to specifying template types. You might try manually checking one of the routines of the specific map instantiation and checking that the placement of whitespace and const within the template expression still matches exactly. In some cases the compiler uses different whitespace rules depending on the value type which makes it impossible to correctly specify a single visualizer – this was the case for eastl::list<>, for which I was forced to include sections for both cases. The downside is that you have a bunch of (error) entries either way.
+> If I had to take a guess, the problem is most likely in the cast to the concrete node type. These are always tricky because, for some strange reason, the debugger is whitespace sensitive with regard to specifying template types. You might try manually checking one of the routines of the specific map instantiation and checking that the placement of whitespace and const within the template expression still matches exactly. In some cases the compiler uses different whitespace rules depending on the value type which makes it impossible to correctly specify a single visualizer – this was the case for eastl::list<>, for which I was forced to include sections for both cases. The downside is that you have a bunch of (error) entries either way.
 
-Cont.10 How do I use a memory pool with a container?
+### Cont.10 How do I use a memory pool with a container?
 
 Using custom memory pools is a common technique for decreasing memory fragmentation and increasing memory cache locality. EASTL gives you the flexibility of defining your own memory pool systems for containers. There are two primary ways of doing this:
 
-Assign a custom allocator to a container. eastl::fixed_pool provides an implementation.
-Use one of the EASTL fixed containers, such as fixed_list.
-Custom Allocator
+* Assign a custom allocator to a container. eastl::fixed_pool provides an implementation.
+* Use one of the EASTL fixed containers, such as fixed_list.
+
+**Custom Allocator**
+
 In the custom allocator case, you will want to create a memory pool and assign it to the container. For purely node-based containers such as list, slist, map, set, multimap, and multiset, your pool simply needs to be able to allocate list nodes. Each of these containers has a member typedef called node_type which defines the type of node allocated by the container. So if you have a memory pool that has a constructor that takes the size of pool items and the count of pool items, you would do this (assuming that MemoryPool implements the Allocator interface):
 
+```cpp
 typedef list<Widget, MemoryPool> WidgetList;           // Declare your WidgetList type.
 
 MemoryPool myPool(sizeof(WidgetList::node_type), 100); // Make a pool of 100 Widget nodes.
 WidgetList myList(&myPool);                            // Create a list that uses the pool.
+```
+
 In the case of containers that are array-based, such as vector and basic_string, memory pools don't work very well as these containers work on a realloc-basis instead of by adding incremental nodes. What what want to do with these containers is assign a sufficient block of memory to them and reserve() the container's capacity to the size of the memory.
 
 In the case of mixed containers which are partly array-based and partly node based, such as hash containers and deque, you can use a memory pool for the nodes but will need a single array block to supply for the buckets (hash containers and deque both use a bucket-like system).
 
 You might consider using eastl::fixed_pool as such an allocator, as it provides such functionality and allows the user to provide the actual memory used for the pool. Here is some example code:
 
+```cpp
 char buffer[256];
 
 list<Widget, fixed_pool> myList;
@@ -1507,77 +1570,101 @@ Fixed Container
 In the fixed container case, the container does all the work for you. To use a list which implements a private pool of memory, just declare it like so:
 
 fixed_list<Widget, 100> fixedList; // Declare a fixed_list that can hold 100 Widgets
-Cont.11 How do I write a comparison (operator<()) for a struct that contains two or more members?
+```
+
+### Cont.11 How do I write a comparison (operator<()) for a struct that contains two or more members?
 
 See Algo.2
 
-Cont.12 Why doesn't container X have member function Y?
+### Cont.12 Why doesn't container X have member function Y?
 
 Why don't the list or vector containers have a find() function? Why doesn't the vector container have a sort() function? Why doesn't the string container have a mid() function? These are common examples of such questions.
 
 The answer usually boils down to two reasons:
 
-The functionality exists in a more centralized location elsewhere, such as the algorithms.
-The functionality can be had by using other member functions.
+* The functionality exists in a more centralized location elsewhere, such as the algorithms.
+* The functionality can be had by using other member functions.
+
 In the case of find and sort functions not being part of containers, the find algorithm and sort algorithm are centralized versions that apply to any container. Additionally, the algorithms allow you to specify a sub-range of the container on which to apply the algorithm. So in order to find an element in a list, you would do this:
-list<int>::iterator i = find(list.begin(), list.end(), 3);
+
+`list<int>::iterator i = find(list.begin(), list.end(), 3);`
+
 And in order to sort a vector, you would do this:
+
+```cpp
 quick_sort(v.begin(), v.end());   // Sort the entire array.
 
-
 quick_sort(&v[3], &v[8]);         // Sort the items at the indexes in the range of [3, 8).
+```
+
 In the case of functionality that can be had by using other member functions, note that EASTL follows the philosophy that duplicated functionality should not exist in a container, with exceptions being made for cases where mistakes and unsafe practices commonly happen if the given function isn't present. In the case of string not having a mid function, this is because there is a string constructor that takes a sub-range of another string. So to make a string out of the middle of another, you would do this:
 
-string strMid(str, 3, 5); // Make a new string of the characters from the source range of [3, 3+5).
+`string strMid(str, 3, 5); // Make a new string of the characters from the source range of [3, 3+5).`
+
 It might be noted that the EASTL string class is unique among EASTL containers in that it sometimes violates the minimum functionality rule. This is so because the std C++ string class similarly does so and EASTL aims to be compatible.
 
-Cont.13 How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.
+### Cont.13 How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.
 
 The problem is illustrated with this example:
 
+```cpp
 map<string, Widget> swMap;
   ...
 map<string, Widget>::iterator it = swMap.find("blue"); // A temporary string object is created here.
+```
+
 In this example, the find function expects a string object and not a string literal and so (silently!) creates a temporary string object for the duration of the find. There are two solutions to this problem:
 
-Make the map a map of char pointers instead of string objects. Don't forget to write a custom compare or else the default comparison function will compare pointer values instead of string contents.
-Use the EASTL hash_map::find_as function, which allows you to find an item in a hash container via an alternative key than the one the hash table uses.
-Cont.14 Why are set and hash_set iterators const (i.e. const_iterator)?
+* Make the map a map of char pointers instead of string objects. Don't forget to write a custom compare or else the default comparison function will compare pointer values instead of string contents.
+* Use the EASTL hash_map::find_as function, which allows you to find an item in a hash container via an alternative key than the one the hash table uses.
+
+### Cont.14 Why are set and hash_set iterators const (i.e. const_iterator)?
 
 The situation is illustrated with this example:
 
+```cpp
 set<int> intSet;
 
 intSet.insert(1);
 set<int>::iterator i = intSet.begin();
 *i = 2; // Error: iterator i is const.
+```
+
 In this example, the iterator is a regular iterator and not a const_iterator, yet the compiler gives an error when trying to change the iterator value. The reason this is so is that a set is an ordered container and changing the value would make it out of order. Thus, set and multiset iterators are always const_iterators. If you need to change the value and are sure the change will not alter the container order, use const_cast or declare mutable member variables for your contained object. This resolution is the one blessed by the C++ standardization committee.
 
-Cont.15 How do I prevent my hash container from re-hashing?
+### Cont.15 How do I prevent my hash container from re-hashing?
 
 If you want to make a hashtable never re-hash (i.e. increase/reallocate its bucket count), call set_max_load_factor with a very high value such as 100000.f.
 
 Similarly, you can control the bucket growth factor with the rehash_policy function. By default, when buckets reallocate, they reallocate to about twice their previous count. You can control that value as with the example code here:
 
+```cpp
 hash_set<int> hashSet;
 hashSet.rehash_policy().mfGrowthFactor = 1.5f
-Cont.16 Which uses less memory, a map or a hash_map?
+```
+
+### Cont.16 Which uses less memory, a map or a hash_map?
 
 A hash_map will virtually always use less memory. A hash_map will use an average of two pointers per stored element, while a map uses three pointers per stored element.
 
-Cont.17 How do I write a custom hash function?
+### Cont.17 How do I write a custom hash function?
 
 You can look at the existing hash functions in functional.h, but we provide a couple examples here.
 
 To write a specific hash function for a Widget class, you would do this:
 
+```cpp
 struct WidgetHash {
     size_t operator()(const Widget& w) const
         { return w.id; }
 };
 
 hash_set<Widget, WidgetHash> widgetHashSet;
+```
+
 To write a generic (templated) hash function for a set of similar classes (in this case that have an id member), you would do this:
+
+```cpp
 template <typename T>
 struct GeneralHash {
     size_t operator()(const T& t) const
@@ -1586,39 +1673,56 @@ struct GeneralHash {
 
 hash_set<Widget, GeneralHash<Widget> > widgetHashSet;
 hash_set<Dogget, GeneralHash<Dogget> > doggetHashSet;
-Cont.18 How do I write a custom compare function for a map or set?
+```
+
+### Cont.18 How do I write a custom compare function for a map or set?
 
 The sorted containers require that an operator< exist for the stored values or that the user provide a suitable custom comparison function. A custom can be implemented like so:
+
+```cpp
 struct WidgetLess {
     bool operator()(const Widget& w1, const Widget& w2) const
         { return w.id < w2.id; }
 };
 
 set<Widget, WidgetLess> wSet;
+```
+
 It's important that your comparison function must be consistent in its behaviour, else the container will either be unsorted or a crash will occur. This concept is called "strict weak ordering."
 
-Cont.19 How do I force my vector or string capacity down to the size of the container?
+### Cont.19 How do I force my vector or string capacity down to the size of the container?
 
 You can simply use the set_capacity() member function which is present in both vector and string. This is a function that is not present in std STL vector and string functions.
 
+```cpp
 eastl::vector<Widget> x;
 x.set_capacity();   // Shrink x's capacity to be equal to its size.
 
 eastl::vector<Widget> x;
 x.set_capacity(0);  // Completely clear x.
+```
+
 To compact your vector or string in a way that would also work with std STL you need to do the following.
 
 How to shrink a vector's capacity to be equal to its size:
 
+```cpp
 std::vector<Widget> x;
 std::vector<Widget>(x).swap(x); // Shrink x's capacity.
+```
+
 How to completely clear a std::vector (size = 0, capacity = 0, no allocation):
+
+```cpp
 std::vector<Widget> x;
 std::vector<Widget>().swap(x); // Completely clear x.
-Cont.20 How do I iterate a container while (selectively) removing items from it?
+```
+
+### Cont.20 How do I iterate a container while (selectively) removing items from it?
 
 All EASTL containers have an erase function which takes an iterator as an argument and returns an iterator to the next item. Thus, you can erase items from a container while iterating it like so:
 
+```cpp
 set<int> intSet;
 
 set<int>::iterator i = intSet.begin();
@@ -1630,7 +1734,9 @@ while(i != intSet.end())
     else
         ++i;
 }
-Cont.21 How do I store a pointer in a container?
+```
+
+### Cont.21 How do I store a pointer in a container?
 
 The problem with storing pointers in containers is that clearing the container will not free the pointers automatically. There are two conventional resolutions to this problem:
 
@@ -1642,35 +1748,42 @@ The advantage of the latter is that your code will be cleaner and will always be
 
 It's important that you use a shared smart pointer and not an unshared one such as C++ auto_ptr, as the latter will result in crashes upon linear container resizes. Here we provide an example of how to create a list of smart pointers:
 
+```cpp
 list< shared_ptr<Widget> > wList;
 
 wList.push_back(shared_ptr<Widget>(new Widget));
 wList.pop_back(); // The Widget will be freed.
-Cont.22 How do I make a union of two containers? difference? intersection?
+```
+
+### Cont.22 How do I make a union of two containers? difference? intersection?
 
 The best way to accomplish this is to sort your container (or use a sorted container such as set) and then apply the set_union, set_difference, or set_intersection algorithms.
 
-Cont.23 How do I override the default global allocator?
+### Cont.23 How do I override the default global allocator?
 
 There are multiple ways to accomplish this. The allocation mechanism is defined in EASTL/internal/config.h and in allocator.h/cpp. Overriding the default global allocator means overriding these files, overriding what these files refer to, or changing these files outright. Here is a list of things you can do, starting with the simplest:
 
-Simply provide the following versions of operator new (which EASTL requires, actually):
-    void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
-    void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
-Predefine the config.h macros for EASTLAlloc, EASTLFree, etc. See config.h for this.
-Override config.h entirely via EASTL_USER_CONFIG_HEADER. See config.h for this.
-Provide your own version of allocator.h/cpp
-Provide your own version of config.h.
+* Simply provide the following versions of operator new (which EASTL requires, actually):
+```cpp
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
+```
+* Predefine the config.h macros for EASTLAlloc, EASTLFree, etc. See config.h for this.
+* Override config.h entirely via EASTL_USER_CONFIG_HEADER. See config.h for this.
+* Provide your own version of allocator.h/cpp
+* Provide your own version of config.h.
+
 If you redefine the allocator class, you can make it work however you want.
 
 Note that config.h defines EASTLAllocatorDefault, which returns the default allocator instance. As documented in config.h, this is not a global allocator which implements all container allocations but is the allocator that is used when EASTL needs to allocate memory internally. There are very few cases where EASTL allocates memory internally, and in each of these it is for a sensible reason that is documented to behave as such.
 
-Cont.24 How do I do trick X with the string container?
+### Cont.24 How do I do trick X with the string container?
 
 There seem to be many things users want to do with strings. Perhaps the most commonly requested EASTL container extensions are string class shortcut functions. While some of these requests are being considered, we provide some shortcut functions here.
 
-find_and_replace
+**find_and_replace**
 
+```cpp
 template <typename String>
 void find_and_replace(String& s, const typename String::value_type* pFind, const typename String::value_type* pReplace)    
 {
@@ -1680,8 +1793,11 @@ void find_and_replace(String& s, const typename String::value_type* pFind, const
 
 Example:
     find_and_replace(s, "hello", "hola");
-trim front (multiple chars)
+```
 
+**trim front (multiple chars)**
+
+```cpp
 template <typename String>
 void trim_front(String& s, const typename String::value_type* pValues)
 {
@@ -1690,8 +1806,11 @@ void trim_front(String& s, const typename String::value_type* pValues)
 
 Example:
     trim_front(s, " \t\n\r");
-trim back (multiple chars)
+```
 
+**trim back (multiple chars)**
+
+```cpp
 template <typename String>
 void trim_front(String& s, const typename String::value_type* pValues)
 {
@@ -1700,8 +1819,11 @@ void trim_front(String& s, const typename String::value_type* pValues)
 
 Example:
     trim_back(s, " \t\n\r");
-prepend
+```
 
+**prepend**
+
+```cpp
 template <typename String>
 void prepend(String& s, const typename String::value_type* p)
 {
@@ -1710,7 +1832,11 @@ void prepend(String& s, const typename String::value_type* p)
 
 Example:
     prepend(s, "log: ");
-begins_with
+```
+
+**begins_with**
+
+```cpp
 template <typename String>
 bool begins_with(const String& s, const typename String::value_type* p)
 {
@@ -1719,8 +1845,11 @@ bool begins_with(const String& s, const typename String::value_type* p)
 
 Example:
     if(begins_with(s, "log: ")) ...
-ends_with
+```
 
+**ends_with**
+
+```cpp
 template <typename String>
 bool ends_with(const String& s, const typename String::value_type* p)
 {
@@ -1731,9 +1860,13 @@ bool ends_with(const String& s, const typename String::value_type* p)
 
 Example:
     if(ends_with(s, "test.")) ...
-tokenize
+```
+
+**tokenize**
+
 Here is a simple tokenization function that acts very much like the C strtok function.
 
+```cpp
 template <typename String>
 size_t tokenize(const String& s, const typename String::value_type* pDelimiters,
                 String* resultArray, size_t resultArraySize)
@@ -1755,18 +1888,22 @@ size_t tokenize(const String& s, const typename String::value_type* pDelimiters,
 Example:
    string resultArray[32];
 tokenize(s, " \t", resultArray, 32));
-Cont.25 How do EASTL smart pointers compare to Boost smart pointers?
+```
+
+### Cont.25 How do EASTL smart pointers compare to Boost smart pointers?
 
 EASTL's smart pointers are nearly identical to Boost (including all that crazy member template and dynamic cast functionality in shared_ptr), but are not using the Boost source code. EA legal has already stated that it is fine to have smart pointer classes with the same names and functionality as those present in Boost. EA legal specifically looked at the smart pointer classes in EASTL for this. There are two differences between EASTL smart pointers and Boost smart pointers:
 
-EASTL smart pointers don't have thread safety built-in. It was deemed that this is too much overhead and that thread safety is something best done at a higher level. By coincidence the C++ library proposal to add shared_ptr also omits the thread safety feature. FWIW, I put a thread-safe shared_ptr in EAThread, though it doesn't attempt to do all the fancy member template things that Boost shared_ptr does. Maybe I'll add that some day if people care.
-EASTL shared_ptr object deletion goes through a deletion object instead of through a virtual function interface. 95% of the time this makes no difference (aside from being more efficient), but the primary case where it matters is when you have shared_ptr<void> and assign to is something like "new Widget". The problem is that shared_ptr<void> doesn't know what destructor to call and so doesn't call a destructor unless you specify a custom destructor object as part of the template specification. I don't know what to say about this one, as it is less safe, but forcing everybody to have the overhead of additional templated classes and virtual destruction functions doesn't seem to be in the spirit of high performance or lean game development.
+* EASTL smart pointers don't have thread safety built-in. It was deemed that this is too much overhead and that thread safety is something best done at a higher level. By coincidence the C++ library proposal to add shared_ptr also omits the thread safety feature. FWIW, I put a thread-safe shared_ptr in EAThread, though it doesn't attempt to do all the fancy member template things that Boost shared_ptr does. Maybe I'll add that some day if people care.
+* EASTL shared_ptr object deletion goes through a deletion object instead of through a virtual function interface. 95% of the time this makes no difference (aside from being more efficient), but the primary case where it matters is when you have shared_ptr<void> and assign to is something like "new Widget". The problem is that shared_ptr<void> doesn't know what destructor to call and so doesn't call a destructor unless you specify a custom destructor object as part of the template specification. I don't know what to say about this one, as it is less safe, but forcing everybody to have the overhead of additional templated classes and virtual destruction functions doesn't seem to be in the spirit of high performance or lean game development.
+
 There is the possibility of making a shared_ptr_boost which is completely identical to Boost shared_ptr. So perhaps that will be done some day.
 
-Cont.26 How do your forward-declare an EASTL container?
+### Cont.26 How do your forward-declare an EASTL container?
 
 Here is are some examples of how to do this:
 
+```cpp
 namespace eastl
 {
     template <typename T, typename Allocator> class basic_string;
@@ -1779,14 +1916,17 @@ namespace eastl
 
     template <typename Key, typename T, typename Compare, typename Allocator> class map;
 }
+```
+
 The forward declaration can be used to declare a pointer or reference to such a class. It cannot be used to declare an instance of a class or refer to class data, static or otherwise. Nevertheless, forward declarations for pointers and references are useful for reducing the number of header files a header file needs to include.
 
-Cont.27 How do I make two containers share a memory pool?
+### Cont.27 How do I make two containers share a memory pool?
 
 EASTL (and std STL) allocators are specified by value semantics and not reference semantics. Value semantics is more powerful (because a value can also be a reference, but not the other way around), but is not always what people expects if they're used to writing things the other way.
 
 Here is some example code:
 
+```cpp
 struct fixed_pool_reference
 {
 public:
@@ -1851,8 +1991,11 @@ inline bool operator!=(const fixed_pool_reference& a, const fixed_pool_reference
 {
     return (a.mpFixedPool != b.mpFixedPool);
 }
+```
+
 Example usage of the above:
 
+```cpp
 typedef eastl::list<int, fixed_pool_reference> IntList;
 
 IntList::node_type buffer[2];
@@ -1863,26 +2006,31 @@ IntList myList2(myPool);
 
 myList1.push_back(37);
 myList2.push_back(39);
-Cont.28 Can I use a std (STL) allocator with EASTL?
+```
+
+### Cont.28 Can I use a std (STL) allocator with EASTL?
 
 No. EASTL allocators are similar in interface to std STL allocators, but not 100% compatible. If it was possible to make them compatible with std STL allocators but also match the design of EASTL then compatibility would exist. The primary reasons for lack of compatibility are:
 
-EASTL allocators have a different allocate function signature.
-EASTL allocators have as many as four extra required functions: ctor(name), get_name(), set_name(), allocate(size, align, offset).
-EASTL allocators have an additional allocate function specifically for aligned allocations, as listed directly above.
-What are the requirements of classes stored in containers?
+* EASTL allocators have a different allocate function signature.
+* EASTL allocators have as many as four extra required functions: ctor(name), get_name(), set_name(), allocate(size, align, offset).
+* EASTL allocators have an additional allocate function specifically for aligned allocations, as listed directly above.
+
+### What are the requirements of classes stored in containers?
 
 Class types stored in containers must have:
 
-a public copy constructor
-a public assignment operator
-a public destructor
-an operator < that compares two such classes (sorted containers only).
-an operator == that compares two such classes (hash containers only).
+* a public copy constructor
+* a public assignment operator
+* a public destructor
+* an operator < that compares two such classes (sorted containers only).
+* an operator == that compares two such classes (hash containers only).
+
 Recall that the compiler generates basic versions these functions for you when you don't implement them yourself, so you can omit any of the above if the compiler-generated version is sufficient.
 
 For example, the following code will act incorrectly, because the user forgot to implement an assignment operator. The compiler-generated assignment operator will assign the refCount value, which the user doesn't want, and which will be called by the vector during resizing.
 
+```cpp
 struct NotAPod
 {
    NotAPod(const NotAPod&) {} // Intentionally don't copy the refCount
@@ -1891,14 +2039,17 @@ struct NotAPod
 };
 
 eastl::vector<NotAPod> v;
-Algorithms
+```
 
-Algo.1 I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
+## Algorithms
+
+### Algo.1 I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
 
 It may possible that you are seeing floating point roundoff problems. Many STL algorithms require object comparisons to act consistently. However, floating point values sometimes compare differently between uses because in one situation a value might be in 32 bit form in system memory, whereas in anther situation that value might be in an FPU register with a different precision. These are difficult problems to track down and aren't the fault of EASTL or whatever similar library you might be using. There are various solutions to the problem, but the important thing is to find a way to force the comparisons to be consistent.
 
 The code below was an example of this happening, whereby the object pA->mPos was stored in system memory while pB->mPos was stored in a register and comparisons were inconsistent and a crash ensued.
 
+```cpp
 class SortByDistance : public binary_function<WorldTreeObject*, WorldTreeObject*, bool>
 {
 private:
@@ -1914,26 +2065,38 @@ public:
              < ((WorldObject*)pB)->mPos - mOrigin).GetLength();
     }
 };
-Algo.2 How do I write a comparison (operator<()) for a struct that contains two or more members?
+```
+
+### Algo.2 How do I write a comparison (operator<()) for a struct that contains two or more members?
 
 For a struct with two members such as the following:
 
+```cpp
 struct X {
     Blah m1;
     Blah m2;
 };
+```
+
 You would write the comparison function like this:
 
+```cpp
 bool operator<(const X& a, const X& b) {
     return (a.m1 == b.m1) ? (a.m2 < b.m2) : (a.m1 < b.m1);
 }
+```
+
 or, using only operator < but more instructions:
 
+```cpp
 bool operator<(const X& a, const X& b) {
     return (a.m1 < b.m1) || (!(b.m1 < a.m1) && (a.m2 < b.m2));
 }
+```
+
 For a struct with three members, you would have:
 
+```cpp
 bool operator<(const X& a, const X& b) {
     if(a.m1 != b.m1)
         return (a.m1 < b.m1);
@@ -1941,35 +2104,43 @@ bool operator<(const X& a, const X& b) {
         return (a.m2 < b.m2);
     return (a.mType < b.mType);
 }
+```
+
 And a somewhat messy implementation if you wanted to use only operator <.
 
 Note also that you can use the above technique to implement operator < for spatial types such as vectors, points, and rectangles. You would simply treat the members of the stuct as an array of values and ignore the fact that they have spatial meaning. All operator < cares about is that things order consistently.
 
+```cpp
 bool operator<(const Point2D& a, const Point2D& b) {
     return (a.x == b.x) ? (a.y < b.y) : (a.x < b.x);
 }
-Algo.3 How do I sort something in reverse order?
+```
+
+### Algo.3 How do I sort something in reverse order?
 
 Normally sorting puts the lowest value items first in the sorted range. You can change this by simply reversing the comparison. For example:
-sort(intVector.begin(), intVector.end(), greater<int>());
+
+`sort(intVector.begin(), intVector.end(), greater<int>());`
+
 It's important that you use operator > instead of >=. The comparison function must return false for every case where values are equal.
 
-Algo.4 I'm getting errors about min and max while compiling.
+### Algo.4 I'm getting errors about min and max while compiling.
 
 You need to define NOMINMAX under VC++ when this occurs, as it otherwise defines min and max macros that interfere. There may be equivalent issues with other compilers. Also, VC++ has a specific <minmax.h> header file which defines min and max macros but which doesn't pay attention to NOMINMAX and so in that case there is nothing to do but not include that file or to undefine min and max. minmax.h is not a standard file and its min and max macros are not standard C or C++ macros or functions.
 
-Algo.5 Why don't algorithms take a container as an argument instead of iterators? A container would be more convenient.
+### Algo.5 Why don't algorithms take a container as an argument instead of iterators? A container would be more convenient.
 
 Having algorithms that use containers instead of algorithms would reduce reduce functionality with no increase in performance. This is because the use of iterators allows for the application of algorithms to sub-ranges of containers and allows for the application of algorithms to containers aren't formal C++ objects, such as C-style arrays.
 
 Providing additional algorithms that use containers would introduce redundancy with respect to the existing algorithms that use iterators.
 
-Algo.6 Given a container of pointers, how do I find an element by value (instead of by pointer)?
+### Algo.6 Given a container of pointers, how do I find an element by value (instead of by pointer)?
 
 Functions such as find_if help you find a T element in a container of Ts. But if you have a container of pointers such as vector<Widget*>, these functions will enable you to find an element that matches a given Widget* pointer, but they don't let you find an element that matches a given Widget object.
 
 You can write your own iterating 'for' loop and compare values, or you can use a generic function object to do the work if this is a common task:
 
+```cpp
 template<typename T>
 struct dereferenced_equal
 {
@@ -1982,7 +2153,9 @@ struct dereferenced_equal
 ...
 
 find_if(container.begin(), container.end(), dereferenced_equal<Widget>(someWidget));
-Algo.7 When do stored objects need to support operator < vs. when do they need to support operator ==?
+```
+
+### Algo.7 When do stored objects need to support operator < vs. when do they need to support operator ==?
 
 Any object which is sorted needs to have operator < defined for it, implicitly via operator < or explicitly via a user-supplied Compare function. Sets and map containers require operator <, while sort, binary search, and min/max algorithms require operator <.
 
@@ -1990,10 +2163,11 @@ Any object which is compareed for equality needs to have operator == defined for
 
 Some algorithms and containers require neither < nor ==. Interestingly, no algorithm or container requires both < and ==.
 
-Algo.8 How do I sort via pointers or array indexes instead of objects directly?
+### Algo.8 How do I sort via pointers or array indexes instead of objects directly?
 
 Pointers
 
+```cpp
 vector<TestObject>  toArray;
 vector<TestObject*> topArray;
 
@@ -2009,8 +2183,11 @@ struct TestObjectPtrCompare
 };
 
 quick_sort(topArray.begin(), topArray.end(), TestObjectPtrCompare());
+```
+
 Array indexes
 
+```cpp
 vector<TestObject>   toArray;
 vector<eastl_size_t> toiArray;
 
@@ -2033,8 +2210,11 @@ struct TestObjectIndexCompare
 };
 
 quick_sort(toiArray.begin(), toiArray.end(), TestObjectIndexCompare(&toArray));
+```
+
 Array indexes (simpler version using toArray as a global variable)
 
+```cpp
 vector<TestObject>   toArray;
 vector<eastl_size_t> toiArray;
 
@@ -2051,9 +2231,11 @@ struct TestObjectIndexCompare
 };
 
 quick_sort(toiArray.begin(), toiArray.end(), TestObjectIndexCompare(&toArray));
-Iterators
+```
 
-Iter.1 What's the difference between iterator, const iterator, and const_iterator?
+## Iterators
+
+### Iter.1 What's the difference between iterator, const iterator, and const_iterator?
 
 An iterator can be modified and item it points to can be modified.
 A const iterator cannot be modified, but the items it points to can be modified.
