@@ -10,6 +10,12 @@
 #define EASTDC_API
 #define EASTDC_LOCAL
 
+#include <EAAssert/eaassert.h>
+
+#if defined(EA_PLATFORM_MICROSOFT)
+	#include <windows.h>
+#endif
+
 namespace EA {
 namespace StdC {
 
@@ -25,6 +31,10 @@ namespace StdC {
 			kUnitsCPUCycles    =    1,  /// CPU clock ticks (or similar equivalent for the platform). Not recommended for use in shipping softare as many systems alter their CPU frequencies at runtime.
 			kUnitsNanoseconds  =    2,  /// For a 1GHz processor, 1 nanosecond is the same as 1 clock tick.
 			kUnitsMilliseconds =    4,  /// For a 1GHz processor, 1 millisecond is the same as 1,000,000 clock ticks.
+			kUnitsMicroseconds =    6,  
+			kUnitsSeconds      =    7,  
+			kUnitsMinutes      =    8,  
+			kUnitsUserDefined  =    1000,  
 		};
 
 	public:
@@ -38,7 +48,7 @@ namespace StdC {
 			: mnStartTime(0)
 			, mnTotalElapsedTime(0)
 			, mnUnits(0)
-			, mfStopwatchCyclesToUnitsCoefficient(0.f)
+			, mfStopwatchCyclesToUnitsCoefficient(1.f)
 			 { } 
 
 		/// Start
@@ -49,6 +59,15 @@ namespace StdC {
 		/// Stop
 		/// Stops the stopwatch it it was running and retaines the elasped time.
 		void Stop();
+
+        /// Restart
+        void Restart();
+
+        /// GetUnits
+        int GetUnits();
+
+        /// GetElapsedTimeFloat
+        float GetElapsedTimeFloat() const;
 
 		/// GetElapsedTime
 		/// Gets the elapsed time, which properly takes into account any 
@@ -75,6 +94,12 @@ namespace StdC {
 		/// at runtime, especially on x86 PCs with their multiple desynchronized CPUs 
 		/// and variable runtime clock speed.
 		static uint64_t GetCPUCycle();
+
+        /// GetUnitsPerCPUCycle
+        static double GetUnitsPerCPUCycle(EA::StdC::Stopwatch::Units);
+
+        /// GetUnitsPerStopwatchCycle
+        static double GetUnitsPerStopwatchCycle(EA::StdC::Stopwatch::Units);
 
 	private:
 		uint64_t    mnStartTime;                            /// Start time; always in cycles.
@@ -137,6 +162,23 @@ void EA::StdC::Stopwatch::Stop()
 	}
 }
 
+inline
+void EA::StdC::Stopwatch::Restart()
+{
+    mnStartTime = 0;
+    mnTotalElapsedTime = 0;
+    mnUnits = 0;
+    mfStopwatchCyclesToUnitsCoefficient = 1.f;
+
+    Start();
+}
+
+inline
+int EA::StdC::Stopwatch::GetUnits()
+{
+    return mnUnits; 
+}
+
 
 inline
 uint64_t EA::StdC::Stopwatch::GetElapsedTime() const
@@ -162,6 +204,29 @@ uint64_t EA::StdC::Stopwatch::GetElapsedTime() const
 	return (uint64_t)((nFinalTotalElapsedTime64 * mfStopwatchCyclesToUnitsCoefficient) + 0.49999f);
 }
 
+inline
+float EA::StdC::Stopwatch::GetElapsedTimeFloat() const
+{
+	uint64_t nFinalTotalElapsedTime64(mnTotalElapsedTime);
+
+	if(mnStartTime) // We we are currently running, then take into account time passed since last start.
+	{
+		uint64_t nCurrentTime;
+
+		// See the 'Stop' function for an explanation of the code below.
+		if(mnUnits == kUnitsCPUCycles)
+			nCurrentTime = GetCPUCycle();
+		else
+			nCurrentTime = GetStopwatchCycle();
+
+		uint64_t nElapsed = nCurrentTime - mnStartTime;
+		nFinalTotalElapsedTime64 += nElapsed;
+
+	} // Now nFinalTotalElapsedTime64 holds the elapsed time in stopwatch cycles. 
+
+	return (nFinalTotalElapsedTime64 * mfStopwatchCyclesToUnitsCoefficient) + 0.49999f;
+}
+
 
 // Other supported processors have fixed-frequency CPUs and thus can 
 // directly use the GetCPUCycle functionality for maximum precision
@@ -171,9 +236,67 @@ inline uint64_t EA::StdC::Stopwatch::GetStopwatchCycle()
 	return GetCPUCycle();
 }
 
-#if defined(EA_PLATFORM_MICROSOFT)
-	#include <windows.h>
+namespace Internal
+{
+    inline double GetPlatformCycleFrequency()
+    {
+    #if defined(EA_PLATFORM_MICROSOFT)
+        LARGE_INTEGER perfFreq;
+        QueryPerformanceFrequency(&perfFreq);
+        return static_cast<double>(perfFreq.QuadPart)/1000.0;
+    #else
+        // todo:  proper linux and osx implementation 
+        EA_FAIL();
+        return 0.000000001;
+    #endif
+    }
+}
 
+
+inline double EA::StdC::Stopwatch::GetUnitsPerCPUCycle(EA::StdC::Stopwatch::Units units) 
+{ 
+    switch(units)
+    {
+        case kUnitsCycles:
+        case kUnitsCPUCycles: 
+            return Internal::GetPlatformCycleFrequency();
+
+        // NOTE:  These aren't used by the existing benchmarks.
+        case kUnitsNanoseconds: 
+        case kUnitsMilliseconds:
+        case kUnitsMicroseconds:
+        case kUnitsSeconds:
+        case kUnitsMinutes:
+        case kUnitsUserDefined:
+            break;
+    }
+
+    return 1.0; 
+}
+
+inline double EA::StdC::Stopwatch::GetUnitsPerStopwatchCycle(EA::StdC::Stopwatch::Units units) 
+{ 
+    switch(units)
+    {
+        case kUnitsCycles:
+        case kUnitsCPUCycles: 
+            return static_cast<double>(Internal::GetPlatformCycleFrequency());
+
+        // NOTE:  These aren't used by the existing benchmarks.
+        case kUnitsNanoseconds: 
+        case kUnitsMilliseconds:
+        case kUnitsMicroseconds:
+        case kUnitsSeconds:
+        case kUnitsMinutes:
+        case kUnitsUserDefined:
+            break;
+    }
+
+    return 1.0; 
+}
+
+
+#if defined(EA_PLATFORM_MICROSOFT)
 	inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
 	{
 		LARGE_INTEGER perfCounter;
@@ -182,9 +305,7 @@ inline uint64_t EA::StdC::Stopwatch::GetStopwatchCycle()
 	}
 
 #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
-
-	inline
-	uint64_t EA::StdC::Stopwatch::GetCPUCycle()
+	inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
 	{
 		uint32_t eaxLow32, edxHigh32;
 		uint64_t result;
@@ -195,6 +316,7 @@ inline uint64_t EA::StdC::Stopwatch::GetStopwatchCycle()
 		return result;
 	}
 #endif
+
 
 
 #endif  // EASTDC_EASTOPWATCH_H
