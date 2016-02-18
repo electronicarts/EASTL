@@ -2244,15 +2244,18 @@ A const const_iterator cannot be modified, nor can the items it points to.
 
 This situation is much like with char pointers:
 
-Iterator type	Pointer equivalent
-iterator	char*
-const iterator	char* const
-const_iterator	const char*
-const const_iterator	const char* const
-Iter.2 How do I tell from an iterator what type of thing it is iterating?
+| Iterator type | Pointer equivalent |
+|--|--|
+| iterator | char* |
+| const iterator | char* const |
+| const_iterator | const char* |
+| const const_iterator | const char* const |
+
+### Iter.2 How do I tell from an iterator what type of thing it is iterating?
 
 Use the value_type typedef from iterator_traits, as in this example
 
+```cpp
 template <typename Iterator>
 void DoSomething(Iterator first, Iterator last)
 {
@@ -2260,10 +2263,13 @@ void DoSomething(Iterator first, Iterator last)
 
     // use value_type
 }
-Iter.3 How do I iterate a container while (selectively) removing items from it?
+```
+
+### Iter.3 How do I iterate a container while (selectively) removing items from it?
 
 All EASTL containers have an erase function which takes an iterator as an argument and returns an iterator to the next item. Thus, you can erase items from a container while iterating it like so:
 
+```cpp
 set<int> intSet;
 set<int>::iterator i = intSet.begin();
 
@@ -2274,7 +2280,11 @@ while(i != intSet.end())
     else
         ++i;
 }
-Iter.4 What is an insert_iterator?
+```
+
+### Iter.4 What is an insert_iterator?
 
 An insert_iterator is a utility class which is like an iterator except that when you assign a value to it, the insert_iterator inserts the value into the container (via insert()) and increments the iterator. Similarly, there are front_insert_iterator and back_insert_iterator, which are similar to insert_iterator except that assigning a value to them causes then to call push_front and push_back, respectively, on the container. These utilities may seem a slightly abstract, but they have uses in generic programming.
+
+----------------------------------------------
 End of document
