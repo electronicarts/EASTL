@@ -10,11 +10,7 @@
 #define EASTDC_API
 #define EASTDC_LOCAL
 
-#include <EAAssert/eaassert.h>
-
-#if defined(EA_PLATFORM_MICROSOFT)
-	#include <windows.h>
-#endif
+#include <chrono>
 
 namespace EA {
 namespace StdC {
@@ -240,15 +236,9 @@ namespace Internal
 {
     inline double GetPlatformCycleFrequency()
     {
-    #if defined(EA_PLATFORM_MICROSOFT)
-        LARGE_INTEGER perfFreq;
-        QueryPerformanceFrequency(&perfFreq);
-        return static_cast<double>(perfFreq.QuadPart)/1000.0;
-    #else
-        // todo:  proper linux and osx implementation 
-        EA_FAIL();
-        return 0.000000001;
-    #endif
+        using namespace std::chrono;
+        double perfFreq = static_cast<double>(high_resolution_clock::period::num / high_resolution_clock::period::num);
+        return perfFreq / 1000.0;
     }
 }
 
@@ -295,28 +285,10 @@ inline double EA::StdC::Stopwatch::GetUnitsPerStopwatchCycle(EA::StdC::Stopwatch
     return 1.0; 
 }
 
-
-#if defined(EA_PLATFORM_MICROSOFT)
-	inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
-	{
-		LARGE_INTEGER perfCounter;
-		QueryPerformanceCounter(&perfCounter);
-		return static_cast<uint64_t>(perfCounter.QuadPart);
-	}
-
-#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
-	inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
-	{
-		uint32_t eaxLow32, edxHigh32;
-		uint64_t result;
-
-		asm volatile("rdtsc" : "=a" (eaxLow32), "=d" (edxHigh32));
-		result = ((uint64_t)edxHigh32 << 32) | ((uint64_t)eaxLow32);
-
-		return result;
-	}
-#endif
-
-
+inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
+{
+    using namespace std::chrono;
+    return high_resolution_clock::now().time_since_epoch().count();
+}
 
 #endif  // EASTDC_EASTOPWATCH_H
