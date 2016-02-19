@@ -6,6 +6,7 @@ tags
 .swo
 -.d
 eastl_build_out
+bench.bat
 build.bat
 
 ## CMake generated files

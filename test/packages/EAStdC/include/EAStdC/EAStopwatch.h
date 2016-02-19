@@ -237,7 +237,7 @@ namespace Internal
     inline double GetPlatformCycleFrequency()
     {
         using namespace std::chrono;
-        double perfFreq = static_cast<double>(high_resolution_clock::period::num / high_resolution_clock::period::num);
+        double perfFreq = static_cast<double>(high_resolution_clock::period::num) / high_resolution_clock::period::den;
         return perfFreq / 1000.0;
     }
 }
