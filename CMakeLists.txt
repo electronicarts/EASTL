@@ -60,4 +60,5 @@ add_definitions(-DEASTL_OPENSOURCE)
 #-------------------------------------------------------------------------------------------
 install (TARGETS EASTL DESTINATION lib)
 install (DIRECTORY include/EASTL DESTINATION include)
+install (DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
 
