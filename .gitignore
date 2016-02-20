@@ -6,6 +6,7 @@ tags
 .swo
 -.d
 eastl_build_out
+build_bench
 bench.bat
 build.bat
 
