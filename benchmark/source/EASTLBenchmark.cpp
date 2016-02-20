@@ -131,7 +131,7 @@ namespace Benchmark
 		WriteTime(result.mTime1NS, sClockTime1);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
 		WriteTime(result.mTime2NS, sClockTime2);
 
-		EA::UnitTest::Report("%-42s | %13I64d %s | %13I64d %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
+		EA::UnitTest::Report("%-42s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
 
 		if(result.msNotes.length()) // If there are any notes...
 			EA::UnitTest::Report("   %s", result.msNotes.c_str());

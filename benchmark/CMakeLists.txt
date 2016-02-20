@@ -51,14 +51,8 @@ target_compile_definitions(EASTL PUBLIC -DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 add_executable(EASTLBenchmarks ${EASTLBENCHMARK_SOURCES})
 
 set(EASTLBenchmark_Libraries
-    # EAAssert
-    # EABase
-    # EAMain
     EASTL
-    # EAStdC
-	# EAThread
-    EATest
-    )
+    EATest)
 target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries})
 
 #-------------------------------------------------------------------------------------------

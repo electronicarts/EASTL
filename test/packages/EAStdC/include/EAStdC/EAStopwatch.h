@@ -242,7 +242,6 @@ namespace Internal
     }
 }
 
-
 inline double EA::StdC::Stopwatch::GetUnitsPerCPUCycle(EA::StdC::Stopwatch::Units units) 
 { 
     switch(units)
@@ -290,5 +289,6 @@ inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
     using namespace std::chrono;
     return high_resolution_clock::now().time_since_epoch().count();
 }
+
 
 #endif  // EASTDC_EASTOPWATCH_H
