@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 #-------------------------------------------------------------------------------------------
-# Defines 
+# Defines
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
 
@@ -54,3 +54,11 @@ target_link_libraries(EASTL ${EASTL_Libraries})
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE)
+
+#-------------------------------------------------------------------------------------------
+# Installation
+#-------------------------------------------------------------------------------------------
+install (TARGETS EASTL DESTINATION lib)
+install (DIRECTORY include/EASTL DESTINATION include)
+install (DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
+
