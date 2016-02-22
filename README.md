@@ -1,6 +1,6 @@
 # EA Standard Template Library
 
-[![Build Status](https://travis-ci.org/electronicarts/EASTL.svg?branch=master)](https://travis-ci.org/electronicarts/EASTL)  [![Build status](https://ci.appveyor.com/api/projects/status/dtn82qr8tw8o3vmi?svg=true)](https://ci.appveyor.com/project/rparolin/eastl) [![Join the chat at https://gitter.im/electronicarts/EASTL](https://badges.gitter.im/electronicarts/EASTL.svg)](https://gitter.im/electronicarts/EASTL?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
+[![Build Status](https://travis-ci.org/electronicarts/EASTL.svg?branch=master)](https://travis-ci.org/electronicarts/EASTL)  [![Build status](https://ci.appveyor.com/api/projects/status/dtn82qr8tw8o3vmi?svg=true)](https://ci.appveyor.com/project/rparolin/eastl) [![Coverage Status](https://coveralls.io/repos/github/electronicarts/EASTL/badge.svg?branch=master)](https://coveralls.io/github/electronicarts/EASTL?branch=master) [![Join the chat at https://gitter.im/electronicarts/EASTL](https://badges.gitter.im/electronicarts/EASTL.svg)](https://gitter.im/electronicarts/EASTL?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
 
 EASTL stands for Electronic Arts Standard Template Library. It is a C++ template library of containers, algorithms, and iterators useful for runtime and tool development across multiple platforms. It is a fairly extensive and robust implementation of such a library and has an emphasis on high performance above all other considerations.
 
