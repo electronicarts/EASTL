@@ -6,35 +6,35 @@ In this document we discuss best practices for using EASTL. The primary emphasis
 
 The descriptions here are intentionally terse; this is to make them easier to visually scan.
 
-1. Consider intrusive containers.
-2. Consider fixed-size containers.
-3. Consider custom allocators.
-4. Consider hash tables instead of maps.
-5. Consider a vector_map (a.k.a. sorted vector) for unchanging data.
-6. Consider slist instead of list.
-7. Avoid redundant end() and size() in loops.
-8. Iterate containers instead of using operator[].
-9. Learn to use the string class appropriately.
-10. Cache list size if you want size() to be O(1).
-11. Use empty() instead of size() when possible.
-12. Know your container efficiencies.
-13. Use vector::reserve.
-14. Use vector::set_capacity to trim memory usage.
-15. Use swap() instead of a manually implemented version.
-16. Consider storing pointers instead of objects.
-17. Consider smart pointers instead of raw pointers.
-18. Use iterator pre-increment instead of post-increment.
-19. Make temporary references so the code can be traced/debugged.
-20. Consider bitvector or bitset instead of vector\<bool>.
-21. Vectors can be treated as contiguous memory.
-22. Search hash_map\<string> via find_as() instead of find().
-23. Take advantage of type_traits (e.g. EASTL_DECLARE_TRIVIAL_RELOCATE).
-24. Name containers to track memory usage.
-25. Learn the algorithms.
-26. Pass and return containers by reference instead of value.
-27. Consider using reset() for fast container teardown.
-28. Consider using fixed_substring instead of copying strings.
-29. Consider using vector::push_back(void).
+1. [Consider intrusive containers.](#consider-intrusive-containers)
+2. [Consider fixed-size containers.](#consider-fixed-size-containers)
+3. [Consider custom allocators.](#consider-custom-allocators)
+4. [Consider hash tables instead of maps.](#consider-hash-tables-instead-of-maps)
+5. [Consider a vector_map (a.k.a. sorted vector) for unchanging data.](#consider-a-vector_map-aka-sorted-vector-for-unchanging-data)
+6. [Consider slist instead of list.](#consider-slist-instead-of-list)
+7. [Avoid redundant end() and size() in loops.](#avoid-redundant-end-and-size-in-loops)
+8. [Iterate containers instead of using operator\[\].](#iterate-containers-instead-of-using-operator)
+9. [Learn to use the string class appropriately.](#learn-to-use-the-string-class-appropriately)
+10. [Cache list size if you want size() to be O(1).](#cache-list-size-if-you-want-listsize-to-be-o1)
+11. [Use empty() instead of size() when possible.](#use-empty-instead-of-size-when-possible)
+12. [Know your container efficiencies.](#know-your-container-efficiencies)
+13. [Use vector::reserve.](#use-vectorreserve)
+14. [Use vector::set_capacity to trim memory usage.](#use-vectorset_capacity-to-trim-memory-usage)
+15. [Use swap() instead of a manually implemented version.](#use-swap-instead-of-a-manually-implemented-version)
+16. [Consider storing pointers instead of objects.](#consider-storing-pointers-instead-of-objects)
+17. [Consider smart pointers instead of raw pointers.](#consider-smart-pointers-instead-of-raw-pointers)
+18. [Use iterator pre-increment instead of post-increment.](#use-iterator-pre-increment-instead-of-post-increment)
+19. [Make temporary references so the code can be traced/debugged.](#make-temporary-references-so-the-code-can-be-traceddebugged)
+20. [Consider bitvector or bitset instead of vector\<bool>.](#consider-bitvector-or-bitset-instead-of-vector)
+21. [Vectors can be treated as contiguous memory.](#vectors-can-be-treated-as-contiguous-memory)
+22. [Search hash_map\<string> via find_as() instead of find().](#search-hash_map-via-find_as-instead-of-find)
+23. [Take advantage of type_traits (e.g. EASTL_DECLARE_TRIVIAL_RELOCATE).](#take-advantage-of-type_traits-eg-eastl_declare_trivial_relocate)
+24. [Name containers to track memory usage.](#name-containers-to-track-memory-usage)
+25. [Learn the algorithms.](#learn-the-algorithms)
+26. [Pass and return containers by reference instead of value.](#pass-and-return-containers-by-reference-instead-of-value)
+27. [Consider using reset() for fast container teardown.](#consider-using-reset-for-fast-container-teardown)
+28. [Consider using fixed_substring instead of copying strings.](#consider-using-fixed_substring-instead-of-copying-strings)
+29. [Consider using vector::push_back(void).](#consider-using-vectorpush_backvoid)
 
 ## Detail
 
