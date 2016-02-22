@@ -159,7 +159,7 @@ for(deque<int>::iterator it = d.begin(), itEnd = d.end(); it != itEnd; ++it)
 The latter avoids a function call and return of an object (which in deque's case happens to be more than just a pointer). The above only works when the container is unchanged or for containers that have a constant end value. But "constant end value" we mean containers which can be modified but end always remains the same.
 
 | Constant begin | Non-constant begin | Constant end | Non-constant end |
-|--|--|--|--|
+|------|------|------|------|
 | array<sup>1</sup> | string<br> vector<br> deque<br> intrusive_list<br> intrusive_slist<br> vector_map<br> vector_multimap<br> vector_set<br> vector_multiset<br> bit_vector<br> hash_map<br> hash_multimap<br> hash_set<br> hash_multiset<br> intrusive_hash_map<br> intrusive_hash_multimap<br> intrusive_hash_set<br> intrusive_hash_multiset | array<br> list<br> slist<br> intrusive_list<br> intrusive_slist<br> map<br> multimap<br> set<br> multiset<br> hash_map<sup>2</sup><br> hash_multimap<sup>2</sup><br> hash_set<sup>2</sup><br> hash_multiset<sup>2</sup><br> intrusive_hash_map<br> intrusive_hash_multimap<br> intrusive_hash_set<br> intrusive_hash_multiset | string<br> vector<br> deque<br> vector_map<br> vector_multimap<br> vector_set<br> vector_multiset<br> bit_vector |
 
 * <sup>1</sup> Arrays can be neither resized nor reallocated.
@@ -192,7 +192,7 @@ Oddly enough, the most mis-used STL container is easily the string class. The ta
 Here we provide a table of actual collected examples of things done and how they could have been done instead.
 
 | What was written | What could have been written |
-|--|--|
+|------|------|
 | `s = s.Left(i) + '+' + s.Right(s.length() - i - 1);` | `s[i] = '+';` |
 | `string s(""); // This is the most commonly found misuse.` | `string s;` |
 | `s = "";` | `s.clear();` |
@@ -237,7 +237,7 @@ All conventional containers have both an empty function and a size function. For
 The above two practices lead us to this practice, which is a generalization of the above. We present a table of basic information for the conventional EASTL containers. The values are described at the bottom.
 
 | Container | empty() efficiency | size() efficiency | operator[] efficiency | insert() efficiency | erase() efficiency | find() efficiency | sort efficiency |
-|--|--|--|--|--|--|--|--|
+|------|------|------|------|------|------|------|------|
 | slist | 1 | O(n) | - | O(1) | O(1) | O(n) | O(n+) |
 | list | 1 | n | - | 1 | 1 | n | n log(n) |
 | intrusive_slist | 1 | n | - | 1 | 1 | 1 | n+ |

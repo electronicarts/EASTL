@@ -2,8 +2,8 @@
 
 This document provides definitions to various terms related to EASTL. Items that are capitalized are items that are used as template parameters.
 
-| | |
-|--|--|
+|  |  |
+|------|------|
 | adapter | An adapter is something that encapsulates a component to provide another interface, such as a C++ class which makes a stack out of a list. |
 | algorithm | Algorithms are standalone functions which manipulate data which usually but not necessarily comes from a container. Some algorithms change the data while others don't. Examples are reverse, sort, find, and remove. |
 | associative container | An associative container is a variable-sized container that supports efficient retrieval of elements (values) based on keys. It supports insertion and removal of elements, but differs from a sequence in that it does not provide a mechanism for inserting an element at a specific position. Associative containers include map, multimap, set, multiset, hash_map, hash_multimap, hash_set, hash_multiset. |

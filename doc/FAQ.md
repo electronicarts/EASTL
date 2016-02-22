@@ -844,8 +844,8 @@ We will discuss various aspects of this topic here. As of this writing, more EAS
 **Function inlining**
 
 EASTL is a template library and inlining is important for optimal speed. Compilers have various options for enabling inlining and those options are discussed in this FAQ in detail. Most users will want to enable some form of inlining when compiling EASTL and other templated libraries. For users that are most concerned about the compiler's inlining increasing code size may want to try the 'inline only functions marked as inline' compiler option. Here is a table of normalized results from the benchmark project (Win32 platform):
-| | Inlining Disabled | Inline only 'inline' | Inline any |
-|--|--|--|--|
+| Inlining Disabled | Inline only 'inline' | Inline any |
+|------|------|------|------|
 | **Application size** | 100K | 86K | 86K |
 | **Execution time** | 100 | 75 | 75 |
 
@@ -855,7 +855,7 @@ The above execution times are highly simplified versions of the actual benchmark
 
 Optimization for speed results in the compiler inlining more code than it would otherwise. This results in the inlined code executing faster than if it was not inlined. As mentioned above, basic function inlining can result in smaller code as well as faster code, but after a certain point highly inlined code becomes greater in size than less inlined code and the performance advantages of inlining start to lessen. The EASTL Benchmark project is a medium sized application that is about 80% templated and thus acts as a decent measure of the practical tradeoff between speed and size. Here is a table of normalized results from the benchmark project (Windows platform):
 | Size | Speed | Speed + LTCG | Speed + LTCG + PGO |
-|--|--|--|--|
+|------|------|------|------|
 | **Application size** | 80K | 100K | 98K | 98K |
 | **Execution time** | 100 | 90 | 83 | 75 |
 
@@ -1184,7 +1184,7 @@ See [Cont.9]()
 Here is a table of answers about how to manually inspect containers in the debugger.
 
 | Container | Approach |
-|--|--|
+|------|------|
 | slist<br>fixed_slist | slist is a singly-linked list. Look at the slist mNode variable. You can walk the list by looking at mNode.mpNext, etc. |
 | list<br>fixed_list | list is a doubly-linked list. Look at the list mNode variable. You can walk the list forward by looking at mNode.mpNext, etc. and backward by looking at mpPrev, etc. |
 | intrusive_list<br>intrusive_slist† | Look at the list mAnchor node. This lets you walk forward and backward in the list via mpNext and mpPrev. |
@@ -2245,7 +2245,7 @@ A const const_iterator cannot be modified, nor can the items it points to.
 This situation is much like with char pointers:
 
 | Iterator type | Pointer equivalent |
-|--|--|
+|------|------|
 | iterator | char* |
 | const iterator | char* const |
 | const_iterator | const char* |

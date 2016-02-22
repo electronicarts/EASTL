@@ -7,7 +7,7 @@ We provide here a list of all top-level modules present or planned for future pr
 ## Module List
 
 | Module | Description |
-|--|--|
+|------|------|
 | config | Configuration header. Allows for changing some compile-time options. |
 | slist <br>fixed_slist | Singly-linked list.<br> fixed_slist is a version which is implemented via a fixed block of contiguous memory.|
 | list<br> fixed_list | Doubly-linked list. |
@@ -44,7 +44,7 @@ We provide here a list of all top-level modules present or planned for future pr
 The overhead sizes listed here refer to an optimized release build; debug builds may add some additional overhead. Some of the overhead sizes may be off by a little bit (usually at most 4 bytes). This is because the values reported here are those that refer to when EASTL's container optimizations have been complete. These optimizations may not have been completed as you are reading this.
 
 | Container |Stores | Container Overhead (32 bit) | Container Overhead (64 bit) | Node Overhead (32 bit) | Node Overhead (64 bit) | Iterator category | size() efficiency | operator[] efficiency | Insert efficiency | Erase via Iterator efficiency | Find efficiency | Sort efficiency |
-|--|--|--|--|--|--|--|--|--|--|--|--|--|
+|------|------|------|------|------|------|------|------|------|------|------|------|------|
 | slist | T | 8 | 16 | 4 | 8 | f | n | - | 1 | 1 | n | n+ |
 | list | T | 12 | 24 | 8 | 16 | b | n | - | 1 | 1 | n | n log(n) |
 | intrusive_slist | T | 4 | 8 | 4 | 8 | f | n | - | 1 | 1 | 1 | n+ |

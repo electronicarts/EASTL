@@ -17,7 +17,7 @@ While EASTL generally outperforms std STL, there are some benchmarks here in whi
 Below is a table of links to detailed benchmark results derived from the Benchmark test present in the EASTL package. The detailed results are present below the table. Additional platforms will be added as results become available for those platforms. Debug benchmarks are present because (lack of) debug performance can be significant for highly templated libraries. EASTL has specific optimizations to enhance debug performance relative to other standard libraries; in some cases it is 10x or more faster than alternatives (though there are exceptions where EASTL is slower). Feel free to submit results for additional compilers/platforms.
 
 | Platform | Compiler | STL type | Build | Results |
-|--|--|--|--|--|
+|------|------|------|------|------|
 | Win32 | VC++ 7.1 | Microsoft (Dinkumware) | Debug | [Detail]() |
 | Win32 | VC++ 7.1 | Microsoft (Dinkumware) | Release | [Detail]() |
 | Win32 | VC++ 7.1 | STLPort | Debug | [Detail]() |
