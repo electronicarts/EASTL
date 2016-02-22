@@ -1,0 +1,6 @@
+version: 1.0.{build}
+os: Visual Studio 2015
+build_script:
+- cmd: cmake -Bbuild -Htest && cmake --build build --config Debug && cmake --build build --config Release && cmake -Bbuild_bench -Hbenchmark && cmake --build build_bench --config Release
+test_script:
+- cmd: cd build && ctest -C Release -V && cd .. && cd build_bench && ctest -C Release -V
