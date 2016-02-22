@@ -14,7 +14,7 @@ EASTL is suitable for any tools and shipping applications where the functionalit
 
 ## Documentation
 
-Please see [EASTL Introduction](https://rawgit.com/electronicarts/EASTL/master/doc/EASTL%20Introduction.html)
+Please see [EASTL Introduction](https://rawgit.com/electronicarts/EASTL/master/doc/EASTL%20Introduction.html).
 
 
 ## Compiling sources
