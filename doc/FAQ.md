@@ -4,120 +4,120 @@ We provide a FAQ (frequently asked questions) list here for a number of commonly
 
 ## Information
 
-1. What is EASTL?
-2. What uses are EASTL suitable for?
-3. How does EASTL differ from standard C++ STL?
-4. Is EASTL thread-safe?
-5. What platforms/compilers does EASTL support?
-6. Why is there EASTL when there is the STL?
-7. Can I mix EASTL with standard C++ STL?
-8. Where can I learn more about STL and EASTL?
-9. What is the legal status of EASTL?
-10. Does EASTL deal with compiler exception handling settings?
-11. What C++ language features does EASTL use (e.g. virtual functions)?
-12.What compiler warning levels does EASTL support?
-13. Is EASTL compatible with Lint?
-14.What compiler settings do I need to compile EASTL?
-15. How hard is it to incorporate EASTL into my project?
-16. Should I use EASTL instead of std STL or instead of my custom library?
-17. I think I've found a bug. What do I do?
-18. Can EASTL be used by third party EA developers?
+1. [What is EASTL?](#info1-what-is-eastl)
+2. [What uses are EASTL suitable for?](#info2-what-uses-are-eastl-suitable-for)
+3. [How does EASTL differ from standard C++ STL?](#info3-how-does-eastl-differ-from-standard-c-stl)
+4. [Is EASTL thread-safe?](#info4-is-eastl-thread-safe)
+5. [What platforms/compilers does EASTL support?](#info5-what-platformscompilers-does-eastl-support)
+6. [Why is there EASTL when there is the STL?](#info6-why-is-there-eastl-when-there-is-the-stl)
+7. [Can I mix EASTL with standard C++ STL?](#info7-can-i-mix-eastl-with-standard-c-stl)
+8. [Where can I learn more about STL and EASTL?](#info8-where-can-i-learn-more-about-stl-and-eastl)
+9. [What is the legal status of EASTL?](#info9-what-is-the-legal-status-of-eastl)
+10. [Does EASTL deal with compiler exception handling settings?](#info10-does-eastl-deal-with-compiler-exception-handling-settings)
+11. [What C++ language features does EASTL use (e.g. virtual functions)?](#info11-what-c-language-features-does-eastl-use-eg-virtual-functions)
+12. [What compiler warning levels does EASTL support?](#info12-what-compiler-warning-levels-does-eastl-support)
+13. [Is EASTL compatible with Lint?](#info13-is-eastl-compatible-with-lint)
+14. [What compiler settings do I need to compile EASTL?](#info14-what-compiler-settings-do-i-need-to-compile-eastl)
+15. [How hard is it to incorporate EASTL into my project?](#info15-how-hard-is-it-to-incorporate-eastl-into-my-project)
+16. [Should I use EASTL instead of std STL or instead of my custom library?](#info16-should-i-use-eastl-instead-of-std-stl-or-instead-of-my-custom-library)
+17. [I think I've found a bug. What do I do?](#info17-i-think-ive-found-a-bug-what-do-i-do)
+18. [Can EASTL be used by third party EA developers?](#info18-can-eastl-be-used-by-third-party-ea-developers)
 
 ## Performance
 
-1. How efficient is EASTL compared to standard C++ STL implementations?
-2. How efficient is EASTL in general?
-3. Strings don't appear to use the "copy-on-write" optimization. Why not?
-4. Does EASTL cause code bloat, given that it uses templates?
-5. Don't STL and EASTL containers fragment memory?
-6. I don't see container optimizations for equivalent scalar types such as pointer types. Why?
-7. I've seen some STL's provide a default quick "node allocator" as the default allocator. Why doesn't EASTL do this?
-8. Templates sometimes seem to take a long time to compile. Why do I do about that?
-9. How do I assign a custom allocator to an EASTL container?
-10. How well does EASTL inline?
-11. How do I control function inlining?
-12. C++ / EASTL seems to bloat my .obj files much more than C does.
-13. What are the best compiler settings for EASTL?
+1. [How efficient is EASTL compared to standard C++ STL implementations?](#perf1-how-efficient-is-eastl-compared-to-standard-c-stl-implementations)
+2. [How efficient is EASTL in general?](#perf2-how-efficient-is-eastl-in-general)
+3. [Strings don't appear to use the "copy-on-write" optimization. Why not?](#perf3-strings-dont-appear-to-use-the-copy-on-write-cow-optimization-why-not)
+4. [Does EASTL cause code bloat, given that it uses templates?](#perf4-does-eastl-cause-code-bloat-given-that-it-uses-templates)
+5. [Don't STL and EASTL containers fragment memory?](#perf5-dont-stl-and-eastl-containers-fragment-memory)
+6. [I don't see container optimizations for equivalent scalar types such as pointer types. Why?](#perf6-i-dont-see-container-optimizations-for-equivalent-scalar-types-such-as-pointer-types-why)
+7. [I've seen some STL's provide a default quick "node allocator" as the default allocator. Why doesn't EASTL do this?](#perf7-ive-seen-some-stls-provide-a-default-quick-node-allocator-as-the-default-allocator-why-doesnt-eastl-do-this)
+8. [Templates sometimes seem to take a long time to compile. Why do I do about that?](#perf8-templates-sometimes-seem-to-take-a-long-time-to-compile-why-do-i-do-about-that)
+9. [How do I assign a custom allocator to an EASTL container?](#cont8-how-do-i-assign-a-custom-allocator-to-an-eastl-container)
+10. [How well does EASTL inline?](#perf10-how-well-does-eastl-inline)
+11. [How do I control function inlining?](#perf11-how-do-i-control-function-inlining)
+12. [C++ / EASTL seems to bloat my .obj files much more than C does.](#perf12-c--eastl-seems-to-bloat-my-obj-files-much-more-than-c-does)
+13. [What are the best compiler settings for EASTL?](#perf13-what-are-the-best-compiler-settings-for-eastl)
 
 ## Problems
 
-1. I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
-2. I am getting compiler warnings (e.g. C4244, C4242 or C4267) that make no sense. Why?
-3. I am getting compiler warning C4530, which complains about exception handling and "unwind semantics." What gives?
-4. Why are tree-based containers hard to read with a debugger?
-5. The EASTL source code is sometimes rather complicated looking. Why is that?
-6. When I get compilation errors, they are very long and complicated looking. What do I do?
-7. Templates sometimes seem to take a long time to compile. Why do I do about that?
-8. I get the compiler error: "template instantiation depth exceeds maximum of 17. use -ftemplate-depth-NN to increase the maximum"
-9. I'm getting errors about min and max while compiling.
-10. C++ / EASTL seems to bloat my .obj files much more than C does.
-11. I'm getting compiler errors regarding operator new being previously defined.
-12. I'm getting errors related to wchar_t string  functions such as wcslen.
-13. I'm getting compiler warning C4619: there is no warning number Cxxxx (e.g. C4217).
-14. My stack-based fixed_vector is not respecting the object alignment requirements.
-15. I am getting compiler errors when using GCC under XCode (Macintosh/iphone).
-16. I am getting linker errors about Vsnprintf8 or Vsnprintf16.
-17. I am getting compiler errors about UINT64_C or UINT32_C.
-18. I am getting a crash with a global EASTL container.
-19. Why doesn't EASTL support passing NULL to functions with pointer arguments?
+1. [I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?](#prob1-im-getting-screwy-behavior-in-sorting-algorithms-or-sorted-containers-whats-wrong)
+2. [I am getting compiler warnings (e.g. C4244, C4242 or C4267) that make no sense. Why?](#prob2-i-am-getting-compiler-warnings-eg-c4244-c4242-or-c4267-that-make-no-sense-why)
+3. [I am getting compiler warning C4530, which complains about exception handling and "unwind semantics." What gives?](#prob3-i-am-getting-compiler-warning-c4530-which-complains-about-exception-handling-and-unwind-semantics-what-gives)
+4. [Why are tree-based containers hard to read with a debugger?](#prob4-why-are-tree-based-eastl-containers-hard-to-read-with-a-debugger)
+5. [The EASTL source code is sometimes rather complicated looking. Why is that?](#prob5-the-eastl-source-code-is-sometimes-rather-complicated-looking-why-is-that)
+6. [When I get compilation errors, they are very long and complicated looking. What do I do?](#prob6-when-i-get-compilation-errors-they-are-very-long-and-complicated-looking-what-do-i-do)
+7. [Templates sometimes seem to take a long time to compile. Why do I do about that?](#prob7-templates-sometimes-seem-to-take-a-long-time-to-compile-why-do-i-do-about-that)
+8. [I get the compiler error: "template instantiation depth exceeds maximum of 17. use -ftemplate-depth-NN to increase the maximum"](#prob8-i-get-the-compiler-error-template-instantiation-depth-exceeds-maximum-of-17-use--ftemplate-depth-nn-to-increase-the-maximum)
+9. [I'm getting errors about min and max while compiling.](#prob9-im-getting-errors-about-min-and-max-while-compiling)
+10. [C++ / EASTL seems to bloat my .obj files much more than C does.](#prob10-c--eastl-seems-to-bloat-my-obj-files-much-more-than-c-does)
+11. [I'm getting compiler errors regarding operator new being previously defined.](#prob11-im-getting-compiler-errors-regarding-placement-operator-new-being-previously-defined)
+12. [I'm getting errors related to wchar_t string  functions such as wcslen().](#prob12-im-getting-errors-related-to-wchar_t-string--functions-such-as-wcslen)
+13. [I'm getting compiler warning C4619: there is no warning number Cxxxx (e.g. C4217).](#prob13-im-getting-compiler-warning-c4619-there-is-no-warning-number-cxxxx-eg-c4217)
+14. [My stack-based fixed_vector is not respecting the object alignment requirements.](#prob14-my-stack-based-fixed_vector-is-not-respecting-the-object-alignment-requirements)
+15. [I am getting compiler errors when using GCC under XCode (Macintosh/iphone).](#prob15-i-am-getting-compiler-errors-when-using-gcc-under-xcode-macintoshiphone)
+16. [I am getting linker errors about Vsnprintf8 or Vsnprintf16.](#prob16-i-am-getting-linker-errors-about-vsnprintf8-or-vsnprintf16)
+17. [I am getting compiler errors about UINT64_C or UINT32_C.](#prob17-i-am-getting-compiler-errors-about-uint64_c-or-uint32_c)
+18. [I am getting a crash with a global EASTL container.](#prob18-i-am-getting-a-crash-with-a-global-eastl-container)
+19. [Why doesn't EASTL support passing NULL to functions with pointer arguments?](#prob19-why-doesnt-eastl-support-passing-null-string-functions)
 
 ## Debug
 
-1. How do I get VC++ mouse-overs to view templated data?
-2. How do I view containers if the visualizer/tooltip support is not present?
-3. The EASTL source code is sometimes rather complicated looking. Why is that?
-4. When I get compilation errors, they are very long and complicated looking. What do I do?
-5. How do I measure hash table balancing?
+1. [How do I get VC++ mouse-overs to view templated data?](#debug1-how-do-i-set-the-vc-debugger-to-display-eastl-container-data-with-tooltips)
+2. [How do I view containers if the visualizer/tooltip support is not present?](#debug2-how-do-i-view-containers-if-the-visualizertooltip-support-is-not-present)
+3. [The EASTL source code is sometimes rather complicated looking. Why is that?](#debug3-the-eastl-source-code-is-sometimes-rather-complicated-looking-why-is-that)
+4. [When I get compilation errors, they are very long and complicated looking. What do I do?](#debug4-when-i-get-compilation-errors-they-are-very-long-and-complicated-looking-what-do-i-do)
+5. [How do I measure hash table balancing?](#debug5-how-do-i-measure-hash-table-balancing)
 
 ## Containers
 
-1. Why do some containers have "fixed" versions (e.g. fixed_list) but others(e.g. deque) don't have fixed versions?
-2. Can I mix EASTL with standard C++ STL?
-3. Why are there so many containers?
-4. Don't STL and EASTL containers fragment memory?
-5. I don't see container optimizations for equivalent scalar types such as pointer types. Why?
-6. What about alternative container and algorithm implementations (e.g. treaps, skip lists, avl trees)?
-7. Why are containers hard to read with a debugger?
-8. How do I assign a custom allocator to an EASTL container?
-9. How do I set the VC++ debugger to display EASTL container data with tooltips?
-10. How do I use a memory pool with a container?
-11. How do I write a comparison (operator<()) for a struct that contains two or more members?
-12. Why doesn't container X have member function Y?
-13. How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.
-14. Why are set and hash_set iterators const (i.e. const_iterator)?
-15. How do I prevent my hash container from re-hashing?
-16. Which uses less memory, a map or a hash_map?
-17. How do I write a custom hash function?
-18. How do I write a custom compare function for a map or set?
-19. How do I force my vector or string capacity down to the size of the container?
-20. How do I iterate a container while (selectively) removing items from it?
-21. How do I store a pointer in a container?
-22. How do I make a union of two containers? difference? intersection?
-23. How do I override the default global allocator?
-24. How do I do trick X with the string class?
-25. How do EASTL smart pointers compare to Boost smart pointers?
-26. How do your forward-declare an EASTL container?
-27.	How do I make two containers share a memory pool?
-28. Can I use a std (STL) allocator with EASTL?
-29. What are the requirements of classes stored in containers?
+1. [Why do some containers have "fixed" versions (e.g. fixed_list) but others(e.g. deque) don't have fixed versions?](#cont1-why-do-some-containers-have-fixed-versions-eg-fixed_list-but-otherseg-deque-dont-have-fixed-versions)
+2. [Can I mix EASTL with standard C++ STL?](#cont2-can-i-mix-eastl-with-standard-c-stl)
+3. [Why are there so many containers?](#cont3-why-are-there-so-many-containers)
+4. [Don't STL and EASTL containers fragment memory?](#cont4-dont-stl-and-eastl-containers-fragment-memory)
+5. [I don't see container optimizations for equivalent scalar types such as pointer types. Why?](#cont5-i-dont-see-container-optimizations-for-equivalent-scalar-types-such-as-pointer-types-why)
+6. [What about alternative container and algorithm implementations (e.g. treaps, skip lists, avl trees)?](#cont6-what-about-alternative-container-and-algorithm-implementations-eg-treaps-skip-lists-avl-trees)
+7. [Why are containers hard to read with a debugger?](#cont7-why-are-tree-based-eastl-containers-hard-to-read-with-a-debugger)
+8. [How do I assign a custom allocator to an EASTL container?](#cont8-how-do-i-assign-a-custom-allocator-to-an-eastl-container)
+9. [How do I set the VC++ debugger to display EASTL container data with tooltips?](#cont9-how-do-i-set-the-vc-debugger-to-display-eastl-container-data-with-tooltips)
+10. [How do I use a memory pool with a container?](#cont10-how-do-i-use-a-memory-pool-with-a-container)
+11. [How do I write a comparison (operator<()) for a struct that contains two or more members?](#cont11-how-do-i-write-a-comparison-operator-for-a-struct-that-contains-two-or-more-members)
+12. [Why doesn't container X have member function Y?](#cont12-why-doesnt-container-x-have-member-function-y)
+13. [How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.](#cont13-how-do-i-search-a-hash_map-of-strings-via-a-char-pointer-efficiently-if-i-use-mapfindhello-it-creates-a-temporary-string-which-is-inefficient)
+14. [Why are set and hash_set iterators const (i.e. const_iterator)?](#cont14-why-are-set-and-hash_set-iterators-const-ie-const_iterator)
+15. [How do I prevent my hash container from re-hashing?](#cont15-how-do-i-prevent-my-hash-container-from-re-hashing)
+16. [Which uses less memory, a map or a hash_map?](#cont16-which-uses-less-memory-a-map-or-a-hash_map)
+17. [How do I write a custom hash function?](#cont17-how-do-i-write-a-custom-hash-function)
+18. [How do I write a custom compare function for a map or set?](#cont18-how-do-i-write-a-custom-compare-function-for-a-map-or-set)
+19. [How do I force my vector or string capacity down to the size of the container?](#cont19-how-do-i-force-my-vector-or-string-capacity-down-to-the-size-of-the-container)
+20. [How do I iterate a container while (selectively) removing items from it?](#cont20-how-do-i-iterate-a-container-while-selectively-removing-items-from-it)
+21. [How do I store a pointer in a container?](#cont21-how-do-i-store-a-pointer-in-a-container)
+22. [How do I make a union of two containers? difference? intersection?](#cont22-how-do-i-make-a-union-of-two-containers-difference-intersection)
+23. [How do I override the default global allocator?](#cont23-how-do-i-override-the-default-global-allocator)
+24. [How do I do trick X with the string container?](#cont24-how-do-i-do-trick-x-with-the-string-container)
+25. [How do EASTL smart pointers compare to Boost smart pointers?](#cont25-how-do-eastl-smart-pointers-compare-to-boost-smart-pointers)
+26. [How do your forward-declare an EASTL container?](#cont26-how-do-your-forward-declare-an-eastl-container)
+27. [How do I make two containers share a memory pool?](#cont27-how-do-i-make-two-containers-share-a-memory-pool)
+28. [Can I use a std (STL) allocator with EASTL?](#cont28-can-i-use-a-std-stl-allocator-with-eastl)
+29. [What are the requirements of classes stored in containers?](#what-are-the-requirements-of-classes-stored-in-containers)
 
 ## Algorithms
 
-1. I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?
-2. How do I write a comparison (operator<()) for a struct that contains two or more members?
-3. How do I sort something in reverse order?
-4. I'm getting errors about min and max while compiling.
-5. Why don't algorithms take a container as an argument instead of iterators? A container would be more convenient.
-6. Given a container of pointers, how do I find an element by value (instead of by pointer)?
-7. When do stored objects need to support opertor < vs. when do they need to support operator ==?
-8. How do I sort via pointers or array indexes instead of objects directly?
+1. [I'm getting screwy behavior in sorting algorithms or sorted containers. What's wrong?](#algo1-im-getting-screwy-behavior-in-sorting-algorithms-or-sorted-containers-whats-wrong)
+2. [How do I write a comparison (operator<()) for a struct that contains two or more members?](#algo2-how-do-i-write-a-comparison-operator-for-a-struct-that-contains-two-or-more-members)
+3. [How do I sort something in reverse order?](#algo3-how-do-i-sort-something-in-reverse-order)
+4. [I'm getting errors about min and max while compiling.](#algo4-im-getting-errors-about-min-and-max-while-compiling)
+5. [Why don't algorithms take a container as an argument instead of iterators? A container would be more convenient.](#algo5-why-dont-algorithms-take-a-container-as-an-argument-instead-of-iterators-a-container-would-be-more-convenient)
+6. [Given a container of pointers, how do I find an element by value (instead of by pointer)?](#algo6-given-a-container-of-pointers-how-do-i-find-an-element-by-value-instead-of-by-pointer)
+7. [When do stored objects need to support opertor < vs. when do they need to support operator ==?](#algo7-when-do-stored-objects-need-to-support-operator--vs-when-do-they-need-to-support-operator-)
+8. [How do I sort via pointers or array indexes instead of objects directly?](#algo8-how-do-i-sort-via-pointers-or-array-indexes-instead-of-objects-directly)
 
 ## Iterators
 
-1. What's the difference between iterator, const iterator, and const_iterator?
-2. How do I tell from an iterator what type of thing it is iterating?
-3. How do I iterate a container while (selectively) removing items from it?
-4. What is an insert_iterator?
+1. [What's the difference between iterator, const iterator, and const_iterator?](#iter1-whats-the-difference-between-iterator-const-iterator-and-const_iterator)
+2. [How do I tell from an iterator what type of thing it is iterating?](#iter2-how-do-i-tell-from-an-iterator-what-type-of-thing-it-is-iterating)
+3. [How do I iterate a container while (selectively) removing items from it?](#iter3-how-do-i-iterate-a-container-while-selectively-removing-items-from-it)
+4. [What is an insert_iterator?](#iter4-what-is-an-insert_iterator)
 
 ## Information
 
@@ -959,7 +959,7 @@ Additionally, EASTL has the design mandate that an empty container constructs no
 
 Currently this debug issue exists only with tree-based containers. Other node-based containers such as list and slist use a trick to get around this problem in debug builds.
 
-See [Debug.2](#debug-2) for more.
+See [Debug.2](#debug2-how-do-i-view-containers-if-the-visualizertooltip-support-is-not-present) for more.
 
 ### Prob.5 The EASTL source code is sometimes rather complicated looking. Why is that?
 
@@ -1177,7 +1177,7 @@ How and where to implement the NULL checks in such a way as to do it efficiently
 
 ### Debug.1 How do I set the VC++ debugger to display EASTL container data with tooltips?
 
-See [Cont.9]()
+See [Cont.9](#cont9-how-do-i-set-the-vc-debugger-to-display-eastl-container-data-with-tooltips)
 
 ### Debug.2 How do I view containers if the visualizer/tooltip support is not present?
 
@@ -1574,7 +1574,7 @@ fixed_list<Widget, 100> fixedList; // Declare a fixed_list that can hold 100 Wid
 
 ### Cont.11 How do I write a comparison (operator<()) for a struct that contains two or more members?
 
-See Algo.2
+See [Algo.2](#algo2-how-do-i-write-a-comparison-operator-for-a-struct-that-contains-two-or-more-members).
 
 ### Cont.12 Why doesn't container X have member function Y?
 
