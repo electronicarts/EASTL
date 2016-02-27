@@ -58,7 +58,7 @@ namespace Benchmark
 		return valueDest;
 	}
 
-	static void WriteTime(int64_t timeNS, eastl::string& sTime)
+	void WriteTime(int64_t timeNS, eastl::string& sTime)
 	{
 		if(timeNS > 1000000000)
 			sTime.sprintf(" %6.2f s",  (double)timeNS / 1000000000);
