@@ -19,8 +19,17 @@ include_directories(source)
 #-------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 11)
 
-if(UNIX)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g -D_DEBUG")
+	set(CMAKE_C_FLAGS_RELEASE "-O2 -g -D_DEBUG")
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	# Disable some (maybe useless) warnings
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-shift-negative-value -Wno-pointer-bool-conversion")
 endif()
 
 #-------------------------------------------------------------------------------------------
