@@ -1163,7 +1163,7 @@ int TEST_STRING_NAME()
 		typename StringType::value_type buf[64];
 
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.copy(buf, 10, sizeof buf);
+		str.copy(buf, 10, 0);
 
 		VERIFY(EA::StdC::Memcmp(buf, LITERAL("klmnopqrs"), 10) != 0);
 	}
