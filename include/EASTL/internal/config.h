@@ -1763,11 +1763,11 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 /// EASTL_OPENSOURCE
 /// This is enabled when EASTL is building built in an "open source" mode.  Which is a mode that eliminates code
 /// dependencies on other technologies that have not been released publically.
-/// EASTL_OPENSOURCE = 0, is the default.  
-/// EASTL_OPENSOURCE = 1, utilizes technologies that not publically available.
+/// EASTL_OPENSOURCE = 0, utilizes technologies that not publically available.
+/// EASTL_OPENSOURCE = 1, is the default.
 /// 
 #ifndef EASTL_OPENSOURCE
-	#define EASTL_OPENSOURCE 0
+	#define EASTL_OPENSOURCE 1
 #endif
 
 #endif // Header include guard
