@@ -5,9 +5,24 @@ cmake_minimum_required(VERSION 3.1)
 project(EASTL CXX)
 
 #-------------------------------------------------------------------------------------------
+# Sub-projects
+#-------------------------------------------------------------------------------------------
+add_subdirectory(test/packages/EAAssert)
+add_subdirectory(test/packages/EABase)
+add_subdirectory(test/packages/EAStdC)
+add_subdirectory(test/packages/EAMain)
+add_subdirectory(test/packages/EATest)
+add_subdirectory(test/packages/EAThread)
+
+add_subdirectory(benchmark)
+add_subdirectory(test)
+
+#-------------------------------------------------------------------------------------------
 # Defines
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DEASTL_OPENSOURCE)
 
 #-------------------------------------------------------------------------------------------
 # Library definition
@@ -34,32 +49,9 @@ target_include_directories(EASTL PUBLIC include ${PROJECT_SOURCE_DIR}/test/packa
 target_link_libraries(EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
-# Libraries
-#-------------------------------------------------------------------------------------------
-add_subdirectory(test/packages/EAAssert)
-add_subdirectory(test/packages/EABase)
-add_subdirectory(test/packages/EAStdC)
-add_subdirectory(test/packages/EAMain)
-add_subdirectory(test/packages/EAThread)
-
-set(EASTL_Libraries
-    EAAssert
-    EABase
-    EAMain
-    EAStdC
-    EAThread)
-target_link_libraries(EASTL ${EASTL_Libraries})
-
-#-------------------------------------------------------------------------------------------
-# Defines
-#-------------------------------------------------------------------------------------------
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE)
-
-#-------------------------------------------------------------------------------------------
 # Installation
 #-------------------------------------------------------------------------------------------
-install (TARGETS EASTL DESTINATION lib)
-install (DIRECTORY include/EASTL DESTINATION include)
-install (DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
+install(TARGETS EASTL DESTINATION lib)
+install(DIRECTORY include/EASTL DESTINATION include)
+install(DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
 
