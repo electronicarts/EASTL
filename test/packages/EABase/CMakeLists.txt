@@ -13,7 +13,7 @@ add_definitions(-D_CHAR16T)
 # Source files
 #-------------------------------------------------------------------------------------------
 set(HEADER_DIR "include/Common/EABase")
-set(EASTDC_SOURCES
+set(EABASE_SOURCES
     ${HEADER_DIR}/eabase.h
     ${HEADER_DIR}/eahave.h
     ${HEADER_DIR}/earesult.h
