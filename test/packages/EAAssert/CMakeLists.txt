@@ -10,7 +10,15 @@ project(EAAssert CXX)
 add_library(EAAssert INTERFACE)
 
 #-------------------------------------------------------------------------------------------
-# Defines 
+# Source files
+#-------------------------------------------------------------------------------------------
+set(HEADER_DIR "include/EAAssert")
+set(EAASSERT_SOURCES
+    ${HEADER_DIR}/eaassert.h
+)
+
+#-------------------------------------------------------------------------------------------
+# Defines
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
 
@@ -19,4 +27,5 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 target_include_directories(EAAssert INTERFACE include)
 
-
+# Workaround to have header files show up in IDEs
+add_custom_target(EAAssert_ide SOURCES ${EAASSERT_SOURCES})

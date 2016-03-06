@@ -15,7 +15,19 @@ add_library(EAThread INTERFACE)
 set(CMAKE_CXX_STANDARD 11)
 
 #-------------------------------------------------------------------------------------------
-# Include directories 
+# Source files
+#-------------------------------------------------------------------------------------------
+set(HEADER_DIR "include/eathread")
+set(EATHREAD_SOURCES
+    ${HEADER_DIR}/eathread.h
+    ${HEADER_DIR}/eathread_atomic.h
+    ${HEADER_DIR}/eathread_thread.h
+)
+
+#-------------------------------------------------------------------------------------------
+# Include directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(EAThread INTERFACE include)
 
+# Workaround to have header files show up in IDEs
+add_custom_target(EAThread_ide SOURCES ${EATHREAD_SOURCES})

@@ -7,13 +7,23 @@ project(EATest CXX)
 #-------------------------------------------------------------------------------------------
 # Library definition 
 #-------------------------------------------------------------------------------------------
-file(GLOB EATEST_SOURCES "source/*.cpp")
+set(HEADER_DIR "include/EATest")
+set(SOURCE_DIR "source")
+set(EATEST_SOURCES
+    ${HEADER_DIR}/EAMissingImpl.inl
+    ${HEADER_DIR}/EASTLNewOperatorGuard.inl
+    ${HEADER_DIR}/EASTLVsnprintf.inl
+    ${HEADER_DIR}/EATest.h
+    ${HEADER_DIR}/internal/Config.h
+    ${SOURCE_DIR}/EATest.cpp
+)
 add_library(EATest ${EATEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------
 # Defines 
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -36,9 +46,3 @@ target_link_libraries(EATest EAStdC)
 target_link_libraries(EATest EASTL)
 target_link_libraries(EATest EAMain)
 target_link_libraries(EATest EAThread)
-
-#-------------------------------------------------------------------------------------------
-# Defines 
-#-------------------------------------------------------------------------------------------
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-

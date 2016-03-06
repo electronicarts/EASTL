@@ -15,9 +15,18 @@ add_library(EAMain INTERFACE)
 set(CMAKE_CXX_STANDARD 11)
 
 #-------------------------------------------------------------------------------------------
-# exported include directories 
+# Source files
+#-------------------------------------------------------------------------------------------
+set(HEADER_DIR "include/EAMain")
+set(EAMAIN_SOURCES
+    ${HEADER_DIR}/EAEntryPointMain.inl
+    ${HEADER_DIR}/EAMain.h
+)
+
+#-------------------------------------------------------------------------------------------
+# exported include directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(EAMain INTERFACE include)
 
-
-
+# Workaround to have header files show up in IDEs
+add_custom_target(EAMain_ide SOURCES ${EAMAIN_SOURCES})
