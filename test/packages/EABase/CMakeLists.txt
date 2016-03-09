@@ -12,18 +12,7 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-set(HEADER_DIR "include/Common/EABase")
-set(EABASE_SOURCES
-    ${HEADER_DIR}/eabase.h
-    ${HEADER_DIR}/eahave.h
-    ${HEADER_DIR}/earesult.h
-    ${HEADER_DIR}/eastdarg.h
-    ${HEADER_DIR}/nullptr.h
-    ${HEADER_DIR}/version.h
-    ${HEADER_DIR}/config/eacompiler.h
-    ${HEADER_DIR}/config/eacompilertraits.h
-    ${HEADER_DIR}/config/eaplatform.h
-)
+file(GLOB EABASE_SOURCES "include/Common/EABase/*.h" "include/Common/EABase/config/*.h")
 
 #-------------------------------------------------------------------------------------------
 # Header only library

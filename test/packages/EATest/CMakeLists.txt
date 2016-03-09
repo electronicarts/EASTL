@@ -7,16 +7,7 @@ project(EATest CXX)
 #-------------------------------------------------------------------------------------------
 # Library definition 
 #-------------------------------------------------------------------------------------------
-set(HEADER_DIR "include/EATest")
-set(SOURCE_DIR "source")
-set(EATEST_SOURCES
-    ${HEADER_DIR}/EAMissingImpl.inl
-    ${HEADER_DIR}/EASTLNewOperatorGuard.inl
-    ${HEADER_DIR}/EASTLVsnprintf.inl
-    ${HEADER_DIR}/EATest.h
-    ${HEADER_DIR}/internal/Config.h
-    ${SOURCE_DIR}/EATest.cpp
-)
+file(GLOB EATEST_SOURCES "source/*.cpp" "include/EATest/*.*" "include/EATest/internal/*.h")
 add_library(EATest ${EATEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------

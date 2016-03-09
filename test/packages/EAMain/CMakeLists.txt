@@ -17,11 +17,7 @@ set(CMAKE_CXX_STANDARD 11)
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-set(HEADER_DIR "include/EAMain")
-set(EAMAIN_SOURCES
-    ${HEADER_DIR}/EAEntryPointMain.inl
-    ${HEADER_DIR}/EAMain.h
-)
+file(GLOB EAMAIN_SOURCES "include/EAMain/*.*")
 
 #-------------------------------------------------------------------------------------------
 # exported include directories

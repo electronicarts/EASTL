@@ -12,10 +12,7 @@ add_library(EAAssert INTERFACE)
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-set(HEADER_DIR "include/EAAssert")
-set(EAASSERT_SOURCES
-    ${HEADER_DIR}/eaassert.h
-)
+file(GLOB EAASSERT_SOURCES "include/EAAssert/*.h")
 
 #-------------------------------------------------------------------------------------------
 # Defines

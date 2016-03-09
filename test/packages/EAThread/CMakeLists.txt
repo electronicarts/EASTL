@@ -17,12 +17,7 @@ set(CMAKE_CXX_STANDARD 11)
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-set(HEADER_DIR "include/eathread")
-set(EATHREAD_SOURCES
-    ${HEADER_DIR}/eathread.h
-    ${HEADER_DIR}/eathread_atomic.h
-    ${HEADER_DIR}/eathread_thread.h
-)
+file(GLOB EATHREAD_SOURCES "include/eathread/*.h")
 
 #-------------------------------------------------------------------------------------------
 # Include directories
