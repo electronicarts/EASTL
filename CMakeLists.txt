@@ -5,17 +5,31 @@ cmake_minimum_required(VERSION 3.1)
 project(EASTL CXX)
 
 #-------------------------------------------------------------------------------------------
+# Options
+#-------------------------------------------------------------------------------------------
+option(EASTL_BUILD_BENCHMARK "Enable generation of build files for benchmark" OFF)
+option(EASTL_BUILD_TESTS "Enable generation of build files for tests" OFF)
+
+#-------------------------------------------------------------------------------------------
 # Sub-projects
 #-------------------------------------------------------------------------------------------
-add_subdirectory(test/packages/EAAssert)
 add_subdirectory(test/packages/EABase)
-add_subdirectory(test/packages/EAStdC)
-add_subdirectory(test/packages/EAMain)
-add_subdirectory(test/packages/EATest)
-add_subdirectory(test/packages/EAThread)
 
-add_subdirectory(benchmark)
-add_subdirectory(test)
+if(EASTL_BUILD_TESTS OR EASTL_BUILD_BENCHMARK)
+    add_subdirectory(test/packages/EAAssert)
+    add_subdirectory(test/packages/EAStdC)
+    add_subdirectory(test/packages/EAMain)
+    add_subdirectory(test/packages/EATest)
+    add_subdirectory(test/packages/EAThread)
+endif()
+
+if(EASTL_BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
+endif()
+
+if(EASTL_BUILD_TESTS)
+    add_subdirectory(test)
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Defines
