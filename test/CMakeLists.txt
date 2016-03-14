@@ -6,7 +6,7 @@
 # CMake info 
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
-project(EASTLTest)
+project(EASTLTest CXX)
 include(CTest)
 
 #-------------------------------------------------------------------------------------------
@@ -24,12 +24,6 @@ if(UNIX)
 endif()
 
 #-------------------------------------------------------------------------------------------
-# Libraries 
-#-------------------------------------------------------------------------------------------
-add_subdirectory(packages/EATest)
-add_subdirectory(../ "${CMAKE_CURRENT_BINARY_DIR}/eastl")
-
-#-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLTEST_SOURCES "source/*.cpp")
@@ -42,7 +36,6 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE)
 add_definitions(-D_CHAR16T)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
-target_compile_definitions(EASTL PUBLIC -DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Executable definition

@@ -27,29 +27,25 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then tar -xzf cmake-3.4.3-Darwin-x86_64.tar.gz                                                     ;fi
 
 script:
-# Build tests (linux)
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild -Htest                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Debug                             ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build --config Release                           ;fi
-# Build tests (osx)
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake -Bbuild -Htest                       ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build build --config Debug         ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build build --config Release       ;fi
-# Benchmarks (linux)
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake -Bbuild_bench -Hbenchmark                                ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./cmake-3.4.3-Linux-x86_64/bin/cmake --build build_bench --config Release                     ;fi
-# Benchmarks (osx)
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake -Bbuild_bench -Hbenchmark            ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ./cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build build_bench --config Release ;fi
+  - mkdir build
+  - cd build
+# Build project (linux)
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Debug                                          ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Release                                        ;fi
+# Build project (osx)
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build . --config Debug                                          ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build . --config Release                                        ;fi
 
 after_success:
 # Run tests 
-  - cd build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
+  - cd test
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
 # Run benchmarks 
   - cd ..
-  - cd build_bench
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
+  - cd benchmark
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
 

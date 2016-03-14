@@ -1,6 +1,6 @@
 version: 1.0.{build}
 os: Visual Studio 2015
 build_script:
-- cmd: cmake -Bbuild -Htest && cmake --build build --config Debug && cmake --build build --config Release && cmake -Bbuild_bench -Hbenchmark && cmake --build build_bench --config Release
+- cmd: mkdir build && cd build && cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON && cmake --build . --config Debug && cmake --build . --config Release
 test_script:
-- cmd: cd build && ctest -C Release -V && cd .. && cd build_bench && ctest -C Release -V
+- cmd: cd test && ctest -C Release -V && cd .. && cd benchmark && ctest -C Release -V

@@ -1,6 +1,8 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
+cmake_minimum_required(VERSION 3.1)
+project(EAAssert CXX)
 
 #-------------------------------------------------------------------------------------------
 # Header only library 
@@ -8,7 +10,12 @@
 add_library(EAAssert INTERFACE)
 
 #-------------------------------------------------------------------------------------------
-# Defines 
+# Source files
+#-------------------------------------------------------------------------------------------
+file(GLOB EAASSERT_SOURCES "include/EAAssert/*.h")
+
+#-------------------------------------------------------------------------------------------
+# Defines
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
 
@@ -17,4 +24,5 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 target_include_directories(EAAssert INTERFACE include)
 
-
+# Workaround to have header files show up in IDEs
+add_custom_target(EAAssert_ide SOURCES ${EAASSERT_SOURCES})

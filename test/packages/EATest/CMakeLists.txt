@@ -2,17 +2,19 @@
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
+project(EATest CXX)
 
 #-------------------------------------------------------------------------------------------
 # Library definition 
 #-------------------------------------------------------------------------------------------
-file(GLOB EATEST_SOURCES "source/*.cpp")
+file(GLOB EATEST_SOURCES "source/*.cpp" "include/EATest/*.*" "include/EATest/internal/*.h")
 add_library(EATest ${EATEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------
 # Defines 
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CHAR16T)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -35,9 +37,3 @@ target_link_libraries(EATest EAStdC)
 target_link_libraries(EATest EASTL)
 target_link_libraries(EATest EAMain)
 target_link_libraries(EATest EAThread)
-
-#-------------------------------------------------------------------------------------------
-# Defines 
-#-------------------------------------------------------------------------------------------
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-

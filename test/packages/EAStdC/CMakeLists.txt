@@ -2,11 +2,12 @@
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
+project(EAStdC CXX)
 
 #-------------------------------------------------------------------------------------------
 # Library definition 
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTDC_SOURCES "source/*.cpp")
+file(GLOB EASTDC_SOURCES "source/*.cpp" "include/EAStdC/*.h")
 add_library(EAStdC ${EASTDC_SOURCES})
 
 #-------------------------------------------------------------------------------------------
