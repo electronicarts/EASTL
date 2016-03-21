@@ -6,7 +6,7 @@
 # CMake info 
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
-project(EASTLTest)
+project(EASTLTest CXX)
 include(CTest)
 
 #-------------------------------------------------------------------------------------------
@@ -33,12 +33,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 #-------------------------------------------------------------------------------------------
-# Libraries 
-#-------------------------------------------------------------------------------------------
-add_subdirectory(packages/EATest)
-add_subdirectory(../ "${CMAKE_CURRENT_BINARY_DIR}/eastl")
-
-#-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLTEST_SOURCES "source/*.cpp")
@@ -48,20 +42,22 @@ set(SOURCES ${EASTLTEST_SOURCES})
 # Defines 
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE)
+add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
-target_compile_definitions(EASTL PUBLIC -DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
 add_executable(EASTLTest ${SOURCES})
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 set(EASTLTest_Libraries
     EASTL
     EATest)
-target_link_libraries(EASTLTest ${EASTLTest_Libraries})
+target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results. 

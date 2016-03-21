@@ -2,11 +2,12 @@
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
+project(EAStdC CXX)
 
 #-------------------------------------------------------------------------------------------
 # Library definition 
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTDC_SOURCES "source/*.cpp")
+file(GLOB EASTDC_SOURCES "source/*.cpp" "include/EAStdC/*.h")
 add_library(EAStdC ${EASTDC_SOURCES})
 
 #-------------------------------------------------------------------------------------------
@@ -19,8 +20,14 @@ add_definitions(-D_CHAR16T)
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 11)
-if(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+if( UNIX AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fasm-blocks" )
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 endif()
 
 #-------------------------------------------------------------------------------------------
