@@ -55,7 +55,7 @@ target_link_libraries(EASTL ${EASTL_Libraries})
 # Defines
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE)
+add_definitions(-DEASTL_OPENSOURCE=1)
 
 #-------------------------------------------------------------------------------------------
 # Installation

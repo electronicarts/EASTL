@@ -31,6 +31,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 endif()
 
+# Work around a crash bug that only occurs with MingW when compiled with optimizations enabled and a dynamic runtime.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND WIN32)
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static")
+endif()
+
 #-------------------------------------------------------------------------------------------
 # Libraries 
 #-------------------------------------------------------------------------------------------
@@ -48,7 +53,7 @@ set(SOURCES ${EASTLBENCHMARK_SOURCES})
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0) 
-add_definitions(-DEASTL_OPENSOURCE)
+add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)  # silence std::hash_map deprecation warnings
 target_compile_definitions(EASTL PUBLIC -DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
