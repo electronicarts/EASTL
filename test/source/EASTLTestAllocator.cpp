@@ -360,7 +360,7 @@
 		}
 	}
 
-	void* operator new(size_t const size)
+	void* operator new(size_t size)
 		{ return Internal::EASTLAlignedAlloc(size, 16); }
 
 	void* operator new[](size_t size)
