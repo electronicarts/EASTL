@@ -79,7 +79,7 @@ target_link_libraries(EASTL EABase)
 #-------------------------------------------------------------------------------------------
 # Installation
 #-------------------------------------------------------------------------------------------
-install(TARGETS EASTL DESTINATION lib/\${BUILD_TYPE})
+install(TARGETS EASTL DESTINATION lib)
 install(DIRECTORY include/EASTL DESTINATION include)
 install(DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
 
