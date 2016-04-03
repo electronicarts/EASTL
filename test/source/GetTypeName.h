@@ -81,12 +81,7 @@ eastl::string GetTypeName()
 			const char* pDemangledName = NULL;
 		#endif
 
-		// Gets rid of pointer to bool conversion warning when pDemangledName is an array.
-		#if EASTL_LIBSTDCPP_DEMANGLE_AVAILABLE
-			if(pDemangledName && pDemangledName[0])
-		#else
-			if(pDemangledName[0])
-		#endif
+		if(pDemangledName && pDemangledName[0])
 			result = pDemangledName;
 		else
 			result = pName;
@@ -102,12 +97,12 @@ eastl::string GetTypeName()
 		else if(eastl::is_rvalue_reference<T>::value)
 			result += "&&";
 
-		#if EASTL_LIBSTDCPP_DEMANGLE_AVAILABLE
 		if(pDemangledName)
 		{
-				free((void*)pDemangledName);	
+			#if EASTL_LIBSTDCPP_DEMANGLE_AVAILABLE
+				free((void*)pDemangledName);
+			#endif
 		}
-		#endif
 	#endif
 
 	return result;
@@ -115,3 +110,10 @@ eastl::string GetTypeName()
 
 
 #endif // Header include guard
+
+
+
+
+
+
+
