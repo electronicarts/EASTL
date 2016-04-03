@@ -866,9 +866,8 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	// VS2013 fails to compile the variadic code below due to what looks like a deficiency in their handling of integral variadic template parameters.
-	// Also mingw's clang and gcc fail to compile the code (on windows, linux untested).
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_MSVC) || \
-	(defined(EA_PLATFORM_MINGW) && (defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)))
+	// Also mingw's clang and gcc fail to compile the code on windows.
+	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_MSVC) || (defined(EA_PLATFORM_MINGW) && (defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)))
 		// We support only two parameters.
 
 		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 0
