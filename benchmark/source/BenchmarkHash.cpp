@@ -22,6 +22,8 @@
 		#define STD_HASH_SUPPORTED 0
 	#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006) // To consider: Find a better way to identify the switchover from pre-C++11 hash containers to C++11 hash containers.
 		#define STD_HASH_SUPPORTED 0 // Need to use std::unordered_map, etc. instead of hash_map, etc.
+	#elif defined(EA_COMPILER_CLANG) && (EA_COMPILER_CPP11_ENABLED) // Bad way to determine if we have C++11 hash containers
+		#define STD_HASH_SUPPORTED 0
 	#else
 		#define STD_HASH_SUPPORTED 1
 	#endif
@@ -34,7 +36,7 @@
 	#pragma warning(disable: 4350) // behavior change: X called instead of Y
 #endif
 #if STD_HASH_SUPPORTED
-	#if defined(__GNUC__) && (defined(_CXXCONFIG) || defined(EA_PLATFORM_UNIX))
+	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && (defined(_CXXCONFIG) || defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_MINGW))
 		#include <ext/hash_map>
 	#else
 		#include <hash_map>

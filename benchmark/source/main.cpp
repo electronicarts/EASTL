@@ -164,7 +164,11 @@ int EAMain(int argc, char* argv[])
 	#endif
 
 	Benchmark::PrintResults();
-	EASTLTest_Printf("Time to complete all tests: %.1f seconds.\n", stopwatch.GetElapsedTimeFloat());
+
+	eastl::string sClockTime;
+	Benchmark::WriteTime(stopwatch.GetElapsedTime(), sClockTime);
+
+	EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());
 
 	// Done
 	if(bWaitAtEnd)

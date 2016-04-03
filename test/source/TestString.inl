@@ -1163,9 +1163,9 @@ int TEST_STRING_NAME()
 		typename StringType::value_type buf[64];
 
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.copy(buf, 10, sizeof buf);
+		str.copy(buf, 10, 10);
 
-		VERIFY(EA::StdC::Memcmp(buf, LITERAL("klmnopqrs"), 10) != 0);
+		VERIFY(EA::StdC::Memcmp(buf, LITERAL("klmnopqrst"), 10) == 0);
 	}
 
 	// size_type find(const this_type& x, size_type position = 0) const EA_NOEXCEPT; 

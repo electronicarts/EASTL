@@ -1805,7 +1805,7 @@ EA_RESTORE_GCC_WARNING()
 		: base_type(value)
 	{
 		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits.
+			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits.
 	}
 	EA_RESTORE_VC_WARNING()
 
@@ -1856,7 +1856,7 @@ EA_RESTORE_GCC_WARNING()
 			EA_DISABLE_VC_WARNING(6313)
 			base_type::operator<<=(n);
 			if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-				mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+				mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
 			EA_RESTORE_VC_WARNING()
 		}
 		else
@@ -1883,7 +1883,7 @@ EA_RESTORE_GCC_WARNING()
 	{
 		base_type::set(); // This sets all bits.
 		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
 		return *this;
 	}
 
@@ -1948,7 +1948,7 @@ EA_RESTORE_GCC_WARNING()
 		EA_DISABLE_VC_WARNING(6313)
 		base_type::flip();
 		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
 		return *this;
 		EA_RESTORE_VC_WARNING()
 	}
@@ -2028,7 +2028,7 @@ EA_RESTORE_GCC_WARNING()
 		base_type::from_uint32(value);
 
 		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
 	}
 
 
@@ -2038,7 +2038,7 @@ EA_RESTORE_GCC_WARNING()
 		base_type::from_uint64(value);
 
 		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
 	}
 
 

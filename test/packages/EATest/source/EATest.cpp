@@ -36,7 +36,7 @@
         #include <Windows.h>
         extern "C" WINBASEAPI BOOL WINAPI IsDebuggerPresent();
 
-    #if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP)
+    #if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP) && !defined(EA_COMPILER_CLANG)
         #pragma comment(lib, "Advapi32.lib"); // For CheckTokenMembership and friends.
     #endif
 

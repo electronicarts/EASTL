@@ -43,9 +43,12 @@ namespace StdC {
 		explicit Stopwatch(int nUnits = kUnitsCycles, bool bStartImmediately = false)
 			: mnStartTime(0)
 			, mnTotalElapsedTime(0)
-			, mnUnits(0)
+			, mnUnits(nUnits)
 			, mfStopwatchCyclesToUnitsCoefficient(1.f)
-			 { } 
+		{
+			if(bStartImmediately)
+				Start();
+		}
 
 		/// Start
 		/// Starts the stopwatch. Continues where it was last stopped. 
@@ -112,7 +115,7 @@ namespace StdC {
 	public:
 		/// LimitStopwatch
 		/// Constructor
-		LimitStopwatch(int nUnits = kUnitsCycles, uint64_t nLimit = 0, bool bStartImmediately = false) : Stopwatch(), mnEndTime(0) { }
+		LimitStopwatch(int nUnits = kUnitsCycles, uint64_t nLimit = 0, bool bStartImmediately = false) : Stopwatch(nUnits, bStartImmediately), mnEndTime(nLimit) { }
 
 		/// IsTimeUp
 		/// Returns true if the limit has been reached. Highly efficient.
@@ -163,7 +166,6 @@ void EA::StdC::Stopwatch::Restart()
 {
     mnStartTime = 0;
     mnTotalElapsedTime = 0;
-    mnUnits = 0;
     mfStopwatchCyclesToUnitsCoefficient = 1.f;
 
     Start();

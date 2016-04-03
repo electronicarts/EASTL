@@ -32,6 +32,7 @@
 	#define WIN32_LEAN_AND_MEAN
 	#endif
 	EA_DISABLE_ALL_VC_WARNINGS()
+	#undef NOMINMAX
 	#define NOMINMAX
 	#include <Windows.h>
 	// #ifdef min
@@ -44,11 +45,14 @@
 	#pragma warning(pop)
 #endif
 
-#ifdef EA_PLATFORM_MICROSOFT
+#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 	#include <thr/xtimec.h>
 #elif defined(EA_PLATFORM_APPLE)
 	#include <mach/mach_time.h>
-#elif defined(EA_PLATFORM_POSIX) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
+#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
+	#if defined(EA_PLATFORM_MINGW)
+	#include <pthread_time.h>
+	#endif
 	#if (defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC))
 		#include <time.h>
 		#include <errno.h>
@@ -534,7 +538,7 @@ namespace chrono
 
 	namespace Internal
 	{
-		#if defined EA_PLATFORM_MICROSOFT
+		#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
 		#elif defined EA_PLATFORM_POSIX
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK

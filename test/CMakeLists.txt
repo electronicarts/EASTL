@@ -19,21 +19,27 @@ include_directories(source)
 #-------------------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 11)
 
-if(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-pointer-bool-conversion")
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 endif()
 
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTLTEST_SOURCES "source/*.cpp")
+file(GLOB EASTLTEST_SOURCES "source/*.cpp" "source/*.inl" "source/*.h")
 set(SOURCES ${EASTLTEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------
 # Defines 
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE)
+add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
@@ -42,10 +48,13 @@ add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 #-------------------------------------------------------------------------------------------
 add_executable(EASTLTest ${SOURCES})
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 set(EASTLTest_Libraries
     EASTL
     EATest)
-target_link_libraries(EASTLTest ${EASTLTest_Libraries})
+target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results. 

@@ -559,10 +559,10 @@
 #endif
 
 #if !defined(EA_HAVE_ISNAN) && !defined(EA_NO_HAVE_ISNAN)
-	#if defined(EA_PLATFORM_MICROSOFT)
+	#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_COMPILER_CLANG)
 		#define EA_HAVE_ISNAN(x)  _isnan(x)          /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  !_finite(x)
-	#elif defined(EA_PLATFORM_APPLE)
+	#elif defined(EA_PLATFORM_APPLE) || (defined(EA_PLATFORM_MICROSOFT) && defined(EA_COMPILER_CLANG))
 		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
 		#define EA_HAVE_ISINF(x)  std::isinf(x)
 	#elif defined(EA_PLATFORM_ANDROID)

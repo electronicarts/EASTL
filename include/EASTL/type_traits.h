@@ -783,7 +783,7 @@ namespace eastl
 	// shall name T&&; otherwise, type shall name T. [ Note: This rule reflects
 	// the semantics of reference collapsing (8.3.2). For example, when a type T
 	// names a type T1&, the type add_rvalue_reference<T>::type is not an
-	// rvalue reference. — end note ]
+	// rvalue reference. end note ]
 	//
 	// Rules (8.3.2 p6):
 	//      void + &&  -> void
@@ -865,7 +865,9 @@ namespace eastl
 	// 
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_MSVC) // VS2013 fails to compile the variadic code below due to what looks like a deficiency in their handling of integral variadic template parameters.
+	// VS2013 fails to compile the variadic code below due to what looks like a deficiency in their handling of integral variadic template parameters.
+	// Also mingw's clang and gcc fail to compile the code on windows.
+	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_MSVC) || (defined(EA_PLATFORM_MINGW) && (defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)))
 		// We support only two parameters.
 
 		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 0
@@ -894,7 +896,6 @@ namespace eastl
 		struct static_min<I0, I1, IN...>
 			{ static const size_t value = ((I0 <= I1) ? static_min<I0, IN...>::value : static_min<I1, IN...>::value); };
 
-
 		template <size_t I0, size_t ...IN>
 		struct static_max;
 
@@ -921,24 +922,3 @@ namespace eastl
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

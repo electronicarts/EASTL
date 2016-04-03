@@ -375,7 +375,7 @@ void BenchmarkString()
 
 			const char16_t pFind1_16[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			#if !defined(EA_PLATFORM_IPHONE) // Crashes on iPhone.
+			#if !defined(EA_PLATFORM_IPHONE) && (!defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_MINGW)) // Crashes on iPhone.
 			  ss16.insert(ss8.size() / 2, pFind1_16);
 			#endif
 			es16.insert(es8.size() / 2, pFind1_16);

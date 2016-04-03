@@ -332,7 +332,7 @@
 	}
 
 #else
-	#ifndef EA_PLATFORM_MICROSOFT
+	#if !defined(EA_PLATFORM_MICROSOFT) || defined(EA_PLATFORM_MINGW)
 		#include <stdlib.h>
 	#endif
 
@@ -360,7 +360,10 @@
 		}
 	}
 
-	void* operator new(size_t const size)
+	void* operator new(size_t size)
+		{ return Internal::EASTLAlignedAlloc(size, 16); }
+
+	void* operator new[](size_t size)
 		{ return Internal::EASTLAlignedAlloc(size, 16); }
 
 	void* operator new[](size_t size, const char* /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
