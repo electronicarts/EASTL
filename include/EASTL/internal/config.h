@@ -105,8 +105,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.00.00"
-	#define EASTL_VERSION_N  30000
+	#define EASTL_VERSION   "3.01.00"
+	#define EASTL_VERSION_N  30100
 #endif
 
 
@@ -585,42 +585,59 @@ namespace eastl
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// EASTL_DEBUG_BREAK
+// EASTL_DEBUG_BREAK / EASTL_DEBUG_BREAK_OVERRIDE
 //
 // This function causes an app to immediately stop under the debugger.
 // It is implemented as a macro in order to allow stopping at the site 
 // of the call.
 //
+// EASTL_DEBUG_BREAK_OVERRIDE allows one to define EASTL_DEBUG_BREAK directly.
+// This is useful in cases where you desire to disable EASTL_DEBUG_BREAK
+// but do not wish to (or cannot) define a custom void function() to replace
+// EASTL_DEBUG_BREAK callsites.
 //
 // Example usage:
 //     EASTL_DEBUG_BREAK();
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_DEBUG_BREAK
-	#if defined(_MSC_VER) && (_MSC_VER >= 1300)
-		#define EASTL_DEBUG_BREAK() __debugbreak()    // This is a compiler intrinsic which will map to appropriate inlined asm for the platform.
-	#elif (defined(EA_PROCESSOR_ARM) && !defined(EA_PROCESSOR_ARM64)) && defined(__APPLE__)
-		#define EASTL_DEBUG_BREAK() asm("trap")
-	#elif defined(EA_PROCESSOR_ARM64) && defined(__APPLE__)
-		#include <signal.h>
-		#include <unistd.h>
-		#define EASTL_DEBUG_BREAK() kill( getpid(), SIGINT )
-	#elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
-		#define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
-	#elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
-		#define EASTL_DEBUG_BREAK() __breakpoint(10)
-	#elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
-		#define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
-	#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
-		#define EASTL_DEBUG_BREAK() { __asm int 3 }
-	#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
-		#define EASTL_DEBUG_BREAK() asm("int3") 
-	#else
-		void EASTL_DEBUG_BREAK(); // User must define this externally.
-	#endif
+#ifndef EASTL_DEBUG_BREAK_OVERRIDE
+    #ifndef EASTL_DEBUG_BREAK
+        #if defined(_MSC_VER) && (_MSC_VER >= 1300)
+            #define EASTL_DEBUG_BREAK() __debugbreak()    // This is a compiler intrinsic which will map to appropriate inlined asm for the platform.
+        #elif (defined(EA_PROCESSOR_ARM) && !defined(EA_PROCESSOR_ARM64)) && defined(__APPLE__)
+            #define EASTL_DEBUG_BREAK() asm("trap")
+        #elif defined(EA_PROCESSOR_ARM64) && defined(__APPLE__)
+            #include <signal.h>
+            #include <unistd.h>
+            #define EASTL_DEBUG_BREAK() kill( getpid(), SIGINT )
+        #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
+            #define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
+        #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
+            #define EASTL_DEBUG_BREAK() __breakpoint(10)
+        #elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
+            #define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
+        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
+            #define EASTL_DEBUG_BREAK() { __asm int 3 }
+        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
+            #define EASTL_DEBUG_BREAK() asm("int3") 
+        #else
+            void EASTL_DEBUG_BREAK(); // User must define this externally.
+        #endif
+    #else
+        void EASTL_DEBUG_BREAK(); // User must define this externally.
+    #endif
 #else
-	void EASTL_DEBUG_BREAK(); // User must define this externally.
+    #ifndef EASTL_DEBUG_BREAK
+		#if EASTL_DEBUG_BREAK_OVERRIDE == 1 
+			// define an empty callable to satisfy the call site. 
+			#define EASTL_DEBUG_BREAK ([]{}) 
+		#else
+			#define EASTL_DEBUG_BREAK EASTL_DEBUG_BREAK_OVERRIDE
+		#endif
+    #else
+        #error EASTL_DEBUG_BREAK is already defined yet you would like to override it. Please ensure no other headers are already defining EASTL_DEBUG_BREAK before this header (config.h) is included
+    #endif
 #endif
 
 
@@ -1451,7 +1468,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 // EA_COMPILER_NO_FUNCTION_TEMPLATE_DEFAULT_ARGS undef
 //
-// We need revise this macro to be unefined in some cases, in case the user
+// We need revise this macro to be undefined in some cases, in case the user
 // isn't using an updated EABase.
 ///////////////////////////////////////////////////////////////////////////////
 #if defined(__EDG_VERSION__) && (__EDG_VERSION__ >= 403) // It may in fact be supported by 4.01 or 4.02 but we don't have compilers to test with.
@@ -1763,7 +1780,7 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 /// EASTL_OPENSOURCE
 /// This is enabled when EASTL is building built in an "open source" mode.  Which is a mode that eliminates code
 /// dependencies on other technologies that have not been released publically.
-/// EASTL_OPENSOURCE = 0, is the default.
+/// EASTL_OPENSOURCE = 0, is the default.  
 /// EASTL_OPENSOURCE = 1, utilizes technologies that not publically available.
 /// 
 #ifndef EASTL_OPENSOURCE
@@ -1771,3 +1788,10 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 #endif
 
 #endif // Header include guard
+
+
+
+
+
+
+

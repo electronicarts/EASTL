@@ -51,7 +51,7 @@
 	#include <mach/mach_time.h>
 #elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
 	#if defined(EA_PLATFORM_MINGW)
-	#include <pthread_time.h>
+		#include <pthread_time.h>
 	#endif
 	#if (defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC))
 		#include <time.h>

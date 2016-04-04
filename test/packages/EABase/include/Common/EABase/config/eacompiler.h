@@ -425,6 +425,10 @@
 			#define EA_COMPILER_MSVC_2013 1
 			#define EA_COMPILER_MSVC13_0  1
 
+		#elif (_MSC_VER < 2000) // VS2015       _MSC_VER of 1900 means VS2015
+			#define EA_COMPILER_MSVC_2015 1
+			#define EA_COMPILER_MSVC14_0  1
+
 		#endif
 
 

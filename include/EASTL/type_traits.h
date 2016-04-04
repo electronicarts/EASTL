@@ -334,7 +334,7 @@ namespace eastl
 	// in template metaprogramming.
 	//
 	// Example usage:
-	//    typedef ChosenType = type_select<is_integral<SomeType>::value, ChoiceAType, ChoiceBType>::type;
+	//    typedef ChosenType = typename type_select<is_integral<SomeType>::value, ChoiceAType, ChoiceBType>::type;
 	//
 	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
 	struct type_select { typedef ConditionIsTrueType type; };

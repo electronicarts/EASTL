@@ -379,6 +379,85 @@ static int TestUtilityIntegerSequence()
 	return nErrorCount;
 }
 
+static int TestUtilityExchange()
+{
+	int nErrorCount = 0;
+
+	{
+		int a = 0;
+		auto r = eastl::exchange(a, 1);
+
+		EATEST_VERIFY(r == 0);
+		EATEST_VERIFY(a == 1);
+	}
+
+	{
+		int a = 0;
+		auto r = eastl::exchange(a, 1.78);
+
+		EATEST_VERIFY(r == 0);
+		EATEST_VERIFY(a == 1);
+	}
+
+	{
+		int a = 0;
+		auto r = eastl::exchange(a, 1.78f);
+
+		EATEST_VERIFY(r == 0);
+		EATEST_VERIFY(a == 1);
+	}
+
+	{
+		int a = 0, b = 1;
+		auto r = eastl::exchange(a, b);
+
+		EATEST_VERIFY(r == 0);
+		EATEST_VERIFY(a == 1);
+		EATEST_VERIFY(b == 1);
+	}
+
+	{
+		bool b = true;
+
+		auto r = eastl::exchange(b, true);
+		EATEST_VERIFY(r);
+
+		r = eastl::exchange(b, false);
+		EATEST_VERIFY(r);
+		EATEST_VERIFY(!b);
+
+		r = eastl::exchange(b, true);
+		EATEST_VERIFY(!r);
+		EATEST_VERIFY(b);
+	}
+
+	{
+		TestObject::Reset();
+
+		TestObject a(42);
+		auto r = eastl::exchange(a, TestObject(24));
+
+		EATEST_VERIFY(r.mX == 42);
+		EATEST_VERIFY(a.mX == 24);
+	}
+
+	{
+		const char* const pElectronicArts = "Electronic Arts";
+		const char* const pEAVancouver = "EA Vancouver";
+
+		eastl::string a(pElectronicArts);
+		auto r = eastl::exchange(a, pEAVancouver);
+
+		EATEST_VERIFY(r == pElectronicArts);
+		EATEST_VERIFY(a == pEAVancouver);
+
+		r = eastl::exchange(a, "EA Standard Template Library");
+		EATEST_VERIFY(a == "EA Standard Template Library");
+	}
+
+	return nErrorCount;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestUtility
 //
@@ -391,6 +470,7 @@ int TestUtility()
 	nErrorCount += TestUtilitySwap();
 	nErrorCount += TestUtilityMove();
 	nErrorCount += TestUtilityIntegerSequence();
+	nErrorCount += TestUtilityExchange();
 
 	return nErrorCount;
 }

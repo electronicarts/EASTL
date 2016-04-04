@@ -120,8 +120,8 @@ namespace eastl
 		map(const Compare& compare, const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
 		map(const this_type& x);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		map(this_type&& x);
-		map(this_type&& x, const allocator_type& allocator);
+			map(this_type&& x);
+			map(this_type&& x, const allocator_type& allocator);
 		#endif
 		map(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
 
@@ -151,6 +151,9 @@ namespace eastl
 		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
 
 		T& operator[](const Key& key); // Of map, multimap, set, and multimap, only map has operator[].
+		#if EASTL_MOVE_SEMANTICS_ENABLED
+			T& operator[](Key&& key); 
+		#endif
 
 	}; // map
 
@@ -414,6 +417,26 @@ namespace eastl
 		//iterator it(base_type::insert(eastl::pair<iterator, iterator>(key, T())).first);
 		//return it->second;
 	}
+
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename Key, typename T, typename Compare, typename Allocator>
+		inline T& map<Key, T, Compare, Allocator>::operator[](Key&& key)
+		{
+			iterator itLower(lower_bound(key)); // itLower->first is >= key.
+
+			if((itLower == end()) || mCompare(key, (*itLower).first))
+			{
+				itLower = base_type::DoInsertKey(true_type(), itLower, eastl::move(key));
+			}
+
+			return (*itLower).second;
+
+			// Reference implementation of this function, which may not be as fast:
+			//iterator it(base_type::insert(eastl::pair<iterator, iterator>(key, T())).first);
+			//return it->second;
+		}
+	#endif
 
 
 

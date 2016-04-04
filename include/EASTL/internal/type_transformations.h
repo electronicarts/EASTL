@@ -45,7 +45,16 @@ namespace eastl
 	template <typename T>
 	struct  add_const
 		{ typedef typename eastl::add_const_helper<T>::type type; };
-
+	
+	// add_const_t is the C++17 using typedef for typename add_const<T>::type.
+	// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
+	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		#define EASTL_ADD_CONST_T(T) typename add_const<T>::type
+	#else
+		template <typename T>
+		using add_const_t = typename add_const<T>::type;
+		#define EASTL_ADD_CONST_T(T) add_const_t<T>
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////

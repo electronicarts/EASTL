@@ -10,7 +10,6 @@
 
 
 
-
 using namespace eastl;
 
 
@@ -1515,6 +1514,22 @@ int TestTypeTraits()
 
 		eastl::add_cv<const volatile int32_t>::type i64 = 47;
 		EATEST_VERIFY(i64 == 47);
+	}
+
+
+	// as_const
+	{
+		{
+			int i = 42;	
+			static_assert(eastl::is_same<decltype(eastl::as_const(i)), const int&>::value, "expecting a 'const T&' return type");
+			EATEST_VERIFY(eastl::as_const(i) == 42);
+		}
+
+		{
+			eastl::string str = "Electronic Arts";
+			static_assert(eastl::is_same<decltype(eastl::as_const(str)), const eastl::string&>::value, "expecting a 'const T&' return type");
+			EATEST_VERIFY(eastl::as_const(str) == "Electronic Arts");
+		}
 	}
 
 

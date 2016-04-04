@@ -315,7 +315,7 @@ namespace eastl
 			insert_return_type insert(const value_type& value) = delete;
 			iterator insert(const_iterator position, const value_type& value) = delete;
 
-		template <typename InputIterator>
+			template <typename InputIterator>
 			void insert(InputIterator first, InputIterator last) = delete;
 				  
 			insert_return_type insert(const key_type& key) = delete;

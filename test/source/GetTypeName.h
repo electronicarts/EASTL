@@ -100,7 +100,7 @@ eastl::string GetTypeName()
 		if(pDemangledName)
 		{
 			#if EASTL_LIBSTDCPP_DEMANGLE_AVAILABLE
-				free((void*)pDemangledName);
+				free((void*)(pDemangledName));
 			#endif
 		}
 	#endif

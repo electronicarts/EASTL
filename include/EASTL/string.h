@@ -4017,6 +4017,62 @@ namespace eastl
 		};
 	#endif
 
+
+	/// to_string 
+	///
+	/// Converts integral types to an eastl::string with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings. 
+	/// 
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_string
+	///
+	inline string to_string(int value) 
+		{ return string(string::CtorSprintf(), "%d", value); }
+	inline string to_string(long value) 
+		{ return string(string::CtorSprintf(), "%ld", value); }
+	inline string to_string(long long value) 
+		{ return string(string::CtorSprintf(), "%lld", value); }
+	inline string to_string(unsigned value) 
+		{ return string(string::CtorSprintf(), "%u", value); }
+	inline string to_string(unsigned long value) 
+		{ return string(string::CtorSprintf(), "%lu", value); }
+	inline string to_string(unsigned long long value) 
+		{ return string(string::CtorSprintf(), "%llu", value); }
+	inline string to_string(float value) 
+		{ return string(string::CtorSprintf(), "%f", value); }
+	inline string to_string(double value) 
+		{ return string(string::CtorSprintf(), "%f", value); }
+	inline string to_string(long double value) 
+		{ return string(string::CtorSprintf(), "%Lf", value); }
+
+
+	/// to_wstring 
+	///
+	/// Converts integral types to an eastl::wstring with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings. 
+	///
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
+	///
+	inline wstring to_wstring(int value) 
+		{ return wstring(wstring::CtorSprintf(), L"%d", value); }
+	inline wstring to_wstring(long value) 
+		{ return wstring(wstring::CtorSprintf(), L"%ld", value); }
+	inline wstring to_wstring(long long value) 
+		{ return wstring(wstring::CtorSprintf(), L"%lld", value); }
+	inline wstring to_wstring(unsigned value) 
+		{ return wstring(wstring::CtorSprintf(), L"%u", value); }
+	inline wstring to_wstring(unsigned long value) 
+		{ return wstring(wstring::CtorSprintf(), L"%lu", value); }
+	inline wstring to_wstring(unsigned long long value) 
+		{ return wstring(wstring::CtorSprintf(), L"%llu", value); }
+	inline wstring to_wstring(float value) 
+		{ return wstring(wstring::CtorSprintf(), L"%f", value); }
+	inline wstring to_wstring(double value) 
+		{ return wstring(wstring::CtorSprintf(), L"%f", value); }
+	inline wstring to_wstring(long double value) 
+		{ return wstring(wstring::CtorSprintf(), L"%Lf", value); }
+
 } // namespace eastl
 
 

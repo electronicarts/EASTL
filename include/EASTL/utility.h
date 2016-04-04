@@ -213,8 +213,53 @@ namespace eastl
 		eastl::swap_ranges(a, a + N, b);
 	}
 
+	/// exchange
+	///
+	/// Replaces the value of the first argument with the new value provided.  
+	/// The return value is the previous value of first argument.
+	///
+	/// http://en.cppreference.com/w/cpp/utility/exchange
+	///
+	#if defined(EA_COMPILER_NO_FUNCTION_TEMPLATE_DEFAULT_ARGS)
+		template <typename T, typename U>
+		inline T exchange(T& obj, U&& new_value, typename eastl::enable_if<eastl::is_convertible<U, T>::value>::type* = 0)
+		{
+			T old_value = eastl::move(obj);
+			obj = eastl::forward<U>(new_value);
+			return old_value;
+		}
+	#else
+		template <typename T, typename U = T>
+		inline T exchange(T& obj, U&& new_value)
+		{
+			T old_value = eastl::move(obj);
+			obj = eastl::forward<U>(new_value);
+			return old_value;
+		}
+	#endif
 
-	///////////////////////////////////////////////////////////////////////
+	/// as_const
+	///
+	/// Converts a 'T&' into a 'const T&' which simplifies calling const functions on non-const objects. 
+	///
+	/// http://en.cppreference.com/w/cpp/utility/as_const
+	///
+	/// C++ proposal paper:
+	/// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4380.html
+	///
+	template <class T>
+	EA_CONSTEXPR typename eastl::add_const<T>::type& as_const(T& t) EA_NOEXCEPT
+		{ return t; }
+
+	// The C++17 forbids 'eastl::as_const' from accepting rvalues.  Passing an rvalue reference to 'eastl::as_const'
+	// generates an 'const T&' or const lvalue reference to a temporary object. 
+	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
+		template <class T>
+		void as_const(const T&&) = delete;
+	#endif
+
+
+    ///////////////////////////////////////////////////////////////////////
 	/// rel_ops
 	///
 	/// rel_ops allow the automatic generation of operators !=, >, <=, >= from

@@ -159,8 +159,8 @@ namespace eastl
 		explicit vector_map(const key_compare& comp, const allocator_type& allocator = EASTL_VECTOR_MAP_DEFAULT_ALLOCATOR);
 		vector_map(const this_type& x);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		vector_map(this_type&& x);
-		vector_map(this_type&& x, const allocator_type& allocator);
+			vector_map(this_type&& x);
+			vector_map(this_type&& x, const allocator_type& allocator);
 		#endif
 		vector_map(std::initializer_list<value_type> ilist, const key_compare& compare = key_compare(), const allocator_type& allocator = EASTL_VECTOR_MAP_DEFAULT_ALLOCATOR);
 
@@ -173,7 +173,7 @@ namespace eastl
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		this_type& operator=(this_type&& x);
+			this_type& operator=(this_type&& x);
 		#endif
 
 		void swap(this_type& x);
@@ -227,13 +227,13 @@ namespace eastl
 
 		eastl::pair<iterator, bool> insert(const value_type& value);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename P>
-		pair<iterator, bool> insert(P&& otherValue);
+			template <typename P>
+			pair<iterator, bool> insert(P&& otherValue);
 		#endif
 
 		iterator insert(const_iterator position, const value_type& value);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		iterator insert(const_iterator position, value_type&& value);
+			iterator insert(const_iterator position, value_type&& value);
 		#endif
 
 		void insert(std::initializer_list<value_type> ilist);
@@ -277,6 +277,10 @@ namespace eastl
 		// the vMap[100] doesn't already exist in the vector_map:
 		//     vMap[100] = vMap[0]
 		mapped_type& operator[](const key_type& k);
+		#if EASTL_MOVE_SEMANTICS_ENABLED
+			mapped_type& operator[](key_type&& k);
+		#endif
+
 
 		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
 		//void      push_back(const value_type& value);
@@ -776,6 +780,20 @@ namespace eastl
 			itLB = insert(itLB, value_type(k, mapped_type()));
 		return (*itLB).second;
 	}
+
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename K, typename T, typename C, typename A, typename RAC>
+		inline typename vector_map<K, T, C, A, RAC>::mapped_type&
+		vector_map<K, T, C, A, RAC>::operator[](key_type&& k)
+		{
+			iterator itLB(lower_bound(k));
+
+			if((itLB == end()) || key_comp()(k, (*itLB).first))
+				itLB = insert(itLB, value_type(eastl::move(k), mapped_type()));
+			return (*itLB).second;
+		}
+	#endif
 
 
 
