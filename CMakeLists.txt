@@ -3,6 +3,7 @@
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
 project(EASTL CXX)
+enable_language(C)
 
 #-------------------------------------------------------------------------------------------
 # Options
@@ -83,4 +84,3 @@ target_link_libraries(EASTL EABase)
 install(TARGETS EASTL DESTINATION lib)
 install(DIRECTORY include/EASTL DESTINATION include)
 install(DIRECTORY test/packages/EABase/include/Common/EABase DESTINATION include)
-
