@@ -215,6 +215,23 @@ namespace eastl
 	>{};
 
 
+	///////////////////////////////////////////////////////////////////////
+	// is_hat_type
+	//
+	// is_hat_type<T>::value == true if and only if:
+	//    underlying type is a C++/CX '^' type such as: Foo^
+	//	  meaning the type is heap allocated and ref-counted
+	///////////////////////////////////////////////////////////////////////
+
+	template <typename T> struct is_hat_type_helper : public false_type {};
+
+	#if (EABASE_VERSION_N > 20607 && defined(EA_COMPILER_WINRTCX_ENABLED)) || defined(__cplusplus_winrt)
+		template <typename T> struct is_hat_type_helper<T^> : public true_type{};
+	#endif 
+
+	template <typename T>
+	struct is_hat_type : public eastl::is_hat_type_helper<T> {};
+
 } // namespace eastl
 
 

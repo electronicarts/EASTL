@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-	#include <time.h>
+#include <time.h>
 
 
 #include "EAMain/EAEntryPointMain.inl"
@@ -83,51 +83,52 @@ int EAMain(int argc, char* argv[])
 
 	TestApplication testSuite("EASTL Unit Tests", argc, argv);
 
-	testSuite.AddTest("TypeTraits",     TestTypeTraits);
-	testSuite.AddTest("Extra",          TestExtra);
-	testSuite.AddTest("Functional",     TestFunctional);
-	testSuite.AddTest("Utility",        TestUtility);
+	testSuite.AddTest("TypeTraits",				TestTypeTraits);
+	testSuite.AddTest("TestCppCXTypeTraits",	TestCppCXTypeTraits);
+	testSuite.AddTest("Extra",					TestExtra);
+	testSuite.AddTest("Functional",				TestFunctional);
+	testSuite.AddTest("Utility",				TestUtility);
 #if EASTL_TUPLE_ENABLED
-	testSuite.AddTest("Tuple",          TestTuple);
+	testSuite.AddTest("Tuple",					TestTuple);
 #endif // EASTL_TUPLE_ENABLED
-	testSuite.AddTest("Memory",         TestMemory);
-	testSuite.AddTest("Allocator",      TestAllocator);
-	testSuite.AddTest("Random",         TestRandom);
-	testSuite.AddTest("NumericLimits",  TestNumericLimits);
-	testSuite.AddTest("Iterator",       TestIterator);
-	testSuite.AddTest("Bitset",         TestBitset);
-	testSuite.AddTest("SmartPtr",       TestSmartPtr);
-	testSuite.AddTest("List",           TestList);
-	testSuite.AddTest("ListMap",        TestListMap);
-	testSuite.AddTest("FixedList",      TestFixedList);
-	testSuite.AddTest("SList",          TestSList);
-	testSuite.AddTest("FixedSList",     TestFixedSList);
-	testSuite.AddTest("IntrusiveList",  TestIntrusiveList);
-	testSuite.AddTest("IntrusiveSList", TestIntrusiveSList);
-	testSuite.AddTest("String",         TestString);
-	testSuite.AddTest("FixedString",    TestFixedString);
-	testSuite.AddTest("Array",          TestArray);
-	testSuite.AddTest("Vector",         TestVector);
-	testSuite.AddTest("FixedVector",    TestFixedVector);
-	testSuite.AddTest("Deque",          TestDeque);
-	testSuite.AddTest("Map",            TestMap);
-	testSuite.AddTest("FixedMap",       TestFixedMap);
-	testSuite.AddTest("Set",            TestSet);
-	testSuite.AddTest("FixedSet",       TestFixedSet);
-	testSuite.AddTest("Hash",           TestHash);
-	testSuite.AddTest("FixedHash",      TestFixedHash);
-	testSuite.AddTest("IntrusiveHash",  TestIntrusiveHash);
-	testSuite.AddTest("VectorMap",      TestVectorMap);
-	testSuite.AddTest("VectorSet",      TestVectorSet);
-	testSuite.AddTest("Algorithm",      TestAlgorithm);
-	testSuite.AddTest("Sort",           TestSort);
-	testSuite.AddTest("Heap",           TestHeap);
-	testSuite.AddTest("RingBuffer",     TestRingBuffer);
-	testSuite.AddTest("SparseMatrix",   TestSparseMatrix);
-	testSuite.AddTest("IntrusiveSDList",TestIntrusiveSDList);
-	testSuite.AddTest("BitVector",      TestBitVector);
-	testSuite.AddTest("Ratio",          TestRatio);
-	testSuite.AddTest("Chrono",         TestChrono);
+	testSuite.AddTest("Memory",					TestMemory);
+	testSuite.AddTest("Allocator",				TestAllocator);
+	testSuite.AddTest("Random",					TestRandom);
+	testSuite.AddTest("NumericLimits",			TestNumericLimits);
+	testSuite.AddTest("Iterator",				TestIterator);
+	testSuite.AddTest("Bitset",					TestBitset);
+	testSuite.AddTest("SmartPtr",				TestSmartPtr);
+	testSuite.AddTest("List",					TestList);
+	testSuite.AddTest("ListMap",				TestListMap);
+	testSuite.AddTest("FixedList",				TestFixedList);
+	testSuite.AddTest("SList",					TestSList);
+	testSuite.AddTest("FixedSList",				TestFixedSList);
+	testSuite.AddTest("IntrusiveList",			TestIntrusiveList);
+	testSuite.AddTest("IntrusiveSList",			TestIntrusiveSList);
+	testSuite.AddTest("String",					TestString);
+	testSuite.AddTest("FixedString",			TestFixedString);
+	testSuite.AddTest("Array",					TestArray);
+	testSuite.AddTest("Vector",					TestVector);
+	testSuite.AddTest("FixedVector",			TestFixedVector);
+	testSuite.AddTest("Deque",					TestDeque);
+	testSuite.AddTest("Map",					TestMap);
+	testSuite.AddTest("FixedMap",				TestFixedMap);
+	testSuite.AddTest("Set",					TestSet);
+	testSuite.AddTest("FixedSet",				TestFixedSet);
+	testSuite.AddTest("Hash",					TestHash);
+	testSuite.AddTest("FixedHash",				TestFixedHash);
+	testSuite.AddTest("IntrusiveHash",			TestIntrusiveHash);
+	testSuite.AddTest("VectorMap",				TestVectorMap);
+	testSuite.AddTest("VectorSet",				TestVectorSet);
+	testSuite.AddTest("Algorithm",				TestAlgorithm);
+	testSuite.AddTest("Sort",					TestSort);
+	testSuite.AddTest("Heap",					TestHeap);
+	testSuite.AddTest("RingBuffer",				TestRingBuffer);
+	testSuite.AddTest("SparseMatrix",			TestSparseMatrix);
+	testSuite.AddTest("IntrusiveSDList",		TestIntrusiveSDList);
+	testSuite.AddTest("BitVector",				TestBitVector);
+	testSuite.AddTest("Ratio",					TestRatio);
+	testSuite.AddTest("Chrono",					TestChrono);
 
 	nErrorCount += testSuite.Run();
 

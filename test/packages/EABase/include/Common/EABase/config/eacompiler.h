@@ -221,6 +221,16 @@
 		#endif
 	#endif
 
+	// EA_COMPILER_WINRTCX_ENABLED
+	//
+	// Defined as 1 if the compiler has its available C++/CX support enabled, else undefined.
+	// This specifically means the corresponding compilation unit has been built with Windows Runtime
+	// Components enabled, usually via the '-ZW' compiler flags being used. This option allows for using
+	// ref counted hat-type '^' objects and other C++/CX specific keywords like "ref new"
+	#if !defined(EA_COMPILER_WINRTCX_ENABLED) && defined(__cplusplus_winrt)
+		#define EA_COMPILER_WINRTCX_ENABLED 1
+	#endif
+
 
 	// EA_COMPILER_CPP11_ENABLED
 	//

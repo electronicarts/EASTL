@@ -40,6 +40,7 @@ int TestRandom();
 int TestNumericLimits();
 int TestBitset();
 int TestTypeTraits();
+int TestCppCXTypeTraits();
 int TestSmartPtr();
 int TestList();
 int TestListMap();

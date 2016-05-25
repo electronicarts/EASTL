@@ -276,6 +276,19 @@ namespace eastl
 	typedef integral_constant<bool, false> false_type;
 
 
+	///////////////////////////////////////////////////////////////////////
+	// bool_constant 
+	//
+	// This is a convenience helper for the often used integral_constant<bool, value>.
+	//
+	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <bool B>
+		struct bool_constant : public integral_constant<bool, B> {};
+	#else
+		template <bool B>
+		using bool_constant = integral_constant<bool, B>;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// yes_type / no_type
@@ -286,12 +299,6 @@ namespace eastl
 	struct       no_type { char padding[8]; };  // sizeof(no_type)  != 1
 
 
-	///////////////////////////////////////////////////////////////////////
-	// empty
-	//
-	template <typename T>
-	struct empty{ };
-
 
 	///////////////////////////////////////////////////////////////////////
 	// unused
@@ -299,7 +306,7 @@ namespace eastl
 	// Used internally to denote a special template argument that means 
 	// it's an unused argument.
 	//
-	struct unused{ };
+	struct unused { };
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -307,7 +314,6 @@ namespace eastl
 	//
 	// Used as a type which constructs from anything. 
 	//
-
 	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) 
 		struct argument_sink{ argument_sink(...){} };
 	#else

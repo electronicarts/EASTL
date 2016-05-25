@@ -32,38 +32,14 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_array_CONFORMANCE 1    // is_array is conforming; doesn't make mistakes.
 
-	#if (defined(__GNUC__) && (__GNUC__ < 4)) || (defined(_MSC_VER_) && _MSC_VER < 1500) // If the compiler is crippled...
+	template<typename T>
+	struct is_array : public eastl::false_type {};
 
-		template <typename T>
-		T (*is_array_tester1(empty<T>))(empty<T>);
-		char is_array_tester1(...);     // May need to use __cdecl under VC++.
+	template<typename T>
+	struct is_array<T[]> : public eastl::true_type {};
 
-		template <typename T>
-		no_type  is_array_tester2(T(*)(empty<T>));
-		yes_type is_array_tester2(...); // May need to use __cdecl under VC++.
-
-		template <typename T>
-		struct is_array_helper {
-			static empty<T> emptyInstance;
-		};
-
-		template <typename T> 
-		struct is_array : public integral_constant<bool,
-			sizeof(is_array_tester2(is_array_tester1(is_array_helper<T>::emptyInstance))) == 1
-		>{};
-
-	#else
-
-		template<typename T>
-		struct is_array : public eastl::false_type {};
- 
-		template<typename T>
-		struct is_array<T[]> : public eastl::true_type {};
- 
-		template<typename T, size_t N>
-		struct is_array<T[N]> : public eastl::true_type {};
-
-	#endif
+	template<typename T, size_t N>
+	struct is_array<T[N]> : public eastl::true_type {};
 
 
 	///////////////////////////////////////////////////////////////////////

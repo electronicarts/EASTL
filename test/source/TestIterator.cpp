@@ -233,6 +233,52 @@ int TestIterator()
 		#endif 
 	}
 
+	// eastl::data
+	{
+		eastl::array<int, 0> intArray;
+		int* pIntArrayData = eastl::data(intArray);
+		EATEST_VERIFY(pIntArrayData == intArray.data());
+
+		eastl::vector<int> intVector;
+		int* pIntVectorData = eastl::data(intVector);
+		EATEST_VERIFY(pIntVectorData == intVector.data());
+
+		int intCArray[34];
+		int* pIntCArray = eastl::data(intCArray);
+		EATEST_VERIFY(pIntCArray == intCArray);
+
+		std::initializer_list<int> intInitList;
+		const int* pIntInitList = eastl::data(intInitList);
+		EATEST_VERIFY(pIntInitList == intInitList.begin());
+	}
+
+	// eastl::size
+	{
+		eastl::vector<int> intVector;
+		intVector.push_back();
+		intVector.push_back();
+		intVector.push_back();
+		EATEST_VERIFY(eastl::size(intVector) == 3);
+
+		int intCArray[34];
+		EATEST_VERIFY(eastl::size(intCArray) == 34);
+	}
+
+	// eastl::empty
+	{
+		eastl::vector<int> intVector;
+		EATEST_VERIFY(eastl::empty(intVector));
+		intVector.push_back();
+		EATEST_VERIFY(!eastl::empty(intVector)); 
+
+		std::initializer_list<int> intInitListEmpty;
+		EATEST_VERIFY(eastl::empty(intInitListEmpty));
+
+		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
+		    EATEST_VERIFY(!eastl::empty({1, 2, 3, 4, 5, 6}));
+		#endif
+	}
+
 	// Range-based for loops
 	#if !defined(EA_COMPILER_NO_RANGE_BASED_FOR_LOOP)
 		{

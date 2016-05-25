@@ -473,9 +473,11 @@ int TestTypeTraits()
 	static_assert(sizeof(conditional<true,  int8_t, int16_t>::type) == sizeof(int8_t),  "conditional failure");
 	static_assert(sizeof(conditional<false, int8_t, int16_t>::type) == sizeof(int16_t), "conditional failure");
 
+	// bool_constant
+	static_assert(bool_constant<is_same<int, int>::value>::value == true, "bool_constant failure");
+	static_assert(bool_constant<is_same<int, short>::value>::value == false, "bool_constant failure");
+	static_assert(is_same<bool_constant<false>::type, integral_constant<bool, false>::type>::value, "bool_constant failure");
 
-	// empty
-	static_assert(sizeof(empty<int>) > 0, "empty failure");
 
 
 	// identity

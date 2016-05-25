@@ -1020,11 +1020,16 @@ namespace eastl
 		{
 			// We expect that the caller uses kAllocFlagBuckets when it wants us to allocate buckets instead of nodes.
 			EASTL_CT_ASSERT(kAllocFlagBuckets == 0x00400000); // Currently we expect this to be so, because the hashtable has a copy of this enum.
+
 			if((flags & kAllocFlagBuckets) == 0) // If we are allocating nodes and (probably) not buckets...
 			{
-				EASTL_ASSERT(n == kNodeSize);  (void)n; // Make unused var warning go away.
+				EASTL_ASSERT(n == kNodeSize); EA_UNUSED(n); 
 				return mPool.allocate();
 			}
+
+			// If bucket size no longer fits within local buffer...
+			if ((flags & kAllocFlagBuckets) == kAllocFlagBuckets && (n > kBucketsSize))
+				return get_overflow_allocator().allocate(n);
 
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
@@ -1036,11 +1041,14 @@ namespace eastl
 			// We expect that the caller uses kAllocFlagBuckets when it wants us to allocate buckets instead of nodes.
 			if ((flags & kAllocFlagBuckets) == 0) // If we are allocating nodes and (probably) not buckets...
 			{
-				EASTL_ASSERT(n == kNodeSize); (void)n; // Make unused var warning go away.
+				EASTL_ASSERT(n == kNodeSize); EA_UNUSED(n);
 				return mPool.allocate(alignment, offset);
 			}
 
-			// To consider: allow for bucket allocations to overflow.
+			// If bucket size no longer fits within local buffer...
+			if ((flags & kAllocFlagBuckets) == kAllocFlagBuckets && (n > kBucketsSize))
+				return get_overflow_allocator().allocate(n, alignment, offset);
+
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}
@@ -1197,6 +1205,7 @@ namespace eastl
 				return mPool.allocate();
 			}
 
+			// Don't allow hashtable buckets to overflow in this case.
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}
@@ -1211,7 +1220,7 @@ namespace eastl
 				return mPool.allocate(alignment, offset);
 			}
 
-			// To consider: allow for bucket allocations to overflow.
+			// Don't allow hashtable buckets to overflow in this case.
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}

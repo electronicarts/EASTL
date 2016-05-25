@@ -108,8 +108,8 @@ namespace eastl
 		set(const Compare& compare, const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 		set(const this_type& x);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		set(this_type&& x);
-		set(this_type&& x, const allocator_type& allocator);
+			set(this_type&& x);
+			set(this_type&& x, const allocator_type& allocator);
 		#endif
 		set(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 
