@@ -290,6 +290,8 @@ namespace eastl
 		eastl::swap_ranges(a, a + N, b);
 	}
 
+#if EASTL_MOVE_SEMANTICS_ENABLED
+
 	/// exchange
 	///
 	/// Replaces the value of the first argument with the new value provided.  
@@ -314,6 +316,8 @@ namespace eastl
 			return old_value;
 		}
 	#endif
+
+#endif // EASTL_MOVE_SEMANTICS_ENABLED
 
 	/// as_const
 	///
