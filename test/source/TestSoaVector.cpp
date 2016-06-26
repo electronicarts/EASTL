@@ -46,6 +46,17 @@ int TestSoaVector()
 
 		EATEST_VERIFY(npsVec[0].b == 1);
 
+		SOA_VECTOR_DECL_3(MultiSoaVec
+			,int, Integers
+			,float, Reals
+			,bool, Bools);
+		
+		MultiSoaVec multiSoaVec;
+		multiSoaVec.push_back();
+		EATEST_VERIFY(multiSoaVec.Integers().size() == 1);
+		EATEST_VERIFY(multiSoaVec.Reals().size() == 1);
+		EATEST_VERIFY((void*)multiSoaVec.Integers().data() != (void*)multiSoaVec.Reals().data());
+
 		//IntSoaVec macroSingleElementVec;
 		//macroSingleElementVec.push_back(1);
 		//EATEST_VERIFY(macroSingleElementVec.element[0] == 1);

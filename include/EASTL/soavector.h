@@ -138,6 +138,36 @@ private:
 
 };
 
+#define SOA_VECTOR_DECL_START(className, ... ) \
+	class className : public soa_vector<##__VA_ARGS__> \
+	{\
+		public: \
+
+#define SOA_VECTOR_DECL_TYPENAME(type, name, iter) vector<type>& name() { return get<iter>(); } \
+
+#define SOA_VECTOR_DECL_END() };
+
+#define SOA_VECTOR_DECL_2(className, type0, name0, type1, name1) \
+	SOA_VECTOR_DECL_START(className, type0, type1) \
+	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	SOA_VECTOR_DECL_END()
+
+#define SOA_VECTOR_DECL_3(className, type0, name0, type1, name1, type2, name2) \
+	SOA_VECTOR_DECL_START(className, type0, type1, type2) \
+	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	SOA_VECTOR_DECL_TYPENAME(type2, name2, 2) \
+	SOA_VECTOR_DECL_END()
+
+#define SOA_VECTOR_DECL_4(className, type0, name0, type1, name1, type2, name2, type3, name3) \
+	SOA_VECTOR_DECL_START(className, type0, type1, type2, type3) \
+	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	SOA_VECTOR_DECL_TYPENAME(type2, name2, 2) \
+	SOA_VECTOR_DECL_TYPENAME(type3, name3, 3) \
+	SOA_VECTOR_DECL_END()
+
 }  // namespace eastl
 
 #endif  // EASTL_SOAVECTOR_H
