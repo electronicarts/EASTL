@@ -98,8 +98,9 @@ int TestSoaVector()
 		soa_vector<int, float> doubleElementVec;
 		auto doubleElement = doubleElementVec.push_back();
 		doubleElement.get<0>() = 2;
-		doubleElement.get<1>() = 3.0f;
+		doubleElement.get<float>() = 3.0f;
 		EATEST_VERIFY(doubleElementVec.get<0>()[0] == 2);
+		EATEST_VERIFY(doubleElementVec.get<1>()[0] == 3.0f);
 		EATEST_VERIFY(doubleElementVec.size() == 1);
 	}
 

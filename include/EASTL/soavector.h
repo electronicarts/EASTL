@@ -224,6 +224,9 @@ public:
 		template<size_t I>
 		soavec_element_t<I, soa_vector<Ts...>>& get() { return mSoaVector.get<I>()[mIndex];	}
 
+		template<typename T> 
+		T& get() { return mSoaVector.get<T>()[mIndex]; }
+
 		element& operator++()
 		{
 			++mIndex;
