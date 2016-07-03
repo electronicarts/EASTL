@@ -96,7 +96,7 @@ int TestSoaVector()
 	// Test soa_vector::Element
 	{
 		soa_vector<int, float> doubleElementVec;
-		auto doubleElement = doubleElementVec.push_back();
+		auto& doubleElement = doubleElementVec.push_back();
 		doubleElement.get<0>() = 2;
 		doubleElement.get<float>() = 3.0f;
 		EATEST_VERIFY(doubleElementVec.get<0>()[0] == 2);
