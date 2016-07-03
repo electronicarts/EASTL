@@ -202,10 +202,7 @@ public:
 		{	}
 
 		template<size_t I>
-		soavec_element_i<I, soa_vector<Ts...>>& get()
-		{
-			return mSoaVector.get<I>()[mIndex];
-		}
+		soavec_element_t<I, soa_vector<Ts...>>& get() { return mSoaVector.get<I>()[mIndex];	}
 
 		element& operator++()
 		{
@@ -214,20 +211,9 @@ public:
 		}
 
 		// dcrooks-todo need to compare vectors, too
-		bool operator==(const element& other) const
-		{
-			return mIndex == other.mIndex;
-		}
-		
-		bool operator!=(const element& other) const 
-		{
-			return mIndex != other.mIndex;
-		}
-
-		element& operator*()
-		{
-			return *this;
-		}
+		bool operator==(const element& other) const	{ return mIndex == other.mIndex; }
+		bool operator!=(const element& other) const { return mIndex != other.mIndex; }
+		element& operator*() { return *this; }
 
 	private:
 		size_t mIndex;
