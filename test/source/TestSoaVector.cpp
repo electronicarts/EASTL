@@ -21,9 +21,11 @@ int TestSoaVector()
 		vector<int>& vec = (singleElementVec).get<0>();
 		EATEST_VERIFY(vec.size() == 1);
 		EATEST_VERIFY(singleElementVec.get<0>().size() == 1);
-		//EATEST_VERIFY(singleElementVec.get<int>().size() == 1);
+		EATEST_VERIFY(singleElementVec.get<int>().size() == 1);
 
-		soa_vector<int, float> doubleElementVec;
+		// Demonstration that we can use multiple types if we only use size_t get
+		// Changing get<0> or get<1> to get<int> will cause a compiler error.
+		soa_vector<int, int> doubleElementVec;
 		doubleElementVec.push_back_uninitialized();
 		EATEST_VERIFY(doubleElementVec.get<0>().size() == 1);
 		EATEST_VERIFY(doubleElementVec.get<1>().size() == 1);
@@ -36,10 +38,10 @@ int TestSoaVector()
 			int b;
 			float c;
 			float d[4];
-		} NonprimitiveStruct;
+		} NonPrimitiveStruct;
 
-		soa_vector<int, NonprimitiveStruct> nonPrimitiveElementVec;
-		vector<NonprimitiveStruct>& npsVec = nonPrimitiveElementVec.get<1>();
+		soa_vector<int, NonPrimitiveStruct> nonPrimitiveElementVec;
+		vector<NonPrimitiveStruct>& npsVec = nonPrimitiveElementVec.get<NonPrimitiveStruct>();
 		nonPrimitiveElementVec.push_back_uninitialized();
 		nonPrimitiveElementVec.get<0>()[0] = 0;
 		nonPrimitiveElementVec.get<1>()[0].a = 0.0f;

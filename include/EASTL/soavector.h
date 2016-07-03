@@ -19,10 +19,7 @@ template <size_t I, typename SoaVector>
 class soavec_element;
 
 template <size_t I, typename SoaVector>
-using soavec_element_i = typename soavec_element<I, SoaVector>::type;
-
-//template <typename T, typename SoaVector>
-//using soavec_element_t = typename soavec_element<T, SoaVector>::index;
+using soavec_element_t = typename soavec_element<I, SoaVector>::type;
 
 namespace Internal
 {
@@ -46,7 +43,7 @@ template <size_t I>
 class soavec_element<I, soa_vector<>> // dcrooks-todo tuple implementation doesn't need this to be the literal soa_vector type, and is able to use "SoaVecTypes"
 {
 public:
-	static_assert(I != I, "tuple_element index out of range");
+	static_assert(I != I, "soavec_element index out of range");
 };
 
 template <typename H, typename... Ts>
@@ -60,7 +57,7 @@ template <size_t I, typename H, typename... Ts>
 class soavec_element<I, soa_vector<H, Ts...>>
 {
 public:
-	typedef soavec_element_i<I - 1, soa_vector<Ts...>> type;
+	typedef soavec_element_t<I - 1, soa_vector<Ts...>> type;
 };
 
 template <size_t I, typename Indices, typename... Ts>
@@ -68,17 +65,40 @@ class soavec_element<I, Internal::SoaVecImpl<Indices, Ts...>> : public soavec_el
 {
 };
 
-//// attempt to isolate index given a type
-//template <size_t I, typename T, typename... TsRest>
-//class soavec_element<I, T, soa_vector<T, Ts...>>
-//{
-//public:
-//	typedef I index;
-//};
-//
-//template <typename T, typename Indices, typename... Ts>
-//class soavec_element_t<T, Internal::SoaVecImpl<Indices, Ts...>> : public soavec_element<T, soa_vector<Ts...>>
-//
+// attempt to isolate index given a type
+template <typename T, typename SoaVector>
+class soavec_index
+{
+};
+
+template <typename T>
+class soavec_index<T, soa_vector<>>
+{
+public:
+	typedef void DuplicateTypeCheck;
+};
+
+template <typename T, typename... TsRest>
+class soavec_index<T, soa_vector<T, TsRest...>>
+{
+public:
+	typedef int DuplicateTypeCheck;
+	static_assert(is_void<typename soavec_index<T, soa_vector<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in soa_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+
+	static const size_t index = 0;
+};
+
+template <typename T, typename Ts, typename... TsRest>
+class soavec_index<T, soa_vector<Ts, TsRest...>>
+{
+public:
+	static const size_t index = soavec_index<T, soa_vector<TsRest...>>::index + 1;
+};
+
+template <typename T, typename Indices, typename... Ts>
+class soavec_index<T, Internal::SoaVecImpl<Indices, Ts...>> : public soavec_index<T, soa_vector<Ts...>>
+{
+};
 
 namespace Internal
 {
@@ -132,7 +152,7 @@ void swallow(Ts&&...)
 template <size_t... Indices, typename... Ts>
 struct SoaVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public SoaVecLeaf<Indices, Ts>...
 {
-	typedef soavec_element_i<0, soa_vector<Ts...>> BaseType;
+	typedef soavec_element_t<0, soa_vector<Ts...>> BaseType;
 	typedef SoaVecLeaf<0, BaseType> BaseLeaf;
 public:
 	EA_CONSTEXPR SoaVecImpl() = default;
@@ -160,18 +180,18 @@ public:
 };
 
 template <size_t I, typename Indices, typename... Ts>
-vector<soavec_element_i<I, SoaVecImpl<Indices, Ts...>>>& get(SoaVecImpl<Indices, Ts...>& t)
+vector<soavec_element_t<I, SoaVecImpl<Indices, Ts...>>>& get(SoaVecImpl<Indices, Ts...>& t)
 {
-	typedef soavec_element_i<I, SoaVecImpl<Indices, Ts...>> Type;
+	typedef soavec_element_t<I, SoaVecImpl<Indices, Ts...>> Type;
 	return static_cast<Internal::SoaVecLeaf<I, Type>&>(t).getInternal();
 }
 
-//template <typename T, typename Indices, typename... Ts>
-//vector<T>& get(SoaVecImpl<Indices, Ts...>& t)
-//{
-//	typename soavec_element_t<T, SoaVecImpl<Indices, Ts...>> Index;
-//	return static_cast<Internal::SoaVecLeaf<Index, T>&>(t).getInternal();
-//}
+template <typename T, typename Indices, typename... Ts>
+vector<T>& get(SoaVecImpl<Indices, Ts...>& t)
+{
+	typedef soavec_index<T, SoaVecImpl<Indices, Ts...>> Index;
+	return static_cast<Internal::SoaVecLeaf<Index::index, T>&>(t).getInternal();
+}
 
 
 }  // namespace Internal
@@ -238,7 +258,7 @@ public:
 	element<Ts...> end() { return element<Ts...>(*this, size() - 1); }
 	
 	template<size_t I>
-	vector<soavec_element_i<I, soa_vector<Ts...>>>& get() {	return Internal::get<I>(mImpl); }
+	vector<soavec_element_t<I, soa_vector<Ts...>>>& get() {	return Internal::get<I>(mImpl); }
 
 	template<typename T>
 	vector<T>& get() { return Internal::get<T>(mImpl); }
