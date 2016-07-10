@@ -1,6 +1,24 @@
 version: 1.0.{build}
-os: Visual Studio 2015
+
+os: 
+    - Visual Studio 2015
+    - Visual Studio 2013
+
+platform:
+    - x86
+    - x64
+
 build_script:
-- cmd: mkdir build && cd build && cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON && cmake --build . --config Debug && cmake --build . --config Release
+    - cmd: mkdir build
+    - cmd: cd build
+    - cmd: cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON 
+    - cmd: cmake --build . --config Debug 
+    - cmd: cmake --build . --config Release
+
 test_script:
-- cmd: cd test && ctest -C Release -V && cd .. && cd benchmark && ctest -C Release -V
+    - cmd: cd test
+    - cmd: ctest -C Release -V 
+    - cmd: cd .. 
+    - cmd: cd benchmark
+    - cmd: ctest -C Release -V
+    - cmd: cd .. 
