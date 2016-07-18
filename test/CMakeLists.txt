@@ -20,7 +20,7 @@ include_directories(source)
 set(CMAKE_CXX_STANDARD 11)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-pointer-bool-conversion")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-pointer-bool-conversion -Wno-unknown-warning-option")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -51,10 +51,12 @@ add_executable(EASTLTest ${SOURCES})
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-set(EASTLTest_Libraries
-    EASTL
-    EATest)
-target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads)
+set(EASTLTest_Libraries EASTL EATest)
+if((NOT APPLE) AND (NOT MSVC))
+	target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads rt)
+else()
+	target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads)
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results. 
