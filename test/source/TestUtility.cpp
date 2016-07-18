@@ -220,7 +220,6 @@ void swap(ThrowSwappable& x, ThrowSwappable& y) EA_NOEXCEPT_IF(false)
 }
 
 #if EASTL_TYPE_TRAIT_is_nothrow_swappable_CONFORMANCE
-
 // NoThrowSwappable
 struct NoThrowSwappable
 {
@@ -234,6 +233,14 @@ void swap(NoThrowSwappable& x, NoThrowSwappable& y) EA_NOEXCEPT_IF(true)
 }
 #endif
 
+struct Swappable1 {};
+struct Swappable2 {};
+struct Swappable3 {};
+void swap(Swappable1& x, Swappable2& y) {} 
+void swap(Swappable2& x, Swappable1& y) {} 
+void swap(Swappable1& x, Swappable3& y) {} // intentionally missing 'swap(Swappable3, Swappable1)'
+
+
 static int TestUtilitySwap()
 {
 	int nErrorCount = 0;
@@ -244,18 +251,99 @@ static int TestUtilitySwap()
 	static_assert((eastl::is_swappable<int>::value == true), "is_swappable failure");
 	static_assert((eastl::is_swappable<eastl::vector<int> >::value == true), "is_swappable failure");
 	static_assert((eastl::is_swappable<ThrowSwappable>::value == true), "is_swappable failure");
-// Need to come up with a class that's not swappable. How do we do that, given the universal swap template?
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert((eastl::is_swappable_v<int> == true), "is_swappable failure");
+		static_assert((eastl::is_swappable_v<eastl::vector<int> > == true), "is_swappable failure");
+		static_assert((eastl::is_swappable_v<ThrowSwappable> == true), "is_swappable failure");
+	#endif
+// Need to come up with a class that's not swappable. How do we do that, given the universal swap template?  
 // static_assert((eastl::is_swappable<?>::value  == false), "is_swappable failure");
 #endif
 
 #if EASTL_TYPE_TRAIT_is_nothrow_swappable_CONFORMANCE
-	static_assert((eastl::is_nothrow_swappable<int>::value == true),
-				  "is_nothrow_swappable failure");  // There currently isn't any specialization for swap of scalar types
-													// that's nothrow.
+	static_assert((eastl::is_nothrow_swappable<int>::value == true), "is_nothrow_swappable failure");  // There currently isn't any specialization for swap of scalar types that's nothrow.
 	static_assert((eastl::is_nothrow_swappable<eastl::vector<int> >::value == false), "is_nothrow_swappable failure");
 	static_assert((eastl::is_nothrow_swappable<ThrowSwappable>::value == false), "is_nothrow_swappable failure");
 	static_assert((eastl::is_nothrow_swappable<NoThrowSwappable>::value == true), "is_nothrow_swappable failure");
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert((eastl::is_nothrow_swappable_v<int> == true), "is_nothrow_swappable failure");  // There currently isn't any specialization for swap of scalar types that's nothrow.
+		static_assert((eastl::is_nothrow_swappable_v<eastl::vector<int>> == false), "is_nothrow_swappable failure");
+		static_assert((eastl::is_nothrow_swappable_v<ThrowSwappable> == false), "is_nothrow_swappable failure");
+		static_assert((eastl::is_nothrow_swappable_v<NoThrowSwappable> == true), "is_nothrow_swappable failure");
+	#endif
 #endif
+
+#if EASTL_VARIADIC_TEMPLATES_ENABLED
+// is_swappable_with
+// is_nothrow_swappable_with
+	static_assert(eastl::is_swappable_with<int&, int&>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, int>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int&, int>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, int&>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, short>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, long>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, eastl::vector<int>>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<void, void>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<int, void>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<void, int>::value, "is_swappable_with failure");
+	static_assert(!eastl::is_swappable_with<ThrowSwappable, ThrowSwappable>::value, "is_swappable_with failure");
+	static_assert(eastl::is_swappable_with<ThrowSwappable&, ThrowSwappable&>::value, "is_swappable_with failure");
+	static_assert(eastl::is_swappable_with<Swappable1&, Swappable1&>::value, "is_swappable_with failure");
+	static_assert(eastl::is_swappable_with<Swappable1&, Swappable2&>::value, "is_swappable_with failure");
+	static_assert(eastl::is_swappable_with<Swappable2&, Swappable1&>::value, "is_swappable_with failure");
+
+    #if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert(eastl::is_swappable_with_v<int&, int&>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int, int>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int&, int>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int, int&>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int, short>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int, long>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<int, eastl::vector<int>>, "is_swappable_with_v failure");
+	    static_assert(!eastl::is_swappable_with_v<void, void>, "is_swappable_with_v failure");
+	    static_assert(!eastl::is_swappable_with_v<int, void>, "is_swappable_with_v failure");
+	    static_assert(!eastl::is_swappable_with_v<void, int>, "is_swappable_with_v failure");
+		static_assert(!eastl::is_swappable_with_v<ThrowSwappable, ThrowSwappable>, "is_swappable_with_v failure");
+		static_assert(eastl::is_swappable_with_v<ThrowSwappable&, ThrowSwappable&>, "is_swappable_with_v failure");
+		static_assert(eastl::is_swappable_with_v<Swappable1&, Swappable1&>, "is_swappable_with_v failure");
+		static_assert(eastl::is_swappable_with_v<Swappable1&, Swappable2&>, "is_swappable_with_v failure");
+		static_assert(eastl::is_swappable_with_v<Swappable2&, Swappable1&>, "is_swappable_with_v failure");
+    #endif // EASTL_VARIABLE_TEMPLATES_ENABLED
+
+#if EASTL_TYPE_TRAIT_is_nothrow_swappable_with_CONFORMANCE
+	static_assert(eastl::is_nothrow_swappable_with<int&, int&>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, int>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int&, int>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, int&>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, short>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, long>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, eastl::vector<int>>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<void, void>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<int, void>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<void, int>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<ThrowSwappable, ThrowSwappable>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<ThrowSwappable&, ThrowSwappable&>::value, "is_nothrow_swappable_with failure");
+	static_assert(!eastl::is_nothrow_swappable_with<NoThrowSwappable, NoThrowSwappable>::value, "is_nothrow_swappable_with failure");
+	static_assert(eastl::is_nothrow_swappable_with<NoThrowSwappable&, NoThrowSwappable&>::value, "is_nothrow_swappable_with failure");
+
+    #if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert(eastl::is_nothrow_swappable_with_v<int&, int&>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int, int>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int&, int>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int, int&>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int, short>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int, long>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<int, eastl::vector<int>>, "is_nothrow_swappable_with_v failure");
+	    static_assert(!eastl::is_nothrow_swappable_with_v<void, void>, "is_nothrow_swappable_with_v failure");
+	    static_assert(!eastl::is_nothrow_swappable_with_v<int, void>, "is_nothrow_swappable_with_v failure");
+	    static_assert(!eastl::is_nothrow_swappable_with_v<void, int>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<ThrowSwappable, ThrowSwappable>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<ThrowSwappable&, ThrowSwappable&>, "is_nothrow_swappable_with_v failure");
+		static_assert(!eastl::is_nothrow_swappable_with_v<NoThrowSwappable, NoThrowSwappable>, "is_nothrow_swappable_with_v failure");
+		static_assert(eastl::is_nothrow_swappable_with_v<NoThrowSwappable&, NoThrowSwappable&>, "is_nothrow_swappable_with_v failure");
+    #endif // EASTL_VARIABLE_TEMPLATES_ENABLED
+#endif
+#endif // EASTL_VARIADIC_TEMPLATES_ENABLED
 
 	return nErrorCount;
 }

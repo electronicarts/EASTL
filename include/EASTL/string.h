@@ -855,7 +855,7 @@ namespace eastl
 
 	inline size_t CharStrlen(const char8_t* p)
 	{
-		#ifdef _MSC_VER // VC++ can implement an instrinsic here.
+		#if defined(_MSC_VER) || defined(__GNUC__) 
 			return strlen(p);
 		#else
 			const char8_t* pCurrent = p;

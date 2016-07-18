@@ -2022,7 +2022,10 @@ namespace eastl
 	inline typename rbtree<K, V, C, A, E, bM, bU>::node_type*
 	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
 	{
-		return (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+
+		return pNode;
 	}
 
 

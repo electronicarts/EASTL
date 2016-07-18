@@ -494,9 +494,13 @@ namespace eastl
 	template <typename T>
 	struct is_same<T, T> : public eastl::true_type { };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T, class U>
+		EA_CONSTEXPR bool is_same_v = is_same<T, U>::value;
+	#endif
 
 
-	///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
 	// is_const
 	//
 	// is_const<T>::value == true if and only if T has const-qualification.

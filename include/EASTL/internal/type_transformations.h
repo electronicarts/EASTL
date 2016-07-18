@@ -524,6 +524,22 @@ namespace eastl
 	}
 
 
+
+	///////////////////////////////////////////////////////////////////////
+	// void_t 
+	//
+	// Maps a sequence of any types to void.  This utility class is used in
+	// template meta programming to simplify compile time reflection mechanisms
+	// required by the standard library.
+    //
+    // http://en.cppreference.com/w/cpp/types/void_t
+    ///////////////////////////////////////////////////////////////////////
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class...>
+		using void_t = void;
+	#endif
+
+
 } // namespace eastl
 
 

@@ -60,11 +60,21 @@ namespace eastl
 
 
 	/// less<T>
-	template <typename T>
+	template <typename T = void>
 	struct less : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a < b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/less_void
+	template <>
+	struct less<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) < eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) < eastl::forward<B>(b); }
 	};
 
 

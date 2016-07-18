@@ -113,6 +113,9 @@ namespace eastl
 	struct hash_node;
 
 	EA_DISABLE_VC_WARNING(4625) // disable warning: "copy constructor could not be generated because a base class copy constructor is inaccessible or deleted"
+	#ifdef EA_COMPILER_MSVC_2015
+		EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
+	#endif
 		template <typename Value>
 		struct hash_node<Value, true>
 		{
@@ -127,6 +130,10 @@ namespace eastl
 			Value      mValue;
 			hash_node* mpNext;
 		} EASTL_MAY_ALIAS;
+
+	#ifdef EA_COMPILER_MSVC_2015
+		EA_RESTORE_VC_WARNING()
+	#endif
 	EA_RESTORE_VC_WARNING()
 
 
@@ -1425,6 +1432,7 @@ namespace eastl
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(const key_type& key)
 	{
 		node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2005,6 +2013,7 @@ namespace eastl
 		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(Args&&... args)
 		{
 			node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+			EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				try
@@ -2181,6 +2190,7 @@ namespace eastl
 		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(value_type&& value)
 		{
 			node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+			EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				try
@@ -2345,6 +2355,7 @@ namespace eastl
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(const value_type& value)
 	{
 		node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2371,6 +2382,7 @@ namespace eastl
 	{
 		// We don't wrap this in try/catch because users of this function are expected to do that themselves as needed.
 		node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 		// Leave pNode->mValue uninitialized.
 		pNode->mpNext = NULL;
 		return pNode;

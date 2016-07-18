@@ -509,7 +509,11 @@ namespace eastl
 					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char8_t*>(mpNext)+mnNodeSize);
 				}
 				else
+				{
 					p = allocate_memory(mOverflowAllocator, mnNodeSize, alignment, alignmentOffset);
+					EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+				}
+
 			}
 
 			#if EASTL_FIXED_SIZE_TRACKING_ENABLED

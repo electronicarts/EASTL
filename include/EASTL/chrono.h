@@ -35,12 +35,6 @@
 	#undef NOMINMAX
 	#define NOMINMAX
 	#include <Windows.h>
-	// #ifdef min
-	//     #undef min
-	// #endif
-	// #ifdef max
-	//     #undef max
-	// #endif
 	EA_RESTORE_ALL_VC_WARNINGS()
 	#pragma warning(pop)
 #endif
@@ -49,12 +43,13 @@
 	#include <thr/xtimec.h>
 #elif defined(EA_PLATFORM_APPLE)
 	#include <mach/mach_time.h>
-#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
+#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) || defined(EA_PLATFORM_ANDROID) 
+	// Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
 	#if defined(EA_PLATFORM_MINGW)
 		#include <pthread_time.h>
 	#endif
+	#include <time.h>
 	#if (defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC))
-		#include <time.h>
 		#include <errno.h>
 	#else
 		#include <sys/time.h>

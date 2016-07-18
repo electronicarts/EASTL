@@ -105,8 +105,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.01.01"
-	#define EASTL_VERSION_N  30101
+	#define EASTL_VERSION   "3.02.01"
+	#define EASTL_VERSION_N  30201
 #endif
 
 
@@ -526,6 +526,29 @@ namespace eastl
 			EA_RESTORE_VC_WARNING()
 	#else
 		#define EASTL_DEV_ASSERT(expression)
+	#endif
+#endif
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_ASSERT_MSG
+//
+// Example usage:
+//    EASTL_ASSERT_MSG(false, "detected error condition!");
+//
+///////////////////////////////////////////////////////////////////////////////
+#ifndef EASTL_ASSERT_MSG
+	#if EASTL_ASSERT_ENABLED
+		#define EASTL_ASSERT_MSG(expression, message) \
+			EA_DISABLE_VC_WARNING(4127) \
+			do { \
+				EA_ANALYSIS_ASSUME(expression); \
+				(void)((expression) || (eastl::AssertionFailure(message), 0)); \
+			} while (0) \
+			EA_RESTORE_VC_WARNING()
+	#else
+		#define EASTL_ASSERT_MSG(expression, message)
 	#endif
 #endif
 
@@ -1785,6 +1808,20 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 /// 
 #ifndef EASTL_OPENSOURCE
 	#define EASTL_OPENSOURCE 0
+#endif
+
+
+/// EASTL_OPTIONAL_ENABLED
+#if defined(EA_COMPILER_MSVC_2012)
+	#define EASTL_OPTIONAL_ENABLED 0
+#elif defined(EA_COMPILER_MSVC_2013)
+	#define EASTL_OPTIONAL_ENABLED 0
+#elif defined(EA_COMPILER_MSVC_2015)
+	#define EASTL_OPTIONAL_ENABLED 1
+#elif EASTL_VARIADIC_TEMPLATES_ENABLED && !defined(EA_COMPILER_NO_TEMPLATE_ALIASES) && !defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) && defined(EA_COMPILER_CPP11_ENABLED)
+	#define EASTL_OPTIONAL_ENABLED 1
+#else
+	#define EASTL_OPTIONAL_ENABLED 0
 #endif
 
 #endif // Header include guard

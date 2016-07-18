@@ -1867,7 +1867,7 @@
 			#define EA_OPTIMIZE_OFF()            \
 				_Pragma("GCC push_options")      \
 				_Pragma("GCC optimize 0")
-        #elif defined(EA_COMPILER_CLANG) &&  !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) 
             #define EA_OPTIMIZE_OFF() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize off") \
@@ -1882,7 +1882,7 @@
 			#define EA_OPTIMIZE_ON() __pragma(optimize("", on))
 		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION > 4004) && (defined(__i386__) || defined(__x86_64__)) // GCC 4.4+ - Seems to work only on x86/Linux so far. However, GCC 4.4 itself appears broken and screws up parameter passing conventions.
 			#define EA_OPTIMIZE_ON() _Pragma("GCC pop_options")
-        #elif defined(EA_COMPILER_CLANG) && !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) 
             #define EA_OPTIMIZE_ON() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize on") \

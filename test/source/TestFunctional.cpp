@@ -679,6 +679,266 @@ int TestFunctional()
 	}
 #endif // EASTL_FUNCTION_ENABLED
 
+	// Test Function Objects
+	#if defined(EA_COMPILER_CPP14_ENABLED)
+	{
+		// eastl::plus<void>
+		{
+			{
+				auto result = eastl::plus<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 42);
+			}
+
+			{
+				auto result = eastl::plus<>{}(40.0, 2.0);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 42.0);
+			}
+
+			{
+				auto result = eastl::plus<>{}(eastl::string("4"), "2");
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == "42");
+			}
+		}
+
+		// eastl::minus<void>
+		{
+			{
+				auto result = eastl::minus<>{}(6, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 4);
+			}
+
+			{
+				auto result = eastl::minus<>{}(6.0, 2.0);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 4.0);
+			}
+		}
+
+		// eastl::multiplies
+		{
+			{
+				auto result = eastl::multiplies<>{}(6, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 12);
+			}
+
+			{
+				auto result = eastl::multiplies<>{}(6.0, 2.0);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 12.0);
+			}
+		}
+
+
+		// eastl::divides
+		{
+			{
+				auto result = eastl::divides<>{}(6, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 3);
+			}
+
+			{
+				auto result = eastl::divides<>{}(6.0, 2.0);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 3.0);
+			}
+		}
+
+		// eastl::modulus
+		{
+			{
+				auto result = eastl::modulus<>{}(6, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 0);
+			}
+
+			{
+				auto result = eastl::modulus<>{}(7, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == 1);
+			}
+		}
+
+		// eastl::negate
+		{
+			{
+				auto result = eastl::negate<>{}(42);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == -42);
+			}
+
+			{
+				auto result = eastl::negate<>{}(42.0);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result == -42.0);
+			}
+		}
+
+		// eastl::equal_to
+		{
+			{
+				auto result = eastl::equal_to<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+
+			{
+				auto result = eastl::equal_to<>{}(40, 40);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+		}
+
+		// eastl::not_equal_to
+		{
+			{
+				auto result = eastl::not_equal_to<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::not_equal_to<>{}(40, 40);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+		}
+
+		// eastl::greater<void>
+		{
+			{
+				auto result = eastl::greater<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::greater<>{}(1, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+
+			{
+				auto result = eastl::greater<>{}(eastl::string("4"), "2");
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+		}
+
+		// eastl::less<void>
+		{
+			{
+				auto result = eastl::less<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+
+			{
+				auto result = eastl::less<>{}(1, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::less<>{}(eastl::string("4"), "2");
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+		}
+
+		// eastl::greater_equal<void>
+		{
+			{
+				auto result = eastl::greater_equal<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::greater_equal<>{}(40, 40);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::greater_equal<>{}(40, 43);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+		}
+
+		// eastl::less_equal<void>
+		{
+			{
+				auto result = eastl::less_equal<>{}(40, 2);
+				EA_UNUSED(result);
+				EATEST_VERIFY(!result);
+			}
+
+			{
+				auto result = eastl::less_equal<>{}(40, 40);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+
+			{
+				auto result = eastl::less_equal<>{}(40, 43);
+				EA_UNUSED(result);
+				EATEST_VERIFY(result);
+			}
+		}
+
+		// eastl::logical_and
+		{
+			auto result = eastl::logical_and<>{}(true, true);
+			EATEST_VERIFY(result);
+			result = eastl::logical_and<>{}(true, false);
+			EATEST_VERIFY(!result);
+			result = eastl::logical_and<>{}(false, true);
+			EATEST_VERIFY(!result);
+			result = eastl::logical_and<>{}(false, false);
+			EATEST_VERIFY(!result);
+
+			bool b = false;
+			result = eastl::logical_and<>{}(b, false);
+			EATEST_VERIFY(!result);
+		}
+
+		// eastl::logical_or
+		{
+			auto result = eastl::logical_or<>{}(true, true);
+			EATEST_VERIFY(result);
+			result = eastl::logical_or<>{}(true, false);
+			EATEST_VERIFY(result);
+			result = eastl::logical_or<>{}(false, true);
+			EATEST_VERIFY(result);
+			result = eastl::logical_or<>{}(false, false);
+			EATEST_VERIFY(!result);
+
+			bool b = false;
+			result = eastl::logical_or<>{}(b, false);
+			EATEST_VERIFY(!result);
+			result = eastl::logical_or<>{}(b, true);
+			EATEST_VERIFY(result);
+		}
+
+		// eastl::logical_not
+		{
+			auto result = eastl::logical_not<>{}(true);
+			EATEST_VERIFY(!result);
+			result = eastl::logical_not<>{}(result);
+			EATEST_VERIFY(result);
+			result = eastl::logical_not<>{}(false);
+			EATEST_VERIFY(result);
+		}
+	}
+	#endif
+
 	return nErrorCount;
 }
 

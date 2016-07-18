@@ -74,6 +74,7 @@ int TestBitVector();
 int TestIterator();
 int TestRatio();
 int TestChrono();
+int TestOptional();
 
 
 // Now enable warnings as desired.

@@ -9,6 +9,7 @@
 #include <EABase/eabase.h>
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/allocator_traits_fwd_decls.h>
+#include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/internal/functional_base.h>
 
@@ -25,53 +26,130 @@ namespace eastl
 	// Primary C++ functions
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename T>
+	template <typename T = void>
 	struct plus : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a + b; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/plus_void
+	template <>
+	struct plus<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) + eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) + eastl::forward<B>(b); }
+	};
+
+	template <typename T = void>
 	struct minus : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a - b; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/minus_void
+	template <>
+	struct minus<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) - eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) - eastl::forward<B>(b); }
+	};
+
+	template <typename T = void>
 	struct multiplies : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a * b; }
 	};
 
-	template <typename T>
-	struct divides : public binary_function<T, T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/multiplies_void
+	template <>
+	struct multiplies<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) * eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) * eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct divides : public binary_function<T, T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a / b; }
 	};
 
-	template <typename T>
-	struct modulus : public binary_function<T, T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/divides_void
+	template <>
+	struct divides<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) / eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) / eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct modulus : public binary_function<T, T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a % b; }
 	};
 
-	template <typename T>
-	struct negate : public unary_function<T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/modulus_void
+	template <>
+	struct modulus<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) % eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) % eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct negate : public unary_function<T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a) const
 			{ return -a; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/negate_void
+	template <>
+	struct negate<void> 
+	{
+		typedef int is_transparent;
+		template<typename T>
+		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
+			-> decltype(-eastl::forward<T>(t))
+			{ return -eastl::forward<T>(t); }
+	};
+
+	template <typename T = void>
 	struct equal_to : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a == b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/equal_to_void
+	template <>
+	struct equal_to<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) == eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) == eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -80,11 +158,22 @@ namespace eastl
 		return compare(a, b) == compare(b, a);
 	}
 
-	template <typename T>
-	struct not_equal_to : public binary_function<T, T, bool>
-	{
+    template <typename T = void>
+    struct not_equal_to : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a != b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/not_equal_to_void
+	template <>
+	struct not_equal_to<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) != eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) != eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -125,11 +214,21 @@ namespace eastl
 		}
 	};
 
-	template <typename T>
+	template <typename T = void>
 	struct greater : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a > b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/greater_void
+	template <>
+	struct greater<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) > eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) > eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -187,11 +286,21 @@ namespace eastl
 		}
 	};
 
-	template <typename T>
-	struct greater_equal : public binary_function<T, T, bool>
-	{
+    template <typename T = void>
+    struct greater_equal : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a >= b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/greater_equal_void
+	template <>
+	struct greater_equal<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) >= eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) >= eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -200,11 +309,21 @@ namespace eastl
 		return !compare(a, b) || !compare(b, a); // If (a >= b), then !(b >= a)
 	}
 
-	template <typename T>
+	template <typename T = void>
 	struct less_equal : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a <= b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/less_equal_void
+	template <>
+	struct less_equal<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) <= eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) <= eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -213,25 +332,55 @@ namespace eastl
 		return !compare(a, b) || !compare(b, a); // If (a <= b), then !(b <= a)
 	}
 
-	template <typename T>
+	template <typename T = void>
 	struct logical_and : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a && b; }
 	};
-
-	template <typename T>
-	struct logical_or : public binary_function<T, T, bool>
+	
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_and_void
+	template <>
+	struct logical_and<void>
 	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) && eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) && eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct logical_or : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a || b; }
 	};
 
-	template <typename T>
-	struct logical_not : public unary_function<T, bool>
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_or_void
+	template <>
+	struct logical_or<void>
 	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) || eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) || eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct logical_not : public unary_function<T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a) const
 			{ return !a; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_not_void
+	template <>
+	struct logical_not<void>
+	{
+		template<typename T>
+		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
+			-> decltype(!eastl::forward<T>(t))
+			{ return !eastl::forward<T>(t); }
 	};
 
 

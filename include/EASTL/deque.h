@@ -651,6 +651,7 @@ namespace eastl
 	T* DequeBase<T, Allocator, kDequeSubarraySize>::DoAllocateSubarray()
 	{
 		T* p = (T*)allocate_memory(mAllocator, kDequeSubarraySize * sizeof(T), EASTL_ALIGN_OF(T), 0);
+		EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		#if EASTL_DEBUG
 			memset((void*)p, 0, kDequeSubarraySize * sizeof(T));
@@ -683,6 +684,7 @@ namespace eastl
 		#endif
 
 		T** pp = (T**)allocate_memory(mAllocator, n * sizeof(T*), EASTL_ALIGN_OF(T), 0);
+		EASTL_ASSERT_MSG(pp != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		#if EASTL_DEBUG
 			memset((void*)pp, 0, n * sizeof(T*));

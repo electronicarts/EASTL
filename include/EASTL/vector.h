@@ -499,9 +499,18 @@ namespace eastl
 				EASTL_FAIL_MSG("vector::DoAllocate -- improbably large request.");
 		#endif
 
-		// If n is zero, then we allocate no memory and just return NULL. 
+		// If n is zero, then we allocate no memory and just return nullptr. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
-		return n ? (T*)allocate_memory(mAllocator, n * sizeof(T), EASTL_ALIGN_OF(T), 0) : NULL;
+		if(EASTL_LIKELY(n))
+		{
+			auto* p = (T*)allocate_memory(mAllocator, n * sizeof(T), EASTL_ALIGN_OF(T), 0);
+			EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+			return p;
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 
 
@@ -958,8 +967,8 @@ namespace eastl
 	inline typename vector<T, Allocator>::reference
 	vector<T, Allocator>::at(size_type n)
 	{
-		// The difference between at and operator[] is that at signals 
-		// if the requested position is out of range by throwing an 
+		// The difference between at() and operator[] is it signals 
+		// the requested position is out of range by throwing an 
 		// out_of_range exception.
 
 		#if EASTL_EXCEPTIONS_ENABLED

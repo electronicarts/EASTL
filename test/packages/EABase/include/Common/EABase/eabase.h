@@ -923,19 +923,19 @@
 // ------------------------------------------------------------------------
 // EA_IS_ENABLED
 //
-// EA_IS_ENABLED is intended to be used for detecting if compile time features
-// are enabled or disabled.  It has a small advantage over using a standard
-// #if or #ifdef test, because it will generate a compilation error if the
-// define being tested has not been set.  This prevents an undefined macro
-// from being evaluated as disabled by default.
+// EA_IS_ENABLED is intended to be used for detecting if compile time features are enabled or disabled.
 //
-// To use the macro, the calling code should create a define for the feature
-// to enable or disable.  This feature define must be set to either EA_ENABLED
-// or EA_DISABLED.  (Do not try to set the feature define directly to some other
+// It has some advantages over using a standard #if or #ifdef tests:
+//	1) Fails to compile when passes numeric macro values. Valid options are strictly enabled or disabled.
+//	2) Fails to compile when passed undefined macro values rather than disabling by default
+//	3) Fails to compile when the passed macro is defined to but empty
+//
+// To use the macro, the calling code should create a define for the feature to enable or disable.  This feature define
+// must be set to either EA_ENABLED or EA_DISABLED.  (Do not try to set the feature define directly to some other
 // value.)
 //
-// Note: These macros are analogous to the Frostbite macro FB_USING used in combination
-// with FB_OFF / FB_ON.
+// Note: These macros are analogous to the Frostbite macro FB_USING used in combination with FB_OFF / FB_ON and are
+// designed to be compatible to support gradual migration.
 //
 // Example usage:
 //
@@ -949,9 +949,10 @@
 //          // USER_PROVIDED_FEATURE_DEFINE is disabled
 //      #endif
 //
-#define EA_ENABLED              1-
-#define EA_DISABLED             0-
-#define EA_IS_ENABLED(x)        ( (x 0) == 1 )
+#define EA_ENABLED              111-
+#define EA_DISABLED             333-
+// NOTE: Numeric values for x will produce a parse error while empty values produce a divide by zero, and the test is a bool for proper negation behavior
+#define EA_IS_ENABLED(x) (333 == 333 * 111 / ((x 0) * (((x 0) == 333 ? 1 : 0) + ((x 0) == 111 ? 1 : 0))))
 
 #endif // Header include guard
 

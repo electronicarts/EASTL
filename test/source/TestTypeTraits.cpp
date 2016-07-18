@@ -163,6 +163,15 @@ struct NonPod2
 	virtual void Function(){}
 };
 
+#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	struct HasIncrementOperator { HasIncrementOperator& operator++() { return *this; } };
+
+    template<typename, typename = eastl::void_t<>>
+	struct has_increment_operator : eastl::false_type {};
+
+	template <typename T>
+	struct has_increment_operator<T, eastl::void_t<decltype(++eastl::declval<T>())>> : eastl::true_type {};
+#endif
 
 
 // We use this for the is_copy_constructible test in order to verify that 
@@ -1420,6 +1429,17 @@ int TestTypeTraits()
 	static_assert((is_same<uint64_t, uint32_t>::value  == false), "is_same failure");
 	static_assert((is_same<Class, ClassAlign32>::value == false), "is_same failure");
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert((is_same_v<uint32_t, uint32_t>  == true),  "is_same_v failure");
+		static_assert((is_same_v<void, void>          == true),  "is_same_v failure");
+		static_assert((is_same_v<void*, void*>        == true),  "is_same_v failure");
+		static_assert((is_same_v<uint64_t, uint64_t>  == true),  "is_same_v failure");
+		static_assert((is_same_v<Class, Class>        == true),  "is_same_v failure");
+		static_assert((is_same_v<uint64_t, uint32_t>  == false), "is_same_v failure");
+		static_assert((is_same_v<Class, ClassAlign32> == false), "is_same_v failure");
+	#endif
+
+
 
 	// is_convertible
 	static_assert((is_convertible<uint16_t,  uint32_t>::value     == true),     "is_convertible failure");
@@ -1702,6 +1722,28 @@ int TestTypeTraits()
 		PodA*  pANew = union_cast<PodA*>(pB);
 		EATEST_VERIFY(pA == pANew);
 	}
+
+	// void_t
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	{
+		{
+			static_assert(is_same_v<void_t<void>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<int>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<short>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<long>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<long long>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<ClassEmpty>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<ClassNonEmpty>, void>, "void_t failure");
+			static_assert(is_same_v<void_t<vector<int>>, void>, "void_t failure");
+		}
+
+		// new sfinae mechansim test 
+		{
+			static_assert(has_increment_operator<HasIncrementOperator>::value, "void_t sfinae failure");
+			static_assert(!has_increment_operator<ClassEmpty>::value, "void_t sfinae failure");
+		}
+	}
+	#endif
 
 	return nErrorCount;
 }
