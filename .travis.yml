@@ -1,10 +1,13 @@
 language: cpp
+
 os:
   - linux
   - osx
+
 compiler: 
     - gcc
     - clang
+
 addons:
   apt:
     sources:
@@ -13,39 +16,43 @@ addons:
     - gcc-4.8
     - g++-4.8
     - clang
+
 matrix:
     exclude:
     - os: osx
       compiler: gcc
 
 install:
-# Install CMake 3.4.3
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget --no-check-certificate http://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz       ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf cmake-3.4.3-Linux-x86_64.tar.gz                                                      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi                             ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then wget --no-check-certificate http://cmake.org/files/v3.4/cmake-3.4.3-Darwin-x86_64.tar.gz      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then tar -xzf cmake-3.4.3-Darwin-x86_64.tar.gz                                                     ;fi
+# Linux Setup 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget --no-check-certificate http://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz   ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf cmake-3.4.3-Linux-x86_64.tar.gz                                                  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8" ;fi                         ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PWD/cmake-3.4.3-Linux-x86_64/bin:$PATH                                       ;fi 
+# OSX Setup 
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then wget --no-check-certificate http://cmake.org/files/v3.4/cmake-3.4.3-Darwin-x86_64.tar.gz  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then tar -xzf cmake-3.4.3-Darwin-x86_64.tar.gz                                                 ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export PATH=$PWD/cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                   ;fi 
 
 script:
-  - mkdir build
-  - cd build
-# Build project (linux)
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON    ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Debug                                          ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../cmake-3.4.3-Linux-x86_64/bin/cmake --build . --config Release                                        ;fi
-# Build project (osx)
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON    ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build . --config Debug                                          ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/cmake --build . --config Release                                        ;fi
+# Debug Build
+  - mkdir build_debug
+  - cd build_debug
+  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
+  - cmake --build . --config Debug
+  - cd ..
+# Release Build
+  - mkdir build_release 
+  - cd build_release 
+  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
+  - cmake --build . --config Release
+  # - cd ..
 
 after_success:
-# Run tests 
+# Run Release Tests 
   - cd test
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
-# Run benchmarks 
+  - ctest -C Release -V
   - cd ..
+# Run Release Benchmarks 
   - cd benchmark
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ../../cmake-3.4.3-Linux-x86_64/bin/ctest -C Release -V                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then ../../cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin/ctest -C Release -V                       ;fi
+  - ctest -C Release -V
 
