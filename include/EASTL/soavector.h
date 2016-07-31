@@ -150,13 +150,15 @@ void swallow(Ts&&...)
 
 
 template <size_t... Indices, typename... Ts>
-struct SoaVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public SoaVecLeaf<Indices, Ts>...
+class SoaVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public SoaVecLeaf<Indices, Ts>...
 {
+public:
 	typedef soavec_element_t<0, soa_vector<Ts...>> BaseType;
 	typedef SoaVecLeaf<0, BaseType> BaseLeaf;
-public:
 	EA_CONSTEXPR SoaVecImpl() = default;
 
+	// dcrooks-todo we should be conscious of what the vector sizes are here, and do a single resize on behalf of the soavecleaf's.
+	// dcrooks-todo (at some point, should we even be wrapping vector functionality?)
 	size_t push_back()
 	{
 		swallow(SoaVecLeaf<Indices, Ts>::push_back()...);
@@ -243,33 +245,86 @@ public:
 		soa_vector<Ts...> &mSoaVector;
 	};
 
+	typedef element<Ts...> element_type;
+public:
 
 	EA_CONSTEXPR soa_vector() = default;
+	
+	element_type push_back();
+	void push_back(const Ts&... args);
+	void push_back_uninitialized();
 
+	size_t size();
 
-	element<Ts...> push_back() 
-	{ 
-		size_t newIndex = mImpl.push_back(); 
-		return element<Ts...>((*this), newIndex);
-	}
-	void push_back(const Ts&... args) { mImpl.push_back(args...); }
-	void push_back_uninitialized() { mImpl.push_back_uninitialized(); }
-
-	size_t size() { return mImpl.size(); }
-
-	element<Ts...> begin() { return element<Ts...>(*this, 0); }
-	element<Ts...> end() { return element<Ts...>(*this, size() - 1); }
+	element_type begin();
+	element_type end();
 	
 	template<size_t I>
-	vector<soavec_element_t<I, soa_vector<Ts...>>>& get() {	return Internal::get<I>(mImpl); }
+	vector<soavec_element_t<I, soa_vector<Ts...>>>& get();
 
 	template<typename T>
-	vector<T>& get() { return Internal::get<T>(mImpl); }
+	vector<T>& get();
 
 private:
 	Impl mImpl;
 
 };
+
+template <typename... Ts>
+typename soa_vector<Ts...>::element_type soa_vector<Ts...>::push_back()
+{
+	size_t newIndex = mImpl.push_back();
+	return element<Ts...>((*this), newIndex);
+}
+
+template <typename... Ts>
+void soa_vector<Ts...>::push_back(const Ts&... args)
+{
+	mImpl.push_back(args...);
+}
+
+template <typename... Ts>
+void soa_vector<Ts...>::push_back_uninitialized()
+{
+	mImpl.push_back_uninitialized();
+}
+
+template <typename... Ts>
+size_t soa_vector<Ts...>::size()
+{
+	return mImpl.size();
+}
+
+template <typename... Ts>
+typename soa_vector<Ts...>::element_type soa_vector<Ts...>::begin()
+{
+	return element<Ts...>(*this, 0);
+}
+
+template <typename... Ts>
+typename soa_vector<Ts...>::element_type soa_vector<Ts...>::end()
+{
+	return element<Ts...>(*this, size() - 1);
+}
+
+template <typename... Ts>
+template<size_t I>
+vector<eastl::soavec_element_t<I, soa_vector<Ts...>>>&
+soa_vector<Ts...>::get()
+{
+	return Internal::get<I>(mImpl);
+}
+
+
+template <typename... Ts>
+template<typename T>
+eastl::vector<T>&
+eastl::soa_vector<Ts...>::get()
+{
+	return Internal::get<T>(mImpl);
+}
+
+
 
 // Vector_Decl macros
 #pragma region 
