@@ -52,7 +52,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(EASTLTest_Libraries EASTL EATest)
-if((NOT APPLE) AND (NOT MSVC))
+if((NOT APPLE) AND (NOT WIN32))
 	target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads rt)
 else()
 	target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads)
