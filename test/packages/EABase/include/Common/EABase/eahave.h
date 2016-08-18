@@ -559,10 +559,10 @@
 #endif
 
 #if !defined(EA_HAVE_ISNAN) && !defined(EA_NO_HAVE_ISNAN)
-	#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_COMPILER_CLANG)
+	#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 		#define EA_HAVE_ISNAN(x)  _isnan(x)          /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  !_finite(x)
-	#elif defined(EA_PLATFORM_APPLE) || (defined(EA_PLATFORM_MICROSOFT) && defined(EA_COMPILER_CLANG))
+	#elif defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
 		#define EA_HAVE_ISINF(x)  std::isinf(x)
 	#elif defined(EA_PLATFORM_ANDROID)
@@ -571,7 +571,7 @@
 	#elif defined(__GNUC__) && defined(__CYGWIN__)
 		#define EA_HAVE_ISNAN(x)  __isnand(x)        /* declared nowhere, it seems. */
 		#define EA_HAVE_ISINF(x)  __isinfd(x)
-	#else /* Most GCC, EDG, and Dinkumware. */
+	#else /* Most GCC, EDG, Dinkumware, and MinGW(-w64). */
 		#define EA_HAVE_ISNAN(x)  isnan(x)           /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  isinf(x)
 	#endif

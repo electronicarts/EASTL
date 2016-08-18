@@ -1,24 +1,18 @@
 version: 1.0.{build}
 
-os: 
-    - Visual Studio 2015
-    - Visual Studio 2013
-
 platform:
-    - x86
-    - x64
+    - MSVC_2013_x86
+    - MSVC_2013_x64
+    - MSVC_2015_x86
+    - MSVC_2015_x64
+    - MinGW_x86
+    - MinGW_x64
+
+install:
+    - scripts\ci-pre.cmd
 
 build_script:
-    - cmd: mkdir build
-    - cmd: cd build
-    - cmd: cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON 
-    - cmd: cmake --build . --config Debug 
-    - cmd: cmake --build . --config Release
+    - scripts\ci-build.cmd
 
 test_script:
-    - cmd: cd test
-    - cmd: ctest -C Release -V 
-    - cmd: cd .. 
-    - cmd: cd benchmark
-    - cmd: ctest -C Release -V
-    - cmd: cd .. 
+    - scripts\ci-test.cmd
