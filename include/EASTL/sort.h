@@ -205,77 +205,144 @@ namespace eastl
 
 
 
-	/// insertion_sort
-	///
-	/// Since insertion_sort requires that the data be addressed with a BidirectionalIterator and 
-	/// not the more flexible RandomAccessIterator, we implement the sort by doing a for loop within
-	/// a for loop. If we were to specialize this for a RandomAccessIterator, we could replace the
-	/// inner for loop with a call to upper_bound, which would be faster.
-	///
-	template <typename BidirectionalIterator, typename StrictWeakOrdering>
-	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
+	/* Insertion Sort
+	 *
+	 * An in-place and stable sorting algorithm that is fast for small arrays,
+	 * making it useful in algorithms like Quick Sort, Merge Sort, most-significant-
+	 * digit Radix Sorts, and Quick Select, which divide their inputs into smaller (semi)sorted segments.
+	 *
+	 * An improvement for larger inputs would be to use upper_bound to find the insertion position,
+	 * followed by memmove, but it will still be slow for large inputs, and not worth it for small ones.
+	 *
+	 * If base[-1] is a sentinel the short-circuit can be removed, but this is a general purpose version.
+	 */
+	
+	//compare functor version
+	template<class Iter, class Compare>//Bidirectional Iterator, though something like a list shouldn't use this
+	void insertion_sort(Iter const base, Iter const past, Compare cmp)
 	{
-		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-		if(first != last) // if the range is non-empty...
-		{
-			BidirectionalIterator iCurrent, iNext, iSorted = first;
-
-			for(++iSorted; iSorted != last; ++iSorted)
-			{
-				const value_type temp(*iSorted);
-
-				iNext = iCurrent = iSorted;
-
-				// Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
-				// It doesn't dereference the iterator, but std STL disallows that operation. This isn't 
-				// a problem for EASTL containers and ranges, as they support a single decrement of first,
-				// but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
-				// To do: Fix this loop to not decrement like so.
-				for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
-				{
-					EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
-					*iNext = *iCurrent;
-				}
-
-				*iNext = temp;
-			}
-		}
-	} // insertion_sort
-
-
-
-	template <typename BidirectionalIterator>
-	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last)
+	    typedef typename eastl::iterator_traits<Iter>::value_type value_type;
+	
+	    if (base!=past)
+	    {   //this could perhaps be written more idiomatic: for (T *left=base, *sorted=base+1; sorted!=past; left=sorted++)
+	        for (Iter left=base, sorted=base; ++sorted!=past; left=sorted)
+	        {
+	            if (cmp(*sorted, *left))
+	            {
+	                const value_type val=*sorted;//should we care about doing moves instead?
+	                Iter right=sorted;
+	
+	                do
+	                {
+	                    EASTL_VALIDATE_COMPARE(!cmp(*left, val));//validate cmp is sane by checking other way
+	                    *right=*left;
+	                }while ((right=left)!=base && cmp(val, *--left));
+	
+	                *right=val;
+	            }
+	        }//outer loop
+	    }//non-empty range
+	}//insertion_sort (Compare)
+	
+	//default less-than version
+	template<class Iter>//Bidirectional Iterator, though something like a list shouldn't use this
+	void insertion_sort(Iter const base, Iter const past)
 	{
-		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	    typedef typename eastl::iterator_traits<Iter>::value_type value_type;
+	
+	    if (base!=past)
+	    {   //this could perhaps be written more idiomatic: for (T *left=base, *sorted=base+1; sorted!=past; left=sorted++)
+	        for (Iter left=base, sorted=base; ++sorted!=past; left=sorted)
+	        {
+	            if (*sorted < *left)
+	            {
+	                const value_type val=*sorted;//should we care about doing moves instead?
+	                Iter right=sorted;
+	
+	                do
+	                {
+	                    EASTL_VALIDATE_COMPARE(!(*left<val));//validate cmp is sane by checking other way
+	                    *right=*left;
+	                }while ((right=left)!=base && val<*--left);
+	
+	                *right=val;
+	            }
+	        }//outer loop
+	    }//non-empty range
+	}//insertion_sort
 
-		if(first != last)
-		{
-			BidirectionalIterator iCurrent, iNext, iSorted = first;
+#if 0
+/* This following Merge Sort or something similar is worth considering compared to the current version.
 
-			for(++iSorted; iSorted != last; ++iSorted)
-			{
-				const value_type temp(*iSorted);
+First, the buffer only needs a length of half the data, not the full length as it does now.
+Second, it starts by using Insertion Sort on small arrays, which noticeably improves the performance. The full sort is still stable.
 
-				iNext = iCurrent = iSorted;
+In trying to achieve minimal copying, it makes more than 2 recursive calls, as does the current one, but 3 instead of 4.
+Originally I thought of doing 4, but I think three is simpler and when I thought of doing 4, the buffer length might need to be a little over n/2.
 
-				// Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
-				// It doesn't dereference the iterator, but std STL disallows that operation. This isn't 
-				// a problem for EASTL containers and ranges, as they support a single decrement of first,
-				// but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
-				// To do: Fix this loop to not decrement like so.
-				for(--iCurrent; (iNext != first) && (temp < *iCurrent); --iNext, --iCurrent)
-				{
-					EASTL_VALIDATE_COMPARE(!(*iCurrent < temp)); // Validate that the compare function is sane.
-					*iNext = *iCurrent;
-				}
+With three it may start out by Insertion Sorting varying length chunks. Though I'm not sure about the implications of this.
+Lets say a small array is <=24 in length and should be Insertion Sorted:
+- if the input array is of size 25, with 3 calls we do 3 insertion sorts on lengths 6, 6 and 13;
+ with 4 calls there would instead be 4 insertion sorts of 6, 6, 6, 7.
+- if the input array is of size 50, with 3 calls we do 5 insertion sorts: 12, 13, (6,6), 13;
+ with 4 calls instead would do 4 of maybe: 12, 12, 12, 14.
 
-				*iNext = temp;
-			}
-		}
-	} // insertion_sort
+Also, in the final merge, if the left range(the buffer containing the merged 2 first quarters) is exhausted first,
+there is nothing left to copy, which is another potential speedup.
+*/
 
+/*
+ * FinishingMerge (internal function)
+ * like a normal merge, but nothing left is copied if the left range is exhausted first
+ *
+ * assumes both ranges non-empty, since caller is msort which checks if the array is large enough when checking
+ * if it should instead use insertion sort
+ *
+ * also like mentioned in insertion_sort, should we care about doing moves instead?
+ */
+template<class BufIt, class DataIt, class Compare>
+void FinishingMerge(BufIt l, BufIt const lEnd, DataIt r, DataIt const rEnd, DataIt dest, Compare cmp)
+{
+    for (;;)//assume both ranges not empty
+    {
+        if (cmp(*r, *l))
+        {
+            *dest++ = *r++;
+            if (r==rEnd)
+                break;//copy remaining left
+        }
+        else//equal elements first taken from left for stability
+        {
+            *dest++ = *l++;
+            if (l==lEnd)
+                return;//nothing left to copy
+        }
+    }
+
+    eastl::copy(l, lEnd, dest);
+}
+
+template<class DataIter, class BufIter, class Compare>
+void merge_sort_buffer(DataIter data, size_t n, BufIter buf, Compare cmp)//n is length of data, buffer must be at least of length n/2
+{
+    if (n>=25u)
+    {
+        const size_t nHalf=n>>1u, nFourth=n>>2u;
+        DataIter const iMid=data+nHalf, iQuad=data+nFourth;
+        //sort first and second quarters of data, will be merged into buffer
+        eastl::merge_sort_buffer(data, nFourth, buf, cmp);
+        eastl::merge_sort_buffer(iQuad, nHalf-nFourth, buf, cmp);
+        //sort right Half of data
+        eastl::merge_sort_buffer(iMid, n-nHalf, buf, cmp);
+        //merge first 2 quarters into buffer.
+        eastl::merge(data, iQuad, iQuad, iMid, buf, cmp);
+        //the following is like a normal merge, but nothing remains to be copied if the left range is exhausted first
+        eastl::FinishingMerge(buf, buf+nHalf, iMid, data+n, data, cmp);
+    }
+    else
+        eastl::insertion_sort(data, data+n, cmp);
+}
+#endif
 
 	#if 0 /*
 	// STLPort-like variation of insertion_sort. Doesn't seem to run quite as fast for small runs.
