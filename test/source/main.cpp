@@ -132,7 +132,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("BitVector",				TestBitVector);
 	testSuite.AddTest("Ratio",					TestRatio);
 	testSuite.AddTest("Chrono",					TestChrono);
-	testSuite.AddTest("SoaVector", TestSoaVector);
+	testSuite.AddTest("TupleVector", TestTupleVector);
 
 	nErrorCount += testSuite.Run();
 

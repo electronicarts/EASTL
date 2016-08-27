@@ -2,8 +2,8 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_SOAVECTOR_H
-#define EASTL_SOAVECTOR_H
+#ifndef EASTL_TUPLEVECTOR_H
+#define EASTL_TUPLEVECTOR_H
 
 #include <EASTL/internal/config.h>
 #include <EASTL/utility.h>
@@ -13,102 +13,102 @@ namespace eastl
 
 // forward declarations
 template <typename... Ts>
-class soa_vector;
+class tuple_vector;
 
-template <size_t I, typename SoaVector>
-class soavec_element;
+template <size_t I, typename TupleVector>
+class tuplevec_element;
 
-template <size_t I, typename SoaVector>
-using soavec_element_t = typename soavec_element<I, SoaVector>::type;
+template <size_t I, typename TupleVector>
+using tuplevec_element_t = typename tuplevec_element<I, TupleVector>::type;
 
 namespace Internal
 {
 	template <typename Indices, typename... Ts>
-	struct SoaVecImpl;
+	struct TupleVecImpl;
 }
 
-// soavec_element helper to be able to isolate a type given an index
+// tuplevec_element helper to be able to isolate a type given an index
 template <typename... Ts>
-struct SoaVecTypes
+struct TupleVecTypes
 {
 };
 
 template <size_t I, typename T>
-class soavec_element
+class tuplevec_element
 {
 };
 
 // attempt to isolate type given an index
 template <size_t I>
-class soavec_element<I, soa_vector<>>
+class tuplevec_element<I, tuple_vector<>>
 {
 public:
-	static_assert(I != I, "soavec_element index out of range");
+	static_assert(I != I, "tuplevec_element index out of range");
 };
 
 template <typename H, typename... Ts>
-class soavec_element<0, soa_vector<H, Ts...>>
+class tuplevec_element<0, tuple_vector<H, Ts...>>
 {
 public:
 	typedef H type;
 };
 
 template <size_t I, typename H, typename... Ts>
-class soavec_element<I, soa_vector<H, Ts...>>
+class tuplevec_element<I, tuple_vector<H, Ts...>>
 {
 public:
-	typedef soavec_element_t<I - 1, soa_vector<Ts...>> type;
+	typedef tuplevec_element_t<I - 1, tuple_vector<Ts...>> type;
 };
 
 template <size_t I, typename Indices, typename... Ts>
-class soavec_element<I, Internal::SoaVecImpl<Indices, Ts...>> : public soavec_element<I, soa_vector<Ts...>>
+class tuplevec_element<I, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
 {
 };
 
 // attempt to isolate index given a type
-template <typename T, typename SoaVector>
-class soavec_index
+template <typename T, typename TupleVector>
+class tuplevec_index
 {
 };
 
 template <typename T>
-class soavec_index<T, soa_vector<>>
+class tuplevec_index<T, tuple_vector<>>
 {
 public:
 	typedef void DuplicateTypeCheck;
 };
 
 template <typename T, typename... TsRest>
-class soavec_index<T, soa_vector<T, TsRest...>>
+class tuplevec_index<T, tuple_vector<T, TsRest...>>
 {
 public:
 	typedef int DuplicateTypeCheck;
-	static_assert(is_void<typename soavec_index<T, soa_vector<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in soa_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+	static_assert(is_void<typename tuplevec_index<T, tuple_vector<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
 
 	static const size_t index = 0;
 };
 
 template <typename T, typename Ts, typename... TsRest>
-class soavec_index<T, soa_vector<Ts, TsRest...>>
+class tuplevec_index<T, tuple_vector<Ts, TsRest...>>
 {
 public:
-	static const size_t index = soavec_index<T, soa_vector<TsRest...>>::index + 1;
+	static const size_t index = tuplevec_index<T, tuple_vector<TsRest...>>::index + 1;
 };
 
 template <typename T, typename Indices, typename... Ts>
-class soavec_index<T, Internal::SoaVecImpl<Indices, Ts...>> : public soavec_index<T, soa_vector<Ts...>>
+class tuplevec_index<T, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
 {
 };
 
 namespace Internal
 {
 
-// SoaVecLeaf
+// TupleVecLeaf
 template <size_t I, typename ValueType>
-class SoaVecLeaf
+class TupleVecLeaf
 {
 public:
-	SoaVecLeaf() : mVec() {}
+	TupleVecLeaf() : mVec() {}
 
 	// swallowed functions requires non-void return types
 	int push_back()
@@ -140,7 +140,7 @@ private:
 	vector<ValueType> mVec;
 };
 
-// SoaVecImpl
+// TupleVecImpl
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
 template <typename... Ts>
@@ -150,25 +150,25 @@ void swallow(Ts&&...)
 
 
 template <size_t... Indices, typename... Ts>
-class SoaVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public SoaVecLeaf<Indices, Ts>...
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 public:
-	typedef soavec_element_t<0, soa_vector<Ts...>> BaseType;
-	typedef SoaVecLeaf<0, BaseType> BaseLeaf;
-	EA_CONSTEXPR SoaVecImpl() = default;
+	typedef tuplevec_element_t<0, tuple_vector<Ts...>> BaseType;
+	typedef TupleVecLeaf<0, BaseType> BaseLeaf;
+	EA_CONSTEXPR TupleVecImpl() = default;
 
 	size_t push_back()
 	{
-		swallow(SoaVecLeaf<Indices, Ts>::push_back()...);
+		swallow(TupleVecLeaf<Indices, Ts>::push_back()...);
 		return BaseLeaf::size() - 1;
 	}
 	void push_back(const Ts&... args)
 	{
-		swallow(SoaVecLeaf<Indices, Ts>::push_back(args)...);
+		swallow(TupleVecLeaf<Indices, Ts>::push_back(args)...);
 	}
 	void push_back_uninitialized()
 	{
-		swallow(SoaVecLeaf<Indices, Ts>::push_back_uninitialized()...);
+		swallow(TupleVecLeaf<Indices, Ts>::push_back_uninitialized()...);
 	}
 
 	size_t size() const
@@ -179,52 +179,52 @@ public:
 };
 
 template <size_t I, typename Indices, typename... Ts>
-vector<soavec_element_t<I, SoaVecImpl<Indices, Ts...>>>& get(SoaVecImpl<Indices, Ts...>& t)
+vector<tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>>& get(TupleVecImpl<Indices, Ts...>& t)
 {
-	typedef soavec_element_t<I, SoaVecImpl<Indices, Ts...>> Type;
-	return static_cast<Internal::SoaVecLeaf<I, Type>&>(t).getInternal();
+	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Type;
+	return static_cast<Internal::TupleVecLeaf<I, Type>&>(t).getInternal();
 }
 
 template <typename T, typename Indices, typename... Ts>
-vector<T>& get(SoaVecImpl<Indices, Ts...>& t)
+vector<T>& get(TupleVecImpl<Indices, Ts...>& t)
 {
-	typedef soavec_index<T, SoaVecImpl<Indices, Ts...>> Index;
-	return static_cast<Internal::SoaVecLeaf<Index::index, T>&>(t).getInternal();
+	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
+	return static_cast<Internal::TupleVecLeaf<Index::index, T>&>(t).getInternal();
 }
 
 
 }  // namespace Internal
 
 
-// External interface of soa_vector
+// External interface of tuple_vector
 template <typename... Ts>
-class soa_vector
+class tuple_vector
 {
 private:
-	typedef Internal::SoaVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
+	typedef Internal::TupleVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
 
 public:
 	
-	// soa_vector_element interface:
+	// tuple_vector_element interface:
 	// - created by fetching push_back, dereferencing iterator
 	// - get<>() function which returns value&
 	// internals:
-	// - reference to soa_vec
+	// - reference to tuple_vector
 	// - index [or store iterator to first vec and derive after the fact? eh, probably just index...]
 	template <typename... Ts>
 	struct element // dcrooks-todo maybe this'll just be iterator?
 	{
 	public:
-		element(soa_vector<Ts...>& soaVector, size_t index = 0)
+		element(tuple_vector<Ts...>& tupleVector, size_t index = 0)
 		: mIndex(index)
-		, mSoaVector(soaVector)
+		, mTupleVector(tupleVector)
 		{	}
 
 		template<size_t I>
-		soavec_element_t<I, soa_vector<Ts...>>& get() { return mSoaVector.get<I>()[mIndex];	}
+		tuplevec_element_t<I, tuple_vector<Ts...>>& get() { return mTupleVector.get<I>()[mIndex];	}
 
 		template<typename T> 
-		T& get() { return mSoaVector.get<T>()[mIndex]; }
+		T& get() { return mTupleVector.get<T>()[mIndex]; }
 
 		element& operator++()
 		{
@@ -238,13 +238,13 @@ public:
 
 	private:
 		size_t mIndex;
-		soa_vector<Ts...> &mSoaVector;
+		tuple_vector<Ts...> &mTupleVector;
 	};
 
 	typedef element<Ts...> element_type;
 public:
 
-	EA_CONSTEXPR soa_vector() = default;
+	EA_CONSTEXPR tuple_vector() = default;
 	
 	element_type push_back();
 	void push_back(const Ts&... args);
@@ -256,7 +256,7 @@ public:
 	element_type end();
 	
 	template<size_t I>
-	vector<soavec_element_t<I, soa_vector<Ts...>>>& get();
+	vector<tuplevec_element_t<I, tuple_vector<Ts...>>>& get();
 
 	template<typename T>
 	vector<T>& get();
@@ -267,46 +267,46 @@ private:
 };
 
 template <typename... Ts>
-typename soa_vector<Ts...>::element_type soa_vector<Ts...>::push_back()
+typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::push_back()
 {
 	size_t newIndex = mImpl.push_back();
 	return element<Ts...>((*this), newIndex);
 }
 
 template <typename... Ts>
-void soa_vector<Ts...>::push_back(const Ts&... args)
+void tuple_vector<Ts...>::push_back(const Ts&... args)
 {
 	mImpl.push_back(args...);
 }
 
 template <typename... Ts>
-void soa_vector<Ts...>::push_back_uninitialized()
+void tuple_vector<Ts...>::push_back_uninitialized()
 {
 	mImpl.push_back_uninitialized();
 }
 
 template <typename... Ts>
-size_t soa_vector<Ts...>::size()
+size_t tuple_vector<Ts...>::size()
 {
 	return mImpl.size();
 }
 
 template <typename... Ts>
-typename soa_vector<Ts...>::element_type soa_vector<Ts...>::begin()
+typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::begin()
 {
 	return element<Ts...>(*this, 0);
 }
 
 template <typename... Ts>
-typename soa_vector<Ts...>::element_type soa_vector<Ts...>::end()
+typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::end()
 {
 	return element<Ts...>(*this, size() - 1);
 }
 
 template <typename... Ts>
 template<size_t I>
-vector<eastl::soavec_element_t<I, soa_vector<Ts...>>>&
-soa_vector<Ts...>::get()
+vector<eastl::tuplevec_element_t<I, tuple_vector<Ts...>>>&
+tuple_vector<Ts...>::get()
 {
 	return Internal::get<I>(mImpl);
 }
@@ -315,7 +315,7 @@ soa_vector<Ts...>::get()
 template <typename... Ts>
 template<typename T>
 eastl::vector<T>&
-eastl::soa_vector<Ts...>::get()
+eastl::tuple_vector<Ts...>::get()
 {
 	return Internal::get<T>(mImpl);
 }
@@ -324,37 +324,37 @@ eastl::soa_vector<Ts...>::get()
 
 // Vector_Decl macros
 #pragma region 
-#define SOA_VECTOR_DECL_START(className, ... ) \
-	class className : public soa_vector<##__VA_ARGS__> \
+#define TUPLE_VECTOR_DECL_START(className, ... ) \
+	class className : public tuple_vector<##__VA_ARGS__> \
 	{\
 		public: \
 
-#define SOA_VECTOR_DECL_TYPENAME(type, name, iter) vector<type>& name() { return get<iter>(); } \
+#define TUPLE_VECTOR_DECL_TYPENAME(type, name, iter) vector<type>& name() { return get<iter>(); } \
 
-#define SOA_VECTOR_DECL_END() };
+#define TUPLE_VECTOR_DECL_END() };
 
-#define SOA_VECTOR_DECL_2(className, type0, name0, type1, name1) \
-	SOA_VECTOR_DECL_START(className, type0, type1) \
-	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-	SOA_VECTOR_DECL_END()
+#define TUPLE_VECTOR_DECL_2(className, type0, name0, type1, name1) \
+	TUPLE_VECTOR_DECL_START(className, type0, type1) \
+	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	TUPLE_VECTOR_DECL_END()
 
-#define SOA_VECTOR_DECL_3(className, type0, name0, type1, name1, type2, name2) \
-	SOA_VECTOR_DECL_START(className, type0, type1, type2) \
-	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-	SOA_VECTOR_DECL_TYPENAME(type2, name2, 2) \
-	SOA_VECTOR_DECL_END()
+#define TUPLE_VECTOR_DECL_3(className, type0, name0, type1, name1, type2, name2) \
+	TUPLE_VECTOR_DECL_START(className, type0, type1, type2) \
+	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	TUPLE_VECTOR_DECL_TYPENAME(type2, name2, 2) \
+	TUPLE_VECTOR_DECL_END()
 
-#define SOA_VECTOR_DECL_4(className, type0, name0, type1, name1, type2, name2, type3, name3) \
-	SOA_VECTOR_DECL_START(className, type0, type1, type2, type3) \
-	SOA_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-	SOA_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-	SOA_VECTOR_DECL_TYPENAME(type2, name2, 2) \
-	SOA_VECTOR_DECL_TYPENAME(type3, name3, 3) \
-	SOA_VECTOR_DECL_END()
+#define TUPLE_VECTOR_DECL_4(className, type0, name0, type1, name1, type2, name2, type3, name3) \
+	TUPLE_VECTOR_DECL_START(className, type0, type1, type2, type3) \
+	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
+	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
+	TUPLE_VECTOR_DECL_TYPENAME(type2, name2, 2) \
+	TUPLE_VECTOR_DECL_TYPENAME(type3, name3, 3) \
+	TUPLE_VECTOR_DECL_END()
 #pragma endregion
 
 }  // namespace eastl
 
-#endif  // EASTL_SOAVECTOR_H
+#endif  // EASTL_TUPLEVECTOR_H

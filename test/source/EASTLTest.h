@@ -79,7 +79,7 @@ int TestRatio();
 int TestChrono();
 int TestOptional();
 int TestAny();
-int TestSoaVector();
+int TestTupleVector();
 
 
 // Now enable warnings as desired.
