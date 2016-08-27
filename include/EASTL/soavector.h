@@ -40,7 +40,7 @@ class soavec_element
 
 // attempt to isolate type given an index
 template <size_t I>
-class soavec_element<I, soa_vector<>> // dcrooks-todo tuple implementation doesn't need this to be the literal soa_vector type, and is able to use "SoaVecTypes"
+class soavec_element<I, soa_vector<>>
 {
 public:
 	static_assert(I != I, "soavec_element index out of range");
@@ -157,8 +157,6 @@ public:
 	typedef SoaVecLeaf<0, BaseType> BaseLeaf;
 	EA_CONSTEXPR SoaVecImpl() = default;
 
-	// dcrooks-todo we should be conscious of what the vector sizes are here, and do a single resize on behalf of the soavecleaf's.
-	// dcrooks-todo (at some point, should we even be wrapping vector functionality?)
 	size_t push_back()
 	{
 		swallow(SoaVecLeaf<Indices, Ts>::push_back()...);
@@ -176,7 +174,6 @@ public:
 	size_t size() const
 	{
 		return BaseLeaf::size();
-		// dcrooks-todo should assert that _all_ of the leaves are the same size. 
 	}
 
 };
@@ -235,7 +232,6 @@ public:
 			return *this;
 		}
 
-		// dcrooks-todo need to compare vectors, too
 		bool operator==(const element& other) const	{ return mIndex == other.mIndex; }
 		bool operator!=(const element& other) const { return mIndex != other.mIndex; }
 		element& operator*() { return *this; }
