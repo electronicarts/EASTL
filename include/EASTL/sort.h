@@ -276,11 +276,12 @@ namespace eastl
 	        }
 	    }
 	} // insertion_sort
-
 	
-	//Insertion Sort (new)
-	//An in-place and stable sorting algorithm that is fast for small arrays.
-	//The following and the default less than compare version are general purpose.
+	
+	
+	///Insertion Sort (new)
+	///An in-place and stable sorting algorithm that is fast for small arrays.
+	///The following and the default less than compare version are general purpose.
 	
 	//compare functor version
 	template<typename BidirectionalIterator, typename Compare>//Bidirectional Iterator, though something like a list shouldn't use this
@@ -290,25 +291,21 @@ namespace eastl
 	
 	    if (first!=last)
 	    {
-	        BidirectionalIterator iLeft=first, iSorted=first;
-	        for (++iSorted; iSorted!=last; iLeft=iSorted, ++iSorted)
+	        BidirectionalIterator iLeft, iRight, iSorted=first;
+	        while (++iSorted!=last)
 	        {
-	            if (cmp(*iSorted, *iLeft))
+	            const value_type temp(*iSorted);//should we care about doing moves instead?
+	
+	            for (iLeft=iRight=iSorted; iRight!=first && cmp(temp, *--iLeft); --iRight)
 	            {
-	                const value_type temp(*iSorted);//should we care about doing moves instead?
-	                BidirectionalIterator iRight=iSorted;
-	
-	                do
-	                {
-	                    EASTL_VALIDATE_COMPARE(!cmp(*iLeft, temp));//validate cmp is sane by checking other way
-	                    *iRight=*iLeft;
-	                }while ((iRight=iLeft)!=first && cmp(temp, *--iLeft));
-	
-	                *iRight=temp;
+	                EASTL_VALIDATE_COMPARE(!cmp(*iLeft, temp));//validate cmp is sane by checking other way
+	                *iRight=*iLeft;
 	            }
-	        }//outer for loop
+	
+	            *iRight=temp;
+	        }//outer loop
 	    }
-	}//insertion_sort (Compare)
+	}//insertion_sort (Compare
 	
 	//default less-than version
 	template<typename BidirectionalIterator>//Bidirectional Iterator, though something like a list shouldn't use this
@@ -318,29 +315,25 @@ namespace eastl
 	
 	    if (first!=last)
 	    {
-	        BidirectionalIterator iLeft=first, iSorted=first;
-	        for (++iSorted; iSorted!=last; iLeft=iSorted, ++iSorted)
+	        BidirectionalIterator iLeft, iRight, iSorted=first;
+	        while (++iSorted!=last)
 	        {
-	            if (*iSorted < *iLeft)
+	            const value_type temp(*iSorted);//should we care about doing moves instead?
+	
+	            for (iLeft=iRight=iSorted; iRight!=first && temp<*--iLeft; --iRight)
 	            {
-	                const value_type temp(*iSorted);//should we care about doing moves instead?
-	                BidirectionalIterator iRight=iSorted;
-	
-	                do
-	                {
-	                    EASTL_VALIDATE_COMPARE(!(*iLeft < temp));//validate cmp is sane by checking other way
-	                    *iRight=*iLeft;
-	                }while ((iRight=iLeft)!=first && temp<*--iLeft);
-	
-	                *iRight=temp;
+	                EASTL_VALIDATE_COMPARE(!(*iLeft<temp));//validate cmp is sane by checking other way
+	                *iRight=*iLeft;
 	            }
-	        }//outer for loop
+	
+	            *iRight=temp;
+	        }//outer loop
 	    }
 	}//insertion_sort (less than)
 	
-	//This following Merge Sort or something similar is worth considering compared to the current version.
-	//First, the buffer only needs a length of half the data, not the full length as it does now.
-	//Second, it starts by using Insertion Sort on small arrays, which noticeably improves the performance. The full sort is still stable.
+	///This following Merge Sort or something similar is worth considering compared to the current version.
+	///First, the buffer only needs a length of half the data, not the full length as it does now.
+	///Second, it starts by using Insertion Sort on small arrays, which noticeably improves the performance. The full sort is still stable.
 	
 	//the following is like a normal merge, but nothing remains to be copied if the left range is exhausted first
 	//this is an internal helper and expects both input ranges are not empty
