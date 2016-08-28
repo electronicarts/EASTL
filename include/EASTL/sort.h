@@ -202,10 +202,83 @@ namespace eastl
 		return eastl::merge<InputIterator1, InputIterator2, OutputIterator, Less>
 						   (first1, last1, first2, last2, result, Less());
 	}
+	
+	
+	
+	
+	/// insertion_sort
+	///
+	/// Since insertion_sort requires that the data be addressed with a BidirectionalIterator and
+	/// not the more flexible RandomAccessIterator, we implement the sort by doing a for loop within
+	/// a for loop. If we were to specialize this for a RandomAccessIterator, we could replace the
+	/// inner for loop with a call to upper_bound, which would be faster.
+	///
+	template <typename BidirectionalIterator, typename StrictWeakOrdering>
+	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
+	{
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if(first != last) // if the range is non-empty...
+	    {
+	        BidirectionalIterator iCurrent, iNext, iSorted = first;
+	
+	        for(++iSorted; iSorted != last; ++iSorted)
+	        {
+	            const value_type temp(*iSorted);
+	
+	            iNext = iCurrent = iSorted;
+	
+	            // Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
+	            // It doesn't dereference the iterator, but std STL disallows that operation. This isn't
+	            // a problem for EASTL containers and ranges, as they support a single decrement of first,
+	            // but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
+	            // To do: Fix this loop to not decrement like so.
+	            for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
+	            {
+	                EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
+	                *iNext = *iCurrent;
+	            }
+	
+	            *iNext = temp;
+	        }
+	    }
+	} // insertion_sort
+	
+	
+	
+	template <typename BidirectionalIterator>
+	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last)
+	{
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if(first != last)
+	    {
+	        BidirectionalIterator iCurrent, iNext, iSorted = first;
+	
+	        for(++iSorted; iSorted != last; ++iSorted)
+	        {
+	            const value_type temp(*iSorted);
+	
+	            iNext = iCurrent = iSorted;
+	
+	            // Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
+	            // It doesn't dereference the iterator, but std STL disallows that operation. This isn't
+	            // a problem for EASTL containers and ranges, as they support a single decrement of first,
+	            // but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
+	            // To do: Fix this loop to not decrement like so.
+	            for(--iCurrent; (iNext != first) && (temp < *iCurrent); --iNext, --iCurrent)
+	            {
+	                EASTL_VALIDATE_COMPARE(!(*iCurrent < temp)); // Validate that the compare function is sane.
+	                *iNext = *iCurrent;
+	            }
+	
+	            *iNext = temp;
+	        }
+	    }
+	} // insertion_sort
 
-
-
-	//Insertion Sort
+	
+	//Insertion Sort (new)
 	//An in-place and stable sorting algorithm that is fast for small arrays.
 	//The following and the default less than compare version are general purpose.
 	
