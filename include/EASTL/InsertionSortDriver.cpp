@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <time.h>
 #include <assert.h>
@@ -140,20 +141,34 @@ void TestInsertionSorts(i32* a, size_t n, size_t smallArrayN=20)
 }
 
 const char* const DataFileName="rand_0.dat";
-enum:size_t{N=TenMil};//ten million
+enum:size_t{N=TenMil};
+/*
+This is probably a really clunky way to do things,
+but I'm concerned that running sort B right after sort A
+might give sort B some kind of advantage, and this is something
+that addresses it I think.
 
-#if 1//test insertion sorts
+The program just makes an executable that times 1 function,
+and I run it a few times, than make some edits to the cpp file to test the other, build and repeat.
+
+First, a file needs to be made so the same data is used across executables.
+
+To use this, alternate the if directives below, and comment out the other functions in
+TestInsertionSorts so theres only one
+*/
+
+#if 1//test insertion sorts or create a file, change to test merge sorts
 int main()
 {
     static i32 a[N];
 
-    #if 0//need to create a file
+    #if 1//create a file
     if (!FillRandom(a, sizeof a)) return 1;
     if (!Write(DataFileName, a, sizeof a)) return 1;
-    #else
+    #else//test insertion sorts
     if (!Read(DataFileName, a, sizeof a)) return 1;
 
-    TestInsertionSorts(a, N);//need to go in and comment out all but 1
+    TestInsertionSorts(a, N);//need to go in and comment out all but 1 that want to test
     #endif
 
     return 0;
