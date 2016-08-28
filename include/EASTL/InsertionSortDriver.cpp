@@ -14,7 +14,7 @@ typedef int32_t i32;
 
 const auto Less=[](i32 a, i32 b){ return a<b; };
 
-enum:size_t{OneMil=10000000u};
+enum:size_t{TenMil=1000u*1000u*10u};
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -59,120 +59,135 @@ bool FillRandom(void* a, size_t bytes)
 }
 #endif//WIN32
 
-void TestNewInsertionSort(const int NumTests=30)
+bool Read(const char* srcFile, void* destArray, size_t bytes)
 {
-    enum:size_t{SmallArraySize=20u, N=OneMil};
-
-    static i32 data[N];
-
-    FILE* TempDataFile=tmpfile();
-    if (TempDataFile==NULL)
+    if (FILE* const fp=fopen(srcFile, "rb"))
     {
-        perror("couldn't create temp file");
-        return;
+        const size_t cnt=fread(destArray, 1, bytes, fp);
+        bool ret;
+
+        if (cnt==bytes)
+            printf("All %lu bytes were read from \"%s\"\n", (ulong)bytes, srcFile),
+            ret=true;
+        else
+            fprintf(stderr, "Error: only %lu of requested %lu bytes were read from \"%s\"\n", (ulong)cnt, (ulong)bytes, srcFile),
+            perror("info"),
+            ret=false;
+
+        if (fclose(fp)!=0)
+            perror("fclose"),
+            ret=false;
+
+        return ret;
     }
-
-    if (!FillRandom(data, sizeof data)) { return; }
-    if (fwrite(data, 4, N, TempDataFile)!=N) { perror("fwrite"); return; }
-
-    int observe=0;
-    clock_t start, stop, oldSum=0, newSum=0;
-    i32* it=NULL;
-    for (int loops=NumTests; loops-- > 0; )
+    else
     {
-        //testing current version
-        rewind(TempDataFile);
-        if (fread(data, 4, N, TempDataFile)!=N) { perror("fread"); return; }
-
-        start=clock();
-        //test many small arrays instead of a big one, or will take a while
-        it=data;
-        for (size_t j=SmallArraySize; j<=N; it+=SmallArraySize, j+=SmallArraySize)
-        {
-            eastl::insertion_sort(it, data+j);
-            //assert(eastl::is_sorted(it, data+j));
-            observe ^= *it;
-        }
-        stop=clock();
-        oldSum += stop-start;
-
-        //testing new version
-        rewind(TempDataFile);
-        if (fread(data, 4, N, TempDataFile)!=N) { perror("fread"); return; }
-
-        start=clock();
-        //test many small arrays instead of a big one, or will take a while
-        it=data;
-        for (size_t j=SmallArraySize; j<=N; it+=SmallArraySize, j+=SmallArraySize)
-        {
-            eastl::insertion_sort_new(it, data+j);
-            //assert(eastl::is_sorted(it, data+j));
-            observe ^= *it;
-        }
-        stop=clock();
-        newSum += stop-start;
+        perror("fopen");
+        return false;
     }
+}
 
-    printf("Old isort took %ld clocks.\n", (long)oldSum);
-    printf("New isort took %ld clocks.\n", (long)newSum);
-    printf("something observable: %d\n", observe);
+bool Write(const char* destFile, const void* srcArray, size_t bytes)
+{
+    if (FILE* const fp=fopen(destFile, "wb"))
+    {
+        const size_t cnt=fwrite(srcArray, 1, bytes, fp);
+        bool ret;
+
+        if (cnt==bytes)
+            printf("All %lu bytes were written to \"%s\"\n", (ulong)bytes, destFile),
+            ret=true;
+        else
+            fprintf(stderr, "Error: only %lu of requested %lu bytes were written to \"%s\"\n", (ulong)cnt, (ulong)bytes, destFile),
+            perror("info"),
+            ret=false;
+
+        if (fclose(fp)!=0)
+            perror("fclose"),
+            ret=false;
+
+        return ret;
+    }
+    else
+    {
+        perror("fopen");
+        return false;
+    }
+}
+
+void TestInsertionSorts(i32* a, size_t n, size_t smallArrayN=20)
+{
+    clock_t start=clock();
+    i32* iter=a;
+    i32 observe=0;
+    //test many small or may take a while
+    for (size_t j=smallArrayN; j<=n; iter+=smallArrayN, j+=smallArrayN)
+    {
+        eastl::insertion_sort(iter, a+j);
+        //eastl::insertion_sort_new(iter, a+j);
+
+        //eastl::insertion_sort(iter, a+j, Less);
+        //eastl::insertion_sort_new(iter, a+j, Less);
+
+        //assert(eastl::is_sorted(iter, a+j));
+
+        observe ^= *iter;
+    }
+    clock_t duration=clock()-start;
+
+    printf("took %ld clocks\nsomething observable: %d\n", long(duration), int(observe));
     getchar();
 }
 
-//lots of repetition here...
-void TestNewMergeSortBuffer(const int NumTests=30)
-{
-    enum:size_t{N=OneMil};
+const char* const DataFileName="rand_0.dat";
+enum:size_t{N=TenMil};//ten million
 
-    static i32 data[N];
-    static i32 buf_full[N];
-    static i32 buf_half[N/2u];//new version needs half the space
-
-    FILE* TempDataFile=tmpfile();
-    if (TempDataFile==NULL)
-    {
-        perror("couldn't create temp file");
-        return;
-    }
-
-    if (!FillRandom(data, sizeof data)) { return; }
-    if (fwrite(data, 4, N, TempDataFile)!=N) { perror("fwrite"); return; }
-
-    int observe=0;
-    clock_t start, stop, oldSum=0, newSum=0;
-    for (int loops=NumTests; loops-- > 0; )
-    {
-        //testing current version
-        rewind(TempDataFile);
-        if (fread(data, 4, N, TempDataFile)!=N) { perror("fread"); return; }
-
-        start=clock();
-        eastl::merge_sort_buffer(data, data+N, buf_full, Less);
-        stop=clock();
-        oldSum += stop-start;
-        //assert(eastl::is_sorted(data, data+N));
-
-        //testing new version
-        rewind(TempDataFile);
-        if (fread(data, 4, N, TempDataFile)!=N) { perror("fread"); return; }
-
-        start=clock();
-        eastl::merge_sort_buffer_new(data, N, buf_half, Less);
-        stop=clock();
-        newSum += stop-start;
-        //assert(eastl::is_sorted(data, data+N));
-    }
-
-    printf("Old msort_buf took %ld clocks.\n", (long)oldSum);
-    printf("New msort_buf took %ld clocks.\n", (long)newSum);
-    printf("something observable: %d\n", observe);
-    getchar();
-}
-
+#if 1//test insertion sorts
 int main()
 {
-    //TestNewInsertionSort();
-    TestNewMergeSortBuffer(8);
+    static i32 a[N];
+
+    #if 0//need to create a file
+    if (!FillRandom(a, sizeof a)) return 1;
+    if (!Write(DataFileName, a, sizeof a)) return 1;
+    #else
+    if (!Read(DataFileName, a, sizeof a)) return 1;
+
+    TestInsertionSorts(a, N);//need to go in and comment out all but 1
+    #endif
 
     return 0;
 }
+#else//test merge sorts
+int main()
+{
+    static i32 a[N];
+    if (!Read(DataFileName, a, sizeof a)) return 1;
+
+    #if 0//current implementation
+    static i32 buf_full[N];
+
+    clock_t start=clock();
+    eastl::merge_sort_buffer(a, a+N, buf_full, Less);
+    clock_t duration=clock()-start;
+
+    assert(eastl::is_sorted(a, a+N));
+
+    printf("current msort took %ld clocks\nsomething observable: %d\n", long(duration), int(*a));
+    getchar();
+    #else//new implementation
+    static i32 buf_half[N/2u];
+
+    clock_t start=clock();
+    eastl::merge_sort_buffer_new(a, N, buf_half, Less);
+    clock_t duration=clock()-start;
+
+    assert(eastl::is_sorted(a, a+N));
+
+    printf("new msort took %ld clocks\nsomething observable: %d\n", long(duration), int(*a));
+    getchar();
+    #endif
+
+    return 0;
+}
+#endif
