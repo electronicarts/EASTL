@@ -279,9 +279,16 @@ namespace eastl
 	
 	
 	
-	///Insertion Sort (new)
-	///An in-place and stable sorting algorithm that is fast for small arrays.
-	///The following and the default less than compare version are general purpose.
+	///modified insertion sort that fixes the decrement problem
+	///
+	///also it seems that:
+	///for (...; ...; iRight=iLeft--)
+	///can be slighlty faster than:
+	///for (...; ...; --iLeft, --iRight)
+	///
+	///inner loop changed(after above change)
+	///from this:	for(--iLeft; iRight!=first && temp<*iLeft  ; iRight=iLeft--){}
+	///  to this:	for(       ; iRight!=first && temp<*--iLeft; iRight=iLeft  ){}
 	
 	//compare functor version
 	template<typename BidirectionalIterator, typename Compare>//Bidirectional Iterator, though something like a list shouldn't use this
@@ -289,14 +296,14 @@ namespace eastl
 	{
 	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 	
-	    if (first!=last)
+	    if (first!=last)//if range not empty
 	    {
 	        BidirectionalIterator iLeft, iRight, iSorted=first;
-	        while (++iSorted!=last)
+	        for (++iSorted; iSorted!=last; ++iSorted)//an array of length 1 is already sorted
 	        {
-	            const value_type temp(*iSorted);//should we care about doing moves instead?
+	            const value_type temp(*iSorted);
 	
-	            for (iLeft=iRight=iSorted; iRight!=first && cmp(temp, *--iLeft); --iRight)
+	            for (iLeft=iRight=iSorted; iRight!=first && cmp(temp, *--iLeft); iRight=iLeft)
 	            {
 	                EASTL_VALIDATE_COMPARE(!cmp(*iLeft, temp));//validate cmp is sane by checking other way
 	                *iRight=*iLeft;
@@ -305,22 +312,21 @@ namespace eastl
 	            *iRight=temp;
 	        }//outer loop
 	    }
-	}//insertion_sort (Compare
+	}//insertion_sort (Compare)
 	
-	//default less-than version
-	template<typename BidirectionalIterator>//Bidirectional Iterator, though something like a list shouldn't use this
+	template<typename BidirectionalIterator>//default less-than version
 	void insertion_sort_new(BidirectionalIterator const first, BidirectionalIterator const last)
 	{
 	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 	
-	    if (first!=last)
+	    if (first!=last)//if range not empty
 	    {
 	        BidirectionalIterator iLeft, iRight, iSorted=first;
-	        while (++iSorted!=last)
+	        for (++iSorted; iSorted!=last; ++iSorted)//an array of length 1 is already sorted
 	        {
-	            const value_type temp(*iSorted);//should we care about doing moves instead?
+	            const value_type temp(*iSorted);
 	
-	            for (iLeft=iRight=iSorted; iRight!=first && temp<*--iLeft; --iRight)
+	            for (iLeft=iRight=iSorted; iRight!=first && temp<*--iLeft; iRight=iLeft)
 	            {
 	                EASTL_VALIDATE_COMPARE(!(*iLeft<temp));//validate cmp is sane by checking other way
 	                *iRight=*iLeft;
