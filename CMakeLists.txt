@@ -44,27 +44,18 @@ add_definitions(-DEASTL_OPENSOURCE=1)
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTL_SOURCES "source/*.cpp" "include/EASTL/*.h")
 add_library(EASTL ${EASTL_SOURCES})
+include_directories("include")
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
-set_property(TARGET EASTL PROPERTY CXX_STANDARD 11)
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/scripts/CMake")
+include(CommonCppFlags)
 
-if(EASTL_BUILD_TESTS OR EASTL_BUILD_BENCHMARK)
-	set_property(TARGET EAStdC EATest PROPERTY CXX_STANDARD 11)
-endif()
-
-if( UNIX AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" )
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fasm-blocks" )
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND
+        (CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "MinSizeRel"
+            OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo") AND MINGW)
+    message(FATAL_ERROR "FIXME: 32bits mingw-w64 clang crashes when compiling with any optimizations.")
 endif()
 
 #-------------------------------------------------------------------------------------------

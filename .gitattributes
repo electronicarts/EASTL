@@ -1,3 +1,6 @@
 # Auto detect text files and perform LF normalization
 # http://git-scm.com/docs/gitattributes
 * text=auto
+.appveyor.yml -text eol=crlf
+.appveyor-mingw.yml -text eol=crlf
+ci-*.cmd -text eol=crlf

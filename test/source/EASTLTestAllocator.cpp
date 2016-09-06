@@ -323,7 +323,7 @@
 		}
 	}
 
-    void EASTLTest_SetGeneralAllocator() 
+	void EASTLTest_SetGeneralAllocator() 
 	{
 		EA::Allocator::SetGeneralAllocator(&EA::Allocator::gGeneralAllocator);
 		#ifdef EA_DEBUG
@@ -353,7 +353,7 @@
 		void EASTLAlignedFree(void* p)
 		{
 		#ifdef EA_PLATFORM_MICROSOFT
-			_aligned_free(p);	
+			_aligned_free(p);
 		#else
 			free(p);
 		#endif
@@ -384,13 +384,20 @@
 	void* operator new[](size_t size, size_t alignment, const std::nothrow_t&)EA_THROW_SPEC_NEW_NONE()
 		{ return Internal::EASTLAlignedAlloc(size, alignment); }
 
+	// C++14 deleter
+	void operator delete(void* p, std::size_t sz ) EA_THROW_SPEC_DELETE_NONE()
+	{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
+
+	void operator delete[](void* p, std::size_t sz ) EA_THROW_SPEC_DELETE_NONE()
+	{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
+
 	void operator delete(void* p) EA_THROW_SPEC_DELETE_NONE()
 		{ Internal::EASTLAlignedFree(p); }
 
 	void operator delete[](void* p) EA_THROW_SPEC_DELETE_NONE()
 		{ Internal::EASTLAlignedFree(p); }
 
-    void EASTLTest_SetGeneralAllocator() { /* intentionally blank */ }
+	void EASTLTest_SetGeneralAllocator() { /* intentionally blank */ }
 	bool EASTLTest_ValidateHeap() { return true; }
 
 #endif // ....
