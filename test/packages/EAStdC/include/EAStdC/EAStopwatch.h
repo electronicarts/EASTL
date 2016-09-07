@@ -10,6 +10,8 @@
 #define EASTDC_API
 #define EASTDC_LOCAL
 
+#include <EABase/eabase.h>
+
 #include <chrono>
 
 namespace EA {
@@ -239,7 +241,12 @@ namespace Internal
     inline double GetPlatformCycleFrequency()
     {
         using namespace std::chrono;
-        double perfFreq = static_cast<double>(high_resolution_clock::period::num) / high_resolution_clock::period::den;
+#if EA_PLATFORM_MINGW
+        using clock = steady_clock;
+#else
+        using clock = high_resolution_clock;
+#endif
+        double perfFreq = static_cast<double>(clock::period::num) / clock::period::den;
         return perfFreq / 1000.0;
     }
 }
@@ -289,7 +296,12 @@ inline double EA::StdC::Stopwatch::GetUnitsPerStopwatchCycle(EA::StdC::Stopwatch
 inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
 {
     using namespace std::chrono;
-    return high_resolution_clock::now().time_since_epoch().count();
+#if EA_PLATFORM_MINGW
+        using clock = steady_clock;
+#else
+        using clock = high_resolution_clock;
+#endif
+    return clock::now().time_since_epoch().count();
 }
 
 
