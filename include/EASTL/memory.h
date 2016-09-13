@@ -1227,6 +1227,7 @@ namespace eastl
 	template <typename T>
 	inline void destruct(T* p)
 	{
+		(void)p;
 		p->~T();
 	}
 
