@@ -103,41 +103,44 @@ class tuplevec_index<T, Internal::TupleVecImpl<Indices, Ts...>> : public tupleve
 namespace Internal
 {
 
+// helper to calculate the sizeof the full tuple
+template<typename... Ts> struct TupleSizeof;
+
+template <>
+struct TupleSizeof<>
+{
+	static const size_t value = 0;
+};
+
+template <typename T, typename... Ts>
+struct TupleSizeof<T, Ts...> : TupleSizeof<Ts...>
+{
+	static const size_t value = sizeof(T) + TupleSizeof<Ts...>::value;
+};
+
+
 // TupleVecLeaf
 template <size_t I, typename ValueType>
 class TupleVecLeaf
 {
 public:
-	TupleVecLeaf() : mVec() {}
+	TupleVecLeaf() {}
 
 	// swallowed functions requires non-void return types
 	int push_back()
 	{
-		mVec.push_back();
 		return 0;
 	}
 
 	int push_back(const ValueType& value)
 	{
-		mVec.push_back(value);
 		return 0;
 	}
 
 	int push_back_uninitialized()
 	{
-		mVec.push_back_uninitialized();
 		return 0;
 	}
-
-	size_t size() const
-	{
-		return mVec.size();
-	}
-
-
-	vector<ValueType>& getInternal() { return mVec; }
-private:
-	vector<ValueType> mVec;
 };
 
 // TupleVecImpl
@@ -148,19 +151,19 @@ void swallow(Ts&&...)
 {
 }
 
-
 template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>..., VectorBase<char, EASTLAllocatorType>
 {
 public:
 	typedef tuplevec_element_t<0, tuple_vector<Ts...>> BaseType;
 	typedef TupleVecLeaf<0, BaseType> BaseLeaf;
+	typedef VectorBase<char, EASTLAllocatorType> VecBase;
 	EA_CONSTEXPR TupleVecImpl() = default;
 
 	size_t push_back()
 	{
 		swallow(TupleVecLeaf<Indices, Ts>::push_back()...);
-		return BaseLeaf::size() - 1;
+		return 0;
 	}
 	void push_back(const Ts&... args)
 	{
@@ -173,28 +176,42 @@ public:
 
 	size_t size() const
 	{
-		return BaseLeaf::size();
+		return 0;
 	}
+
+	constexpr size_t tuple_sizeof() const
+	{
+		return TupleSizeof<Ts...>::value;
+	}
+
+	using VecBase::mpBegin;
+	using VecBase::mpEnd;
+	using VecBase::mpCapacity;
+	using VecBase::mAllocator;
+	using VecBase::npos;
+	using VecBase::GetNewCapacity;
+	using VecBase::DoAllocate;
+	using VecBase::DoFree;
 
 };
 
-template <size_t I, typename Indices, typename... Ts>
-vector<tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>>& get(TupleVecImpl<Indices, Ts...>& t)
-{
-	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Type;
-	return static_cast<Internal::TupleVecLeaf<I, Type>&>(t).getInternal();
-}
+//template <size_t I, typename Indices, typename... Ts>
+//vector<tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>>& get(TupleVecImpl<Indices, Ts...>& t)
+//{
+//	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Type;
+//	return static_cast<Internal::TupleVecLeaf<I, Type>&>(t).getInternal();
+//	return vector<Type>();
+//}
 
-template <typename T, typename Indices, typename... Ts>
-vector<T>& get(TupleVecImpl<Indices, Ts...>& t)
-{
-	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
-	return static_cast<Internal::TupleVecLeaf<Index::index, T>&>(t).getInternal();
-}
-
+//template <typename T, typename Indices, typename... Ts>
+//vector<T>& get(TupleVecImpl<Indices, Ts...>& t)
+//{
+//	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
+//	//return static_cast<Internal::TupleVecLeaf<Index::index, T>&>(t).getInternal();
+//	return vector<Internal::TupleVecLeaf<Index::index, T>>();
+//}
 
 }  // namespace Internal
-
 
 // External interface of tuple_vector
 template <typename... Ts>
@@ -251,15 +268,16 @@ public:
 	void push_back_uninitialized();
 
 	size_t size();
+	constexpr size_t tuple_sizeof() const;
 
 	element_type begin();
 	element_type end();
 	
-	template<size_t I>
-	vector<tuplevec_element_t<I, tuple_vector<Ts...>>>& get();
+	//template<size_t I>
+	//vector<tuplevec_element_t<I, tuple_vector<Ts...>>>& get();
 
-	template<typename T>
-	vector<T>& get();
+	//template<typename T>
+	//vector<T>& get();
 
 private:
 	Impl mImpl;
@@ -292,6 +310,12 @@ size_t tuple_vector<Ts...>::size()
 }
 
 template <typename... Ts>
+constexpr size_t tuple_vector<Ts...>::tuple_sizeof() const
+{
+	return mImpl.tuple_sizeof();
+}
+
+template <typename... Ts>
 typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::begin()
 {
 	return element<Ts...>(*this, 0);
@@ -302,25 +326,22 @@ typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::end()
 {
 	return element<Ts...>(*this, size() - 1);
 }
+//
+//template <typename... Ts>
+//template<size_t I>
+//vector<eastl::tuplevec_element_t<I, tuple_vector<Ts...>>>&
+//tuple_vector<Ts...>::get()
+//{
+//	return Internal::get<I>(mImpl);
+//}
 
-template <typename... Ts>
-template<size_t I>
-vector<eastl::tuplevec_element_t<I, tuple_vector<Ts...>>>&
-tuple_vector<Ts...>::get()
-{
-	return Internal::get<I>(mImpl);
-}
-
-
-template <typename... Ts>
-template<typename T>
-eastl::vector<T>&
-eastl::tuple_vector<Ts...>::get()
-{
-	return Internal::get<T>(mImpl);
-}
-
-
+//template <typename... Ts>
+//template<typename T>
+//eastl::vector<T>&
+//eastl::tuple_vector<Ts...>::get()
+//{
+//	return Internal::get<T>(mImpl);
+//}
 
 // Vector_Decl macros
 #pragma region 
