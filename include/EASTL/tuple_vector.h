@@ -118,6 +118,19 @@ struct TupleSizeof<T, Ts...> : TupleSizeof<Ts...>
 	static const size_t value = sizeof(T) + TupleSizeof<Ts...>::value;
 };
 
+// helper to just store an instance of each of the types. Helpful for skipping certain size calculations, and doing simply ptr arith
+template<typename... Ts> struct TupleSimpleStore;
+
+template<>
+struct TupleSimpleStore<>
+{
+};
+
+template <typename T, typename... Ts>
+struct TupleSimpleStore<T, Ts...> : TupleSimpleStore<Ts...>
+{
+	T val;
+};
 
 // TupleVecLeaf
 template <size_t I, typename ValueType>
@@ -152,12 +165,16 @@ void swallow(Ts&&...)
 }
 
 template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>..., VectorBase<char, EASTLAllocatorType>
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>..., VectorBase<TupleSimpleStore<Ts...>, EASTLAllocatorType>
 {
 public:
 	typedef tuplevec_element_t<0, tuple_vector<Ts...>> BaseType;
 	typedef TupleVecLeaf<0, BaseType> BaseLeaf;
-	typedef VectorBase<char, EASTLAllocatorType> VecBase;
+	typedef VectorBase<TupleSimpleStore<Ts...>, EASTLAllocatorType> VecBase;
+	
+	typedef VecBase::size_type size_type;
+	
+	
 	EA_CONSTEXPR TupleVecImpl() = default;
 
 	size_t push_back()
@@ -174,14 +191,19 @@ public:
 		swallow(TupleVecLeaf<Indices, Ts>::push_back_uninitialized()...);
 	}
 
-	size_t size() const
+	size_type size() const
 	{
-		return 0;
+		return (size_type)(mpEnd - mpBegin);
+	}
+
+	size_type capacity() const
+	{
+		return (size_type)(mpCapacity - mpBegin);
 	}
 
 	constexpr size_t tuple_sizeof() const
 	{
-		return TupleSizeof<Ts...>::value;
+		return sizeof(TupleSimpleStore<Ts...>);
 	}
 
 	using VecBase::mpBegin;
@@ -259,7 +281,8 @@ public:
 	};
 
 	typedef element<Ts...> element_type;
-public:
+	typedef typename Impl::size_type size_type;
+
 
 	EA_CONSTEXPR tuple_vector() = default;
 	
@@ -267,8 +290,9 @@ public:
 	void push_back(const Ts&... args);
 	void push_back_uninitialized();
 
-	size_t size();
-	constexpr size_t tuple_sizeof() const;
+	size_type size();
+	size_type capacity();
+	constexpr size_type tuple_sizeof() const;
 
 	element_type begin();
 	element_type end();
@@ -304,13 +328,19 @@ void tuple_vector<Ts...>::push_back_uninitialized()
 }
 
 template <typename... Ts>
-size_t tuple_vector<Ts...>::size()
+typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::size()
 {
 	return mImpl.size();
 }
 
 template <typename... Ts>
-constexpr size_t tuple_vector<Ts...>::tuple_sizeof() const
+typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
+{
+	return mImpl.capacity();
+}
+
+template <typename... Ts>
+typename constexpr tuple_vector<Ts...>::size_type tuple_vector<Ts...>::tuple_sizeof() const
 {
 	return mImpl.tuple_sizeof();
 }

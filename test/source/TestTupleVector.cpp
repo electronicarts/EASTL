@@ -17,8 +17,10 @@ int TestTupleVector()
 	// Test uninit'ed push-backs
 	{
 		tuple_vector<int> singleElementVec;
-		singleElementVec.push_back_uninitialized();
 		EATEST_VERIFY(singleElementVec.tuple_sizeof() == sizeof(int));
+		EATEST_VERIFY(singleElementVec.size() == 0);
+		EATEST_VERIFY(singleElementVec.capacity() == 0);
+		singleElementVec.push_back_uninitialized();
 		//vector<int>& vec = (singleElementVec).get<0>();
 		//EATEST_VERIFY(vec.size() == 1);
 		//EATEST_VERIFY(singleElementVec.get<0>().size() == 1);
