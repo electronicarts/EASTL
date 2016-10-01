@@ -17,10 +17,14 @@ int TestTupleVector()
 	// Test uninit'ed push-backs
 	{
 		tuple_vector<int> singleElementVec;
-		EATEST_VERIFY(singleElementVec.tuple_sizeof() == sizeof(int));
+		EATEST_VERIFY(singleElementVec.sizeof_tuple() == sizeof(int));
 		EATEST_VERIFY(singleElementVec.size() == 0);
 		EATEST_VERIFY(singleElementVec.capacity() == 0);
 		singleElementVec.push_back_uninitialized();
+		EATEST_VERIFY(singleElementVec.size() == 1);
+		EATEST_VERIFY(singleElementVec.capacity() == 1);
+
+
 		//vector<int>& vec = (singleElementVec).get<0>();
 		//EATEST_VERIFY(vec.size() == 1);
 		//EATEST_VERIFY(singleElementVec.get<0>().size() == 1);
@@ -30,7 +34,7 @@ int TestTupleVector()
 		// Changing get<0> or get<1> to get<int> will cause a compiler error.
 		tuple_vector<int, int> doubleElementVec;
 		doubleElementVec.push_back_uninitialized();
-		EATEST_VERIFY(doubleElementVec.tuple_sizeof() == sizeof(int) + sizeof(int));
+		EATEST_VERIFY(doubleElementVec.sizeof_tuple() == sizeof(int) + sizeof(int));
 
 		//EATEST_VERIFY(doubleElementVec.get<0>().size() == 1);
 		//EATEST_VERIFY(doubleElementVec.get<1>().size() == 1);

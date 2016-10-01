@@ -149,11 +149,6 @@ public:
 	{
 		return 0;
 	}
-
-	int push_back_uninitialized()
-	{
-		return 0;
-	}
 };
 
 // TupleVecImpl
@@ -165,19 +160,15 @@ void swallow(Ts&&...)
 }
 
 template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>..., VectorBase<TupleSimpleStore<Ts...>, EASTLAllocatorType>
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 public:
-	typedef tuplevec_element_t<0, tuple_vector<Ts...>> BaseType;
-	typedef TupleVecLeaf<0, BaseType> BaseLeaf;
-	typedef VectorBase<TupleSimpleStore<Ts...>, EASTLAllocatorType> VecBase;
-	
-	typedef VecBase::size_type size_type;
-	
+	typedef TupleSimpleStore<Ts...> storage_type;
+	typedef eastl_size_t size_type;
 	
 	EA_CONSTEXPR TupleVecImpl() = default;
 
-	size_t push_back()
+	size_type push_back()
 	{
 		swallow(TupleVecLeaf<Indices, Ts>::push_back()...);
 		return 0;
@@ -188,12 +179,16 @@ public:
 	}
 	void push_back_uninitialized()
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::push_back_uninitialized()...);
+		if (mNumElements == capacity())
+		{
+			DoGrow(mNumElements + 1);
+		}
+		++mNumElements;
 	}
 
 	size_type size() const
 	{
-		return (size_type)(mpEnd - mpBegin);
+		return mNumElements;
 	}
 
 	size_type capacity() const
@@ -201,20 +196,41 @@ public:
 		return (size_type)(mpCapacity - mpBegin);
 	}
 
-	constexpr size_t tuple_sizeof() const
+	constexpr size_type sizeof_tuple() const
 	{
-		return sizeof(TupleSimpleStore<Ts...>);
+		return sizeof(storage_type);
 	}
 
-	using VecBase::mpBegin;
-	using VecBase::mpEnd;
-	using VecBase::mpCapacity;
-	using VecBase::mAllocator;
-	using VecBase::npos;
-	using VecBase::GetNewCapacity;
-	using VecBase::DoAllocate;
-	using VecBase::DoFree;
+private:
+	storage_type* mpBegin = nullptr;
+	storage_type* mpCapacity = nullptr;
+	size_type mNumElements = 0;
 
+	EASTLAllocatorType mAllocator = EASTLAllocatorType(EASTL_VECTOR_DEFAULT_NAME);
+
+private:
+
+	void DoGrow(size_type n)
+	{
+		storage_type* pNewData = DoAllocate(n);
+
+		// dcrooks-todo move data from mpbegin to pNewData
+
+		mpBegin = pNewData;
+		mpCapacity = mpBegin + n;
+	}
+
+	storage_type* DoAllocate(size_type n)
+	{
+#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(n >= 0x80000000))
+			EASTL_FAIL_MSG("tuple_vector::DoAllocate -- improbably large request.");
+#endif
+
+		// If n is zero, then we allocate no memory and just return NULL. 
+		// This is fine, as our default ctor initializes with NULL pointers. 
+		return n ? (storage_type*)allocate_memory(mAllocator, n * sizeof(storage_type), EASTL_ALIGN_OF(storage_type), 0) : nullptr;
+	}
 };
 
 //template <size_t I, typename Indices, typename... Ts>
@@ -292,7 +308,7 @@ public:
 
 	size_type size();
 	size_type capacity();
-	constexpr size_type tuple_sizeof() const;
+	constexpr size_type sizeof_tuple() const;
 
 	element_type begin();
 	element_type end();
@@ -340,9 +356,9 @@ typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
 }
 
 template <typename... Ts>
-typename constexpr tuple_vector<Ts...>::size_type tuple_vector<Ts...>::tuple_sizeof() const
+typename constexpr tuple_vector<Ts...>::size_type tuple_vector<Ts...>::sizeof_tuple() const
 {
-	return mImpl.tuple_sizeof();
+	return mImpl.sizeof_tuple();
 }
 
 template <typename... Ts>
