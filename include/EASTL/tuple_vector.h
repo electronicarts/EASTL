@@ -109,16 +109,19 @@ template<typename... Ts> struct TupleRecurser;
 template <>
 struct TupleRecurser<>
 {
-	static void DoPushBack(void* pBase, const eastl_size_t index, const eastl_size_t capacity)
-	{
-		// no-op
-	}
+	typedef eastl_size_t size_type;
+	// This class should never be instantiated. This is just a helper for working with static functions when anonymous functions don't work
+	// and provide some other utilities
+	TupleRecurser() = delete; 
+
+	static void DoPushBack(void* pBase, const size_type index, const size_type capacity) { } // base case no-op
+	static void DoMove(void* pDest, void* pSrc, const size_type destCapacity, const size_type srcCapacity) { } // base case no-op
 };
 
 template <typename T, typename... Ts>
 struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 {
-	static void DoPushBack(void* pBase, const eastl_size_t index, const eastl_size_t capacity)
+	static void DoPushBack(void* pBase, const size_type index, const size_type capacity)
 	{
 		// calculate the destination pointer, do an in-place construction of type T
 		T* pDest = &(((T*)pBase)[index]);
@@ -128,6 +131,20 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 		T* pNext = &(((T*)pBase)[capacity]);
 		TupleRecurser<Ts...>::DoPushBack((void*)pNext, index, capacity);
 	}
+
+	static void DoMove(void* pDest, void* pSrc, const size_type destCapacity, const size_type srcCapacity)
+	{
+		T* pNextDest = &(((T*)pDest)[destCapacity]);
+		T* pNextSrc = &(((T*)pSrc)[srcCapacity]);
+
+		eastl::uninitialized_move_ptr_if_noexcept((T*)pSrc, pNextSrc, (T*)pDest);
+		eastl::destruct((T*)pSrc, pNextSrc);
+
+		TupleRecurser<Ts...>::DoMove((void*)pNextDest, (void*)pNextSrc, destCapacity, srcCapacity);
+	}
+	
+	T val;
+
 };
 
 // helper to just store an instance of each of the types. Helpful for skipping certain size calculations, and doing simply ptr arith
@@ -141,26 +158,6 @@ struct TupleSimpleStore<>
 template <typename T, typename... Ts>
 struct TupleSimpleStore<T, Ts...> : TupleSimpleStore<Ts...>
 {
-	T val;
-};
-
-// TupleVecLeaf
-template <size_t I, typename ValueType>
-class TupleVecLeaf
-{
-public:
-	TupleVecLeaf() {}
-
-	// swallowed functions requires non-void return types
-	int push_back()
-	{
-		return 0;
-	}
-
-	//int push_back(const ValueType& value)
-	//{
-	//	return 0;
-	//}
 };
 
 // TupleVecImpl
@@ -172,10 +169,10 @@ void swallow(Ts&&...)
 }
 
 template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...>
 {
 public:
-	typedef TupleSimpleStore<Ts...> storage_type;
+	typedef TupleRecurser<Ts...> storage_type;
 	typedef eastl_size_t size_type;
 	
 	EA_CONSTEXPR TupleVecImpl() = default;
@@ -184,15 +181,13 @@ public:
 	{
 		if (mNumElements == capacity())
 		{
-			DoGrow(mNumElements + 1);
+			DoGrow(mNumElements + 2);
 		}
-		//swallow(TupleVecLeaf<Indices, Ts>::push_back(mNumElements)...);
 		TupleRecurser<Ts...>::DoPushBack(mpBegin, mNumElements, capacity());
 		return mNumElements++;
 	}
 	void push_back(const Ts&... args)
 	{
-		//swallow(TupleVecLeaf<Indices, Ts>::push_back(args)...);
 	}
 	void push_back_uninitialized()
 	{
@@ -231,8 +226,14 @@ private:
 	{
 		storage_type* pNewData = DoAllocate(n);
 
-		// dcrooks-todo move data from mpbegin to pNewData
+		if (mpBegin)
+		{
+			size_type oldCapacity = capacity();
+			TupleRecurser<Ts...>::DoMove(pNewData, mpBegin, n, oldCapacity);
+			EASTLFree(mAllocator, mpBegin, oldCapacity * sizeof(storage_type));
+		}
 
+		
 		mpBegin = pNewData;
 		mpCapacity = mpBegin + n;
 	}

@@ -57,11 +57,15 @@ int TestTupleVector()
 		} NonPrimitiveStruct;
 
 		tuple_vector<int, NonPrimitiveStruct> nonPrimitiveElementVec;
-		//vector<NonPrimitiveStruct>& npsVec = nonPrimitiveElementVec.get<NonPrimitiveStruct>();
-		//nonPrimitiveElementVec.push_back_uninitialized();
 		nonPrimitiveElementVec.push_back();
 		nonPrimitiveElementVec.push_back();
-		EATEST_VERIFY(nonPrimitiveElementVec.size() == 2);
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		EATEST_VERIFY(nonPrimitiveElementVec.size() == 8);
 		//nonPrimitiveElementVec.get<0>()[0] = 0;
 		//nonPrimitiveElementVec.get<1>()[0].a = 0.0f;
 		//nonPrimitiveElementVec.get<1>()[0].b = 1;
