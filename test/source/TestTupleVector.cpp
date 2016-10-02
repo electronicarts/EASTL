@@ -67,12 +67,21 @@ int TestTupleVector()
 		//nonPrimitiveElementVec.push_back();
 		EATEST_VERIFY(nonPrimitiveElementVec.size() == 6);
 		EATEST_VERIFY(nonPrimitiveElementVec.get<1>()[4].d[0] == 5.0f);
+
 		//nonPrimitiveElementVec.get<0>()[0] = 0;
 		//nonPrimitiveElementVec.get<1>()[0].a = 0.0f;
 		//nonPrimitiveElementVec.get<1>()[0].b = 1;
 
 		//EATEST_VERIFY(npsVec[0].b == 1);
 
+		tuple_vector<int, bool, float> multiTupleVec;
+		multiTupleVec.push_back(-1, true, 1.0f);
+		multiTupleVec.push_back(-2, true, 2.0f);
+		multiTupleVec.push_back(-3, true, 3.0f);
+		multiTupleVec.push_back(-4, true, 4.0f);
+		multiTupleVec.push_back(-5, true, 5.0f);
+		multiTupleVec.push_back(-6, true, 6.0f);
+		EATEST_VERIFY(multiTupleVec.get<2>()[2] == 3.0f);
 		// Test the macro declaration
 		//TUPLE_VECTOR_DECL_3(MultiTupleVec
 		//	,int, Integers

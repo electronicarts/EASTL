@@ -15,50 +15,53 @@ namespace eastl
 template <typename... Ts>
 class tuple_vector;
 
-template <size_t I, size_t Offset, typename TupleVector>
+template <size_t I, typename TupleVector>
 struct tuplevec_element;
 
-template <size_t I, size_t Offset, typename TupleVector>
-using tuplevec_element_t = typename tuplevec_element<I, Offset, TupleVector>::type;
+template <size_t I, typename TupleVector>
+using tuplevec_element_t = typename tuplevec_element<I, TupleVector>::type;
 
 namespace Internal
 {
 	template <typename Indices, typename... Ts>
 	struct TupleVecImpl;
+
+	template<typename... Ts>
+	struct TupleRecurser;
 }
 
 // tuplevec_element helper to be able to isolate a type given an index
-template <size_t I, size_t Offset, typename T>
+template <size_t I, typename T>
 struct tuplevec_element
 {
 };
 
 // attempt to isolate type given an index
-template <size_t I, size_t Offset>
-struct tuplevec_element<I, Offset, tuple_vector<>>
+template <size_t I>
+struct tuplevec_element<I, tuple_vector<>>
 {
 	static_assert(I != I, "tuplevec_element index out of range");
 };
 
-template <size_t Offset, typename T, typename... Ts>
-struct tuplevec_element<0, Offset, tuple_vector<T, Ts...>>
+template <typename T, typename... Ts>
+struct tuplevec_element<0, tuple_vector<T, Ts...>>
 {
 	tuplevec_element() = delete; // tuplevec_element should only be used for compile-time assistance, and never be instantiated
 	typedef T type;
-	static const size_t offset = Offset;
+	static const size_t OffsetFromEnd = sizeof(Internal::TupleRecurser<T, Ts...>);
 };
 
-template <size_t I, size_t Offset, typename T, typename... Ts>
-struct tuplevec_element<I, Offset, tuple_vector<T, Ts...>>
+template <size_t I, typename T, typename... Ts>
+struct tuplevec_element<I, tuple_vector<T, Ts...>>
 {
-	typedef tuplevec_element_t<I - 1, Offset + sizeof(T), tuple_vector<Ts...>> type;
-	static const size_t offset = tuplevec_element<I - 1, Offset + sizeof(T), tuple_vector<Ts...>>::offset;
+	typedef tuplevec_element_t<I - 1, tuple_vector<Ts...>> type;
+	static const size_t OffsetFromEnd = tuplevec_element<I - 1, tuple_vector<Ts...>>::OffsetFromEnd;
 };
 
 template <size_t I, typename Indices, typename... Ts>
-struct tuplevec_element<I, 0, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, 0, tuple_vector<Ts...>>
+struct tuplevec_element<I, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
 {
-	static const size_t offset = tuplevec_element<I, 0, tuple_vector<Ts...>>::offset;
+	static const size_t offset = sizeof(Internal::TupleRecurser<Ts...>) - tuplevec_element<I, tuple_vector<Ts...>>::OffsetFromEnd;
 };
 
 // attempt to isolate index given a type
@@ -98,8 +101,6 @@ namespace Internal
 {
 
 // helper to calculate the sizeof the full tuple
-template<typename... Ts> struct TupleRecurser;
-
 template <>
 struct TupleRecurser<>
 {
@@ -252,9 +253,9 @@ private:
 };
 
 template <size_t I, typename Indices, typename... Ts>
-tuplevec_element_t<I, 0, TupleVecImpl<Indices, Ts...>>* get(TupleVecImpl<Indices, Ts...>& t)
+tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>* get(TupleVecImpl<Indices, Ts...>& t)
 {
-	typedef tuplevec_element<I, 0, TupleVecImpl<Indices, Ts...>> Element;
+	typedef tuplevec_element<I, TupleVecImpl<Indices, Ts...>> Element;
 	return t.data<Element::type>(Element::offset);
 }
 
@@ -331,7 +332,7 @@ public:
 	//element_type end();
 	
 	template<size_t I>
-	tuplevec_element_t<I, 0, tuple_vector<Ts...>>* get();
+	tuplevec_element_t<I, tuple_vector<Ts...>>* get();
 
 	//template<typename T>
 	//vector<T>& get();
@@ -399,7 +400,7 @@ typename constexpr tuple_vector<Ts...>::size_type tuple_vector<Ts...>::sizeof_tu
 //
 template<typename... Ts>
 template<size_t I>
-eastl::tuplevec_element_t<I, 0, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
+eastl::tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 {
 	return Internal::get<I>(mImpl);
 }
