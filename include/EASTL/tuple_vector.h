@@ -104,18 +104,30 @@ namespace Internal
 {
 
 // helper to calculate the sizeof the full tuple
-template<typename... Ts> struct TupleSizeof;
+template<typename... Ts> struct TupleRecurser;
 
 template <>
-struct TupleSizeof<>
+struct TupleRecurser<>
 {
-	static const size_t value = 0;
+	static void DoPushBack(void* pBase, const eastl_size_t index, const eastl_size_t capacity)
+	{
+		// no-op
+	}
 };
 
 template <typename T, typename... Ts>
-struct TupleSizeof<T, Ts...> : TupleSizeof<Ts...>
+struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 {
-	static const size_t value = sizeof(T) + TupleSizeof<Ts...>::value;
+	static void DoPushBack(void* pBase, const eastl_size_t index, const eastl_size_t capacity)
+	{
+		// calculate the destination pointer, do an in-place construction of type T
+		T* pDest = &(((T*)pBase)[index]);
+		::new((void*)pDest) T();
+
+		// advance the pointer by the total number of T's that we have, for the next type to work with
+		T* pNext = &(((T*)pBase)[capacity]);
+		TupleRecurser<Ts...>::DoPushBack((void*)pNext, index, capacity);
+	}
 };
 
 // helper to just store an instance of each of the types. Helpful for skipping certain size calculations, and doing simply ptr arith
@@ -145,10 +157,10 @@ public:
 		return 0;
 	}
 
-	int push_back(const ValueType& value)
-	{
-		return 0;
-	}
+	//int push_back(const ValueType& value)
+	//{
+	//	return 0;
+	//}
 };
 
 // TupleVecImpl
@@ -170,12 +182,17 @@ public:
 
 	size_type push_back()
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::push_back()...);
-		return 0;
+		if (mNumElements == capacity())
+		{
+			DoGrow(mNumElements + 1);
+		}
+		//swallow(TupleVecLeaf<Indices, Ts>::push_back(mNumElements)...);
+		TupleRecurser<Ts...>::DoPushBack(mpBegin, mNumElements, capacity());
+		return mNumElements++;
 	}
 	void push_back(const Ts&... args)
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::push_back(args)...);
+		//swallow(TupleVecLeaf<Indices, Ts>::push_back(args)...);
 	}
 	void push_back_uninitialized()
 	{

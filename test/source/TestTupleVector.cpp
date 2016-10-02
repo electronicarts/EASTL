@@ -21,8 +21,9 @@ int TestTupleVector()
 		EATEST_VERIFY(singleElementVec.size() == 0);
 		EATEST_VERIFY(singleElementVec.capacity() == 0);
 		singleElementVec.push_back_uninitialized();
-		EATEST_VERIFY(singleElementVec.size() == 1);
-		EATEST_VERIFY(singleElementVec.capacity() == 1);
+		singleElementVec.push_back();
+		EATEST_VERIFY(singleElementVec.size() == 2);
+		EATEST_VERIFY(singleElementVec.capacity() == 2);
 
 
 		//vector<int>& vec = (singleElementVec).get<0>();
@@ -41,17 +42,26 @@ int TestTupleVector()
 		//EATEST_VERIFY((void*)doubleElementVec.get<0>().data() !=
 		//	(void*)doubleElementVec.get<1>().data());
 
-		typedef struct
+		typedef struct NonPrimitiveStruct
 		{
 			float a;
 			int b;
 			float c;
 			float d[4];
+			NonPrimitiveStruct()
+				:a(1.0f)
+				,b(2)
+				,c(3.0f)
+				, d{ 5.0f, 6.0f, 7.0f, 8.0f }
+			{}
 		} NonPrimitiveStruct;
 
 		tuple_vector<int, NonPrimitiveStruct> nonPrimitiveElementVec;
 		//vector<NonPrimitiveStruct>& npsVec = nonPrimitiveElementVec.get<NonPrimitiveStruct>();
-		nonPrimitiveElementVec.push_back_uninitialized();
+		//nonPrimitiveElementVec.push_back_uninitialized();
+		nonPrimitiveElementVec.push_back();
+		nonPrimitiveElementVec.push_back();
+		EATEST_VERIFY(nonPrimitiveElementVec.size() == 2);
 		//nonPrimitiveElementVec.get<0>()[0] = 0;
 		//nonPrimitiveElementVec.get<1>()[0].a = 0.0f;
 		//nonPrimitiveElementVec.get<1>()[0].b = 1;
