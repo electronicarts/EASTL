@@ -21,9 +21,29 @@ int TestTupleVector()
 		EATEST_VERIFY(singleElementVec.capacity() == 0);
 		singleElementVec.push_back_uninitialized();
 		singleElementVec.push_back(5);
-		EATEST_VERIFY(singleElementVec.size() == 2);
-		EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
-		EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+		//EATEST_VERIFY(singleElementVec.size() == 2);
+		//EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
+		//EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+
+		struct AlignTestByte3
+		{
+			char a[3];
+		};
+
+		__declspec(align(16)) struct AlignTestVec4
+		{
+			float a[4];
+		};
+
+		__declspec(align(8)) struct AlignTestEightByte
+		{
+			int a[2];
+		};
+
+		tuple_vector<bool, AlignTestVec4, AlignTestByte3, AlignTestEightByte> alignElementVec;
+		alignElementVec.push_back_uninitialized();
+
+
 
 		//vector<int>& vec = (singleElementVec).get<0>();
 		//EATEST_VERIFY(vec.size() == 1);

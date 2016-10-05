@@ -25,6 +25,9 @@ namespace Internal
 {
 	template <typename Indices, typename... Ts>
 	struct TupleVecImpl;
+
+	template < typename... Ts>
+	struct TupleRecurser;
 }
 
 // tuplevec_element helper to be able to isolate a type given an index
@@ -94,6 +97,29 @@ struct tuplevec_index<T, Internal::TupleVecImpl<Indices, Ts...>> : public tuplev
 namespace Internal
 {
 
+// helper to calculate the sizeof the full tuple
+template <>
+struct TupleRecurser<>
+{
+	// This class should never be instantiated. This is just a helper for working with static functions when anonymous functions don't work
+	// and provide some other utilities
+	TupleRecurser() = delete;
+		
+	static constexpr size_t GetTotalAlignment()
+	{
+		return 0;
+	}
+};
+
+template <typename T, typename... Ts>
+struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
+{
+	static constexpr size_t GetTotalAlignment()
+	{
+		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
+	}
+};
+
 template <size_t I, typename T>
 struct TupleVecLeaf
 {
@@ -110,22 +136,25 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoMove(T* pDest, const size_t srcElements)
+	int DoMove(void* pDest, const size_t srcElements)
 	{
-		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, pDest);
+		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, (T*)pDest);
 		eastl::destruct(mpData, mpData + srcElements);
-		mpData = pDest;
+		mpData = (T*)pDest;
 		return 0;
 	}
 
-	int SetData(T* pData)
+	int SetData(void* pData)
 	{
-		mpData = pData;
+		mpData = (T*)pData;
 		return 0;
 	}
 	
 	T* mpData = nullptr;
 };
+
+
+
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
 template <typename... Ts>
@@ -209,13 +238,13 @@ private:
 		if (mpBegin)
 		{
 			size_type oldCapacity = capacity();
-			swallow(TupleVecLeaf<Indices, Ts>::DoMove(static_cast<int*>(pNewData), mNumElements)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoMove(pNewData, mNumElements)...);
 			// dcrooks-todo really need to calculate proper sizeof here
 			EASTLFree(mAllocator, mpBegin, oldCapacity * sizeof(int));
 		}
 		else
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::SetData(static_cast<int*>(pNewData))...);
+			swallow(TupleVecLeaf<Indices, Ts>::SetData(pNewData)...);
 		}
 		mpBegin = pNewData;
 		mNumCapacity = n;
@@ -231,7 +260,8 @@ private:
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
 		// dcrooks-todo really need to calculate proper sizeof here
-		return n ? allocate_memory(mAllocator, n * sizeof(int), EASTL_ALIGN_OF(int), 0) : nullptr;
+		size_t alignment = TupleRecurser<Ts...>::GetTotalAlignment();
+		return n ? allocate_memory(mAllocator, n * sizeof(int), alignment, 0) : nullptr;
 	}
 };
 
