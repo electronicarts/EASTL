@@ -25,9 +25,6 @@ namespace Internal
 {
 	template <typename Indices, typename... Ts>
 	struct TupleVecImpl;
-
-	template<typename... Ts>
-	struct TupleRecurser;
 }
 
 // tuplevec_element helper to be able to isolate a type given an index
@@ -48,20 +45,17 @@ struct tuplevec_element<0, tuple_vector<T, Ts...>>
 {
 	tuplevec_element() = delete; // tuplevec_element should only be used for compile-time assistance, and never be instantiated
 	typedef T type;
-	static const size_t OffsetFromEnd = sizeof(Internal::TupleRecurser<T, Ts...>);
 };
 
 template <size_t I, typename T, typename... Ts>
 struct tuplevec_element<I, tuple_vector<T, Ts...>>
 {
 	typedef tuplevec_element_t<I - 1, tuple_vector<Ts...>> type;
-	static const size_t OffsetFromEnd = tuplevec_element<I - 1, tuple_vector<Ts...>>::OffsetFromEnd;
 };
 
 template <size_t I, typename Indices, typename... Ts>
 struct tuplevec_element<I, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
 {
-	static const size_t offset = sizeof(Internal::TupleRecurser<Ts...>) - tuplevec_element<I, tuple_vector<Ts...>>::OffsetFromEnd;
 };
 
 // attempt to isolate index given a type
@@ -100,59 +94,38 @@ struct tuplevec_index<T, Internal::TupleVecImpl<Indices, Ts...>> : public tuplev
 namespace Internal
 {
 
-// helper to calculate the sizeof the full tuple
-template <>
-struct TupleRecurser<>
+template <size_t I, typename T>
+struct TupleVecLeaf
 {
-	typedef eastl_size_t size_type;
-	// This class should never be instantiated. This is just a helper for working with static functions when anonymous functions don't work
-	// and provide some other utilities
-	TupleRecurser() = delete; 
-
-	static void DoPushBack(void* pBase, const size_type index, const size_type capacity) { } // base case no-op
-	static void DoMove(void* pDest, void* pSrc, const size_type destCapacity, const size_type srcCapacity) { } // base case no-op
-};
-
-template <typename T, typename... Ts>
-struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
-{
-	static void DoPushBack(void* pBase, const size_type index, const size_type capacity)
+	// functions that get piped through swallow need to return some kind of value, hence why these are not void
+	int DoConstruction(const size_t index)
 	{
-		// calculate the destination pointer, do an in-place construction of type T
-		T* pDest = &(((T*)pBase)[index]);
-		::new((void*)pDest) T();
-
-		// advance the pointer by the total number of T's that we have, for the next type to work with
-		T* pNext = &(((T*)pBase)[capacity]);
-		TupleRecurser<Ts...>::DoPushBack((void*)pNext, index, capacity);
+		::new(mpData + index) T();
+		return 0;
 	}
 
-	static void DoPushBack(void* pBase, const size_type index, const size_type capacity, const T& arg, const Ts&... args)
+	int DoConstruction(const size_t index, const T& arg)
 	{
-		// calculate the destination pointer, do an in-place construction of type T
-		T* pDest = &(((T*)pBase)[index]);
-		::new((void*)pDest) T(arg);
-
-		// advance the pointer by the total number of T's that we have, for the next type to work with
-		T* pNext = &(((T*)pBase)[capacity]);
-		TupleRecurser<Ts...>::DoPushBack((void*)pNext, index, capacity, args...);
+		::new(mpData + index) T(arg);
+		return 0;
 	}
 
-	static void DoMove(void* pDest, void* pSrc, const size_type destCapacity, const size_type srcCapacity)
+	int DoMove(T* pDest, const size_t srcElements)
 	{
-		T* pNextDest = &(((T*)pDest)[destCapacity]);
-		T* pNextSrc = &(((T*)pSrc)[srcCapacity]);
+		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, pDest);
+		eastl::destruct(mpData, mpData + srcElements);
+		mpData = pDest;
+		return 0;
+	}
 
-		eastl::uninitialized_move_ptr_if_noexcept((T*)pSrc, pNextSrc, (T*)pDest);
-		eastl::destruct((T*)pSrc, pNextSrc);
-
-		TupleRecurser<Ts...>::DoMove((void*)pNextDest, (void*)pNextSrc, destCapacity, srcCapacity);
+	int SetData(T* pData)
+	{
+		mpData = pData;
+		return 0;
 	}
 	
-	T val;
+	T* mpData = nullptr;
 };
-
-// TupleVecImpl
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
 template <typename... Ts>
@@ -160,36 +133,39 @@ void swallow(Ts&&...)
 {
 }
 
+// TupleVecImpl
 template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...>
+class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 public:
-	typedef TupleRecurser<Ts...> storage_type;
 	typedef eastl_size_t size_type;
 	
 	EA_CONSTEXPR TupleVecImpl() = default;
 
 	size_type push_back()
 	{
-		if (mNumElements == capacity())
+		if (mNumElements == mNumCapacity)
 		{
-			DoGrow(mNumElements + 2);
+			DoGrow(mNumElements + 1);
 		}
-		TupleRecurser<Ts...>::DoPushBack(mpBegin, mNumElements, capacity());
-		return mNumElements++;
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements)...);
+		++mNumElements;
+		return mNumElements;
 	}
+
 	void push_back(const Ts&... args)
 	{
-		if (mNumElements == capacity())
+		if (mNumElements == mNumCapacity)
 		{
-			DoGrow(mNumElements + 2);
+			DoGrow(mNumElements + 1);
 		}
-		TupleRecurser<Ts...>::DoPushBack(mpBegin, mNumElements, capacity(), args...);
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, args)...);
 		++mNumElements;
 	}
+
 	void push_back_uninitialized()
 	{
-		if (mNumElements == capacity())
+		if (mNumElements == mNumCapacity)
 		{
 			DoGrow(mNumElements + 1);
 		}
@@ -203,24 +179,25 @@ public:
 
 	size_type capacity() const
 	{
-		return (size_type)(mpCapacity - mpBegin);
-	}
-
-	constexpr size_type sizeof_tuple() const
-	{
-		return sizeof(storage_type);
+		return mNumCapacity;
 	}
 
 	template<typename T>
-	T* data(size_type subTupleOffset) const
+	T* data() const
 	{
-		return (T*)(((char*)mpBegin) + subTupleOffset * capacity());
+		return TupleVecLeaf<tuplevec_index<T, tuple_vector<Ts...>>::index, T>::mpData;
+	}
+
+	template<size_t I, typename T>
+	T* data() const
+	{
+		return TupleVecLeaf<I, tuplevec_element_t<I, tuple_vector<Ts...>>::mpData;
 	}
 
 private:
-	storage_type* mpBegin = nullptr;
-	storage_type* mpCapacity = nullptr;
+	void* mpBegin = nullptr;
 	size_type mNumElements = 0;
+	size_type mNumCapacity = 0;
 
 	EASTLAllocatorType mAllocator = EASTLAllocatorType(EASTL_VECTOR_DEFAULT_NAME);
 
@@ -228,18 +205,23 @@ private:
 
 	void DoGrow(size_type n)
 	{
-		storage_type* pNewData = DoAllocate(n);
+		void* pNewData = DoAllocate(n);
 		if (mpBegin)
 		{
 			size_type oldCapacity = capacity();
-			TupleRecurser<Ts...>::DoMove(pNewData, mpBegin, n, oldCapacity);
-			EASTLFree(mAllocator, mpBegin, oldCapacity * sizeof(storage_type));
+			swallow(TupleVecLeaf<Indices, Ts>::DoMove(static_cast<int*>(pNewData), mNumElements)...);
+			// dcrooks-todo really need to calculate proper sizeof here
+			EASTLFree(mAllocator, mpBegin, oldCapacity * sizeof(int));
+		}
+		else
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::SetData(static_cast<int*>(pNewData))...);
 		}
 		mpBegin = pNewData;
-		mpCapacity = mpBegin + n;
+		mNumCapacity = n;
 	}
 
-	storage_type* DoAllocate(size_type n)
+	void* DoAllocate(size_type n)
 	{
 #if EASTL_ASSERT_ENABLED
 		if (EASTL_UNLIKELY(n >= 0x80000000))
@@ -248,24 +230,23 @@ private:
 
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
-		return n ? (storage_type*)allocate_memory(mAllocator, n * sizeof(storage_type), EASTL_ALIGN_OF(storage_type), 0) : nullptr;
+		// dcrooks-todo really need to calculate proper sizeof here
+		return n ? allocate_memory(mAllocator, n * sizeof(int), EASTL_ALIGN_OF(int), 0) : nullptr;
 	}
 };
 
 template <size_t I, typename Indices, typename... Ts>
 tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>* get(TupleVecImpl<Indices, Ts...>& t)
 {
-	typedef tuplevec_element<I, TupleVecImpl<Indices, Ts...>> Element;
-	return t.data<Element::type>(Element::offset);
+	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Element;
+	return t.data<Element>();
 }
 
-//template <typename T, typename Indices, typename... Ts>
-//vector<T>& get(TupleVecImpl<Indices, Ts...>& t)
-//{
-//	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
-//	//return static_cast<Internal::TupleVecLeaf<Index::index, T>&>(t).getInternal();
-//	return vector<Internal::TupleVecLeaf<Index::index, T>>();
-//}
+template <typename T, typename Indices, typename... Ts>
+T* get(TupleVecImpl<Indices, Ts...>& t)
+{
+	return t.data<T>();
+}
 
 }  // namespace Internal
 
@@ -326,7 +307,6 @@ public:
 
 	size_type size();
 	size_type capacity();
-	constexpr size_type sizeof_tuple() const;
 
 	//element_type begin();
 	//element_type end();
@@ -334,20 +314,13 @@ public:
 	template<size_t I>
 	tuplevec_element_t<I, tuple_vector<Ts...>>* get();
 
-	//template<typename T>
-	//vector<T>& get();
+	template<typename T>
+	T* get();
 
 private:
 	Impl mImpl;
 
 };
-
-//template <typename... Ts>
-//typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::push_back()
-//{
-//	size_t newIndex = mImpl.push_back();
-//	return element<Ts...>((*this), newIndex);
-//}
 
 template <typename... Ts>
 void tuple_vector<Ts...>::push_back()
@@ -380,24 +353,6 @@ typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
 	return mImpl.capacity();
 }
 
-template <typename... Ts>
-typename constexpr tuple_vector<Ts...>::size_type tuple_vector<Ts...>::sizeof_tuple() const
-{
-	return mImpl.sizeof_tuple();
-}
-
-//template <typename... Ts>
-//typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::begin()
-//{
-//	return element<Ts...>(*this, 0);
-//}
-//
-//template <typename... Ts>
-//typename tuple_vector<Ts...>::element_type tuple_vector<Ts...>::end()
-//{
-//	return element<Ts...>(*this, size() - 1);
-//}
-//
 template<typename... Ts>
 template<size_t I>
 eastl::tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
@@ -405,15 +360,12 @@ eastl::tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 	return Internal::get<I>(mImpl);
 }
 
-//template <typename... Ts>
-//template<typename T>
-//eastl::vector<T>&
-//eastl::tuple_vector<Ts...>::get()
-//{
-//	return Internal::get<T>(mImpl);
-//}
-
-
+template<typename... Ts>
+template<typename T>
+T* tuple_vector<Ts...>::get()
+{
+	return Internal::get<T>(mImpl);
+}
 
 // Vector_Decl macros
 //#pragma region 
