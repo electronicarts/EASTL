@@ -25,23 +25,30 @@ int TestTupleVector()
 		//EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
 		//EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
 
-		struct AlignTestByte3
-		{
-			char a[3];
-		};
-
 		__declspec(align(16)) struct AlignTestVec4
 		{
 			float a[4];
+			AlignTestVec4() :a{ 1.0f, 2.0f, 3.0f, 4.0f } {}
 		};
 
-		__declspec(align(8)) struct AlignTestEightByte
+		struct AlignTestByte3
 		{
-			int a[2];
+			char a[3];
+			AlignTestByte3() :a{ 1, 2, 3 } {}
 		};
 
-		tuple_vector<bool, AlignTestVec4, AlignTestByte3, AlignTestEightByte> alignElementVec;
-		alignElementVec.push_back_uninitialized();
+		__declspec(align(4)) struct AlignTestFourByte
+		{
+			int a;
+			AlignTestFourByte() :a(-1) {}
+		};
+
+		tuple_vector<bool, AlignTestVec4, AlignTestByte3, AlignTestFourByte> alignElementVec;
+		alignElementVec.push_back();
+		alignElementVec.push_back();
+		alignElementVec.push_back();
+		alignElementVec.push_back();
+		alignElementVec.push_back();
 
 
 

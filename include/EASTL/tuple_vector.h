@@ -109,6 +109,16 @@ struct TupleRecurser<>
 	{
 		return 0;
 	}
+
+	template<size_t I, typename Indices, typename... Ts>
+	static void* DoAllocation(TupleVecImpl<Indices, Ts...> &vec, size_t oldNumElements, size_t capacity, size_t offset)
+	{
+		// If n is zero, then we allocate no memory and just return NULL. 
+		// This is fine, as our default ctor initializes with NULL pointers. 
+		size_t alignment = TupleRecurser<Ts...>::GetTotalAlignment();
+		void* ptr = capacity ? allocate_memory(vec.mAllocator, offset, alignment, 0) : nullptr;
+		return ptr;
+	}
 };
 
 template <typename T, typename... Ts>
@@ -117,6 +127,18 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	static constexpr size_t GetTotalAlignment()
 	{
 		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
+	}
+
+	template<size_t I, typename Indices, typename... VecTypes>
+	static void* DoAllocation(TupleVecImpl<Indices, VecTypes...> &vec, size_t oldNumElements, size_t capacity, size_t offset)
+	{
+		size_t alignment = alignof(T);
+		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
+		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
+		void* pData = TupleRecurser<Ts...>::DoAllocation<I+1, Indices, VecTypes...>(vec, oldNumElements, capacity, offsetEnd);
+		void* pDest = (char*)(pData)+offsetBegin;
+		vec.TupleVecLeaf<I, T>::DoMove(pDest, oldNumElements);
+		return pData;
 	}
 };
 
@@ -138,8 +160,11 @@ struct TupleVecLeaf
 
 	int DoMove(void* pDest, const size_t srcElements)
 	{
-		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, (T*)pDest);
-		eastl::destruct(mpData, mpData + srcElements);
+		if (mpData)
+		{
+			eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, (T*)pDest);
+			eastl::destruct(mpData, mpData + srcElements);
+		}
 		mpData = (T*)pDest;
 		return 0;
 	}
@@ -152,9 +177,6 @@ struct TupleVecLeaf
 	
 	T* mpData = nullptr;
 };
-
-
-
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
 template <typename... Ts>
@@ -230,38 +252,19 @@ private:
 
 	EASTLAllocatorType mAllocator = EASTLAllocatorType(EASTL_VECTOR_DEFAULT_NAME);
 
-private:
+	friend struct TupleRecurser<>;
 
 	void DoGrow(size_type n)
 	{
-		void* pNewData = DoAllocate(n);
-		if (mpBegin)
-		{
-			size_type oldCapacity = capacity();
-			swallow(TupleVecLeaf<Indices, Ts>::DoMove(pNewData, mNumElements)...);
-			// dcrooks-todo really need to calculate proper sizeof here
-			EASTLFree(mAllocator, mpBegin, oldCapacity * sizeof(int));
-		}
-		else
-		{
-			swallow(TupleVecLeaf<Indices, Ts>::SetData(pNewData)...);
-		}
-		mpBegin = pNewData;
+		mpBegin = DoAllocate(n);
 		mNumCapacity = n;
 	}
 
 	void* DoAllocate(size_type n)
 	{
-#if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(n >= 0x80000000))
-			EASTL_FAIL_MSG("tuple_vector::DoAllocate -- improbably large request.");
-#endif
-
-		// If n is zero, then we allocate no memory and just return NULL. 
-		// This is fine, as our default ctor initializes with NULL pointers. 
-		// dcrooks-todo really need to calculate proper sizeof here
-		size_t alignment = TupleRecurser<Ts...>::GetTotalAlignment();
-		return n ? allocate_memory(mAllocator, n * sizeof(int), alignment, 0) : nullptr;
+		return TupleRecurser<Ts...>::DoAllocation<0, integer_sequence<size_t, Indices...>, Ts...>(*this, mNumElements, n, 0);
+		// dcrooks-todo need to free
+		//EASTLFree(mAllocator, mpBegin, mNumElements);
 	}
 };
 
