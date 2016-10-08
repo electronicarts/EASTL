@@ -183,13 +183,13 @@ int TestTupleVector()
 		doubleElementVec.push_back(4, 5.0f);
 		doubleElementVec.push_back(5, 6.0f);
 
-		int i = 1;
-		for (auto iter : doubleElementVec)
+		int i = 0;
+		for (tuple<int,float> iter : doubleElementVec)
 		{
-			EATEST_VERIFY(iter.get<0>() == i);
-			++i;
+			//EATEST_VERIFY(get<0>(iter) == i);
+			i += get<0>(iter);
 		}
-		EATEST_VERIFY(i == 6);
+		EATEST_VERIFY(i == 15);
 	}
 	return nErrorCount;
 }

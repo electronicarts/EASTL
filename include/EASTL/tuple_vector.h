@@ -7,7 +7,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/utility.h>
-
+#include <EASTL/tuple.h>
 namespace eastl
 {
 
@@ -21,7 +21,7 @@ struct tuplevec_element;
 template <size_t I, typename TupleVector>
 using tuplevec_element_t = typename tuplevec_element<I, TupleVector>::type;
 
-namespace Internal
+namespace TupleVecInternal
 {
 	template <typename Indices, typename... Ts>
 	struct TupleVecImpl;
@@ -60,7 +60,7 @@ struct tuplevec_element<I, tuple_vector<T, Ts...>>
 };
 
 template <size_t I, typename Indices, typename... Ts>
-struct tuplevec_element<I, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
+struct tuplevec_element<I, TupleVecInternal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
 {
 };
 
@@ -95,11 +95,11 @@ struct tuplevec_index<T, tuple_vector<Ts, TsRest...>>
 };
 
 template <typename T, typename Indices, typename... Ts>
-struct tuplevec_index<T, Internal::TupleVecImpl<Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
+struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
 {
 };
 
-namespace Internal
+namespace TupleVecInternal
 {
 
 // helper to calculate the sizeof the full tuple
@@ -295,24 +295,28 @@ struct TupleVecIter
 
 	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
 	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
-	TupleVecIter& operator*() { return *this; }
+	tuple<Ts...> operator*()
+	{ 
+		typedef make_index_sequence < sizeof...(Ts)> Indices;
+		return tuple<Ts...>(mTupleVec.get<Ts>()[mIndex]...);
+	}
 
 private:
 	size_t mIndex;
 	tuple_vector<Ts...> &mTupleVec;
 };
 
-}  // namespace Internal
+}  // namespace TupleVecInternal
 
 // External interface of tuple_vector
 template <typename... Ts>
 class tuple_vector
 {
 private:
-	typedef Internal::TupleVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
+	typedef TupleVecInternal::TupleVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
 
 public:
-	typedef Internal::TupleVecIter<Ts...> iterator;
+	typedef TupleVecInternal::TupleVecIter<Ts...> iterator;
 	typedef typename Impl::size_type size_type;
 
 	EA_CONSTEXPR tuple_vector() = default;
@@ -385,14 +389,14 @@ template<typename... Ts>
 template<size_t I>
 tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 {
-	return Internal::get<I>(mImpl);
+	return TupleVecInternal::get<I>(mImpl);
 }
 
 template<typename... Ts>
 template<typename T>
 T* tuple_vector<Ts...>::get()
 {
-	return Internal::get<T>(mImpl);
+	return TupleVecInternal::get<T>(mImpl);
 }
 
 }  // namespace eastl
