@@ -72,6 +72,7 @@ struct tuplevec_index<T, tuple_vector<>>
 {
 	typedef void DuplicateTypeCheck;
 	tuplevec_index() = delete; // tuplevec_index should only be used for compile-time assistance, and never be instantiated
+	static const size_t index = 0;
 };
 
 template <typename T, typename... TsRest>
@@ -86,6 +87,7 @@ struct tuplevec_index<T, tuple_vector<T, TsRest...>>
 template <typename T, typename Ts, typename... TsRest>
 struct tuplevec_index<T, tuple_vector<Ts, TsRest...>>
 {
+	typedef typename tuplevec_index<T, tuple_vector<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
 	static const size_t index = tuplevec_index<T, tuple_vector<TsRest...>>::index + 1;
 };
 

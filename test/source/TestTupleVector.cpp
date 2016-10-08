@@ -33,6 +33,8 @@ int TestTupleVector()
 		complexVec.push_back(2, 1.0f, true);
 		complexVec.push_back(4, 3.0f, false);
 		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
+		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
+		EATEST_VERIFY(complexVec.get<2>()[2] == complexVec.get<bool>()[2]);
 
 		__declspec(align(16)) struct AlignTestVec4
 		{
@@ -182,12 +184,12 @@ int TestTupleVector()
 		doubleElementVec.push_back(5, 6.0f);
 
 		int i = 1;
-		EATEST_VERIFY(*(doubleElementVec.get<0>()) == 1);
 		for (auto iter : doubleElementVec)
 		{
 			EATEST_VERIFY(iter.get<0>() == i);
 			++i;
 		}
+		EATEST_VERIFY(i == 6);
 	}
 	return nErrorCount;
 }
