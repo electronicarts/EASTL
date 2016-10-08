@@ -28,6 +28,9 @@ namespace Internal
 
 	template < typename... Ts>
 	struct TupleRecurser;
+
+	template < typename... Ts>
+	struct TupleVecIter;
 }
 
 // tuplevec_element helper to be able to isolate a type given an index
@@ -251,6 +254,8 @@ private:
 		mDataSize = allocation.second;
 		mNumCapacity = n;
 	}
+
+
 };
 
 template <size_t I, typename Indices, typename... Ts>
@@ -267,6 +272,36 @@ T* get(TupleVecImpl<Indices, Ts...>& t)
 	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
+template <typename... Ts>
+struct TupleVecIter
+{
+	TupleVecIter() = delete;
+	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index = 0)
+		: mIndex(index)
+		, mTupleVec(tupleVec)
+	{	}
+
+	template<size_t I>
+	auto& get() { return mTupleVec.get<I>()[mIndex]; }
+
+	template<typename T>
+	auto& get() { return mTupleVec.get<T>()[mIndex]; }
+
+	TupleVecIter& operator++()
+	{
+		++mIndex;
+		return *this;
+	}
+
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
+	TupleVecIter& operator*() { return *this; }
+
+private:
+	size_t mIndex;
+	tuple_vector<Ts...> &mTupleVec;
+};
+
 }  // namespace Internal
 
 // External interface of tuple_vector
@@ -277,38 +312,7 @@ private:
 	typedef Internal::TupleVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
 
 public:
-	
-	// tuple_vector iterator interface:
-	struct iterator
-	{
-		iterator() = delete;
-
-		iterator(tuple_vector<Ts...>& tupleVec, size_t index = 0)
-		: mIndex(index)
-		, mTupleVec(tupleVec)
-		{	}
-
-		template<size_t I>
-		auto& get() { return mTupleVec.get<I>()[mIndex]; }
-
-		template<typename T> 
-		auto& get() { return mTupleVec.get<T>()[mIndex]; }
-
-		iterator& operator++()
-		{
-			++mIndex;
-			return *this;
-		}
-
-		bool operator==(const iterator& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
-		bool operator!=(const iterator& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
-		iterator& operator*() { return *this; }
-
-	private:
-		size_t mIndex;
-		tuple_vector<Ts...> &mTupleVec;
-	};
-
+	typedef Internal::TupleVecIter<Ts...> iterator;
 	typedef typename Impl::size_type size_type;
 
 	EA_CONSTEXPR tuple_vector() = default;
