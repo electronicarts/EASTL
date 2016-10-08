@@ -279,6 +279,8 @@ public:
 	// tuple_vector iterator interface:
 	struct iterator
 	{
+		iterator() = delete;
+
 		iterator(tuple_vector<Ts...>& tupleVec, size_t index = 0)
 		: mIndex(index)
 		, mTupleVec(tupleVec)
@@ -297,7 +299,7 @@ public:
 		}
 
 		bool operator==(const iterator& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
-		bool operator!=(const iterator& other) const { return mIndex != other.mIndex && mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
+		bool operator!=(const iterator& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
 		iterator& operator*() { return *this; }
 
 	private:
