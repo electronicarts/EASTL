@@ -21,9 +21,18 @@ int TestTupleVector()
 		EATEST_VERIFY(singleElementVec.capacity() == 0);
 		singleElementVec.push_back_uninitialized();
 		singleElementVec.push_back(5);
-		//EATEST_VERIFY(singleElementVec.size() == 2);
-		//EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
-		//EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+		EATEST_VERIFY(singleElementVec.size() == 2);
+		EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
+		EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+
+		
+		
+		tuple_vector<int, float, bool> complexVec;
+		complexVec.push_back(3, 2.0f, true);
+		complexVec.push_back(1, 4.0f, false);
+		complexVec.push_back(2, 1.0f, true);
+		complexVec.push_back(4, 3.0f, false);
+		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
 
 		__declspec(align(16)) struct AlignTestVec4
 		{
@@ -37,10 +46,10 @@ int TestTupleVector()
 			AlignTestByte3() :a{ 1, 2, 3 } {}
 		};
 
-		__declspec(align(4)) struct AlignTestFourByte
+		__declspec(align(8)) struct AlignTestFourByte
 		{
-			int a;
-			AlignTestFourByte() :a(-1) {}
+			int a[5];
+			AlignTestFourByte() :a{ -1, -2, -3, -4, -5 } {}
 		};
 
 		tuple_vector<bool, AlignTestVec4, AlignTestByte3, AlignTestFourByte> alignElementVec;
@@ -165,19 +174,20 @@ int TestTupleVector()
 
 	// Test tuple_Vector in a ranged-for
 	{
-		//tuple_vector<int, float> doubleElementVec;
-		//doubleElementVec.push_back(1, 2.0f);
-		//doubleElementVec.push_back(2, 3.0f);
-		//doubleElementVec.push_back(3, 4.0f);
-		//doubleElementVec.push_back(4, 5.0f);
-		//doubleElementVec.push_back(5, 6.0f);
+		tuple_vector<int, float> doubleElementVec;
+		doubleElementVec.push_back(1, 2.0f);
+		doubleElementVec.push_back(2, 3.0f);
+		doubleElementVec.push_back(3, 4.0f);
+		doubleElementVec.push_back(4, 5.0f);
+		doubleElementVec.push_back(5, 6.0f);
 
-		//int i = 1;
-		//for (auto element : doubleElementVec)
-		//{
-		//	//EATEST_VERIFY(element.get<0>() == i);
-		//	++i;
-		//}
+		int i = 1;
+		EATEST_VERIFY(*(doubleElementVec.get<0>()) == 1);
+		for (auto iter : doubleElementVec)
+		{
+			EATEST_VERIFY(iter.get<0>() == i);
+			++i;
+		}
 	}
 	return nErrorCount;
 }

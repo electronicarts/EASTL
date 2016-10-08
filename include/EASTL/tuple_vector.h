@@ -224,18 +224,6 @@ public:
 		return mNumCapacity;
 	}
 
-	template<typename T>
-	T* data() const
-	{
-		return TupleVecLeaf<tuplevec_index<T, tuple_vector<Ts...>>::index, T>::mpData;
-	}
-
-	template<size_t I, typename T>
-	T* data() const
-	{
-		return TupleVecLeaf<I, tuplevec_element_t<I, tuple_vector<Ts...>>::mpData;
-	}
-
 private:
 	void* mpData = nullptr;
 	size_type mDataSize = 0;
@@ -267,13 +255,14 @@ template <size_t I, typename Indices, typename... Ts>
 tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>* get(TupleVecImpl<Indices, Ts...>& t)
 {
 	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Element;
-	return t.data<Element>();
+	return t.TupleVecLeaf<I, Element>::mpData;
 }
 
 template <typename T, typename Indices, typename... Ts>
 T* get(TupleVecImpl<Indices, Ts...>& t)
 {
-	return t.data<T>();
+	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
+	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
 }  // namespace Internal
@@ -287,45 +276,36 @@ private:
 
 public:
 	
-	// tuple_vector_element interface:
-	// - created by fetching push_back, dereferencing iterator
-	// - get<>() function which returns value&
-	// internals:
-	// - reference to tuple_vector
-	// - index [or store iterator to first vec and derive after the fact? eh, probably just index...]
-	//template <typename... Ts>
-	//struct element // dcrooks-todo maybe this'll just be iterator?
-	//{
-	//public:
-	//	element(tuple_vector<Ts...>& tupleVector, size_t index = 0)
-	//	: mIndex(index)
-	//	, mTupleVector(tupleVector)
-	//	{	}
+	// tuple_vector iterator interface:
+	struct iterator
+	{
+		iterator(tuple_vector<Ts...>& tupleVec, size_t index = 0)
+		: mIndex(index)
+		, mTupleVec(tupleVec)
+		{	}
 
-	//	template<size_t I>
-	//	tuplevec_element_t<I, tuple_vector<Ts...>>& get() { return mTupleVector.get<I>()[mIndex];	}
+		template<size_t I>
+		auto& get() { return mTupleVec.get<I>()[mIndex]; }
 
-	//	template<typename T> 
-	//	T& get() { return mTupleVector.get<T>()[mIndex]; }
+		template<typename T> 
+		auto& get() { return mTupleVec.get<T>()[mIndex]; }
 
-	//	element& operator++()
-	//	{
-	//		++mIndex;
-	//		return *this;
-	//	}
+		iterator& operator++()
+		{
+			++mIndex;
+			return *this;
+		}
 
-	//	bool operator==(const element& other) const	{ return mIndex == other.mIndex; }
-	//	bool operator!=(const element& other) const { return mIndex != other.mIndex; }
-	//	element& operator*() { return *this; }
+		bool operator==(const iterator& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
+		bool operator!=(const iterator& other) const { return mIndex != other.mIndex && mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
+		iterator& operator*() { return *this; }
 
-	//private:
-	//	size_t mIndex;
-	//	tuple_vector<Ts...> &mTupleVector;
-	//};
+	private:
+		size_t mIndex;
+		tuple_vector<Ts...> &mTupleVec;
+	};
 
-	//typedef element<Ts...> element_type;
 	typedef typename Impl::size_type size_type;
-
 
 	EA_CONSTEXPR tuple_vector() = default;
 	
@@ -336,9 +316,9 @@ public:
 	size_type size();
 	size_type capacity();
 
-	//element_type begin();
-	//element_type end();
-	
+	iterator begin();
+	iterator end();
+
 	template<size_t I>
 	tuplevec_element_t<I, tuple_vector<Ts...>>* get();
 
@@ -381,9 +361,21 @@ typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
 	return mImpl.capacity();
 }
 
+template <typename... Ts>
+typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::begin()
+{
+	return tuple_vector<Ts...>::iterator(*this, 0);
+}
+
+template <typename... Ts>
+typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::end()
+{
+	return tuple_vector<Ts...>::iterator(*this, size());
+}
+
 template<typename... Ts>
 template<size_t I>
-eastl::tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
+tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 {
 	return Internal::get<I>(mImpl);
 }
