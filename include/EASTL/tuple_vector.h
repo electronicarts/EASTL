@@ -110,14 +110,14 @@ struct TupleRecurser<>
 		return 0;
 	}
 
-	template<size_t I, typename Indices, typename... Ts>
-	static void* DoAllocation(TupleVecImpl<Indices, Ts...> &vec, size_t oldNumElements, size_t capacity, size_t offset)
+	template<size_t I, typename Indices, typename... VecTypes>
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
-		size_t alignment = TupleRecurser<Ts...>::GetTotalAlignment();
+		size_t alignment = TupleRecurser<VecTypes...>::GetTotalAlignment();
 		void* ptr = capacity ? allocate_memory(vec.mAllocator, offset, alignment, 0) : nullptr;
-		return ptr;
+		return make_pair(ptr, offset);
 	}
 };
 
@@ -130,15 +130,15 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	}
 
 	template<size_t I, typename Indices, typename... VecTypes>
-	static void* DoAllocation(TupleVecImpl<Indices, VecTypes...> &vec, size_t oldNumElements, size_t capacity, size_t offset)
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
 		size_t alignment = alignof(T);
 		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
 		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		void* pData = TupleRecurser<Ts...>::DoAllocation<I+1, Indices, VecTypes...>(vec, oldNumElements, capacity, offsetEnd);
-		void* pDest = (char*)(pData)+offsetBegin;
-		vec.TupleVecLeaf<I, T>::DoMove(pDest, oldNumElements);
-		return pData;
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<I+1, Indices, VecTypes...>(vec, capacity, offsetEnd);
+		void* pDest = (char*)(allocation.first)+offsetBegin;
+		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
+		return allocation;
 	}
 };
 
@@ -158,23 +158,14 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoMove(void* pDest, const size_t srcElements)
+	int DoMove(void* pDest, const size_t srcNumElements)
 	{
-		if (mpData)
-		{
-			eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcElements, (T*)pDest);
-			eastl::destruct(mpData, mpData + srcElements);
-		}
+		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcNumElements, (T*)pDest);
+		eastl::destruct(mpData, mpData + srcNumElements);
 		mpData = (T*)pDest;
 		return 0;
 	}
 
-	int SetData(void* pData)
-	{
-		mpData = (T*)pData;
-		return 0;
-	}
-	
 	T* mpData = nullptr;
 };
 
@@ -246,25 +237,29 @@ public:
 	}
 
 private:
-	void* mpBegin = nullptr;
+	void* mpData = nullptr;
+	size_type mDataSize = 0;
 	size_type mNumElements = 0;
 	size_type mNumCapacity = 0;
 
 	EASTLAllocatorType mAllocator = EASTLAllocatorType(EASTL_VECTOR_DEFAULT_NAME);
 
 	friend struct TupleRecurser<>;
+	template<typename... Ts>
+	friend struct TupleRecurser;
 
 	void DoGrow(size_type n)
 	{
-		mpBegin = DoAllocate(n);
-		mNumCapacity = n;
+		DoAllocate(n);
 	}
 
-	void* DoAllocate(size_type n)
+	void DoAllocate(size_type n)
 	{
-		return TupleRecurser<Ts...>::DoAllocation<0, integer_sequence<size_t, Indices...>, Ts...>(*this, mNumElements, n, 0);
-		// dcrooks-todo need to free
-		//EASTLFree(mAllocator, mpBegin, mNumElements);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<0, integer_sequence<size_t, Indices...>, Ts...>(*this, n, 0);
+		EASTLFree(mAllocator, mpData, mDataSize);
+		mpData = allocation.first;
+		mDataSize = allocation.second;
+		mNumCapacity = n;
 	}
 };
 
@@ -399,39 +394,6 @@ T* tuple_vector<Ts...>::get()
 {
 	return Internal::get<T>(mImpl);
 }
-
-// Vector_Decl macros
-//#pragma region 
-//#define TUPLE_VECTOR_DECL_START(className, ... ) \
-//	class className : public tuple_vector<##__VA_ARGS__> \
-//	{\
-//		public: \
-//
-//#define TUPLE_VECTOR_DECL_TYPENAME(type, name, iter) vector<type>& name() { return get<iter>(); } \
-//
-//#define TUPLE_VECTOR_DECL_END() };
-//
-//#define TUPLE_VECTOR_DECL_2(className, type0, name0, type1, name1) \
-//	TUPLE_VECTOR_DECL_START(className, type0, type1) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-//	TUPLE_VECTOR_DECL_END()
-//
-//#define TUPLE_VECTOR_DECL_3(className, type0, name0, type1, name1, type2, name2) \
-//	TUPLE_VECTOR_DECL_START(className, type0, type1, type2) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type2, name2, 2) \
-//	TUPLE_VECTOR_DECL_END()
-//
-//#define TUPLE_VECTOR_DECL_4(className, type0, name0, type1, name1, type2, name2, type3, name3) \
-//	TUPLE_VECTOR_DECL_START(className, type0, type1, type2, type3) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type0, name0, 0) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type1, name1, 1) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type2, name2, 2) \
-//	TUPLE_VECTOR_DECL_TYPENAME(type3, name3, 3) \
-//	TUPLE_VECTOR_DECL_END()
-//#pragma endregion
 
 }  // namespace eastl
 
