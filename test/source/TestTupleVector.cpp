@@ -60,10 +60,9 @@ int TestTupleVector()
 		alignElementVec.push_back();
 		alignElementVec.push_back();
 		alignElementVec.push_back();
-
 	}
 
-	// Test tuple_Vector in a ranged-for
+	// Test tuple_Vector in a ranged for, and other large-scale iterator testing
 	{
 		tuple_vector<int, float, int> tripleElementVec;
 		tripleElementVec.push_back(1, 2.0f, 6);
@@ -72,19 +71,70 @@ int TestTupleVector()
 		tripleElementVec.push_back(4, 5.0f, 9);
 		tripleElementVec.push_back(5, 6.0f, 10);
 
-		float i = 0;
-		int j = 0;
-		EATEST_VERIFY(&get<0>(*tripleElementVec.begin()) == tripleElementVec.get<0>());
-		EATEST_VERIFY(&get<1>(*tripleElementVec.begin()) == tripleElementVec.get<1>());
-		for (auto& iter : tripleElementVec)
+
+		// test copyConstructible, copyAssignable, swappable, prefix inc, !=, reference convertible to value_type (InputIterator!)
 		{
-			//EATEST_VERIFY(get<0>(iter) == i);
-			i += get<1>(iter);
-			j += get<2>(iter);
+			tuple_vector<int, float, int>::iterator iter = tripleElementVec.begin();
+			++iter;
+			auto copiedIter(iter);
+			EATEST_VERIFY(get<2>(*copiedIter) == 7);
+			EATEST_VERIFY(copiedIter == iter);
+
+			++iter;
+			copiedIter = iter;
+			EATEST_VERIFY(get<2>(*copiedIter) == 8);
+
+			++iter;
+			swap(iter, copiedIter);
+			EATEST_VERIFY(get<2>(*iter) == 8);
+			EATEST_VERIFY(get<2>(*copiedIter) == 9);
+
+			EATEST_VERIFY(copiedIter != iter);
+
+			tuple<int&, float&, int&> ref(*iter);
+			tuple<int, float, int> value(*iter);
+			EATEST_VERIFY(get<2>(ref) == get<2>(value));
 		}
-		EATEST_VERIFY(i == 20.0f);
-		EATEST_VERIFY(j == 40);
+
+		// test postfix increment, default constructible (ForwardIterator)
+		{
+			tuple_vector<int, float, int>::iterator iter = tripleElementVec.begin();
+			auto prefixIter = ++iter;
+			
+			tuple_vector<int, float, int>::iterator postfixIter;
+			postfixIter = iter++;
+			EATEST_VERIFY(prefixIter == postfixIter);
+			EATEST_VERIFY(get<2>(*prefixIter) == 7);
+			EATEST_VERIFY(get<2>(*iter) == 8);
+		}
+
+		// test prefix decrement and postfix decrement (BidirectionalIterator)
+		{
+			tuple_vector<int, float, int>::iterator iter = tripleElementVec.end();
+			auto prefixIter = --iter;
+
+			tuple_vector<int, float, int>::iterator postfixIter;
+			postfixIter = iter--;
+			EATEST_VERIFY(prefixIter == postfixIter);
+			EATEST_VERIFY(get<2>(*prefixIter) == 10);
+			EATEST_VERIFY(get<2>(*iter) == 9);
+		}
+
+		{
+			float i = 0;
+			int j = 0;
+			EATEST_VERIFY(&get<0>(*tripleElementVec.begin()) == tripleElementVec.get<0>());
+			EATEST_VERIFY(&get<1>(*tripleElementVec.begin()) == tripleElementVec.get<1>());
+			for (auto& iter : tripleElementVec)
+			{
+				i += get<1>(iter);
+				j += get<2>(iter);
+			}
+			EATEST_VERIFY(i == 20.0f);
+			EATEST_VERIFY(j == 40);
+		}
 	}
+
 	return nErrorCount;
 }
 

@@ -273,44 +273,56 @@ T* get(TupleVecImpl<Indices, Ts...>& t)
 }
 
 template <typename... Ts>
-struct TupleVecIter
+struct TupleVecIter : public iterator<bidirectional_iterator_tag, tuple<Ts...>, long, tuple<Ts*...>, tuple<Ts&...>>
 {
-	TupleVecIter() = delete;
-	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index = 0)
-		: mIndex(index)
-		, mTupleVec(tupleVec)
-	{	}
+	TupleVecIter() = default;
+	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
+		: mTupleVec(&tupleVec), mIndex(index) { }
 
-	template<size_t I>
-	auto& get() { return mTupleVec.get<I>()[mIndex]; }
+	TupleVecIter<Ts...> operator++() { ++mIndex; return *this; }
+	TupleVecIter<Ts...> operator--() { --mIndex; return *this; }
 
-	template<typename T>
-	auto& get() { return mTupleVec.get<T>()[mIndex]; }
-
-	TupleVecIter& operator++()
+	TupleVecIter<Ts...> operator++(int)
 	{
+		TupleVecIter<Ts...> temp = *this;
 		++mIndex;
-		return *this;
+		return temp;
 	}
 
-	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
-	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
-	
-	tuple<Ts&...> operator*()
-	{ 
-		// We cannot directly do mTupleVec.get<Indices>() here because the compiler needs to figure out the Indices variadic
-		return InternalDeref(make_index_sequence < sizeof...(Ts)>());
+	TupleVecIter<Ts...> operator--(int)
+	{
+		TupleVecIter<Ts...> temp = *this;
+		--mIndex;
+		return temp;
 	}
+
+
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
+	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
 
 private:
+	
 	template <size_t... Indices>
-	tuple<Ts&...> InternalDeref(integer_sequence<size_t, Indices...> indices)
+	value_type MakeValue(integer_sequence<size_t, Indices...> indices)
 	{
-		return tuple<Ts&...>(mTupleVec.get<Indices>()[mIndex]...);
+		return value_type(mTupleVec->get<Indices>()[mIndex]...);
 	}
 
-	size_t mIndex;
-	tuple_vector<Ts...> &mTupleVec;
+	template <size_t... Indices>
+	reference MakeReference(integer_sequence<size_t, Indices...> indices)
+	{
+		return reference(mTupleVec->get<Indices>()[mIndex]...);
+	}
+
+	template <size_t... Indices>
+	pointer MakePointer(integer_sequence<size_t, Indices...> indices)
+	{
+		return pointer(&mTupleVec->get<Indices>()[mIndex]...);
+	}
+
+	size_t mIndex = 0;
+	tuple_vector<Ts...> *mTupleVec = nullptr;
 };
 
 }  // namespace TupleVecInternal
