@@ -184,7 +184,9 @@ int TestTupleVector()
 		doubleElementVec.push_back(5, 6.0f);
 
 		int i = 0;
-		for (tuple<int,float> iter : doubleElementVec)
+		EATEST_VERIFY(&get<0>(*doubleElementVec.begin()) == doubleElementVec.get<0>());
+		EATEST_VERIFY(&get<1>(*doubleElementVec.begin()) == doubleElementVec.get<1>());
+		for (auto& iter : doubleElementVec)
 		{
 			//EATEST_VERIFY(get<0>(iter) == i);
 			i += get<0>(iter);

@@ -295,10 +295,10 @@ struct TupleVecIter
 
 	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
 	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
-	tuple<Ts...> operator*()
+	tuple<Ts&...> operator*()
 	{ 
 		typedef make_index_sequence < sizeof...(Ts)> Indices;
-		return tuple<Ts...>(mTupleVec.get<Ts>()[mIndex]...);
+		return tuple<Ts&...>(mTupleVec.get<Ts>()[mIndex]...);
 	}
 
 private:
