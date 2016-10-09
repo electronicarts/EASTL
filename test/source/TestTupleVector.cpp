@@ -7,6 +7,7 @@
 #include "EASTLTest.h"
 
 #include <EASTL/tuple_vector.h>
+#include <EASTL/sort.h>
 
 using namespace eastl;
 
@@ -161,6 +162,29 @@ int TestTupleVector()
 			EATEST_VERIFY(j == 40);
 		}
 	}
+
+	// test sort.h
+	{
+		tuple_vector<bool, float, int> tripleElementVec;
+		tripleElementVec.reserve(16);
+		tripleElementVec.push_back(true, 2.0f, 8);
+		tripleElementVec.push_back(false, 3.0f, 3);
+		tripleElementVec.push_back(false, 4.0f, 9);
+		tripleElementVec.push_back(true, 5.0f, 6);
+		tripleElementVec.push_back(true, 6.0f, 4);
+		tripleElementVec.push_back(false, 7.0f, 10);
+		tripleElementVec.push_back(true, 8.0f, 5);
+		tripleElementVec.push_back(false, 9.0f, 2);
+
+		EATEST_VERIFY(tripleElementVec.get<1>()[0] == 2.0f);
+		sort(tripleElementVec.begin(), tripleElementVec.end(),
+			[](const tuple<const bool&, const float&, const int&> a, const tuple<const bool&, const float&, const int&> b)
+		{
+			return get<2>(a) > get<2>(b); 
+		} );
+		EATEST_VERIFY(tripleElementVec.get<1>()[0] == 7.0f);
+	}
+
 
 	return nErrorCount;
 }
