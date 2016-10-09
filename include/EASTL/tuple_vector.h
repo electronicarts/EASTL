@@ -219,6 +219,14 @@ public:
 		++mNumElements;
 	}
 
+	void reserve(size_t n)
+	{
+		if (n > mNumCapacity)
+		{
+			DoGrow(n);
+		}
+	}
+
 	size_type size() const
 	{
 		return mNumElements;
@@ -387,6 +395,8 @@ public:
 	iterator begin();
 	iterator end();
 
+	void reserve(size_t n);
+
 	template<size_t I>
 	tuplevec_element_t<I, tuple_vector<Ts...>>* get();
 
@@ -439,6 +449,12 @@ template <typename... Ts>
 typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::end()
 {
 	return tuple_vector<Ts...>::iterator(*this, size());
+}
+
+template <typename...Ts>
+void tuple_vector<Ts...>::reserve(size_t n)
+{
+	mImpl.reserve(n);
 }
 
 template<typename... Ts>
