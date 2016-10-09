@@ -273,14 +273,14 @@ T* get(TupleVecImpl<Indices, Ts...>& t)
 }
 
 template <typename... Ts>
-struct TupleVecIter : public iterator<bidirectional_iterator_tag, tuple<Ts...>, long, tuple<Ts*...>, tuple<Ts&...>>
+struct TupleVecIter : public iterator<bidirectional_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 	TupleVecIter() = default;
 	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
 		: mTupleVec(&tupleVec), mIndex(index) { }
 
-	TupleVecIter<Ts...> operator++() { ++mIndex; return *this; }
-	TupleVecIter<Ts...> operator--() { --mIndex; return *this; }
+	TupleVecIter<Ts...>& operator++() { ++mIndex; return *this; }
+	TupleVecIter<Ts...>& operator--() { --mIndex; return *this; }
 
 	TupleVecIter<Ts...> operator++(int)
 	{
