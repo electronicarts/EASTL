@@ -120,6 +120,33 @@ int TestTupleVector()
 			EATEST_VERIFY(get<2>(*iter) == 9);
 		}
 
+		// test many arithmetic operations (RandomAccessIterator)
+		{
+			tuple_vector<int, float, int>::iterator iter = tripleElementVec.begin();
+			auto symmetryOne = iter + 2;
+			auto symmetryTwo = 2 + iter;
+			iter += 2;
+			EATEST_VERIFY(symmetryOne == symmetryTwo);
+			EATEST_VERIFY(symmetryOne == iter);
+
+			symmetryOne = iter - 2;
+			symmetryTwo = 2 - iter;
+			iter -= 2;
+			EATEST_VERIFY(symmetryOne == symmetryTwo);
+			EATEST_VERIFY(symmetryOne == iter);
+
+			iter += 2;
+			EATEST_VERIFY(iter - symmetryOne == 2);
+
+			tuple<int&, float&, int&> symmetryRef = symmetryOne[2];
+			EATEST_VERIFY(get<2>(symmetryRef) == get<2>(*iter));
+
+			EATEST_VERIFY(symmetryOne < iter);
+			EATEST_VERIFY(iter > symmetryOne);
+			EATEST_VERIFY(symmetryOne >= symmetryTwo && iter >= symmetryOne);
+			EATEST_VERIFY(symmetryOne <= symmetryTwo && symmetryOne <= iter);
+		}
+
 		{
 			float i = 0;
 			int j = 0;

@@ -273,33 +273,70 @@ T* get(TupleVecImpl<Indices, Ts...>& t)
 }
 
 template <typename... Ts>
-struct TupleVecIter : public iterator<bidirectional_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
+struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
+private:
+	typedef TupleVecIter<Ts...> this_type;
+
+public:
 	TupleVecIter() = default;
 	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
 		: mTupleVec(&tupleVec), mIndex(index) { }
 
-	TupleVecIter<Ts...>& operator++() { ++mIndex; return *this; }
-	TupleVecIter<Ts...>& operator--() { --mIndex; return *this; }
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
+	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
 
-	TupleVecIter<Ts...> operator++(int)
+	this_type& operator++() { ++mIndex; return *this; }
+	this_type operator++(int)
 	{
-		TupleVecIter<Ts...> temp = *this;
+		this_type temp = *this;
 		++mIndex;
 		return temp;
 	}
 
-	TupleVecIter<Ts...> operator--(int)
+	this_type& operator--() { --mIndex; return *this; }
+	this_type operator--(int)
 	{
-		TupleVecIter<Ts...> temp = *this;
+		this_type temp = *this;
 		--mIndex;
 		return temp;
 	}
 
+	this_type& operator+=(difference_type n) { mIndex += n; return *this; }
+	this_type operator+(difference_type n)
+	{ 
+		this_type temp = *this;
+		return temp += n;
+	}
+	friend this_type operator+(difference_type n, const this_type& rhs)
+	{
+		this_type temp = rhs;
+		return temp += n;
+	}
 
-	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
-	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
-	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
+	this_type& operator-=(difference_type n) { mIndex -= n; return *this; }
+	this_type operator-(difference_type n)
+	{
+		this_type temp = *this;
+		return temp -= n;
+	}
+	friend this_type operator-(difference_type n, const this_type& rhs)
+	{
+		this_type temp = rhs;
+		return temp -= n;
+	}
+
+	difference_type operator-(const this_type& rhs) { return mIndex - rhs.mIndex; }
+	bool operator<(const this_type& rhs) { return mIndex < rhs.mIndex; }
+	bool operator>(const this_type& rhs) { return mIndex > rhs.mIndex; }
+	bool operator>=(const this_type& rhs) { return mIndex >= rhs.mIndex; }
+	bool operator<=(const this_type& rhs) { return mIndex <= rhs.mIndex; }
+
+	reference operator[](size_t n)
+	{
+		return *(*this + n);
+	}
 
 private:
 	
