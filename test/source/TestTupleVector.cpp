@@ -176,22 +176,22 @@ int TestTupleVector()
 
 	// Test tuple_Vector in a ranged-for
 	{
-		tuple_vector<int, float> doubleElementVec;
-		doubleElementVec.push_back(1, 2.0f);
-		doubleElementVec.push_back(2, 3.0f);
-		doubleElementVec.push_back(3, 4.0f);
-		doubleElementVec.push_back(4, 5.0f);
-		doubleElementVec.push_back(5, 6.0f);
+		tuple_vector<int, float, int> tripleElementVec;
+		tripleElementVec.push_back(1, 2.0f, 6);
+		tripleElementVec.push_back(2, 3.0f, 7);
+		tripleElementVec.push_back(3, 4.0f, 8);
+		tripleElementVec.push_back(4, 5.0f, 9);
+		tripleElementVec.push_back(5, 6.0f, 10);
 
-		int i = 0;
-		EATEST_VERIFY(&get<0>(*doubleElementVec.begin()) == doubleElementVec.get<0>());
-		EATEST_VERIFY(&get<1>(*doubleElementVec.begin()) == doubleElementVec.get<1>());
-		for (auto& iter : doubleElementVec)
+		float i = 0;
+		EATEST_VERIFY(&get<0>(*tripleElementVec.begin()) == tripleElementVec.get<0>());
+		EATEST_VERIFY(&get<1>(*tripleElementVec.begin()) == tripleElementVec.get<1>());
+		for (auto& iter : tripleElementVec)
 		{
 			//EATEST_VERIFY(get<0>(iter) == i);
-			i += get<0>(iter);
+			i += get<1>(iter);
 		}
-		EATEST_VERIFY(i == 15);
+		EATEST_VERIFY(i == 20);
 	}
 	return nErrorCount;
 }

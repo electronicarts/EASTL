@@ -295,13 +295,20 @@ struct TupleVecIter
 
 	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec.get<0>() == other.mTupleVec.get<0>(); }
 	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec.get<0>() != other.mTupleVec.get<0>(); }
+	
 	tuple<Ts&...> operator*()
 	{ 
-		typedef make_index_sequence < sizeof...(Ts)> Indices;
-		return tuple<Ts&...>(mTupleVec.get<Ts>()[mIndex]...);
+		// We cannot directly do mTupleVec.get<Indices>() here because the compiler needs to figure out the Indices variadic
+		return InternalDeref(make_index_sequence < sizeof...(Ts)>());
 	}
 
 private:
+	template <size_t... Indices>
+	tuple<Ts&...> Deref(integer_sequence<size_t, Indices...> indices)
+	{
+		return tuple<Ts&...>(mTupleVec.get<Indices>()[mIndex]...);
+	}
+
 	size_t mIndex;
 	tuple_vector<Ts...> &mTupleVec;
 };
