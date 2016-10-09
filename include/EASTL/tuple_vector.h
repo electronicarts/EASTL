@@ -304,7 +304,7 @@ struct TupleVecIter
 
 private:
 	template <size_t... Indices>
-	tuple<Ts&...> Deref(integer_sequence<size_t, Indices...> indices)
+	tuple<Ts&...> InternalDeref(integer_sequence<size_t, Indices...> indices)
 	{
 		return tuple<Ts&...>(mTupleVec.get<Indices>()[mIndex]...);
 	}
