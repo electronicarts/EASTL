@@ -188,6 +188,7 @@ public:
 	typedef eastl_size_t size_type;
 	
 	EA_CONSTEXPR TupleVecImpl() = default;
+	~TupleVecImpl() { EASTLFree(mAllocator, mpData, mDataSize); }
 
 	size_type push_back()
 	{
@@ -312,7 +313,7 @@ public:
 	}
 
 	this_type& operator+=(difference_type n) { mIndex += n; return *this; }
-	this_type operator+(difference_type n)
+	this_type operator+(difference_type n) const
 	{ 
 		this_type temp = *this;
 		return temp += n;
@@ -324,7 +325,7 @@ public:
 	}
 
 	this_type& operator-=(difference_type n) { mIndex -= n; return *this; }
-	this_type operator-(difference_type n)
+	this_type operator-(difference_type n) const
 	{
 		this_type temp = *this;
 		return temp -= n;
@@ -335,13 +336,13 @@ public:
 		return temp -= n;
 	}
 
-	difference_type operator-(const this_type& rhs) { return mIndex - rhs.mIndex; }
-	bool operator<(const this_type& rhs) { return mIndex < rhs.mIndex; }
-	bool operator>(const this_type& rhs) { return mIndex > rhs.mIndex; }
-	bool operator>=(const this_type& rhs) { return mIndex >= rhs.mIndex; }
-	bool operator<=(const this_type& rhs) { return mIndex <= rhs.mIndex; }
+	difference_type operator-(const this_type& rhs) const { return mIndex - rhs.mIndex; }
+	bool operator<(const this_type& rhs) const { return mIndex < rhs.mIndex; }
+	bool operator>(const this_type& rhs) const { return mIndex > rhs.mIndex; }
+	bool operator>=(const this_type& rhs) const { return mIndex >= rhs.mIndex; }
+	bool operator<=(const this_type& rhs) const { return mIndex <= rhs.mIndex; }
 
-	reference operator[](size_t n)
+	reference operator[](size_t n) 
 	{
 		return *(*this + n);
 	}
