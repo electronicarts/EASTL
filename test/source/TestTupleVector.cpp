@@ -9,6 +9,8 @@
 #include <EASTL/tuple_vector.h>
 #include <EASTL/sort.h>
 
+#include <random>
+#include <windows.h>
 using namespace eastl;
 
 int TestTupleVector()
@@ -165,24 +167,107 @@ int TestTupleVector()
 
 	// test sort.h
 	{
-		tuple_vector<bool, float, int> tripleElementVec;
-		tripleElementVec.reserve(16);
-		tripleElementVec.push_back(true, 2.0f, 8);
-		tripleElementVec.push_back(false, 3.0f, 3);
-		tripleElementVec.push_back(false, 4.0f, 9);
-		tripleElementVec.push_back(true, 5.0f, 6);
-		tripleElementVec.push_back(true, 6.0f, 4);
-		tripleElementVec.push_back(false, 7.0f, 10);
-		tripleElementVec.push_back(true, 8.0f, 5);
-		tripleElementVec.push_back(false, 9.0f, 2);
-
-		EATEST_VERIFY(tripleElementVec.get<1>()[0] == 2.0f);
-		sort(tripleElementVec.begin(), tripleElementVec.end(),
-			[](const tuple<const bool&, const float&, const int&> a, const tuple<const bool&, const float&, const int&> b)
+		LARGE_INTEGER  tupleSortCounter; tupleSortCounter.QuadPart = 0;
+		LARGE_INTEGER  vectorSortCounter; vectorSortCounter.QuadPart = 0;
+		const int cacheFlushSize = 10 * 1024 * 1024;
+		int* cacheFlushSrc = new int[cacheFlushSize];
+		int* cacheFlushDest = new int[cacheFlushSize];
+		LARGE_INTEGER frequency;
+		const int NumData = 64;
+		struct LargeData
 		{
-			return get<2>(a) > get<2>(b); 
-		} );
-		EATEST_VERIFY(tripleElementVec.get<1>()[0] == 7.0f);
+			/*LargeData(float f)
+			{
+				memset(&data, f, NumData);
+			}*/
+			float data[NumData];
+		};
+		QueryPerformanceFrequency(&frequency);
+		do
+		{
+			LARGE_INTEGER startTime, endTime;
+
+			tuple_vector<bool, LargeData, int> tripleElementVec;
+			const int ElementCount = 1 * 1024;
+			tripleElementVec.reserve(ElementCount);
+
+			struct TripleElement
+			{
+				bool a;
+				LargeData b;
+				int c;
+			};
+			vector<TripleElement> aosTripleElement;
+			aosTripleElement.reserve(ElementCount);
+
+			// Choose a random mean between 1 and 6
+			std::default_random_engine e1(0);
+			std::uniform_int_distribution<int> bool_picker(0, 0);
+			std::uniform_real_distribution<float> float_picker(0, 32768);
+			std::uniform_int_distribution<int> int_picker(0, 32768);
+
+			for (int i = 0; i < ElementCount; ++i)
+			{
+				bool randomBool = (bool)bool_picker(e1);
+				float randomFloat = float_picker(e1);
+				int randomInt = int_picker(e1);
+				tripleElementVec.push_back(randomBool, {randomFloat}, randomInt);
+				aosTripleElement.push_back({ randomBool, {randomFloat}, randomInt });
+			}
+
+			{
+				memset(cacheFlushSrc, 0, cacheFlushSize);
+				memcpy(cacheFlushDest, cacheFlushSrc, cacheFlushSize);
+			}
+
+			QueryPerformanceCounter(&startTime);
+			//EATEST_VERIFY(tripleElementVec.get<0>() != nullptr);
+			//volatile int numTupleBools = 0;
+			//for (auto& iter : tripleElementVec)
+			//{
+			//	numTupleBools += get<0>(iter) ? 1 : 0;
+			//}
+			sort(tripleElementVec.begin(), tripleElementVec.end(),
+				[](tuple<const bool&, const LargeData&, const int&> a, tuple<const bool&, const LargeData&, const int&> b)
+			{
+				return get<2>(a) > get<2>(b);
+			});
+			QueryPerformanceCounter(&endTime);
+			tupleSortCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
+
+			//EATEST_VERIFY(tripleElementVec.get<0>() != nullptr);
+
+			{
+				memset(cacheFlushSrc, 0, cacheFlushSize);
+				memcpy(cacheFlushDest, cacheFlushSrc, cacheFlushSize);
+			}
+			//EATEST_VERIFY(aosTripleElement.data() != nullptr);
+
+			QueryPerformanceCounter(&startTime);
+			//volatile int numVecBools = 0;
+			//for (auto& iter : aosTripleElement)
+			//{
+			//	numVecBools += iter.a ? 1 : 0;
+			//}
+			sort(aosTripleElement.begin(), aosTripleElement.end(), [](const TripleElement& a, const TripleElement& b)
+			{
+				return a.c > b.c;
+			});
+			QueryPerformanceCounter(&endTime);
+			vectorSortCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
+			//EATEST_VERIFY(aosTripleElement.data() != nullptr);
+		} while ((tupleSortCounter.QuadPart * 1000.0) / frequency.QuadPart < 10.0);
+
+		EATEST_VERIFY(nErrorCount == 0);
+
+		double tupleSortTime = (tupleSortCounter.QuadPart * 1000.0) / frequency.QuadPart;
+		double vectorSortTime = (vectorSortCounter.QuadPart * 1000.0) / frequency.QuadPart;
+
+		EA::EAMain::ReportVerbosity(0, "Tuple loop time (ms): %f\n", tupleSortTime);
+		EA::EAMain::ReportVerbosity(0, "Vector loop time (ms): %f\n", vectorSortTime);
+
+		EATEST_VERIFY(nErrorCount == 0);
+
 	}
 
 
