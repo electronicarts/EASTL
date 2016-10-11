@@ -202,13 +202,13 @@ int TestTupleVector()
 
 			// Choose a random mean between 1 and 6
 			std::default_random_engine e1(0);
-			std::uniform_int_distribution<int> bool_picker(0, 0);
+			std::uniform_int_distribution<int> bool_picker(0, 1);
 			std::uniform_real_distribution<float> float_picker(0, 32768);
 			std::uniform_int_distribution<int> int_picker(0, 32768);
 
 			for (int i = 0; i < ElementCount; ++i)
 			{
-				bool randomBool = (bool)bool_picker(e1);
+				bool randomBool = bool_picker(e1) < 1 ? false : true;
 				float randomFloat = float_picker(e1);
 				int randomInt = int_picker(e1);
 				tripleElementVec.push_back(randomBool, {randomFloat}, randomInt);
