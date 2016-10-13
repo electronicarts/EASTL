@@ -317,7 +317,7 @@ struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, 
 {
 private:
 	typedef TupleVecIter<Ts...> this_type;
-
+	typedef const tuple<const Ts&...> const_reference;
 public:
 	TupleVecIter() = default;
 	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
@@ -327,8 +327,9 @@ public:
 	bool operator==(const TupleVecIter& other) const { return mTuple == other.mTuple; }
 	bool operator!=(const TupleVecIter& other) const { return !(mTuple == other.mTuple); }
 	reference operator*() { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
+	const_reference operator*() const { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
 
-	this_type& operator++() { DoPtrMove(mTuple, 1); return *this; }
+	inline this_type& operator++() { DoPtrMove(mTuple, 1); return *this; }
 	this_type operator++(int)
 	{
 		this_type temp = *this;
@@ -379,12 +380,23 @@ public:
 		return *(*this + n);
 	}
 
+	const_reference operator[](size_t n) const
+	{
+		return *(*this + n);
+	}
+
 private:
 
 	template <size_t... Indices>
-	reference MakeReference(tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+	inline static reference MakeReference(tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
 	{
 		return reference(*get<Indices>(ptrTuple)...);
+	}
+
+	template <size_t... Indices>
+	inline static const_reference MakeReference(const tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+	{
+		return const_reference(*get<Indices>(ptrTuple)...);
 	}
 
 	template <size_t... Indices>
