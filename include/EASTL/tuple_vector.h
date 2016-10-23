@@ -312,41 +312,40 @@ T* get(TupleVecImpl<Indices, Ts...>& t)
 	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
+
 template <typename... Ts>
 struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 private:
 	typedef TupleVecIter<Ts...> this_type;
-	typedef const tuple<const Ts&...> const_reference;
+
 public:
 	TupleVecIter() = default;
 	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
-		:mTuple(MakePointer(tupleVec, make_index_sequence<sizeof...(Ts)>(), index))
-	{}
+		: mTupleVec(&tupleVec), mIndex(index) { }
 
-	bool operator==(const TupleVecIter& other) const { return mTuple == other.mTuple; }
-	bool operator!=(const TupleVecIter& other) const { return !(mTuple == other.mTuple); }
-	reference operator*() { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
-	const_reference operator*() const { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
+	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
 
-	inline this_type& operator++() { DoPtrMove(mTuple, 1); return *this; }
+	this_type& operator++() { ++mIndex; return *this; }
 	this_type operator++(int)
 	{
 		this_type temp = *this;
-		++(*this);
+		++mIndex;
 		return temp;
 	}
 
-	this_type& operator--() { DoPtrMove(mTuple, -1); return *this; }
+	this_type& operator--() { --mIndex; return *this; }
 	this_type operator--(int)
 	{
 		this_type temp = *this;
-		--(*this);
+		--mIndex;
 		return temp;
 	}
 
-	this_type& operator+=(difference_type n) { DoPtrMove(mTuple, n); return *this; }
-	this_type operator+(difference_type n) const
+	this_type& operator+=(difference_type n) { mIndex += n; return *this; }
+	this_type operator+(difference_type n)
 	{
 		this_type temp = *this;
 		return temp += n;
@@ -357,8 +356,8 @@ public:
 		return temp += n;
 	}
 
-	this_type& operator-=(difference_type n) { DoPtrMove(mTuple, -n); return *this; }
-	this_type operator-(difference_type n) const
+	this_type& operator-=(difference_type n) { mIndex -= n; return *this; }
+	this_type operator-(difference_type n)
 	{
 		this_type temp = *this;
 		return temp -= n;
@@ -369,18 +368,13 @@ public:
 		return temp -= n;
 	}
 
-	difference_type operator-(const this_type& rhs) const { return get<0>(mTuple) - get<0>(rhs.mTuple); }
-	bool operator<(const this_type& rhs) const { return get<0>(mTuple) < get<0>(rhs.mTuple); }
-	bool operator>(const this_type& rhs) const { return get<0>(mTuple) > get<0>(rhs.mTuple); }
-	bool operator>=(const this_type& rhs) const { return get<0>(mTuple) >= get<0>(rhs.mTuple); }
-	bool operator<=(const this_type& rhs) const { return get<0>(mTuple) <= get<0>(rhs.mTuple); }
+	difference_type operator-(const this_type& rhs) { return mIndex - rhs.mIndex; }
+	bool operator<(const this_type& rhs) { return mIndex < rhs.mIndex; }
+	bool operator>(const this_type& rhs) { return mIndex > rhs.mIndex; }
+	bool operator>=(const this_type& rhs) { return mIndex >= rhs.mIndex; }
+	bool operator<=(const this_type& rhs) { return mIndex <= rhs.mIndex; }
 
-	reference operator[](size_t n) 
-	{
-		return *(*this + n);
-	}
-
-	const_reference operator[](size_t n) const
+	reference operator[](size_t n)
 	{
 		return *(*this + n);
 	}
@@ -388,27 +382,133 @@ public:
 private:
 
 	template <size_t... Indices>
-	inline static reference MakeReference(tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+	value_type MakeValue(integer_sequence<size_t, Indices...> indices)
 	{
-		return reference(*get<Indices>(ptrTuple)...);
+		return value_type(mTupleVec->get<Indices>()[mIndex]...);
 	}
 
 	template <size_t... Indices>
-	inline static const_reference MakeReference(const tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+	reference MakeReference(integer_sequence<size_t, Indices...> indices)
 	{
-		return const_reference(*get<Indices>(ptrTuple)...);
+		return reference(mTupleVec->get<Indices>()[mIndex]...);
 	}
 
 	template <size_t... Indices>
-	inline static pointer MakePointer(tuple_vector<Ts...>& tupleVec, integer_sequence<size_t, Indices...> indices, size_t index)
+	pointer MakePointer(integer_sequence<size_t, Indices...> indices)
 	{
-		return pointer(&tupleVec.get<Indices>()[index]...);
+		return pointer(&mTupleVec->get<Indices>()[mIndex]...);
 	}
 
-	tuple<Ts*...> mTuple;
+	size_t mIndex = 0;
+	tuple_vector<Ts...> *mTupleVec = nullptr;
 };
 
+
+
+//
+//template <typename... Ts>
+//struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
+//{
+//private:
+//	typedef TupleVecIter<Ts...> this_type;
+//	typedef const tuple<const Ts&...> const_reference;
+//public:
+//	TupleVecIter() = default;
+//	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
+//		:mTuple(MakePointer(tupleVec, make_index_sequence<sizeof...(Ts)>(), index))
+//	{}
+//
+//	bool operator==(const TupleVecIter& other) const { return mTuple == other.mTuple; }
+//	bool operator!=(const TupleVecIter& other) const { return !(mTuple == other.mTuple); }
+//	reference operator*() { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
+//	const_reference operator*() const { return MakeReference(mTuple, make_index_sequence<sizeof...(Ts)>()); }
+//
+//	inline this_type& operator++() { DoPtrMove(mTuple, 1); return *this; }
+//	this_type operator++(int)
+//	{
+//		this_type temp = *this;
+//		++(*this);
+//		return temp;
+//	}
+//
+//	this_type& operator--() { DoPtrMove(mTuple, -1); return *this; }
+//	this_type operator--(int)
+//	{
+//		this_type temp = *this;
+//		--(*this);
+//		return temp;
+//	}
+//
+//	this_type& operator+=(difference_type n) { DoPtrMove(mTuple, n); return *this; }
+//	this_type operator+(difference_type n) const
+//	{
+//		this_type temp = *this;
+//		return temp += n;
+//	}
+//	friend this_type operator+(difference_type n, const this_type& rhs)
+//	{
+//		this_type temp = rhs;
+//		return temp += n;
+//	}
+//
+//	this_type& operator-=(difference_type n) { DoPtrMove(mTuple, -n); return *this; }
+//	this_type operator-(difference_type n) const
+//	{
+//		this_type temp = *this;
+//		return temp -= n;
+//	}
+//	friend this_type operator-(difference_type n, const this_type& rhs)
+//	{
+//		this_type temp = rhs;
+//		return temp -= n;
+//	}
+//
+//	difference_type operator-(const this_type& rhs) const { return get<0>(mTuple) - get<0>(rhs.mTuple); }
+//	bool operator<(const this_type& rhs) const { return get<0>(mTuple) < get<0>(rhs.mTuple); }
+//	bool operator>(const this_type& rhs) const { return get<0>(mTuple) > get<0>(rhs.mTuple); }
+//	bool operator>=(const this_type& rhs) const { return get<0>(mTuple) >= get<0>(rhs.mTuple); }
+//	bool operator<=(const this_type& rhs) const { return get<0>(mTuple) <= get<0>(rhs.mTuple); }
+//
+//	reference operator[](size_t n) 
+//	{
+//		return *(*this + n);
+//	}
+//
+//	const_reference operator[](size_t n) const
+//	{
+//		return *(*this + n);
+//	}
+//
+//private:
+//
+//	template <size_t... Indices>
+//	inline static reference MakeReference(tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+//	{
+//		return reference(*get<Indices>(ptrTuple)...);
+//	}
+//
+//	template <size_t... Indices>
+//	inline static const_reference MakeReference(const tuple<Ts*...>& ptrTuple, integer_sequence<size_t, Indices...> indices)
+//	{
+//		return const_reference(*get<Indices>(ptrTuple)...);
+//	}
+//
+//	template <size_t... Indices>
+//	inline static pointer MakePointer(tuple_vector<Ts...>& tupleVec, integer_sequence<size_t, Indices...> indices, size_t index)
+//	{
+//		return pointer(&tupleVec.get<Indices>()[index]...);
+//	}
+//
+//	tuple<Ts*...> mTuple;
+//};
+
 }  // namespace TupleVecInternal
+
+//template <typename... Ts>
+//void iter_swap(TupleVecInternal::TupleVecIter<Ts...>& a, TupleVecInternal::TupleVecIter<Ts...>& b)
+//{
+//	TupleVecInternal::TupleIndexRecurser<sizeof...(Ts)-1, Ts... >::DoSwap(a.mTupleVec->mImpl, b.mTupleVec->mImpl, a.mIndex, b.mIndex);
+//}
 
 // External interface of tuple_vector
 template <typename... Ts>
