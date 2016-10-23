@@ -6,11 +6,13 @@
 
 #include "EASTLTest.h"
 
+#include <EASTL/array.h>
 #include <EASTL/tuple_vector.h>
 #include <EASTL/sort.h>
 
 #include <random>
 #include <windows.h>
+
 using namespace eastl;
 
 void flushCache(int* cacheFlushSrc, const int cacheFlushSize, int* cacheFlushDest)
@@ -185,11 +187,11 @@ int TestTupleVector()
 		const int NumData = 64;
 		struct LargeData
 		{
-			/*LargeData(float f)
+			LargeData(float f)
 			{
-				memset(&data, f, NumData);
-			}*/
-			float data[NumData];
+				data.fill(f);
+			}
+			eastl::array<float, NumData> data;
 		};
 		QueryPerformanceFrequency(&frequency);
 		do
@@ -197,14 +199,14 @@ int TestTupleVector()
 			LARGE_INTEGER startTime, endTime;
 
 			// create+populate the two vectors with some junk
-			tuple_vector<bool, float , int> tripleElementVec;
+			tuple_vector<bool, LargeData, int> tripleElementVec;
 			const int ElementCount = 1 * 1024 * 1024;
 			tripleElementVec.reserve(ElementCount);
 
 			struct TripleElement
 			{
 				bool a;
-				float b;
+				LargeData b;
 				int c;
 			};
 			vector<TripleElement> aosTripleElement;
