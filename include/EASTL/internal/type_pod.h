@@ -1294,7 +1294,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if (defined(EA_COMPILER_NO_DECLTYPE) && !EASTL_TYPE_TRAIT_declval_CONFORMANCE) || defined(_MSC_VER) // VS2012 mis-compiles the conforming code below and so must be placed here.
+	#if (defined(EA_COMPILER_NO_DECLTYPE) && !EASTL_TYPE_TRAIT_declval_CONFORMANCE) || (defined(_MSC_VER) && _MSC_VER <= 1800) // VS2012 mis-compiles the conforming code below and so must be placed here.
 		#define EASTL_TYPE_TRAIT_is_assignable_CONFORMANCE 0
 
 		// It's impossible to do this correctly without declval or some other compiler help.
@@ -1667,7 +1667,7 @@ namespace eastl
 	// For a complete type T and given 
 	//     template <class U>
 	//     struct test { U u; };
-	// test<T>::˜test() is not deleted (C++11 "= delete").
+	// test<T>::ï¿½test() is not deleted (C++11 "= delete").
 	// T shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
 	//
 	///////////////////////////////////////////////////////////////////////
