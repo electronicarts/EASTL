@@ -1020,6 +1020,7 @@ int TestTypeTraits()
 		// These might not succeed unless the implementation is conforming.
 		static_assert((eastl::is_assignable<Assignable, Assignable>::value == true),  "is_assignable failure");
 		static_assert((eastl::is_assignable<Assignable, Pod1>::value       == true),  "is_assignable failure");
+		static_assert((eastl::is_assignable<PodA&, PodA>::value            == true),  "is_assignable failure");
 
 		// These cannot succeed unless the implementation is conforming.
 		static_assert((eastl::is_assignable<void, void>::value             == false),  "is_assignable failure");
