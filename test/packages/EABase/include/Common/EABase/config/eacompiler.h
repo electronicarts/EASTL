@@ -1054,9 +1054,9 @@
 	#if !defined(EA_COMPILER_NO_VARIABLE_TEMPLATES)
 		#if defined(_MSC_VER) && (_MSC_FULL_VER >= 190023918)    // VS2015 Update 2 and above.
 			// supported.
-		#elif defined(__clang__) && (EA_COMPILER_VERSION >= 340) && !defined(__APPLE__)    // Clang 3.4+, not including Apple's Clang.
+		#elif defined(EA_COMPILER_CPP14_ENABLED) && defined(__clang__) && (EA_COMPILER_VERSION >= 304) && !defined(__APPLE__)    // Clang 3.4+, not including Apple's Clang.
 			// supported.
-		#elif defined(__GNUC__) && (EA_COMPILER_VERSION >= 5000)   // GCC 5+
+		#elif defined(EA_COMPILER_CPP14_ENABLED) && defined(__GNUC__) && (EA_COMPILER_VERSION >= 5000)   // GCC 5+
 			// supported.
 		#elif !defined(EA_COMPILER_CPP14_ENABLED) 
 			#define EA_COMPILER_NO_VARIABLE_TEMPLATES 1

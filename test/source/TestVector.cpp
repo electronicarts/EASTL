@@ -11,6 +11,7 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/utility.h>
 #include <EASTL/allocator_malloc.h>
+#include <EASTL/unique_ptr.h>
 
 #include "ConceptImpls.h"
 
@@ -119,6 +120,19 @@ public:
 
 	testmovable& operator=(testmovable&&) EA_NOEXCEPT { return *this; }
 };
+
+
+#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	/// custom type-trait which checks if a type is comparable via the <operator.
+	template <class, class = eastl::void_t<>>
+	struct is_less_comparable : eastl::false_type { };
+	template <class T>
+	struct is_less_comparable<T, eastl::void_t<decltype(eastl::declval<T>() < eastl::declval<T>())>> : eastl::true_type { };
+#else
+	// bypass the test since the compiler doesn't support variable templates.
+	template <class> struct is_less_comparable : eastl::false_type { };
+#endif
+
 
 int TestVector()
 {
@@ -398,7 +412,7 @@ int TestVector()
 			TestObject& r01 = vec01.at(6);
 			EATEST_VERIFY(!(r01 == TestObject(0)));  // Should not get here, as exception thrown.
 		}
-		catch (std::out_of_range& err) { EATEST_VERIFY(true); }
+		catch (std::out_of_range&) { EATEST_VERIFY(true); }
 		catch (...) { EATEST_VERIFY(false); }
 #endif
 	}
@@ -1399,6 +1413,82 @@ int TestVector()
 	}
 
 #endif // EASTL_TEST_CONCEPT_IMPLS
+
+	{
+		// validates our vector implementation does not use 'operator<' on input iterators during vector construction.
+		//
+		struct container_value_type { int data; };
+		struct container_with_custom_iterator
+		{
+			struct iterator
+			{
+				typedef eastl::input_iterator_tag iterator_category;
+				typedef int value_type;
+				typedef ptrdiff_t difference_type;
+				typedef int* pointer;
+				typedef int& reference;
+
+				bool operator!=(const iterator& rhs) const { return false; }
+				iterator& operator++()                     { return *this; }
+				iterator operator++(int)                   { return *this; }
+				container_value_type operator*()           { return {}; }
+			};
+
+			container_with_custom_iterator() {}
+
+			iterator begin() const { return {}; }
+			iterator end() const   { return {}; }
+			bool empty() const     { return false; }
+
+		private:
+			eastl::vector<container_value_type> m_vector;
+		};
+
+		static_assert(!is_less_comparable<container_with_custom_iterator::iterator>::value, "type cannot support comparison by '<' for this test");
+		container_with_custom_iterator ci;
+		eastl::vector<container_value_type> v2(ci.begin(), ci.end()); 
+	}
+
+
+	// unique_ptr tests
+	{
+		// Simple move-assignment test to prevent regressions where eastl::vector utilizes operations on T that are not necessary.
+		{
+			eastl::vector<eastl::unique_ptr<int>> v1;
+			eastl::vector<eastl::unique_ptr<int>> v2;
+			v2 = eastl::move(v1);
+		}
+
+		{
+			// This test verifies that eastl::vector can handle the move-assignment case where its utilizes two
+			// different allocator instances that do not compare equal.  An example of an allocator that compares equal
+			// but isn't the same object instance is an allocator that shares the same memory allocation mechanism (eg.
+			// malloc).  The memory allocated from one instance can be freed by another instance in the case where
+			// allocators compare equal.  This test is verifying functionality in the opposite case where allocators
+			// instances do not compare equal and must clean up its own allocated memory.
+			InstanceAllocator::reset_all();
+			{
+				InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
+				eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v1(a1);
+				eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v2(a2);
+
+				VERIFY(v1.get_allocator() != v2.get_allocator());
+
+				// add some data in the vector so we can move it to the other vector.
+				v1.push_back(nullptr);
+				v1.push_back(nullptr);
+				v1.push_back(nullptr);
+				v1.push_back(nullptr);
+
+				VERIFY(!v1.empty() && v2.empty());
+				v2 = eastl::move(v1);
+				VERIFY(v1.empty() && !v2.empty());
+				v1.swap(v2); 
+				VERIFY(!v1.empty() && v2.empty());
+			}
+			VERIFY(InstanceAllocator::mMismatchCount == 0);
+		}
+	}
 
 	return nErrorCount;
 }

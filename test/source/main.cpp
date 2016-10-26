@@ -83,15 +83,14 @@ int EAMain(int argc, char* argv[])
 
 	TestApplication testSuite("EASTL Unit Tests", argc, argv);
 
+	testSuite.AddTest("Any",				    TestAny);
 	testSuite.AddTest("Optional",				TestOptional);
 	testSuite.AddTest("TypeTraits",				TestTypeTraits);
 	testSuite.AddTest("TestCppCXTypeTraits",	TestCppCXTypeTraits);
 	testSuite.AddTest("Extra",					TestExtra);
 	testSuite.AddTest("Functional",				TestFunctional);
 	testSuite.AddTest("Utility",				TestUtility);
-#if EASTL_TUPLE_ENABLED
 	testSuite.AddTest("Tuple",					TestTuple);
-#endif // EASTL_TUPLE_ENABLED
 	testSuite.AddTest("Memory",					TestMemory);
 	testSuite.AddTest("Allocator",				TestAllocator);
 	testSuite.AddTest("Random",					TestRandom);
@@ -111,13 +110,16 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Array",					TestArray);
 	testSuite.AddTest("Vector",					TestVector);
 	testSuite.AddTest("FixedVector",			TestFixedVector);
+	testSuite.AddTest("SegmentedVector",		TestSegmentedVector);
 	testSuite.AddTest("Deque",					TestDeque);
 	testSuite.AddTest("Map",					TestMap);
 	testSuite.AddTest("FixedMap",				TestFixedMap);
+	testSuite.AddTest("StringMap",				TestStringMap);
 	testSuite.AddTest("Set",					TestSet);
 	testSuite.AddTest("FixedSet",				TestFixedSet);
 	testSuite.AddTest("Hash",					TestHash);
 	testSuite.AddTest("FixedHash",				TestFixedHash);
+	testSuite.AddTest("FixedHash",				TestStringHashMap);
 	testSuite.AddTest("IntrusiveHash",			TestIntrusiveHash);
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);

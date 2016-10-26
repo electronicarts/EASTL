@@ -1163,6 +1163,9 @@ int TestSuite::Run()
     {
         ResultInfo& resultInfo = *it;
 
+		eastl::string test_name;
+		resultInfo.mpTest->GetName(test_name);
+
         // If we already have a result for this test, we don't need to run it again.
         if(resultInfo.mnResult != kTestResultNone)
             continue;

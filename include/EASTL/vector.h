@@ -590,7 +590,7 @@ namespace eastl
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 		template <typename T, typename Allocator>
 		inline vector<T, Allocator>::vector(this_type&& x)
-			: base_type(x.mAllocator)
+			: base_type(eastl::move(x.mAllocator))  // vector requires move-construction of allocator in this case.
 		{
 			DoSwap(x);
 		}
@@ -600,7 +600,13 @@ namespace eastl
 		inline vector<T, Allocator>::vector(this_type&& x, const allocator_type& allocator)
 			: base_type(allocator)
 		{
-			swap(x); // member swap handles the case that x has a different allocator than our allocator by doing a copy.
+			if (mAllocator == x.mAllocator) // If allocators are equivalent...
+				DoSwap(x);
+			else 
+			{
+				this_type temp(eastl::move(*this)); // move construct so we don't require the use of copy-ctors that prevent the use of move-only types.
+				temp.swap(x);
+			}
 		}
 	#endif
 
@@ -1381,10 +1387,10 @@ namespace eastl
 	// allocator_traits<allocator_type>::propagate_on_container_swap::value is true (propagate_on_container_swap
 	// is false by default). EASTL doesn't have allocator_traits and so this doesn't directly apply,
 	// but EASTL has the effective behavior of propagate_on_container_swap = false for all allocators. 
-	// So EASTL swap exchanges contents but not allocators, and swap is more efficient if allocators are equivalent.
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::swap(this_type& x)
 	{
+	#if EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		if(mAllocator == x.mAllocator) // If allocators are equivalent...
 			DoSwap(x);
 		else // else swap the contents.
@@ -1393,6 +1399,27 @@ namespace eastl
 			*this = x;                   // itself call this member swap function.
 			x     = temp;
 		}
+	#else
+		// NOTE(rparolin): The previous implementation required T to be copy-constructible in the fall-back case where
+		// allocators with unique instances copied elements.  This was an unnecessary restriction and prevented the common
+		// usage of vector with non-copyable types (eg. eastl::vector<non_copyable> or eastl::vector<unique_ptr>). 
+		// 
+		// The previous implementation violated the following requirements of vector::swap so the fall-back code has
+		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = false' therefore the fall-back case is
+		// undefined behaviour.  We simply swap the contents and the allocator as that is the common expectation of
+		// users and does not put the container into an invalid state since it can not free its memory via its current
+		// allocator instance.
+		//
+		// http://en.cppreference.com/w/cpp/container/vector/swap
+		// "Exchanges the contents of the container with those of other. Does not invoke any move, copy, or swap
+		// operations on individual elements."
+		//
+	    // http://en.cppreference.com/w/cpp/concept/AllocatorAwareContainer
+	    // "Swapping two containers with unequal allocators if propagate_on_container_swap is false is undefined
+	    // behavior."
+
+		DoSwap(x);
+	#endif
 	}
 
 
@@ -1445,7 +1472,7 @@ namespace eastl
 	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
 	{
 		// To do: Use emplace_back instead of push_back(). Our emplace_back will work below without any ifdefs.
-		for(; first < last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
+		for(; first != last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
 			push_back(*first);        // Thus the standard *requires* that we do this (inefficient) implementation.
 	}                                 // Luckily, InputIterators are in practice almost never used, so this code will likely never get executed.
 
@@ -1730,7 +1757,7 @@ namespace eastl
 	void vector<T, Allocator>::DoClearCapacity() // This function exists because set_capacity() currently indirectly requires value_type to be default-constructible, 
 	{                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
 		clear();
-		this_type temp(*this);  // This is the simplest way to accomplish this, 
+		this_type temp(eastl::move(*this));  // This is the simplest way to accomplish this, 
 		swap(temp);             // and it is as efficient as any other.
 	}
 

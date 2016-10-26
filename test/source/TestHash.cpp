@@ -335,6 +335,15 @@ int TestHash()
 	}
 
 
+	{
+		// void reserve(size_type nElementCount);
+		nErrorCount += HashContainerReserveTest<hash_set<int>>()();
+		nErrorCount += HashContainerReserveTest<hash_multiset<int>>()();
+		nErrorCount += HashContainerReserveTest<hash_map<int, int>>()();
+		nErrorCount += HashContainerReserveTest<hash_multimap<int, int>>()();
+	}
+
+
 	{   // Test hash_set with cached hash code.
 
 		// insert_return_type insert(const value_type& value) ;

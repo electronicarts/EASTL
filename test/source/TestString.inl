@@ -28,7 +28,7 @@ int TEST_STRING_NAME()
 
 	// explicit basic_string(const allocator_type& allocator);
 	{ 
-		eastl::allocator alloc;
+		typename StringType::allocator_type alloc;
 		StringType str(alloc);
 		VERIFY(str.validate());
 	}

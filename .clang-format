@@ -21,7 +21,7 @@ DerivePointerBinding                      : false
 IndentWidth                               : 4
 KeepEmptyLinesAtTheStartOfBlocks          : true
 MaxEmptyLinesToKeep                       : 2
-NamespaceIndentation                      : Inner 
+NamespaceIndentation                      : All 
 PointerBindsToType                        : true
 SpacesBeforeTrailingComments              : 1
 SpacesInAngles                            : false

@@ -16,6 +16,7 @@
 
 #include <EASTL/internal/integer_sequence.h>
 #include <EASTL/internal/tuple_fwd_decls.h>
+#include <EASTL/internal/in_place_t.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push)           // VC++ generates a bogus warning that you cannot code away.
@@ -809,7 +810,8 @@ namespace eastl
 
 #endif  // EASTL_TUPLE_ENABLED
 
-		}  // namespace eastl
+
+}  // namespace eastl
 
 #ifdef _MSC_VER
 	#pragma warning(pop)

@@ -12,9 +12,9 @@ namespace eastl
 	class allocator;
 
 	template <typename T, typename Allocator> class basic_string;
-	typedef basic_string<char, allocator> string8;
+	typedef basic_string<char, allocator> local_string8;  // collides with eastl::string8 in bulkbuilds
 
-	static void UseForwardDeclaredString(string8*)
+	static void UseForwardDeclaredString(local_string8*)
 	{
 	}
 
@@ -162,7 +162,7 @@ static int TestForwardDeclarations()
 {
 	int nErrorCount = 0;
 
-	eastl::string8 s8;
+	eastl::local_string8 s8;
 	UseForwardDeclaredString(&s8);   
 
 	eastl::vector8 v8;

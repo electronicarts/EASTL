@@ -4146,6 +4146,27 @@ namespace eastl
 
 
 
+	/// clamp
+	///
+	/// Returns a reference to a clamped value within the range of [lo, hi].
+	///
+	/// http://en.cppreference.com/w/cpp/algorithm/clamp
+	///
+	template <class T>
+	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi)
+	{
+		return clamp(v, lo, hi, eastl::less<>());
+	}
+
+	template <class T, class Compare>
+	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
+	{
+		// code collapsed to a single line due to constexpr requirements
+		return [&] { EASTL_ASSERT(!comp(hi, lo)); }(),
+			   comp(v, lo) ? lo : comp(hi, v) ? hi : v;
+	}
+
+
 } // namespace eastl
 
 

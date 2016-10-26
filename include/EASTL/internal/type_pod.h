@@ -286,7 +286,7 @@ namespace eastl
 		#define EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE 1    // has_trivial_assign is conforming.
 
 		template <typename T> 
-		struct has_trivial_assign : public integral_constant<bool, (__has_trivial_assign(T) || eastl::is_pod<T>::value) && !eastl::is_const<T>::value && !eastl::is_volatile<T>::value>{};
+		struct has_trivial_assign : public integral_constant<bool, (__has_trivial_assign(T) || eastl::is_pod<T>::value) && !eastl::is_const<T>::value && !eastl::is_volatile<T>::value && !eastl::is_hat_type<T>::value>{};
 	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
 		#define EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE 1    // has_trivial_assign is conforming.
 
@@ -335,7 +335,7 @@ namespace eastl
 		#define EASTL_TYPE_TRAIT_has_trivial_destructor_CONFORMANCE 1    // has_trivial_destructor is conforming.
 
 		template <typename T> 
-		struct has_trivial_destructor : public eastl::integral_constant<bool, __has_trivial_destructor(T) || eastl::is_pod<T>::value>{};
+		struct has_trivial_destructor : public eastl::integral_constant<bool, (__has_trivial_destructor(T) || eastl::is_pod<T>::value) && !eastl::is_hat_type<T>::value>{};
 	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
 		#define EASTL_TYPE_TRAIT_has_trivial_destructor_CONFORMANCE 1    // has_trivial_destructor is conforming.
 
@@ -1667,7 +1667,7 @@ namespace eastl
 	// For a complete type T and given 
 	//     template <class U>
 	//     struct test { U u; };
-	// test<T>::Â˜test() is not deleted (C++11 "= delete").
+	// test<T>::˜test() is not deleted (C++11 "= delete").
 	// T shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
 	//
 	///////////////////////////////////////////////////////////////////////
@@ -1759,7 +1759,7 @@ namespace eastl
 
 		template <typename T>
 		struct is_trivially_destructible // Can't use just __has_trivial_destructor(T) because some compilers give it slightly different meaning, and are just plain broken, such as VC++'s __has_trivial_destructor, which says false for fundamental types.
-			: public integral_constant<bool, eastl::is_destructible<T>::value && ((__has_trivial_destructor(T) &&  !eastl::is_hat_type<T>::value)|| eastl::is_scalar<typename eastl::remove_all_extents<T>::type>::value)> {};
+			: public integral_constant<bool, eastl::is_destructible<T>::value && ((__has_trivial_destructor(T) && !eastl::is_hat_type<T>::value)|| eastl::is_scalar<typename eastl::remove_all_extents<T>::type>::value)> {};
 
 	#else
 		#define EASTL_TYPE_TRAIT_is_trivially_destructible_CONFORMANCE 0
@@ -1907,6 +1907,10 @@ namespace eastl
 			: public eastl::is_nothrow_constructible<T, typename eastl::add_rvalue_reference<T>::type> {};
 	#endif
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_nothrow_move_constructible_v = is_nothrow_move_constructible<T>::value;
+	#endif
 
 
 } // namespace eastl

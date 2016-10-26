@@ -306,6 +306,10 @@ int TestTuple()
 	return nErrorCount;
 }
 
+#else
+
+int TestTuple() { return 0; }
+
 #endif  // EASTL_TUPLE_ENABLED
 
 EA_RESTORE_VC_WARNING()

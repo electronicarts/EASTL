@@ -133,7 +133,7 @@ namespace eastl
 		/// If an exception occurs during the allocation of the shared 
 		/// reference count, the owned pointer is deleted and the exception
 		/// is rethrown. A null pointer is given a reference count of 1.
-		explicit shared_array(T* pArray = NULL, const allocator& allocator = EASTL_SHARED_ARRAY_DEFAULT_ALLOCATOR)
+		explicit shared_array(T* pArray = NULL, const allocator_type& allocator = EASTL_SHARED_ARRAY_DEFAULT_ALLOCATOR)
 			: mpArray(pArray),
 			  mpRefCount(NULL),
 			  mAllocator(allocator)

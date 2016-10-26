@@ -626,6 +626,40 @@ static int TestMinMax()
 }
 
 
+static int TestClamp()
+{
+	using namespace eastl;
+
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::clamp(42, 1, 100) == 42);
+	EATEST_VERIFY(eastl::clamp(-42, 1, 100) == 1);
+	EATEST_VERIFY(eastl::clamp(420, 1, 100) == 100);
+	EATEST_VERIFY(eastl::clamp(1, 1, 100) == 1);
+	EATEST_VERIFY(eastl::clamp(100, 1, 100) == 100);
+
+	EATEST_VERIFY(eastl::clamp(42.f, 1.f, 100.f, less<float>()) == 42.f);
+	EATEST_VERIFY(eastl::clamp(-42.f, 1.f, 100.f, less<float>()) == 1.f);
+	EATEST_VERIFY(eastl::clamp(420.f, 1.f, 100.f, less<float>()) == 100.f);
+	EATEST_VERIFY(eastl::clamp(1.f, 1.f, 100.f, less<float>()) == 1.f);
+	EATEST_VERIFY(eastl::clamp(100.f, 1.f, 100.f, less<float>()) == 100.f);
+
+	EATEST_VERIFY(eastl::clamp(42., 1., 100., less<double>()) == 42.);
+	EATEST_VERIFY(eastl::clamp(-42., 1., 100., less<double>()) == 1.);
+	EATEST_VERIFY(eastl::clamp(420., 1., 100., less<double>()) == 100.);
+	EATEST_VERIFY(eastl::clamp(1., 1., 100., less<double>()) == 1.);
+	EATEST_VERIFY(eastl::clamp(100., 1., 100., less<double>()) == 100.);
+
+	EATEST_VERIFY(eastl::clamp(A(42), A(1), A(100), LessStruct()).a == A(42).a);
+	EATEST_VERIFY(eastl::clamp(A(-42), A(1), A(100), LessStruct()).a == A(1).a);
+	EATEST_VERIFY(eastl::clamp(A(420), A(1), A(100), LessStruct()).a == A(100).a);
+	EATEST_VERIFY(eastl::clamp(A(1), A(1), A(100), LessStruct()).a == A(1).a);
+	EATEST_VERIFY(eastl::clamp(A(100), A(1), A(100), LessStruct()).a == A(100).a);
+
+	return nErrorCount;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestAlgorithm
 //
@@ -642,6 +676,8 @@ int TestAlgorithm()
 	TestObject::Reset();
 
 	nErrorCount += TestMinMax();
+	nErrorCount += TestClamp();
+
 
 	// bool all_of (InputIterator first, InputIterator last, Predicate p);
 	// bool any_of (InputIterator first, InputIterator last, Predicate p);

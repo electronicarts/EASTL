@@ -54,13 +54,16 @@ int TestFixedString();
 int TestArray();
 int TestVector();
 int TestFixedVector();
+int TestSegmentedVector();
 int TestDeque();
 int TestMap();
 int TestFixedMap();
+int TestStringMap();
 int TestSet();
 int TestFixedSet();
 int TestHash();
 int TestFixedHash();
+int TestStringHashMap();
 int TestIntrusiveHash();
 int TestVectorMap();
 int TestVectorSet();
@@ -75,6 +78,7 @@ int TestIterator();
 int TestRatio();
 int TestChrono();
 int TestOptional();
+int TestAny();
 
 
 // Now enable warnings as desired.
@@ -371,7 +375,7 @@ struct TestObject
 	int             mX;                  // Value for the TestObject.
 	bool            mbThrowOnCopy;       // Throw an exception of this object is copied, moved, or assigned to another.
 	int64_t         mId;                 // Unique id for each object, equal to its creation number. This value is not coped from other TestObjects during any operations, including moves.
-	uint32_t        mMagicValue;         // Used to verify that an instance is valid and that it is not corrupted. It should alwasy be kMagicValue.
+	uint32_t        mMagicValue;         // Used to verify that an instance is valid and that it is not corrupted. It should always be kMagicValue.
 	static int64_t  sTOCount;            // Count of all current existing TestObjects.
 	static int64_t  sTOCtorCount;        // Count of times any ctor was called.
 	static int64_t  sTODtorCount;        // Count of times dtor was called.

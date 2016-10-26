@@ -1036,6 +1036,7 @@ namespace eastl
 		void clear(bool clearBuckets);                  // If clearBuckets is true, we free the bucket memory and set the bucket count back to the newly constructed count.
 		void reset_lose_memory() EA_NOEXCEPT;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 		void rehash(size_type nBucketCount);
+		void reserve(size_type nElementCount);
 
 		#if EASTL_RESET_ENABLED
 			void reset() EA_NOEXCEPT; // This function name is deprecated; use reset_lose_memory instead.
@@ -2777,6 +2778,14 @@ namespace eastl
 
 		mnElementCount = 0;
 		mRehashPolicy.mnNextResize = 0;
+	}
+
+
+	template <typename K, typename V, typename A, typename EK, typename Eq,
+			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
+	{
+		rehash(mRehashPolicy.GetBucketCount(uint32_t(nElementCount)));
 	}
 
 

@@ -4,6 +4,7 @@ tags
 .swp
 *.swp
 .swo
+.TMP
 -.d
 eastl_build_out
 build_bench
@@ -23,8 +24,6 @@ cmake_install.cmake
 **/*.vcxproj.filters
 *.VC.opendb
 *.sdf
-**/*.suo
-**/*.user
 .vs/*
 **/Debug/*
 CMakeFiles/*
@@ -34,5 +33,6 @@ Release/*
 Win32/*
 x64/*
 MinSizeRel/*
-build*/*
+build/*
 Testing/*
+%ALLUSERSPROFILE%/*

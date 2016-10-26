@@ -166,9 +166,13 @@ namespace eastl
 	template <typename T>
 	struct alignment_of : public integral_constant<size_t, alignment_of_value<T>::value>{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR size_t alignment_of_v = alignment_of<T>::value;
+	#endif
 
 
-	///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
 	// is_aligned
 	//
 	// Defined as true if the type has alignment requirements greater 
@@ -183,6 +187,11 @@ namespace eastl
 
 	template <typename T> 
 	struct is_aligned : public integral_constant<bool, is_aligned_value<T>::value>{};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR size_t is_aligned_v = is_aligned<T>::value;
+	#endif
 
 
 

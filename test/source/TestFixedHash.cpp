@@ -560,6 +560,22 @@ int TestFixedHash()
 		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject, 32, 7, true> >();
 	}
 
+	{
+		// void reserve(size_type nElementCount);
+
+		// test with overflow enabled.
+		nErrorCount += HashContainerReserveTest<fixed_hash_set<int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_multiset<int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_map<int, int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_multimap<int, int, 16>>()();
+
+		// API prevents testing fixed size hash container reservation without overflow enabled. 
+		//
+		// nErrorCount += HashContainerReserveTest<fixed_hash_set<int, 400, 401, false>>()();
+		// nErrorCount += HashContainerReserveTest<fixed_hash_multiset<int, 400, 401, false>>()();
+		// nErrorCount += HashContainerReserveTest<fixed_hash_map<int, int, 400, 401, false>>()();
+		// nErrorCount += HashContainerReserveTest<fixed_hash_multimap<int, int, 9000, 9001, false>>()();
+	}
 
 	{
 		// initializer_list support.

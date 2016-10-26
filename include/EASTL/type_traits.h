@@ -457,6 +457,10 @@ namespace eastl
 	template <typename T, typename F>
 	struct conditional<false, T, F> { typedef F type; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <bool B, class T, class F>
+		using conditional_t = typename conditional<B, T, F>::type;
+	#endif
 
 	///////////////////////////////////////////////////////////////////////
 	// identity
@@ -750,6 +754,10 @@ namespace eastl
 		template <typename T> struct remove_reference<T&&>{ typedef T type; };
 	#endif
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_reference_t = typename remove_reference<T>::type;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
