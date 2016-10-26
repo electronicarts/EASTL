@@ -330,7 +330,7 @@ namespace eastl
 		storage_handler_ptr m_handler;
 
 	public:
-		// TODO(rparolin):  make renable constexpr
+		// TODO(rparolin):  renable constexpr
 		// EA_CONSTEXPR 
 			any() EA_NOEXCEPT 
 			: m_storage(), m_handler(nullptr) {}
