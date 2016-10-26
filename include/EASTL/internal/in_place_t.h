@@ -21,13 +21,22 @@ namespace eastl
 		template <size_t> struct in_place_index_tag {};
 	}
 
-
 	///////////////////////////////////////////////////////////////////////////////
 	/// in_place_tag
 	///
 	/// http://en.cppreference.com/w/cpp/utility/in_place_tag
 	///
-	struct in_place_tag { in_place_tag() = delete; };
+	struct in_place_tag
+	{
+		in_place_tag() = delete;
+
+	private:
+		explicit in_place_tag(Internal::in_place_tag) {}
+		friend inline in_place_tag Internal_ConstructInPlaceTag();
+	};
+
+	// internal factory function for in_place_tag
+	inline in_place_tag Internal_ConstructInPlaceTag() { return in_place_tag(Internal::in_place_tag{}); }
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -52,13 +61,13 @@ namespace eastl
 	/// 
 	/// http://en.cppreference.com/w/cpp/utility/in_place
 	///
-	inline in_place_tag in_place(Internal::in_place_tag) { return {}; }
+	inline in_place_tag in_place(Internal::in_place_tag) { return Internal_ConstructInPlaceTag(); }
 
 	template <class T>
-	inline in_place_tag in_place(Internal::in_place_type_tag<T>) { return {}; }
+	inline in_place_tag in_place(Internal::in_place_type_tag<T>) { return Internal_ConstructInPlaceTag(); }
 
 	template <std::size_t I>
-	inline in_place_tag in_place(Internal::in_place_index_tag<I>){ return {}; }
+	inline in_place_tag in_place(Internal::in_place_index_tag<I>) { return Internal_ConstructInPlaceTag(); }
 
 
 } // namespace eastl
