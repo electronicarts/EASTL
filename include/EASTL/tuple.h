@@ -469,7 +469,7 @@ template <typename T, typename Indices, typename... Ts>
 T&& get(TupleImpl<Indices, Ts...>&& t)
 {
 	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
-	return static_cast<Type&&>(static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal());
+	return static_cast<T&&>(static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal());
 }
 
 // TupleLike
