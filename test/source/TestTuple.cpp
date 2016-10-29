@@ -209,7 +209,7 @@ int TestTuple()
 	}
 
 	{
-		// Test some other edge cases with typed-getter
+		// Test some other cases with typed-getter
 		tuple<double, double, bool> aTupleWithRepeatedType(1.0f, 2.0f, true);
 		EATEST_VERIFY(get<bool>(aTupleWithRepeatedType) == true);
 
@@ -218,6 +218,19 @@ int TestTuple()
 
 		tuple<bool, double, double> yetAnotherTupleWithRepeatedType(true, 1.0f, 2.0f);
 		EATEST_VERIFY(get<bool>(anotherTupleWithRepeatedType) == true);
+
+		struct floatOne { float val; };
+		struct floatTwo { float val; };
+		tuple<floatOne, floatTwo> aTupleOfStructs({ 1.0f }, { 2.0f } );
+		EATEST_VERIFY(get<floatOne>(aTupleOfStructs).val == 1.0f);
+		EATEST_VERIFY(get<floatTwo>(aTupleOfStructs).val == 2.0f);
+		
+		const tuple<double, double, bool> aConstTuple(aTupleWithRepeatedType);
+		const bool& constRef = get<bool>(aConstTuple);
+		EATEST_VERIFY(constRef == true);
+
+		const bool&& constRval = get<bool>(eastl::move(aTupleWithRepeatedType));
+		EATEST_VERIFY(constRval == true);
 	}
 
 	{
