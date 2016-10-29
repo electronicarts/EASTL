@@ -130,9 +130,12 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(aSingleElementTuple) == 1);
 		get<0>(aSingleElementTuple) = 2;
 		EATEST_VERIFY(get<0>(aSingleElementTuple) == 2);
+		get<int>(aSingleElementTuple) = 3;
+		EATEST_VERIFY(get<int>(aSingleElementTuple) == 3);
 
 		const tuple<int> aConstSingleElementTuple(3);
 		EATEST_VERIFY(get<0>(aConstSingleElementTuple) == 3);
+		EATEST_VERIFY(get<int>(aConstSingleElementTuple) == 3);
 
 		tuple<DefaultConstructibleType> aDefaultConstructedTuple;
 		EATEST_VERIFY(get<0>(aDefaultConstructedTuple).mVal == DefaultConstructibleType::defaultVal);
@@ -167,6 +170,10 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(aTuple) == 1);
 		EATEST_VERIFY(get<1>(aTuple) == 1.0f);
 		EATEST_VERIFY(get<2>(aTuple) == true);
+		EATEST_VERIFY(get<int>(aTuple) == 1);
+		EATEST_VERIFY(get<float>(aTuple) == 1.0f);
+		EATEST_VERIFY(get<bool>(aTuple) == true);
+
 		get<1>(aTuple) = 2.0f;
 		EATEST_VERIFY(get<1>(aTuple) == 2.0f);
 
@@ -199,6 +206,18 @@ int TestTuple()
 		tuple<int, float, bool> aDefaultInitializedTuple;
 		EATEST_VERIFY(get<0>(aDefaultInitializedTuple) == 0 && get<1>(aDefaultInitializedTuple) == 0.0f &&
 					  get<2>(aDefaultInitializedTuple) == false);
+	}
+
+	{
+		// Test some other edge cases with typed-getter
+		tuple<double, double, bool> aTupleWithRepeatedType(1.0f, 2.0f, true);
+		EATEST_VERIFY(get<bool>(aTupleWithRepeatedType) == true);
+
+		tuple<double, bool, double> anotherTupleWithRepeatedType(1.0f, true, 2.0f);
+		EATEST_VERIFY(get<bool>(anotherTupleWithRepeatedType) == true);
+
+		tuple<bool, double, double> yetAnotherTupleWithRepeatedType(true, 1.0f, 2.0f);
+		EATEST_VERIFY(get<bool>(anotherTupleWithRepeatedType) == true);
 	}
 
 	{

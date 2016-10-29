@@ -67,7 +67,7 @@ class tuple_size<Internal::TupleImpl<Indices, Ts...>> : public integral_constant
 {
 };
 
-// tuple_element helper
+// tuple_element helper to be able to isolate a type given an index
 template <size_t I, typename T>
 class tuple_element
 {
@@ -142,6 +142,41 @@ class tuple_element<I, volatile Internal::TupleImpl<Indices, Ts...>> : public tu
 template <size_t I, typename Indices, typename... Ts>
 class tuple_element<I, const volatile Internal::TupleImpl<Indices, Ts...>> : public tuple_element<
 																				 I, const volatile tuple<Ts...>>
+{
+};
+
+// attempt to isolate index given a type
+template <typename T, typename Tuple>
+struct tuple_index
+{
+};
+
+template <typename T>
+struct tuple_index<T, TupleTypes<>>
+{
+	typedef void DuplicateTypeCheck;
+	tuple_index() = delete; // tuple_index should only be used for compile-time assistance, and never be instantiated
+	static const size_t index = 0;
+};
+
+template <typename T, typename... Ts>
+struct tuple_index<T, TupleTypes<T, Ts...>>
+{
+	typedef int DuplicateTypeCheck;
+	static_assert(is_void<typename tuple_index<T, TupleTypes<Ts...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+
+	static const size_t index = 0;
+};
+
+template <typename T, typename Ts, typename... TsRest>
+struct tuple_index<T, TupleTypes<Ts, TsRest...>>
+{
+	typedef typename tuple_index<T, TupleTypes<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
+	static const size_t index = tuple_index<T, TupleTypes<TsRest...>>::index + 1;
+};
+
+template <typename T, typename Indices, typename... Ts>
+struct tuple_index<T, Internal::TupleImpl<Indices, Ts...>> : public tuple_index<T, TupleTypes<Ts...>>
 {
 };
 
@@ -349,6 +384,14 @@ const tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(const TupleImpl<Indices
 template <size_t I, typename Indices, typename... Ts>
 tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& t);
 
+template <typename T, typename Indices, typename... Ts>
+T& get(TupleImpl<Indices, Ts...>& t);
+
+template <typename T, typename Indices, typename... Ts>
+const T& get(const TupleImpl<Indices, Ts...>& t);
+
+template <typename T, typename Indices, typename... Ts>
+T&& get(TupleImpl<Indices, Ts...>&& t);
 
 template <size_t... Indices, typename... Ts>
 struct TupleImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleLeaf<Indices, Ts>...
@@ -406,6 +449,27 @@ tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& 
 {
 	typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
 	return static_cast<Type&&>(static_cast<Internal::TupleLeaf<I, Type>&>(t).getInternal());
+}
+
+template <typename T, typename Indices, typename... Ts>
+T& get(TupleImpl<Indices, Ts...>& t)
+{
+	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
+	return static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
+}
+
+template <typename T, typename Indices, typename... Ts>
+const T& get(const TupleImpl<Indices, Ts...>& t)
+{
+	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
+	return static_cast<const Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
+}
+
+template <typename T, typename Indices, typename... Ts>
+T&& get(TupleImpl<Indices, Ts...>&& t)
+{
+	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
+	return static_cast<Type&&>(static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal());
 }
 
 // TupleLike
@@ -699,6 +763,15 @@ private:
 
 	template <size_t I, typename... Ts_>
 	friend tuple_element_t<I, tuple<Ts_...>>&& get(tuple<Ts_...>&& t);
+
+	template <typename T, typename... ts_>
+	friend T& get(tuple<ts_...>& t);
+
+	template <typename T, typename... ts_>
+	friend const T& get(const tuple<ts_...>& t);
+
+	template <typename T, typename... ts_>
+	friend T&& get(tuple<ts_...>&& t);
 };
 
 template <>
@@ -724,6 +797,24 @@ template <size_t I, typename... Ts>
 inline tuple_element_t<I, tuple<Ts...>>&& get(tuple<Ts...>&& t)
 {
 	return get<I>(move(t.mImpl));
+}
+
+template <typename T, typename... Ts>
+inline T& get(tuple<Ts...>& t)
+{
+	return get<T>(t.mImpl);
+}
+
+template <typename T, typename... Ts>
+inline const T& get(const tuple<Ts...>& t)
+{
+	return get<T>(t.mImpl);
+}
+
+template <typename T, typename... Ts>
+inline T&& get(tuple<Ts...>&& t)
+{
+	return get<T>(move(t.mImpl));
 }
 
 template <typename... Ts>
