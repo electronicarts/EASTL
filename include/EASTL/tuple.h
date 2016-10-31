@@ -159,17 +159,20 @@ struct tuple_index<T, TupleTypes<>>
 	static const size_t index = 0;
 };
 
-template <typename T, typename... Ts>
-struct tuple_index<T, TupleTypes<T, Ts...>>
+template <typename T, typename... TsRest>
+struct tuple_index<T, TupleTypes<T, TsRest...>>
 {
 	typedef int DuplicateTypeCheck;
-	static_assert(is_void<typename tuple_index<T, TupleTypes<Ts...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+	// after finding type T in the list of types, try to find type T in TsRest.
+	// If we stumble back into this version of tuple_index, i.e. type T appears twice in the list of types, then DuplicateTypeCheck will be of type int, and the statiC_assert will fail.
+	// If we don't, then we'll go through the version of tuple_index above, where all of the types have been exhausted, and DuplicateTypeCheck will be void.
+	static_assert(is_void<typename tuple_index<T, TupleTypes<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
 
 	static const size_t index = 0;
 };
 
-template <typename T, typename Ts, typename... TsRest>
-struct tuple_index<T, TupleTypes<Ts, TsRest...>>
+template <typename T, typename TsHead, typename... TsRest>
+struct tuple_index<T, TupleTypes<TsHead, TsRest...>>
 {
 	typedef typename tuple_index<T, TupleTypes<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
 	static const size_t index = tuple_index<T, TupleTypes<TsRest...>>::index + 1;
