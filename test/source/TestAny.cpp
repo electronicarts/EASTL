@@ -241,11 +241,20 @@ int TestAny()
 
 	#if EASTL_RTTI_ENABLED
 	{
-		VERIFY(EA::StdC::Strcmp(any(42).type().name(), "int") == 0);
-		VERIFY(EA::StdC::Strcmp(any(42.f).type().name(), "float") == 0);
-		VERIFY(EA::StdC::Strcmp(any(42u).type().name(), "unsigned int") == 0);
-		VERIFY(EA::StdC::Strcmp(any(42ul).type().name(), "unsigned long") == 0);
-		VERIFY(EA::StdC::Strcmp(any(42l).type().name(), "long") == 0);
+		#if defined(EA_COMPILER_MSVC)
+			VERIFY(EA::StdC::Strcmp(any(42).type().name(), "int") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42.f).type().name(), "float") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42u).type().name(), "unsigned int") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42ul).type().name(), "unsigned long") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42l).type().name(), "long") == 0);
+
+		#elif defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)
+			VERIFY(EA::StdC::Strcmp(any(42).type().name(), "i") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42.f).type().name(), "f") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42u).type().name(), "j") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42ul).type().name(), "m") == 0);
+			VERIFY(EA::StdC::Strcmp(any(42l).type().name(), "l") == 0);
+		#endif
 	}
 	#endif
 

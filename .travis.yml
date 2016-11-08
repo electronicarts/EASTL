@@ -7,6 +7,9 @@ os:
 compiler: 
     - gcc
     - clang
+env:
+    - EASTL_CONFIG=Debug
+    - EASTL_CONFIG=Release
 
 addons:
   apt:
@@ -33,26 +36,16 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then tar -xzf cmake-3.1.3-Darwin-x86_64.tar.gz                                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export PATH=$PWD/cmake-3.1.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                   ;fi 
 
+before_script:
+  - mkdir build_$EASTL_CONFIG
+  - cd build_$EASTL_CONFIG
+  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
+  - cmake --build . --config $EASTL_CONFIG
+
 script:
-# Debug Build
-  - mkdir build_debug
-  - cd build_debug
-  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
-  - cmake --build . --config Debug
-  - cd ..
-# Release Build
-  - mkdir build_release 
-  - cd build_release 
-  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
-  - cmake --build . --config Release
-  # - cd ..
-
-after_success:
-# Run Release Tests 
-  - cd test
-  - ctest -C Release -V
-  - cd ..
-# Run Release Benchmarks 
-  - cd benchmark
-  - ctest -C Release -V
-
+    # Run Tests 
+    - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
+    - ctest -C $EASTL_CONFIG -V
+    # Run Benchmarks
+    - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
+    - ctest -C $EASTL_CONFIG  -V
