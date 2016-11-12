@@ -248,7 +248,7 @@
 			#define EA_COMPILER_CPP11_ENABLED 1
 		#elif defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)
 			#define EA_COMPILER_CPP11_ENABLED 1
-		#elif defined(_MSC_VER)         // Microsoft unilaterally enables its C++11 support; there is no way to disable it.
+		#elif defined(_MSC_VER) && _MSC_VER >= 1600         // Microsoft unilaterally enables its C++11 support; there is no way to disable it.
 			#define EA_COMPILER_CPP11_ENABLED 1
 		#elif defined(__SN_VER__) && (__SN_VER__ >= 43001)
 			#if __option(cpp11)
