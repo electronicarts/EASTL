@@ -127,6 +127,9 @@ int TestVectorSet()
 
 		const VS2::key_compare& kc = vsc.key_comp();
 		vs.key_comp() = kc;
+
+		// verify count method is const qualified
+		vsc.count(0);
 	}
 
 

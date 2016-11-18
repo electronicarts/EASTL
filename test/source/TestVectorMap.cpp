@@ -132,6 +132,9 @@ int TestVectorMap()
 
 		const VM2::key_compare& kc = vmc.key_comp();
 		vm.key_comp() = kc;
+
+		// verify that count is const qualified
+		vmc.count(0);
 	}
 
 
