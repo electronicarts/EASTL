@@ -890,8 +890,7 @@ namespace eastl
 			else if(n < (size_type)(mpEnd - mpBegin))
 				resize(n);
 
-			this_type temp(*this);  // This is the simplest way to accomplish this, 
-			swap(temp);             // and it is as efficient as any other.
+			shrink_to_fit();
 		}
 		else // Else new capacity > size.
 		{
@@ -1628,8 +1627,8 @@ namespace eastl
 
 				if(n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
 				{
-					eastl::uninitialized_copy_ptr(mpEnd - n, mpEnd, mpEnd);
-					eastl::copy_backward(destPosition, mpEnd - n, mpEnd); // We need copy_backward because of potential overlap issues.
+					eastl::uninitialized_move_ptr(mpEnd - n, mpEnd, mpEnd);
+					eastl::move_backward(destPosition, mpEnd - n, mpEnd); // We need move_backward because of potential overlap issues.
 					eastl::copy(first, last, destPosition);
 				}
 				else
@@ -1637,7 +1636,7 @@ namespace eastl
 					BidirectionalIterator iTemp = first;
 					eastl::advance(iTemp, nExtra);
 					eastl::uninitialized_copy_ptr(iTemp, last, mpEnd);
-					eastl::uninitialized_copy_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
+					eastl::uninitialized_move_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
 					eastl::copy_backward(first, iTemp, destPosition + nExtra);
 				}
 
@@ -1702,14 +1701,14 @@ namespace eastl
 
 				if(n < nExtra)
 				{
-					eastl::uninitialized_copy_ptr(mpEnd - n, mpEnd, mpEnd);
-					eastl::copy_backward(destPosition, mpEnd - n, mpEnd); // We need copy_backward because of potential overlap issues.
+					eastl::uninitialized_move_ptr(mpEnd - n, mpEnd, mpEnd);
+					eastl::move_backward(destPosition, mpEnd - n, mpEnd); // We need move_backward because of potential overlap issues.
 					eastl::fill(destPosition, destPosition + n, temp);
 				}
 				else
 				{
 					eastl::uninitialized_fill_n_ptr(mpEnd, n - nExtra, temp);
-					eastl::uninitialized_copy_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
+					eastl::uninitialized_move_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
 					eastl::fill(destPosition, mpEnd, temp);
 				}
 
