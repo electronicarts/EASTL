@@ -390,7 +390,9 @@ int TestFunctional()
 		nErrorCount += TestHashHelper<char8_t>('E');
 		nErrorCount += TestHashHelper<char16_t>(0xEAEA);
 		nErrorCount += TestHashHelper<char32_t>(0x00EA4330);
-		nErrorCount += TestHashHelper<wchar_t>(L'E');
+        #if !defined(EA_WCHAR_T_NON_NATIVE)
+            nErrorCount += TestHashHelper<wchar_t>(L'E');
+        #endif
 		nErrorCount += TestHashHelper<signed short>(4330);
 		nErrorCount += TestHashHelper<unsigned short>(4330u);
 		nErrorCount += TestHashHelper<signed int>(4330);

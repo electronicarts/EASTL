@@ -11,7 +11,6 @@ if not [x%PLATFORM:MinGW=%]==[x%PLATFORM%] (
 	set "PATH=C:\msys64\usr\bin;%PATH%"
 	C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh --sysupgrade --sysupgrade
 	C:\msys64\usr\bin\pacman --noconfirm -Syu
-
 	C:\msys64\usr\bin\pacman --noconfirm --needed -S mingw-w64-%platform_string%-clang mingw-w64-x86_64-ninja
 )
 

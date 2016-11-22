@@ -23,13 +23,11 @@ if not [x%PLATFORM:2013=%]==[x%PLATFORM%] (
 
 rem Check if the platform variable contains x64
 if not [x%PLATFORM:x64=%]==[x%PLATFORM%] set vs_generator=%vs_generator% Win64
-
 cmake .. -G "%vs_generator%" -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON 
-
-cmake --build . --config Debug 
-cmake --build . --config Release
-
+cmake --build . --config Debug || goto error
+cmake --build . --config Release || goto error
 goto :end
+
 
 :build-mingw
 rem Start build for gcc and clang.
@@ -52,7 +50,7 @@ rem Build with gcc.
 for %%c in (Debug, Release) do (
 	cd build-%PLATFORM%-gcc-%%~c
 	cmake .. -GNinja -DCMAKE_BUILD_TYPE=%%~c -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DCMAKE_C_COMPILER=%bin_folder%/gcc.exe -DCMAKE_CXX_COMPILER=%bin_folder%/g++.exe -DCMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/ninja.exe
-	cmake --build .
+	cmake --build . || goto error
 	cd ..
 )
 
@@ -67,10 +65,15 @@ if not [x%PLATFORM:x64=%]==[x%PLATFORM%] (
 for %%c in (%configurations%) do (
 	cd build-%PLATFORM%-clang-%%~c
 	cmake .. -GNinja -DCMAKE_BUILD_TYPE=%%~c -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DCMAKE_C_COMPILER=%bin_folder%/clang.exe -DCMAKE_CXX_COMPILER=%bin_folder%/clang++.exe -DCMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/ninja.exe
-	cmake --build .
+	cmake --build . || goto error
 	cd ..
 )
 
-:end
+goto end
 
+:error
+echo Failed!
+EXIT /b %ERRORLEVEL%
+
+:end
 endlocal
