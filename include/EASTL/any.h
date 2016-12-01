@@ -62,7 +62,7 @@ namespace eastl
 	namespace Internal
 	{
 		// utility to switch between exceptions and asserts
-		void DoBadAnyCast()
+		inline void DoBadAnyCast()
 		{
 			#if EASTL_EXCEPTIONS_ENABLED
 				throw bad_any_cast();
@@ -476,7 +476,7 @@ namespace eastl
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// 20.7.4, non-member functions
 	//
-	void swap(any& rhs, any& lhs) EA_NOEXCEPT { rhs.swap(lhs); }
+	inline void swap(any& rhs, any& lhs) EA_NOEXCEPT { rhs.swap(lhs); }
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////
