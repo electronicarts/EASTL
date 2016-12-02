@@ -571,7 +571,10 @@
 	#elif defined(__GNUC__) && defined(__CYGWIN__)
 		#define EA_HAVE_ISNAN(x)  __isnand(x)        /* declared nowhere, it seems. */
 		#define EA_HAVE_ISINF(x)  __isinfd(x)
-	#else /* Most GCC, EDG, Dinkumware, and MinGW(-w64). */
+	#elif defined(EA_PLATFORM_MINGW)                 /* Meant to workaround a GCC limitation where cmath undefines isnan, both GCC and clang have std::isnan */
+		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
+		#define EA_HAVE_ISINF(x)  std::isinf(x)
+	#else /* Most GCC, EDG, Dinkumware. */
 		#define EA_HAVE_ISNAN(x)  isnan(x)           /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  isinf(x)
 	#endif
