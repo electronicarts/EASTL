@@ -12,7 +12,7 @@
 //
 // Any instance of optional<T> at any given time either contains a value or does not
 // contain a value. When an instance of optional<T> contains a value, it means that an
-// object of type T, referred to as the optional object’s contained value, is allocated
+// object of type T, referred to as the optional object's contained value, is allocated
 // within the storage of the optional object. Implementations are not permitted to use
 // additional storage, such as dynamic memory, to allocate its contained value. 
 //
