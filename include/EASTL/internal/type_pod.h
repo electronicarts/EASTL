@@ -1667,7 +1667,7 @@ namespace eastl
 	// For a complete type T and given 
 	//     template <class U>
 	//     struct test { U u; };
-	// test<T>::˜test() is not deleted (C++11 "= delete").
+	// test<T>::~test() is not deleted (C++11 "= delete").
 	// T shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
 	//
 	///////////////////////////////////////////////////////////////////////
