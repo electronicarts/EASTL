@@ -10,6 +10,7 @@ eastl_build_out
 build_bench
 bench.bat
 build.bat
+.p4config
 
 ## CMake generated files
 CMakeCache.txt

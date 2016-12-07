@@ -730,7 +730,11 @@
 		#endif
 	#else
 		typedef uint16_t char16_t;
-		typedef wchar_t  char32_t;
+		#if defined(__cplusplus)
+			typedef wchar_t  char32_t;
+		#else
+			typedef uint32_t char32_t;
+		#endif
 	#endif
 #endif
 
@@ -894,6 +898,8 @@
 #elif defined(__GNUC__) && (defined(__GXX_EXPERIMENTAL_CXX0X__) || (defined(__cplusplus) && (__cplusplus >= 201103L)))
 	// static_assert is defined by the compiler.
 #elif defined(__EDG_VERSION__) && (__EDG_VERSION__ >= 401) && defined(EA_COMPILER_CPP11_ENABLED)
+	// static_assert is defined by the compiler.
+#elif !defined(__cplusplus) && defined(__GLIBC__) && defined(__USE_ISOC11)
 	// static_assert is defined by the compiler.
 #else
 	#define NEED_CUSTOM_STATIC_ASSERT

@@ -79,6 +79,8 @@ int TestRatio();
 int TestChrono();
 int TestOptional();
 int TestAny();
+int TestCharTraits();
+int TestStringView();
 
 
 // Now enable warnings as desired.

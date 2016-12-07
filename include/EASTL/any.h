@@ -330,8 +330,10 @@ namespace eastl
 		storage_handler_ptr m_handler;
 
 	public:
-		// TODO(rparolin):  renable constexpr
-		// EA_CONSTEXPR 
+			#ifndef EA_COMPILER_GNUC
+				// TODO(rparolin):  renable constexpr for GCC
+				EA_CONSTEXPR 
+			#endif
 			any() EA_NOEXCEPT 
 			: m_storage(), m_handler(nullptr) {}
 

@@ -74,7 +74,7 @@ For more information, please refer to <http://unlicense.org/>
 // This workaround exists because on MSVC the "is_nothrow_move_constructible" type trait does not function as
 // expected.  It incorrectly flags the coping/moving of a pointer to the callable as being able to throw an exception.
 // We can remove this workaround when the "is_nothrow_move_constructible" type trait functions for all Microsoft
-// platforms and we being testing it again in EASTLs unit tests.
+// platforms and we begin testing it again in EASTLs unit tests.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(EA_PLATFORM_MICROSOFT)
 	#define EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL 0
@@ -88,15 +88,31 @@ namespace eastl
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_NAME
+	#ifndef EASTL_FUNCTION_DEFAULT_NAME
 		#define EASTL_FUNCTION_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " function" // Unless the user overrides something, this is "EASTL function".
 	#endif
 
-
-	/// EASTL_VECTOR_DEFAULT_ALLOCATOR
+	/// EASTL_FUNCTION_DEFAULT_ALLOCATOR
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_ALLOCATOR
+	#ifndef EASTL_FUNCTION_DEFAULT_ALLOCATOR
 		#define EASTL_FUNCTION_DEFAULT_ALLOCATOR allocator_type(EASTL_FUNCTION_DEFAULT_NAME)
+	#endif
+
+
+	/// EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE
+	///
+	/// Defines the size of the SSO buffer which is used to hold the specified capture state of the callable.
+	///
+	#ifndef EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE
+		#define EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE (2 * sizeof(void*))
+	#endif
+
+	/// EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE
+	///
+	/// Defines the size of the SSO buffer which is used to hold the specified allocator type.
+	///
+	#ifndef EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE
+		#define EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE (2 * sizeof(void*))
 	#endif
 
 
@@ -114,16 +130,24 @@ namespace detail
 
 	struct functor_storage_type
 	{
-	protected:
-		size_t padding_first;
-		size_t padding_second;
+		union
+		{
+			void* first;
+			char padding[EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE];
+		};
 	};
+	static_assert(sizeof(functor_storage_type) >= EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE, "capture storage size mismatch");
 
 	struct allocator_storage_type
 	{
-		void* first;
-		void* second;
+		union
+		{
+			void* first;
+			char padding[EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE];
+		};
 	};
+	static_assert(sizeof(allocator_storage_type) >= EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE, "allocator storage size mismatch");
+
 
 	struct empty_struct { };
 
@@ -141,10 +165,10 @@ namespace detail
 			&& sizeof(Allocator) <= sizeof(allocator_storage_type)
 			// so that it will be aligned
 			&& eastl::alignment_of<functor_storage_type>::value % eastl::alignment_of<Callable>::value == 0
-#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL			
+		#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL			
 			// so that we can offer noexcept move
 			&& eastl::is_nothrow_move_constructible<Callable>::value
-#endif
+		#endif
 			// so that the user can override it
 			&& !force_function_heap_allocation<Callable>::value;
 	};

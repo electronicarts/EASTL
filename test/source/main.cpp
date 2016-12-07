@@ -83,6 +83,8 @@ int EAMain(int argc, char* argv[])
 
 	TestApplication testSuite("EASTL Unit Tests", argc, argv);
 
+	testSuite.AddTest("StringView",			    TestStringView);
+	testSuite.AddTest("CharTraits",			    TestCharTraits);
 	testSuite.AddTest("Any",				    TestAny);
 	testSuite.AddTest("Optional",				TestOptional);
 	testSuite.AddTest("TypeTraits",				TestTypeTraits);

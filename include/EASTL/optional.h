@@ -312,6 +312,15 @@ namespace eastl
 		    }
 	    }
 
+		inline void reset()
+		{
+			if (engaged)
+			{
+				destruct_value();
+				engaged = false;
+			}
+		}
+
 	private:
 
 	    inline void construct_value(const value_type& v)
@@ -319,15 +328,6 @@ namespace eastl
 
 	    inline void construct_value(value_type&& v)
 			{ ::new (eastl::addressof(val)) value_type(eastl::move(v)); }
-
-	    inline void reset()
-		{
-			if(engaged)
-			{
-				destruct_value();
-				engaged = false;
-			}
-		}
 
 	    inline T* get_value_address() EASTL_OPTIONAL_NOEXCEPT
 	    {

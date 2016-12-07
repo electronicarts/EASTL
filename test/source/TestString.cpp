@@ -11,8 +11,7 @@
 
 using namespace eastl;
 
-// todo:  comment on this mess being required inorder to inject string literal string conversion macros into the unit
-// test code.
+// this mess is required inorder to inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
 #define LITERAL(x) x
 #include "TestString.inl"

@@ -1516,48 +1516,48 @@ int TestVector()
 		eastl::vector<container_value_type> v2(ci.begin(), ci.end()); 
 	}
 
-
-#if EASTL_MOVE_SEMANTICS_ENABLED
-	// unique_ptr tests
-	{
-		// Simple move-assignment test to prevent regressions where eastl::vector utilizes operations on T that are not necessary.
+	// If the legacy code path is enabled we cannot handle non-copyable types
+	#ifndef EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR 
+		// unique_ptr tests
 		{
-			eastl::vector<eastl::unique_ptr<int>> v1;
-			eastl::vector<eastl::unique_ptr<int>> v2;
-			v2 = eastl::move(v1);
-		}
-
-		{
-			// This test verifies that eastl::vector can handle the move-assignment case where its utilizes two
-			// different allocator instances that do not compare equal.  An example of an allocator that compares equal
-			// but isn't the same object instance is an allocator that shares the same memory allocation mechanism (eg.
-			// malloc).  The memory allocated from one instance can be freed by another instance in the case where
-			// allocators compare equal.  This test is verifying functionality in the opposite case where allocators
-			// instances do not compare equal and must clean up its own allocated memory.
-			InstanceAllocator::reset_all();
+			// Simple move-assignment test to prevent regressions where eastl::vector utilizes operations on T that are not necessary.
 			{
-				InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
-				eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v1(a1);
-				eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v2(a2);
-
-				VERIFY(v1.get_allocator() != v2.get_allocator());
-
-				// add some data in the vector so we can move it to the other vector.
-				v1.push_back(nullptr);
-				v1.push_back(nullptr);
-				v1.push_back(nullptr);
-				v1.push_back(nullptr);
-
-				VERIFY(!v1.empty() && v2.empty());
+				eastl::vector<eastl::unique_ptr<int>> v1;
+				eastl::vector<eastl::unique_ptr<int>> v2;
 				v2 = eastl::move(v1);
-				VERIFY(v1.empty() && !v2.empty());
-				v1.swap(v2); 
-				VERIFY(!v1.empty() && v2.empty());
 			}
-			VERIFY(InstanceAllocator::mMismatchCount == 0);
+
+			{
+				// This test verifies that eastl::vector can handle the move-assignment case where its utilizes two
+				// different allocator instances that do not compare equal.  An example of an allocator that compares equal
+				// but isn't the same object instance is an allocator that shares the same memory allocation mechanism (eg.
+				// malloc).  The memory allocated from one instance can be freed by another instance in the case where
+				// allocators compare equal.  This test is verifying functionality in the opposite case where allocators
+				// instances do not compare equal and must clean up its own allocated memory.
+				InstanceAllocator::reset_all();
+				{
+					InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
+					eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v1(a1);
+					eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v2(a2);
+
+					VERIFY(v1.get_allocator() != v2.get_allocator());
+
+					// add some data in the vector so we can move it to the other vector.
+					v1.push_back(nullptr);
+					v1.push_back(nullptr);
+					v1.push_back(nullptr);
+					v1.push_back(nullptr);
+
+					VERIFY(!v1.empty() && v2.empty());
+					v2 = eastl::move(v1);
+					VERIFY(v1.empty() && !v2.empty());
+					v1.swap(v2); 
+					VERIFY(!v1.empty() && v2.empty());
+				}
+				VERIFY(InstanceAllocator::mMismatchCount == 0);
+			}
 		}
-	}
-#endif
+	#endif
 
 	return nErrorCount;
 }

@@ -79,6 +79,11 @@ int TestOptional()
 			VERIFY(static_cast<bool>(o));
 			VERIFY(o.value_or(0x8BADF00D) == 1024);
 			VERIFY(o.value() == 1024);
+			
+			// Test reset
+			o.reset();
+			VERIFY(!o);
+			VERIFY(o.value_or(0x8BADF00D) == (int)0x8BADF00D);
 		}
 
 		{
