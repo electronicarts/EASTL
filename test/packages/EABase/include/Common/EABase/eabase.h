@@ -114,8 +114,8 @@
 	   #define __STDC_FORMAT_MACROS
 	#endif
 	// The GCC PSP compiler defines standard int types (e.g. uint32_t) but not PRId8, etc.
-	// MSVC doesn't include an inttypes.h header.
-	#if !defined(EA_COMPILER_MSVC)
+	// MSVC added support for inttypes.h header in VS2013.
+	#if !defined(EA_COMPILER_MSVC) || EA_COMPILER_VERSION >= 1800
 		#include <inttypes.h> // PRId8, SCNd8, etc.
 	#endif
 	#if defined(_MSC_VER)
@@ -355,7 +355,7 @@
 	typedef double              double_t;
 #endif
 
-#if defined(EA_COMPILER_HAS_INTTYPES) && !defined(EA_COMPILER_MSVC)
+#if defined(EA_COMPILER_HAS_INTTYPES) && (!defined(EA_COMPILER_MSVC) || EA_COMPILER_VERSION >= 1800)
 	#define EA_COMPILER_HAS_C99_FORMAT_MACROS 
 #endif
 
