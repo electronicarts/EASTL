@@ -257,7 +257,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -695,7 +695,7 @@ namespace eastl
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline typename vector_map<K, T, C, A, RAC>::size_type
-	vector_map<K, T, C, A, RAC>::count(const key_type& k)
+	vector_map<K, T, C, A, RAC>::count(const key_type& k) const
 	{
 		const const_iterator it(find(k));
 		return (it != end()) ? (size_type)1 : (size_type)0;
