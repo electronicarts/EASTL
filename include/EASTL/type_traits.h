@@ -629,13 +629,35 @@ namespace eastl
 		struct is_function
 			: public eastl::false_type {};
 
-		template <typename ReturnValue, typename... ArgPack>
-		struct is_function<ReturnValue /*FunctionName*/(ArgPack...)>
-			: public eastl::true_type {};
+		#if EA_PLATFORM_PTR_SIZE == 4 && defined(EA_PLATFORM_MICROSOFT) && defined(_MSC_EXTENSIONS)
+			// __cdecl specialization
+			template <typename ReturnValue, typename... ArgPack>
+			struct is_function<ReturnValue __cdecl (ArgPack...)>
+				: public eastl::true_type {};
 
-		template <typename ReturnValue, typename... ArgPack>
-		struct is_function<ReturnValue /*FunctionName*/(ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
-			: public eastl::true_type {};
+			template <typename ReturnValue, typename... ArgPack>
+			struct is_function<ReturnValue __cdecl (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+				: public eastl::true_type {};
+
+			// __stdcall specialization
+			template <typename ReturnValue, typename... ArgPack>
+			struct is_function<ReturnValue __stdcall (ArgPack...)>
+				: public eastl::true_type {};
+
+			// When functions use a variable number of arguments, it is the caller that cleans the stack (cf. cdecl).
+			//
+			// template <typename ReturnValue, typename... ArgPack>
+			// struct is_function<ReturnValue __stdcall (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+			//     : public eastl::true_type {};
+		#else 
+			template <typename ReturnValue, typename... ArgPack>
+			struct is_function<ReturnValue (ArgPack...)>
+				: public eastl::true_type {};
+
+			template <typename ReturnValue, typename... ArgPack>
+			struct is_function<ReturnValue (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+				: public eastl::true_type {};
+		#endif
 	#endif
 
 

@@ -8,23 +8,19 @@
 #include "TestSet.h"
 #include <EASTL/hash_set.h>
 #include <EASTL/hash_map.h>
+#include <EASTL/unordered_set.h>
+#include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/vector.h>
+#include <EASTL/unique_ptr.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 using namespace eastl;
-
 
 namespace eastl
 {
@@ -402,53 +398,78 @@ int TestHash()
 		// hashtable& operator=(const this_type& x);
 		// void swap(this_type& x);
 		// bool validate() const;
-
-		hash_set<int> hashSet3(0);
-		hash_set<int> hashSet4(1);
-		hash_set<int> hashSet5(2);
-		hash_set<int> hashSet6(3);
-		hash_set<int> hashSet7(4);
-
-		hashSet4 = hashSet3;
-		hashSet6 = hashSet5;
-		hashSet3 = hashSet7;
-
-		for(int i = 0; i < 10; i++)
 		{
-			hashSet3.insert(i);
-			hashSet4.insert(i);
-			hashSet5.insert(i);
-			hashSet6.insert(i);
-			hashSet7.insert(i);
+			hash_set<int> hashSet3(0);
+			hash_set<int> hashSet4(1);
+			hash_set<int> hashSet5(2);
+			hash_set<int> hashSet6(3);
+			hash_set<int> hashSet7(4);
+
+			hashSet4 = hashSet3;
+			hashSet6 = hashSet5;
+			hashSet3 = hashSet7;
+
+			for(int i = 0; i < 10; i++)
+			{
+				hashSet3.insert(i);
+				hashSet4.insert(i);
+				hashSet5.insert(i);
+				hashSet6.insert(i);
+				hashSet7.insert(i);
+			}
+
+			hashSet4 = hashSet3;
+			hashSet6 = hashSet5;
+			hashSet3 = hashSet7;
+
+			EATEST_VERIFY(hashSet3.validate());
+			EATEST_VERIFY(hashSet4.validate());
+			EATEST_VERIFY(hashSet5.validate());
+			EATEST_VERIFY(hashSet6.validate());
+			EATEST_VERIFY(hashSet7.validate());
+
+			swap(hashSet4, hashSet3);
+			swap(hashSet6, hashSet5);
+			swap(hashSet3, hashSet7);
+
+			EATEST_VERIFY(hashSet3.validate());
+			EATEST_VERIFY(hashSet4.validate());
+			EATEST_VERIFY(hashSet5.validate());
+			EATEST_VERIFY(hashSet6.validate());
+			EATEST_VERIFY(hashSet7.validate());
+
+			hash_set<int> hashSet8(hashSet6);
+			hash_set<int> hashSet9(hashSet7);
+			hash_set<int> hashSet10(hashSet8);
+
+			EATEST_VERIFY(hashSet8.validate());
+			EATEST_VERIFY(hashSet9.validate());
+			EATEST_VERIFY(hashSet10.validate());
 		}
+		
+		// test hashtable::swap using different allocator instances
+		{
+			typedef hash_set<int, eastl::hash<int>, eastl::equal_to<int>, InstanceAllocator> HS;
+			HS hashSet1(InstanceAllocator("hash_set1 name", 111));
+			HS hashSet2(InstanceAllocator("hash_set2 name", 222));
 
-		hashSet4 = hashSet3;
-		hashSet6 = hashSet5;
-		hashSet3 = hashSet7;
+			for(int i = 0; i < 10; i++)
+			{
+				hashSet1.insert(i);
+				hashSet2.insert(i+10);
+			}
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
-		EATEST_VERIFY(hashSet5.validate());
-		EATEST_VERIFY(hashSet6.validate());
-		EATEST_VERIFY(hashSet7.validate());
+			hashSet2.swap(hashSet1);
 
-		swap(hashSet4, hashSet3);
-		swap(hashSet6, hashSet5);
-		swap(hashSet3, hashSet7);
+			EATEST_VERIFY(hashSet1.validate());
+			EATEST_VERIFY(hashSet2.validate());
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
-		EATEST_VERIFY(hashSet5.validate());
-		EATEST_VERIFY(hashSet6.validate());
-		EATEST_VERIFY(hashSet7.validate());
+			EATEST_VERIFY(hashSet1.get_allocator().mInstanceId == 222);
+			EATEST_VERIFY(hashSet2.get_allocator().mInstanceId == 111);
 
-		hash_set<int> hashSet8(hashSet6);
-		hash_set<int> hashSet9(hashSet7);
-		hash_set<int> hashSet10(hashSet8);
-
-		EATEST_VERIFY(hashSet8.validate());
-		EATEST_VERIFY(hashSet9.validate());
-		EATEST_VERIFY(hashSet10.validate());
+			EATEST_VERIFY(eastl::all_of(eastl::begin(hashSet2), eastl::end(hashSet2), [](int i) { return i < 10; }));
+			EATEST_VERIFY(eastl::all_of(eastl::begin(hashSet1), eastl::end(hashSet1), [](int i) { return i >= 10; }));
+		}
 	}
 
 
@@ -547,15 +568,20 @@ int TestHash()
 
 	{
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<eastl::hash_map<int, TestObject> >();
+		nErrorCount += TestMapCpp11<eastl::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<eastl::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<eastl::hash_set<TestObject> >();
+		nErrorCount += TestSetCpp11<eastl::hash_set<TestObject>>();
+		nErrorCount += TestSetCpp11<eastl::unordered_set<TestObject>>();
 
-		nErrorCount += TestMultimapCpp11<eastl::hash_multimap<int, TestObject> >();
+		nErrorCount += TestMultimapCpp11<eastl::hash_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<eastl::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<eastl::hash_multiset<TestObject> >();
+		nErrorCount += TestMultisetCpp11<eastl::hash_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<eastl::unordered_multiset<TestObject>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::hash_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::unordered_map<int, NonCopyable>>();
 	}
 
 
@@ -1063,6 +1089,30 @@ int TestHash()
 			EATEST_VERIFY(iterations == 30);
 		}
 	}
+
+	// test hashtable holding move-only types
+	#if !defined(EA_COMPILER_MSVC_2013)
+	{
+		struct Movable
+		{
+			Movable() {}
+			Movable(Movable&&) = default;
+			Movable& operator=(Movable&&) = default;
+			Movable(const Movable&) = delete;
+			Movable& operator=(const Movable&) = delete;
+
+			bool operator==(Movable) const { return true; }
+
+			struct Hash
+			{
+				size_t operator()(Movable) const { return 0; }
+			};
+		};
+
+		eastl::unordered_set<Movable, Movable::Hash> a, b;
+		swap(a,b);
+	}
+	#endif
 
 	{
 		#if EASTL_MOVE_SEMANTICS_ENABLED

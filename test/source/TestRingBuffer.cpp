@@ -5,6 +5,7 @@
 
 #include "EASTLTest.h"
 #include <EASTL/bonus/ring_buffer.h>
+#include <EASTL/bonus/fixed_ring_buffer.h>
 #include <EASTL/vector.h>
 #include <EASTL/deque.h>
 #include <EASTL/string.h>
@@ -1039,6 +1040,54 @@ int TestRingBuffer()
 		it -= 2;
 		EATEST_VERIFY(*it == 9); // It is important to test going back to the beginning of the underlying container.
 
+	}
+
+	// fixed_ring_buffer<T,N> tests
+	// ring_buffer<T, fixed_vector<T,N>> tests
+	{
+		{
+			// (MAX_ELEMENTS - 1) accommodates the ring_buffer sentinel
+			const int MAX_ELEMENTS = 8;
+			eastl::ring_buffer<int, eastl::fixed_vector<int, MAX_ELEMENTS, false>> rb(MAX_ELEMENTS - 1);  
+
+			for (int i = 0; i < MAX_ELEMENTS - 1; i++)
+				rb.push_back(i);
+
+			auto it = rb.begin();
+			for (int i = 0; i < MAX_ELEMENTS - 1; i++)
+				{ EATEST_VERIFY(*it++ == i); }
+		}
+
+		#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		{
+			const int MAX_ELEMENTS = 25;
+			eastl::fixed_ring_buffer<int, MAX_ELEMENTS> rb(MAX_ELEMENTS);
+
+			for(int i = 0; i < MAX_ELEMENTS; i++)
+				rb.push_back(i);
+
+			auto it = rb.begin();
+			for(int i = 0; i < MAX_ELEMENTS; i++)
+				{ EATEST_VERIFY(*it++ == i); }
+		}
+		#endif
+
+		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		{
+			const int MAX_ELEMENTS = 8;
+			eastl::fixed_ring_buffer<int, MAX_ELEMENTS> rb = {0, 1, 2, 3, 4, 5, 6, 7};
+
+			auto it = rb.begin();
+			for(int i = 0; i < MAX_ELEMENTS; i++)
+				{ EATEST_VERIFY(*it++ == i); }
+		}
+
+		{
+			struct LocalStruct {};
+			fixed_ring_buffer<LocalStruct, 8> rb = {{{}, {}, {}}};
+			EATEST_VERIFY(rb.size() == 3);
+		}
+		#endif
 	}
 
 	return nErrorCount;

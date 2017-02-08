@@ -15,16 +15,10 @@
 #include <EASTL/intrusive_list.h>
 #include <EASTL/memory.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 #include <string.h>
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 // This is used below, though is currently disabled as documented below.
@@ -126,6 +120,31 @@ int TestIterator_advance()
 	return nErrorCount;
 }
 
+int TestIterator_moveIterator()
+{
+	int nErrorCount = 0;
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+	{
+		eastl::vector<int> v = {0, 1, 42, 2};
+		const auto constBeginMoveIter = eastl::make_move_iterator(v.begin());
+
+		// operator++(int)
+		auto moveIter = constBeginMoveIter;
+		moveIter++; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		EATEST_VERIFY(*moveIter != *constBeginMoveIter);
+
+		// operator--(int)
+		moveIter = constBeginMoveIter + 2; // points to '42'
+		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		EATEST_VERIFY(*moveIter != *(constBeginMoveIter + 2));
+	}
+	#endif
+
+	return nErrorCount;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestIterator
@@ -134,6 +153,7 @@ int TestIterator()
 {
 	int nErrorCount = 0;
 	nErrorCount += TestIterator_advance();
+	nErrorCount += TestIterator_moveIterator();
 	
 	{
 		// reverse_iterator
