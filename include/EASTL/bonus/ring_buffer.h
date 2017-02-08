@@ -32,6 +32,20 @@
 
 namespace eastl
 {
+	/// EASTL_RING_BUFFER_DEFAULT_NAME
+	///
+	/// Defines a default container name in the absence of a user-provided name.
+	///
+	#ifndef EASTL_RING_BUFFER_DEFAULT_NAME
+		#define EASTL_RING_BUFFER_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " ring_buffer" // Unless the user overrides something, this is "EASTL ring_buffer".
+	#endif
+
+	/// EASTL_RING_BUFFER_DEFAULT_ALLOCATOR
+	///
+	#ifndef EASTL_RING_BUFFER_DEFAULT_ALLOCATOR
+		#define EASTL_RING_BUFFER_DEFAULT_ALLOCATOR allocator_type(EASTL_RING_BUFFER_DEFAULT_NAME)
+	#endif
+
 
 	/// ring_buffer_iterator
 	///
@@ -222,17 +236,17 @@ namespace eastl
 		explicit ring_buffer(const allocator_type& allocator);
 		ring_buffer(const this_type& x);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		ring_buffer(this_type&& x);
-		ring_buffer(this_type&& x, const allocator_type& allocator);
+			ring_buffer(this_type&& x);
+			ring_buffer(this_type&& x, const allocator_type& allocator);
 		#endif
-		ring_buffer(std::initializer_list<value_type> ilist, const allocator_type& allocator = allocator_type()); // This function sets the capacity to be equal to the size of the initializer list.
+		ring_buffer(std::initializer_list<value_type> ilist, const allocator_type& allocator = EASTL_RING_BUFFER_DEFAULT_ALLOCATOR); // This function sets the capacity to be equal to the size of the initializer list.
 
 		// No destructor necessary. Default will do.
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
-		this_type& operator=(this_type&& x);
+			this_type& operator=(this_type&& x);
 		#endif
 
 		template <typename InputIterator>

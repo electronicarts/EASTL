@@ -73,16 +73,62 @@ int TEST_STRING_NAME()
 			VERIFY(eastl::Compare(sw2.data(), pLiteral, sw2.size()) == 0);
 		}
 
-		// EA_CONSTEXPR const_iterator begin() const EA_NOEXCEPT 
-		// EA_CONSTEXPR const_iterator cbegin() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_iterator end() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_iterator cend() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_reverse_iterator rbegin() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_reverse_iterator crbegin() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_reverse_iterator rend() const EA_NOEXCEPT
-		// EA_CONSTEXPR const_reverse_iterator crend() const EA_NOEXCEPT
 		{
-			// TODO(rparolin):  implement me
+			// EA_CONSTEXPR const_iterator begin() const EA_NOEXCEPT
+			// EA_CONSTEXPR const_iterator cbegin() const EA_NOEXCEPT
+			StringViewT sw(LITERAL("abcdefg"));
+			{
+				auto i = sw.begin();
+				auto ci = sw.cbegin();
+
+				VERIFY(*i++ == LITERAL('a'));
+				VERIFY(*i++ == LITERAL('b'));
+
+				VERIFY(*ci++ == LITERAL('a'));
+				VERIFY(*ci++ == LITERAL('b'));
+			}
+
+			// EA_CONSTEXPR const_iterator end() const EA_NOEXCEPT
+			// EA_CONSTEXPR const_iterator cend() const EA_NOEXCEPT
+			{
+				auto i = sw.end();
+				auto ci = sw.cend();
+
+				VERIFY(*i-- == LITERAL('\0'));
+				VERIFY(*i-- == LITERAL('g'));
+
+				VERIFY(*ci-- == LITERAL('\0'));
+				VERIFY(*ci-- == LITERAL('g'));
+			}
+
+			// EA_CONSTEXPR const_reverse_iterator rbegin() const EA_NOEXCEPT
+			// EA_CONSTEXPR const_reverse_iterator crbegin() const EA_NOEXCEPT
+			{
+				auto i = sw.rbegin();
+				auto ci = sw.crbegin();
+
+				VERIFY(*i++ == LITERAL('g'));
+				VERIFY(*i++ == LITERAL('f'));
+
+				VERIFY(*ci++ == LITERAL('g'));
+				VERIFY(*ci++ == LITERAL('f'));
+			}
+
+			// EA_CONSTEXPR const_reverse_iterator rend() const EA_NOEXCEPT
+			// EA_CONSTEXPR const_reverse_iterator crend() const EA_NOEXCEPT
+			{
+				auto i = sw.rend();
+				i--;
+
+				auto ci = sw.crend();
+				ci--;
+
+				VERIFY(*i-- == LITERAL('a'));
+				VERIFY(*i-- == LITERAL('b'));
+
+				VERIFY(*ci-- == LITERAL('a'));
+				VERIFY(*ci-- == LITERAL('b'));
+			}
 		}
 
 		// EA_CONSTEXPR const_pointer data() const
@@ -295,21 +341,21 @@ int TEST_STRING_NAME()
 		{
 			StringViewT str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-			VERIFY(str.find(StringViewT(LITERAL("d")))    != StringViewT::npos);
-			VERIFY(str.find(StringViewT(LITERAL("tuv")))  != StringViewT::npos);
-			VERIFY(str.find(StringViewT(LITERAL("123r"))) == StringViewT::npos);
+			VERIFY(str.rfind(StringViewT(LITERAL("d")))    != StringViewT::npos);
+			VERIFY(str.rfind(StringViewT(LITERAL("tuv")))  != StringViewT::npos);
+			VERIFY(str.rfind(StringViewT(LITERAL("123r"))) == StringViewT::npos);
 
-			VERIFY(str.find(LITERAL("d"))    != StringViewT::npos);
-			VERIFY(str.find(LITERAL("tuv"))  != StringViewT::npos);
-			VERIFY(str.find(LITERAL("123r")) == StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("d"))    != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("tuv"))  != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("123r")) == StringViewT::npos);
 
-			VERIFY(str.find(LITERAL("d"), 0)    != StringViewT::npos);
-			VERIFY(str.find(LITERAL("tuv"), 2)  != StringViewT::npos);
-			VERIFY(str.find(LITERAL("123r"), 2) == StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("d"), str.length())        != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("tuv"), str.length() - 2)  != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("123r"), str.length() - 2) == StringViewT::npos);
 
-			VERIFY(str.find(LITERAL('d'), 0) != StringViewT::npos);
-			VERIFY(str.find(LITERAL('t'), 2) != StringViewT::npos);
-			VERIFY(str.find(LITERAL('1'), 2) == StringViewT::npos);
+			VERIFY(str.rfind(LITERAL('d'), str.length() - 0) != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL('t'), str.length() - 2) != StringViewT::npos);
+			VERIFY(str.rfind(LITERAL('1'), str.length() - 2) == StringViewT::npos);
 		}
 
 		// EA_CONSTEXPR size_type find_first_of(basic_string_view s, size_type pos = 0) const EA_NOEXCEPT;

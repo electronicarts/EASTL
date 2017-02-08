@@ -112,13 +112,19 @@ namespace eastl
 	template <typename Value, bool bCacheHashCode>
 	struct hash_node;
 
-	EA_DISABLE_VC_WARNING(4625) // disable warning: "copy constructor could not be generated because a base class copy constructor is inaccessible or deleted"
+	EA_DISABLE_VC_WARNING(4625 4626) // "copy constructor / assignment operator could not be generated because a base class copy constructor is inaccessible or deleted"
 	#ifdef EA_COMPILER_MSVC_2015
 		EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
 	#endif
 		template <typename Value>
 		struct hash_node<Value, true>
 		{
+			#if defined(_MSC_VER) && (EA_COMPILER_VERSION == 1800) // VS2013
+				hash_node(hash_node&& x) : mValue(eastl::move(x.mValue)), mpNext(x.mpNext), mnHashCode(x.mnHashCode) {}
+			#elif EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
+				hash_node(hash_node&&) = default;
+			#endif
+
 			Value        mValue;
 			hash_node*   mpNext;
 			eastl_size_t mnHashCode;      // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
@@ -127,7 +133,13 @@ namespace eastl
 		template <typename Value>
 		struct hash_node<Value, false>
 		{
-			Value      mValue;
+			#if defined(_MSC_VER) && (EA_COMPILER_VERSION == 1800) // VS2013
+				hash_node(hash_node&& x) : mValue(eastl::move(x.mValue)), mpNext(x.mpNext) {}
+			#elif EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
+				hash_node(hash_node&&) = default;
+			#endif
+
+		    Value      mValue;
 			hash_node* mpNext;
 		} EASTL_MAY_ALIAS;
 
@@ -1517,20 +1529,15 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::swap(this_type& x)
 	{
-		if(mAllocator == x.mAllocator) // If allocators are equivalent...
+		hash_code_base<K, V, EK, Eq, H1, H2, H, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
+		eastl::swap(mRehashPolicy, x.mRehashPolicy);
+		EASTL_MACRO_SWAP(node_type**, mpBucketArray, x.mpBucketArray);
+		eastl::swap(mnBucketCount, x.mnBucketCount);
+		eastl::swap(mnElementCount, x.mnElementCount);
+
+		if (mAllocator != x.mAllocator) // If allocators are not equivalent...
 		{
-			// We leave mAllocator as-is.
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
-			eastl::swap(mRehashPolicy,  x.mRehashPolicy);
-			EASTL_MACRO_SWAP(node_type**, mpBucketArray, x.mpBucketArray); // Use EASTL_MACRO_SWAP because GCC (at least v4.6-4.8) has a bug where it fails to compile eastl::swap(mpBucketArray, x.mpBucketArray).
-			eastl::swap(mnBucketCount,  x.mnBucketCount);
-			eastl::swap(mnElementCount, x.mnElementCount);
-		}
-		else
-		{
-			const this_type temp(*this); // Can't call eastl::swap because that would
-			*this = x;                   // itself call this member swap function.
-			x     = temp;
+			eastl::swap(mAllocator, x.mAllocator);
 		}
 	}
 

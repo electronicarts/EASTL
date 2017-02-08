@@ -45,6 +45,21 @@ int TestStringView()
 	nErrorCount += TestBasicStringView32<eastl::u32string_view>();
 #endif
 
+	// strlen(char_t) compatibility
+	{
+		auto* pStr = "Hello, World";
+		string_view sw(pStr, strlen(pStr));
+		VERIFY(sw.size() == strlen(pStr));
+	}
+
+	// strlen(wchar_t) compatibility
+	{
+		auto* pStr = L"Hello, World";
+		wstring_view sw(pStr, wcslen(pStr));
+		VERIFY(sw.size() == wcslen(pStr));
+	}
+
+
 	return nErrorCount;
 }
 

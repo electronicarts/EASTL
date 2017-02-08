@@ -9,6 +9,7 @@
 #include <EASTL/fixed_allocator.h>
 #include <EASTL/core_allocator_adapter.h>
 #include <EASTL/list.h>
+#include <EAStdC/EAString.h>
 
 
 
@@ -282,10 +283,30 @@ static int TestCoreAllocatorAdapter()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// TestSwapAllocator
+//
+static int TestSwapAllocator()
+{
+	int nErrorCount = 0;
+
+	{
+		InstanceAllocator a(nullptr, (uint8_t)111), b(nullptr, (uint8_t)222);
+		eastl::swap(a, b);
+		
+		EATEST_VERIFY(a.mInstanceId == 222);
+		EATEST_VERIFY(b.mInstanceId == 111);
+
+		EATEST_VERIFY(EA::StdC::Strcmp(a.get_name(), "InstanceAllocator 222") == 0);
+		EATEST_VERIFY(EA::StdC::Strcmp(b.get_name(), "InstanceAllocator 111") == 0);
+	}
+
+	return nErrorCount;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// TestExtra
+// TestAllocator
 //
 int TestAllocator()
 {
@@ -294,6 +315,7 @@ int TestAllocator()
 	nErrorCount += TestFixedAllocator();
 	nErrorCount += TestAllocatorMalloc();
 	nErrorCount += TestCoreAllocatorAdapter();
+	nErrorCount += TestSwapAllocator();
 
 	return nErrorCount;
 }

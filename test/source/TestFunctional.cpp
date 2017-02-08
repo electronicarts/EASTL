@@ -679,6 +679,33 @@ int TestFunctional()
 			EATEST_VERIFY(allocCount == 0);
 		}
 	}
+
+	// Checking _MSC_EXTENSIONS is required because the Microsoft calling convention classifiers are only available when
+	// compiler specific C/C++ language extensions are enabled.
+	#if defined(EA_PLATFORM_MICROSOFT) && defined(_MSC_EXTENSIONS)
+	{
+		// no arguments
+		typedef void(__stdcall * StdCallFunction)();
+		typedef void(__cdecl * CDeclFunction)();
+		
+		// only varargs
+		typedef void(__stdcall * StdCallFunctionWithVarargs)(...);
+		typedef void(__cdecl * CDeclFunctionWithVarargs)(...);
+
+		// arguments and varargs
+		typedef void(__stdcall * StdCallFunctionWithVarargsAtEnd)(int, int, int, ...);
+		typedef void(__cdecl * CDeclFunctionWithVarargsAtEnd)(int, short, long, ...);
+
+		static_assert(!eastl::is_function<StdCallFunction>::value, "is_function failure");
+		static_assert(!eastl::is_function<CDeclFunction>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<StdCallFunction>::type>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<CDeclFunction>::type>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<StdCallFunctionWithVarargs>::type>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<CDeclFunctionWithVarargs>::type>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<StdCallFunctionWithVarargsAtEnd>::type>::value, "is_function failure");
+		static_assert(eastl::is_function<typename eastl::remove_pointer<CDeclFunctionWithVarargsAtEnd>::type>::value, "is_function failure");
+	}
+	#endif
 #endif // EASTL_FUNCTION_ENABLED
 
 	// Test Function Objects

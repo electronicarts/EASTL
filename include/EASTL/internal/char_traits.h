@@ -272,6 +272,64 @@ namespace eastl
 	}
 
 	template <typename T>
+	const T* CharTypeStringFindEnd(const T* pBegin, const T* pEnd, T c)
+	{
+		const T* pTemp = pEnd;
+		while(--pTemp >= pBegin)
+		{
+			if(*pTemp == c)
+				return pTemp;
+		}
+
+		return pEnd;
+	}
+    
+	template <typename T>
+	const T* CharTypeStringRSearch(const T* p1Begin, const T* p1End, 
+								   const T* p2Begin, const T* p2End)
+	{
+		// Test for zero length strings, in which case we have a match or a failure, 
+		// but the return value is the same either way.
+		if((p1Begin == p1End) || (p2Begin == p2End))
+			return p1Begin;
+
+		// Test for a pattern of length 1.
+		if((p2Begin + 1) == p2End)
+			return CharTypeStringFindEnd(p1Begin, p1End, *p2Begin);
+
+		// Test for search string length being longer than string length.
+		if((p2End - p2Begin) > (p1End - p1Begin))
+			return p1End;
+
+		// General case.
+		const T* pSearchEnd = (p1End - (p2End - p2Begin) + 1);
+		const T* pCurrent1;
+		const T* pCurrent2;
+
+		while(pSearchEnd != p1Begin)
+		{
+			// Search for the last occurrence of *p2Begin.
+			pCurrent1 = CharTypeStringFindEnd(p1Begin, pSearchEnd, *p2Begin);
+			if(pCurrent1 == pSearchEnd) // If the first char of p2 wasn't found, 
+				return p1End;           // then we immediately have failure.
+
+			// In this case, *pTemp == *p2Begin. So compare the rest.
+			pCurrent2 = p2Begin;
+			while(*pCurrent1++ == *pCurrent2++)
+			{
+				if(pCurrent2 == p2End)
+					return (pCurrent1 - (p2End - p2Begin));
+			}
+
+			// A smarter algorithm might know to subtract more than just one,
+			// but in most cases it won't make much difference anyway.
+			--pSearchEnd;
+		}
+
+		return p1End;
+	}
+
+	template <typename T>
 	inline const T* CharTypeStringFindFirstOf(const T* p1Begin, const T* p1End, const T* p2Begin, const T* p2End)
 	{
 		for (; p1Begin != p1End; ++p1Begin)

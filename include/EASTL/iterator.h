@@ -468,7 +468,7 @@ namespace eastl
 			move_iterator operator++(int)
 			{
 				move_iterator tempMoveIterator = *this;
-				++tempMoveIterator;
+				++mIterator;
 				return tempMoveIterator;
 			}
 
@@ -481,7 +481,7 @@ namespace eastl
 			move_iterator operator--(int)
 			{
 				move_iterator tempMoveIterator = *this;
-				--tempMoveIterator;
+				--mIterator;
 				return tempMoveIterator;
 			}
 

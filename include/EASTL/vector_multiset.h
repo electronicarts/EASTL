@@ -223,7 +223,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -647,7 +647,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline typename vector_multiset<K, C, A, RAC>::size_type
-	vector_multiset<K, C, A, RAC>::count(const key_type& k)
+	vector_multiset<K, C, A, RAC>::count(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (size_type)eastl::distance(pairIts.first, pairIts.second);

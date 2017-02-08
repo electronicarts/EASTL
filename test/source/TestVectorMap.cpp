@@ -132,8 +132,17 @@ int TestVectorMap()
 
 		const VM2::key_compare& kc = vmc.key_comp();
 		vm.key_comp() = kc;
+
+		// ensure count can be called from a const object
+		vmc.count(0);
 	}
 
+	{
+		const VMM1 vmm;
+
+		// ensure count can be called from a const object
+		vmm.count(0);
+	}
 
 	{
 		// Misc testing

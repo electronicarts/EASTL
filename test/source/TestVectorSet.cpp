@@ -127,6 +127,16 @@ int TestVectorSet()
 
 		const VS2::key_compare& kc = vsc.key_comp();
 		vs.key_comp() = kc;
+
+		// ensure count can be called from a const object
+		vsc.count(0);
+	}
+
+	{
+		const VMS1 vms;
+
+		// ensure count can be called from a const object
+		vms.count(0);
 	}
 
 
