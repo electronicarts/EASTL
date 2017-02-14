@@ -341,6 +341,17 @@ namespace EA
             #define EATEST_VERIFY_F(bExpression, pFormat, ...) EA::UnitTest::TestInternal::EATEST_VERIFY_F_IMP((bExpression), nErrorCount, __FILE__, __LINE__, pFormat, __VA_ARGS__)
         #endif
 
+				/// EATEST_VERIFY_THROW
+				/// EATEST_VERIFY_NOTHROW
+				/// 
+				/// This macro confirms whether or not an expression throws or doesn't throw.
+				/// 
+				/// See EATEST_VERIFY for details about error reporting and the _MSG variants
+				#define EATEST_VERIFY_THROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(!isNoThrow); }
+				#define EATEST_VERIFY_NOTHROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(isNoThrow); }
+				#define EATEST_VERIFY_THROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(!isNoThrow, msg); }
+				#define EATEST_VERIFY_NOTHROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(isNoThrow, msg); }
+
 
         ///////////////////////////////////////////////////////////////////////
         /// GetSystemTimeMicroseconds
