@@ -50,8 +50,8 @@ install:
 
 before_script:
   - if [[ -n "$USE_CLANG_39" ]]; then export PATH="${CLANG_39_PATH}/bin:$PATH"                                                            ;fi
-  - if [[ -n "$USE_CLANG_39" ]]; then export CC="clang"; fi
-  - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"; fi
+  - if [[ -n "$USE_CLANG_39" ]]; then export CC="clang"                                                                                   ;fi
+  - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"                                                                                ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CXXFLAGS="$CXXFLAGS -I${CLANG_39_PATH}/include -std=c++11 -stdlib=libc++"                    ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export LDFLAGS="$LDFLAGS -L${CLANG_39_PATH}/lib"                                                    ;fi
   - mkdir build_$EASTL_CONFIG
@@ -62,7 +62,7 @@ before_script:
 script:
     # Run Tests 
     - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
-    - ctest -C $EASTL_CONFIG -V
+    - ctest -C $EASTL_CONFIG -V || exit 1
     # Run Benchmarks
     - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
-    - ctest -C $EASTL_CONFIG  -V
+    - ctest -C $EASTL_CONFIG -V || exit 1
