@@ -11,7 +11,6 @@
 #include <EASTL/internal/red_black_tree.h>
 #include <EASTL/functional.h>
 #include <EASTL/utility.h>
-#include <stdexcept>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -448,10 +447,17 @@ namespace eastl
 	{
 		iterator itLower(lower_bound(key)); // itLower->first is >= key.
 
-		if(itLower == end())
-		{
-			throw std::out_of_range("map::at key does not exist");
-		}
+		#if EASTL_EXCEPTIONS_ENABLED
+			if(itLower == end())
+			{
+				throw std::out_of_range("map::at key does not exist");
+			}
+		#else
+			if(itLower == end())
+			{
+				EASTL_FAIL_MSG("map::at key does not exist");
+			}
+		#endif
 
 		return (*itLower).second;
 	}
@@ -462,10 +468,17 @@ namespace eastl
 	{
 		const_iterator itLower(lower_bound(key)); // itLower->first is >= key.
 
-		if(itLower == end())
-		{
-			throw std::out_of_range("map::at key does not exist");
-		}
+		#if EASTL_EXCEPTIONS_ENABLED
+			if(itLower == end())
+			{
+				throw std::out_of_range("map::at key does not exist");
+			}
+		#else
+			if(itLower == end())
+			{
+				EASTL_FAIL_MSG("map::at key does not exist");
+			}
+		#endif
 
 		return (*itLower).second;
 	}

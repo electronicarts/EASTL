@@ -144,16 +144,22 @@ int TestMap()
 		typedef eastl::map<int, int>     IntIntMap;
 		IntIntMap map1;
 
-		EATEST_VERIFY_THROW(map1.at(0));
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map1.at(0));
+		#endif
 		map1[0]=1;
-		EATEST_VERIFY_NOTHROW(map1.at(0));
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_NOTHROW(map1.at(0));
+		#endif
 		EATEST_VERIFY(map1.at(0) == 1);
 
 		const IntIntMap map2;
 		const IntIntMap map3(map1);
 
-		EATEST_VERIFY_THROW(map2.at(0));
-		EATEST_VERIFY_NOTHROW(map3.at(0));
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map2.at(0));
+			EATEST_VERIFY_NOTHROW(map3.at(0));
+		#endif
 		EATEST_VERIFY(map3.at(0) == 1);
 	}
 

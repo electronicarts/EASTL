@@ -344,13 +344,21 @@ namespace EA
 				/// EATEST_VERIFY_THROW
 				/// EATEST_VERIFY_NOTHROW
 				/// 
-				/// This macro confirms whether or not an expression throws or doesn't throw.
+				/// This macro confirms whether or not an expression throws or doesn't throw. If it's not the case that EASTL_EXCEPTIONS_ENABLED
+				/// the provided expression will not be evaluated.
 				/// 
 				/// See EATEST_VERIFY for details about error reporting and the _MSG variants
-				#define EATEST_VERIFY_THROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(!isNoThrow); }
-				#define EATEST_VERIFY_NOTHROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(isNoThrow); }
-				#define EATEST_VERIFY_THROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(!isNoThrow, msg); }
-				#define EATEST_VERIFY_NOTHROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(isNoThrow, msg); }
+				#if EASTL_EXCEPTIONS_ENABLED
+					#define EATEST_VERIFY_THROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(!isNoThrow); }
+					#define EATEST_VERIFY_NOTHROW(expression) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY(isNoThrow); }
+					#define EATEST_VERIFY_THROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(!isNoThrow, msg); }
+					#define EATEST_VERIFY_NOTHROW_MSG(expression, msg) {bool isNoThrow; try{ {expression;} isNoThrow=true; }catch(...){isNoThrow=false;} EATEST_VERIFY_MSG(isNoThrow, msg); }
+				#else
+					#define EATEST_VERIFY_THROW(expression) 
+					#define EATEST_VERIFY_NOTHROW(expression) 
+					#define EATEST_VERIFY_THROW_MSG(expression, msg) 
+					#define EATEST_VERIFY_NOTHROW_MSG(expression, msg) 
+				#endif
 
 
         ///////////////////////////////////////////////////////////////////////
