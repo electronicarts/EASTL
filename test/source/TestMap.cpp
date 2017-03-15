@@ -122,7 +122,6 @@ int TestMap()
 		EATEST_VERIFY(m.empty());
 	}
 
-
 	{
 		// User reports that EASTL_VALIDATE_COMPARE_ENABLED / EASTL_COMPARE_VALIDATE isn't compiling for this case.
 		eastl::map<eastl::string8, int> m; 
@@ -139,6 +138,29 @@ int TestMap()
 		v[0][16] = 0;                       // The rbtree was in a bad internal state and so this line resulted in a crash.
 		EATEST_VERIFY(v[0].validate());
 		EATEST_VERIFY(v.validate());
+	}
+
+	{
+		typedef eastl::map<int, int>     IntIntMap;
+		IntIntMap map1;
+
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map1.at(0));
+		#endif
+		map1[0]=1;
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_NOTHROW(map1.at(0));
+		#endif
+		EATEST_VERIFY(map1.at(0) == 1);
+
+		const IntIntMap map2;
+		const IntIntMap map3(map1);
+
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map2.at(0));
+			EATEST_VERIFY_NOTHROW(map3.at(0));
+		#endif
+		EATEST_VERIFY(map3.at(0) == 1);
 	}
 
 //    todo:  create a test case for this.

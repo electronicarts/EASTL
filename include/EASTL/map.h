@@ -155,6 +155,9 @@ namespace eastl
 			T& operator[](Key&& key); 
 		#endif
 
+		T& at(const Key& key);
+		const T& at(const Key& key) const;
+
 	}; // map
 
 
@@ -438,6 +441,41 @@ namespace eastl
 		}
 	#endif
 
+
+	template <typename Key, typename T, typename Compare, typename Allocator>
+	inline T& map<Key, T, Compare, Allocator>::at(const Key& key)
+	{
+		iterator itLower(lower_bound(key)); // itLower->first is >= key.
+
+		if(itLower == end())
+		{
+			#if EASTL_EXCEPTIONS_ENABLED
+				throw std::out_of_range("map::at key does not exist");
+			#else
+				EASTL_FAIL_MSG("map::at key does not exist");
+			#endif
+		}
+
+		return (*itLower).second;
+	}
+
+
+	template <typename Key, typename T, typename Compare, typename Allocator>
+	inline const T& map<Key, T, Compare, Allocator>::at(const Key& key) const
+	{
+		const_iterator itLower(lower_bound(key)); // itLower->first is >= key.
+
+		if(itLower == end())
+		{
+			#if EASTL_EXCEPTIONS_ENABLED
+				throw std::out_of_range("map::at key does not exist");
+			#else
+				EASTL_FAIL_MSG("map::at key does not exist");
+			#endif
+		}
+
+		return (*itLower).second;
+	}
 
 
 
