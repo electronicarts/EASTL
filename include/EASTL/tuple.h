@@ -12,6 +12,9 @@
 
 #include <EASTL/internal/tuple_fwd_decls.h>
 
+EA_DISABLE_VC_WARNING(4623) // warning C4623: default constructor was implicitly defined as deleted
+EA_DISABLE_VC_WARNING(4510) // warning C4510: default constructor could not be generated
+
 #if EASTL_TUPLE_ENABLED
 
 namespace eastl
@@ -899,5 +902,6 @@ inline typename Internal::TupleCat<Tuples...>::ResultType tuple_cat(Tuples&&... 
 }  // namespace eastl
 
 #endif  // EASTL_TUPLE_ENABLED
-
+EA_RESTORE_VC_WARNING()
+EA_RESTORE_VC_WARNING()
 #endif  // EASTL_TUPLE_H

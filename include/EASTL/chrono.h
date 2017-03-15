@@ -41,6 +41,9 @@
 
 #if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 	#include <thr/xtimec.h>
+#elif defined(EA_PLATFORM_PS4)
+	#include <Dinkum/threads/xtimec.h>
+	#include <kernel.h>
 #elif defined(EA_PLATFORM_APPLE)
 	#include <mach/mach_time.h>
 #elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) || defined(EA_PLATFORM_ANDROID) 
@@ -209,7 +212,7 @@ namespace chrono
 		typedef Period period;
 		typedef duration<Rep, Period> this_type;
 
-    #if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) || defined(CS_UNDEFINED_STRING)
+    #if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) || defined(EA_PLATFORM_PS4)
 		EA_CONSTEXPR duration() 
 			: mRep() {}
 
@@ -534,6 +537,8 @@ namespace chrono
 	namespace Internal
 	{
 		#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
+			#define EASTL_NS_PER_TICK 1 
+		#elif defined EA_PLATFORM_PS4
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
 		#elif defined EA_PLATFORM_POSIX
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
@@ -556,9 +561,26 @@ namespace chrono
 		inline uint64_t GetTicks()
 		{
 		#if defined EA_PLATFORM_MICROSOFT
-			uint64_t t;
-			QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&t));  // TODO:  migrate to rdtsc?
-			return t;
+			auto queryFrequency = []
+			{
+				LARGE_INTEGER frequency;
+				QueryPerformanceFrequency(&frequency);
+				return double(1000000000.0L / frequency.QuadPart);  // nanoseconds per tick
+			};
+
+			auto queryCounter = []
+			{
+				LARGE_INTEGER counter;
+				QueryPerformanceCounter(&counter);
+				return counter.QuadPart;
+			};
+
+			EA_DISABLE_VC_WARNING(4640)  // warning C4640: construction of local static object is not thread-safe (VS2013)
+			static auto frequency = queryFrequency(); // cache cpu frequency on first call
+			EA_RESTORE_VC_WARNING()
+			return uint64_t(frequency * queryCounter());
+        #elif defined EA_PLATFORM_PS4
+			return sceKernelGetProcessTimeCounter();
 		#elif defined(EA_PLATFORM_APPLE)
 		   return mach_absolute_time();
 		#elif defined(EA_PLATFORM_POSIX) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).

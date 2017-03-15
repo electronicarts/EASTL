@@ -47,6 +47,14 @@
     #include <sys/sysctl.h>
     #import <mach/mach.h>
     #import <mach/mach_host.h>
+#elif defined(EA_PLATFORM_KETTLE)
+    #include <unistd.h>
+    #include <sys/types.h>
+    #include <sdk_version.h>
+    #if (SCE_ORBIS_SDK_VERSION >= 0x00930000u) // SDK 930+
+        #include <libdbg.h>
+    #endif
+
 #elif defined(EA_PLATFORM_BSD)
     #include <sys/types.h>
     #include <sys/ptrace.h>
@@ -264,6 +272,9 @@ EATEST_API bool IsDebuggerPresent()
 {
     #if defined(EA_PLATFORM_MICROSOFT)
             return ::IsDebuggerPresent() != 0;
+
+    #elif defined(EA_PLATFORM_KETTLE) && (SCE_ORBIS_SDK_VERSION >= 0x00930000u)
+        return (sceDbgIsDebuggerAttached() != 0);
 
     #elif defined(__APPLE__) // OS X, iPhone, iPad, etc.
         // See http://developer.apple.com/mac/library/qa/qa2004/qa1361.html
@@ -694,6 +705,8 @@ EATEST_API uint64_t GetSystemMemoryMB()
 
         return (uint64_t)(pageCount * pageSize) / (1024 * 1024);
 
+    #elif defined(EA_PLATFORM_PS4)      // As of SDK 1.6 (May 2014), the normal max direct memory available to applications is 4.5 GiB. On dev kits the max direct memory available is 5.25 GiB when enabled in debug settings.
+        return 4096;
     #elif defined(EA_PLATFORM_DESKTOP)  // Generic desktop catchall, which includes Unix and OSX.
         return 2048;
     #elif defined(EA_PLATFORM_MOBILE)

@@ -109,6 +109,8 @@
 
             #if defined(EA_COMPILER_MSVC) && (_MSC_VER >= 1300)
                 #define EATEST_DEBUG_BREAK() __debugbreak() // This is a compiler intrinsic which will map to appropriate inlined asm for the platform.
+            #elif defined(EA_PLATFORM_SONY) && defined(EA_PROCESSOR_X86_64)
+                #define EATEST_DEBUG_BREAK() do { { __asm volatile ("int $0x41"); } } while(0)
             #elif defined(EA_PROCESSOR_ARM) && (defined(__APPLE__) || defined(CS_UNDEFINED_STRING))
                 #include <signal.h>
                 #include <unistd.h>

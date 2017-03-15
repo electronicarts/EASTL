@@ -617,7 +617,9 @@
 	//      void  operator delete[](void*, const std::nothrow_t&) EA_THROW_SPEC_DELETE_NONE();
 	//
 	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY)
-		#if   defined(_MSC_VER)
+		#if defined(EA_PLATFORM_PS4)
+			#define EA_THROW_SPEC_NEW(X)        _THROWS(X)
+		#elif defined(_MSC_VER)
 			// Disabled warning "nonstandard extension used: 'throw (...)'" as this warning is a W4 warning which is usually off by default
 			// and doesn't convey any important information but will still complain when building with /Wall (which most teams do)
 			#define EA_THROW_SPEC_NEW(X)        __pragma(warning(push)) __pragma(warning(disable: 4987)) _THROWS(X) __pragma(warning(pop))

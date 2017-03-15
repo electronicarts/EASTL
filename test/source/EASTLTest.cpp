@@ -177,6 +177,10 @@ const char* GetStdSTLName()
 		return "Apache";
 
 	// Tests for specific platforms that have specific STL versions.
+	#elif defined(EA_PLATFORM_SONY)
+		return "Sony Dinkumware";
+
+	// Special case for Dinkumware.
 	#elif defined(_YVALS)
 		#if defined(_MSC_VER)
 			return "VC++ Dinkumware";

@@ -5,6 +5,9 @@
  *-----------------------------------------------------------------------------
  * Currently supported platform indentification defines include:
  */
+#ifdef EA_PLATFORM_PS4 // ifdef for code stripping purposes 
+    // EA_PLATFORM_PS4 (EA_PLATFORM_KETTLE)
+#endif
 /*
  *    EA_PLATFORM_ANDROID
  *    EA_PLATFORM_APPLE
@@ -89,7 +92,36 @@
 	#define EA_PLATFORM_DESKTOP 1
 #endif
 
-#if   defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
+#if defined(EA_PLATFORM_PS4) || defined(__ORBIS__) || defined(EA_PLATFORM_KETTLE)
+	// PlayStation 4
+	// Orbis was Sony's code-name for the platform, which is now obsolete.
+	// Kettle was an EA-specific code-name for the platform, which is now obsolete.
+	#if defined(EA_PLATFORM_PS4)
+		#undef  EA_PLATFORM_PS4
+	#endif
+	#define EA_PLATFORM_PS4 1
+
+	// Backward compatibility:
+		#if defined(EA_PLATFORM_KETTLE)
+			#undef  EA_PLATFORM_KETTLE
+		#endif
+	// End backward compatbility
+
+	#define EA_PLATFORM_KETTLE 1
+	#define EA_PLATFORM_NAME "PS4"
+	#define EA_SYSTEM_LITTLE_ENDIAN 1
+	#define EA_PLATFORM_DESCRIPTION "PS4 on x64"
+	#define EA_PLATFORM_CONSOLE 1
+	#define EA_PLATFORM_SONY 1
+	#define EA_PLATFORM_POSIX 1
+	// #define EA_POSIX_THREADS_AVAILABLE 1  // POSIX threading API is available but discouraged.  Sony indicated use of the scePthreads* API is preferred. 
+	#define EA_PROCESSOR_X86_64 1
+	#if defined(__GNUC__) || defined(__clang__)
+		#define EA_ASM_STYLE_ATT 1
+	#endif
+
+
+#elif defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
 	#undef  EA_PLATFORM_LRB
 	#define EA_PLATFORM_LRB         1
 	#define EA_PLATFORM_NAME        "Larrabee"

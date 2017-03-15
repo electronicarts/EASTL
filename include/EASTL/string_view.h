@@ -28,18 +28,18 @@ namespace eastl
 	class basic_string_view
 	{
 	public:
-		typedef basic_string_view<T> this_type;
-		typedef T value_type;
-		typedef T* pointer;
-		typedef const T* const_pointer;
-		typedef T& reference;
-		typedef const T& const_reference;
-		typedef T* iterator;
-		typedef const T* const_iterator;
-		typedef eastl::reverse_iterator<iterator> reverse_iterator;
-		typedef eastl::reverse_iterator<const_iterator> const_reverse_iterator;
-		typedef size_t size_type;
-		typedef ptrdiff_t difference_type;
+		typedef basic_string_view<T>						this_type;
+		typedef T 											value_type;
+		typedef T* 											pointer;
+		typedef const T* 									const_pointer;
+		typedef T& 											reference;
+		typedef const T& 									const_reference;
+		typedef T* 											iterator;
+		typedef const T* 									const_iterator;
+		typedef eastl::reverse_iterator<iterator> 			reverse_iterator;
+		typedef eastl::reverse_iterator<const_iterator> 	const_reverse_iterator;
+		typedef size_t 										size_type;
+		typedef ptrdiff_t 									difference_type;
 
 		static const EA_CONSTEXPR size_type npos = size_type(-1);
 
@@ -121,7 +121,7 @@ namespace eastl
 
 		EA_CPP14_CONSTEXPR void remove_suffix(size_type n)
 		{
-			EASTL_ASSERT_MSG(n <= mnCount, "behavior is undefined if moving past the end of the string");
+			EASTL_ASSERT_MSG(n <= mnCount, "behavior is undefined if moving past the beginning of the string");
 			mnCount -= n;
 		}
 

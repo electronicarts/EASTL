@@ -80,8 +80,52 @@ struct HashtableValueHash
 
 
 
-// Template instantations.
+// Explicit Template instantiations.
 // These tell the compiler to compile all the functions for the given class.
+template class eastl::hashtable<int,
+                                eastl::pair<const int, int>,
+                                eastl::allocator,
+                                eastl::use_first<eastl::pair<const int, int>>,
+                                eastl::equal_to<int>,
+                                eastl::hash<int>,
+                                mod_range_hashing,
+                                default_ranged_hash,
+                                prime_rehash_policy,
+                                true, // bCacheHashCode
+                                true, // bMutableIterators
+                                true  // bUniqueKeys
+                                >;
+template class eastl::hashtable<int,
+								eastl::pair<const int, int>,
+								eastl::allocator,
+								eastl::use_first<eastl::pair<const int, int>>,
+								eastl::equal_to<int>,
+								eastl::hash<int>,
+								mod_range_hashing,
+								default_ranged_hash,
+								prime_rehash_policy,
+								false, // bCacheHashCode
+								true,  // bMutableIterators
+								true   // bUniqueKeys
+								>;
+// TODO(rparolin): known compiler error, we should fix this.
+// template class eastl::hashtable<int,
+//                                 eastl::pair<const int, int>,
+//                                 eastl::allocator,
+//                                 eastl::use_first<eastl::pair<const int, int>>,
+//                                 eastl::equal_to<int>,
+//                                 eastl::hash<int>,
+//                                 mod_range_hashing,
+//                                 default_ranged_hash,
+//                                 prime_rehash_policy,
+//                                 false, // bCacheHashCode
+//                                 true,  // bMutableIterators
+//                                 false  // bUniqueKeys
+//                                 >;
+
+// Note these will only compile non-inherited functions.  We provide explicit
+// template instantiations for the hashtable base class above to get compiler
+// coverage of those inherited hashtable functions.
 template class eastl::hash_set<int>;
 template class eastl::hash_multiset<int>;
 template class eastl::hash_map<int, int>;
@@ -90,6 +134,16 @@ template class eastl::hash_set<Align32>;
 template class eastl::hash_multiset<Align32>;
 template class eastl::hash_map<Align32, Align32>;
 template class eastl::hash_multimap<Align32, Align32>;
+
+// validate static assumptions about hashtable core types
+typedef eastl::hash_node<int, false> HashNode1;
+typedef eastl::hash_node<int, true> HashNode2;
+static_assert(eastl::is_default_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_default_constructible<HashNode2>::value, "hash_node static error");
+static_assert(eastl::is_copy_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_copy_constructible<HashNode2>::value, "hash_node static error");
+static_assert(eastl::is_move_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_move_constructible<HashNode2>::value, "hash_node static error");
 
 // A custom hash function that has a high number of collisions is used to ensure many keys share the same hash value.
 struct colliding_hash
@@ -368,6 +422,49 @@ int TestHash()
 			else
 				EATEST_VERIFY(it == hashSet.end());
 		}
+	}
+
+	{
+		// ENABLE_IF_HASHCODE_U32(HashCodeT, iterator)       find_by_hash(HashCodeT c)
+		// ENABLE_IF_HASHCODE_U32(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
+		{
+			// NOTE(rparolin):
+			// these overloads of find_by_hash contains a static assert that forces a compiler error in the event it is
+			// used with a hashtable configured to not cache the hash value in the node.
+		}
+
+		// iterator                                          find_by_hash(const key_type& k, hash_code_t c)
+		// const_iterator                                    find_by_hash(const key_type& k, hash_code_t c) const
+		#ifdef EA_COMPILER_CPP14_ENABLED 
+		{
+			auto FindByHashTest = [&nErrorCount](auto& hashSet)
+			{
+				const int kCount = 10000;
+				for(int i = 0; i < kCount; i++)
+					hashSet.insert(i);
+
+				for(int i = 0; i < kCount * 2; i++)
+				{
+					auto it = hashSet.find_by_hash(i, i);
+
+					if(i < kCount)
+						EATEST_VERIFY(it != hashSet.end());
+					else
+						EATEST_VERIFY(it == hashSet.end());
+				}
+			};
+
+			{
+				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, true> HashSetIntC;
+				HashSetIntC hashSetC;
+				FindByHashTest(hashSetC);
+
+				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, false> HashSetInt;
+				HashSetInt hashSet;
+				FindByHashTest(hashSet);
+			}
+		}
+		#endif
 	}
 
 

@@ -388,5 +388,11 @@
 	</Expand>
 </Type>
 
+<Type Name="eastl::reverse_iterator&lt;*&gt;">
+	<DisplayString>{*(mIterator-1)}</DisplayString>
+	<Expand>
+		<ExpandedItem>mIterator-1</ExpandedItem>
+	</Expand>
+</Type>
 
 </AutoVisualizer>
