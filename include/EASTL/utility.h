@@ -400,6 +400,22 @@ namespace eastl
 			  second()
 		{
 		}
+		
+		#if EASTL_MOVE_SEMANTICS_ENABLED
+			template <typename U, typename = typename eastl::enable_if<eastl::is_convertible<U,T1>::value && !eastl::is_rvalue_reference<U>::value>::type>
+			EA_CPP14_CONSTEXPR pair(U&& x)
+				: first(eastl::move(x)),
+					second()
+			{
+			}
+
+			template <typename U, typename = typename eastl::enable_if<eastl::is_convertible<U,T1>::value && eastl::is_rvalue_reference<U>::value>::type>
+			EA_CPP14_CONSTEXPR pair(U x)
+				: first(eastl::move(x)),
+					second()
+			{
+			}
+		#endif
 
 		EA_CPP14_CONSTEXPR pair(const T1& x, const T2& y) : first(x), second(y) {}
 

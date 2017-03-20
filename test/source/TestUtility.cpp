@@ -16,6 +16,15 @@ inline bool operator==(const BasicObject& t1, const BasicObject& t2) { return t1
 
 inline bool operator<(const BasicObject& t1, const BasicObject& t2) { return t1.mX < t2.mX; }
 
+template <typename T>
+class TestPairSingleMoveConstructor
+{
+	public:
+		void test(T&& value){
+			eastl::pair<T,T> p(eastl::move(value));
+		}
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestUtilityPair
 //
@@ -542,6 +551,20 @@ static int TestUtilityExchange()
 		r = eastl::exchange(a, "EA Standard Template Library");
 		EATEST_VERIFY(a == "EA Standard Template Library");
 	}
+
+	// Issue #82; construct pair using single move constructor
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+	{
+		int i1 = 1;
+		TestPairSingleMoveConstructor<int> test1;
+		test1.test(eastl::move(i1));
+
+		int i2a = 2;
+		int & i2b = i2a;
+		TestPairSingleMoveConstructor<int&> test2;
+		test1.test(eastl::move(i2b));
+	}
+	#endif
 
 	return nErrorCount;
 }
