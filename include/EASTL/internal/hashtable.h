@@ -2587,48 +2587,46 @@ namespace eastl
 
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename V, typename A, typename EK, typename Eq,
-					typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-		typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means bUniqueKeys is false.
+	template <typename K, typename V, typename A, typename EK, typename Eq,
+				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means bUniqueKeys is false.
+	{
+		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
+
+		if(bRehash.first)
+			DoRehash(bRehash.second);
+
+		const hash_code_t c = get_hash_code(key);
+		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
+
+		node_type* const pNodeNew = DoAllocateNodeFromKey(key);
+		set_code(pNodeNew, c); // This is a no-op for most hashtables.
+
+		// To consider: Possibly make this insertion not make equal elements contiguous.
+		// As it stands now, we insert equal values contiguously in the hashtable.
+		// The benefit is that equal_range can work in a sensible manner and that
+		// erase(value) can more quickly find equal values. The downside is that
+		// this insertion operation taking some extra time. How important is it to
+		// us that equal_range span all equal items? 
+		node_type* const pNodePrev = DoFindNode(mpBucketArray[n], key, c);
+
+		if(pNodePrev == NULL)
 		{
-			const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
-
-			if(bRehash.first)
-				DoRehash(bRehash.second);
-
-			const hash_code_t c = get_hash_code(key);
-			const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
-
-			node_type* const pNodeNew = DoAllocateNodeFromKey(key);
-			set_code(pNodeNew, c); // This is a no-op for most hashtables.
-
-			// To consider: Possibly make this insertion not make equal elements contiguous.
-			// As it stands now, we insert equal values contiguously in the hashtable.
-			// The benefit is that equal_range can work in a sensible manner and that
-			// erase(value) can more quickly find equal values. The downside is that
-			// this insertion operation taking some extra time. How important is it to
-			// us that equal_range span all equal items? 
-			node_type* const pNodePrev = DoFindNode(mpBucketArray[n], key, c);
-
-			if(pNodePrev == NULL)
-			{
-				EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-				pNodeNew->mpNext = mpBucketArray[n];
-				mpBucketArray[n] = pNodeNew;
-			}
-			else
-			{
-				pNodeNew->mpNext  = pNodePrev->mpNext;
-				pNodePrev->mpNext = pNodeNew;
-			}
-
-			++mnElementCount;
-
-			return iterator(pNodeNew, mpBucketArray + n);
+			EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+			pNodeNew->mpNext = mpBucketArray[n];
+			mpBucketArray[n] = pNodeNew;
 		}
-	#endif
+		else
+		{
+			pNodeNew->mpNext  = pNodePrev->mpNext;
+			pNodePrev->mpNext = pNodeNew;
+		}
+
+		++mnElementCount;
+
+		return iterator(pNodeNew, mpBucketArray + n);
+	}
 
 
 	#if EASTL_MOVE_SEMANTICS_ENABLED
@@ -2681,46 +2679,48 @@ namespace eastl
 	#endif
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type&& key) // false_type means bUniqueKeys is false.
-	{
-		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
-
-		if(bRehash.first)
-			DoRehash(bRehash.second);
-
-		const hash_code_t c = get_hash_code(key);
-		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
-
-		node_type* const pNodeNew = DoAllocateNodeFromKey(eastl::move(key));
-		set_code(pNodeNew, c); // This is a no-op for most hashtables.
-
-		// To consider: Possibly make this insertion not make equal elements contiguous.
-		// As it stands now, we insert equal values contiguously in the hashtable.
-		// The benefit is that equal_range can work in a sensible manner and that
-		// erase(value) can more quickly find equal values. The downside is that
-		// this insertion operation taking some extra time. How important is it to
-		// us that equal_range span all equal items? 
-		node_type* const pNodePrev = DoFindNode(mpBucketArray[n], key, c);
-
-		if(pNodePrev == NULL)
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename K, typename V, typename A, typename EK, typename Eq,
+					typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+		typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type&& key) // false_type means bUniqueKeys is false.
 		{
-			EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-			pNodeNew->mpNext = mpBucketArray[n];
-			mpBucketArray[n] = pNodeNew;
-		}
-		else
-		{
-			pNodeNew->mpNext  = pNodePrev->mpNext;
-			pNodePrev->mpNext = pNodeNew;
-		}
+			const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
-		++mnElementCount;
+			if(bRehash.first)
+				DoRehash(bRehash.second);
 
-		return iterator(pNodeNew, mpBucketArray + n);
-	}
+			const hash_code_t c = get_hash_code(key);
+			const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
+
+			node_type* const pNodeNew = DoAllocateNodeFromKey(eastl::move(key));
+			set_code(pNodeNew, c); // This is a no-op for most hashtables.
+
+			// To consider: Possibly make this insertion not make equal elements contiguous.
+			// As it stands now, we insert equal values contiguously in the hashtable.
+			// The benefit is that equal_range can work in a sensible manner and that
+			// erase(value) can more quickly find equal values. The downside is that
+			// this insertion operation taking some extra time. How important is it to
+			// us that equal_range span all equal items? 
+			node_type* const pNodePrev = DoFindNode(mpBucketArray[n], key, c);
+
+			if(pNodePrev == NULL)
+			{
+				EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+				pNodeNew->mpNext = mpBucketArray[n];
+				mpBucketArray[n] = pNodeNew;
+			}
+			else
+			{
+				pNodeNew->mpNext  = pNodePrev->mpNext;
+				pNodePrev->mpNext = pNodeNew;
+			}
+
+			++mnElementCount;
+
+			return iterator(pNodeNew, mpBucketArray + n);
+		}
+	#endif
 
 
 	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED

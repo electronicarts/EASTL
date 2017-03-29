@@ -16,14 +16,16 @@ inline bool operator==(const BasicObject& t1, const BasicObject& t2) { return t1
 
 inline bool operator<(const BasicObject& t1, const BasicObject& t2) { return t1.mX < t2.mX; }
 
-template <typename T>
-class TestPairSingleMoveConstructor
-{
-	public:
-		void test(T&& value){
-			eastl::pair<T,T> p(eastl::move(value));
-		}
-};
+#if EASTL_MOVE_SEMANTICS_ENABLED
+	template <typename T>
+	class TestPairSingleMoveConstructor
+	{
+		public:
+			void test(T&& value){
+				eastl::pair<T,T> p(eastl::move(value));
+			}
+	};
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestUtilityPair
