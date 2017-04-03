@@ -1293,9 +1293,8 @@ int TestHash()
 			std::size_t operator()(const Key& k) const { return 0; }
 		};
 
-		class Tester
+		struct Tester
 		{
-			public:
 			int test()
 			{
 				Key key;
