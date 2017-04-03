@@ -186,8 +186,8 @@ namespace eastl
 	// contains the cached hashed value or not. 
 	#define ENABLE_IF_HAS_HASHCODE(T, RT) typename eastl::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
 	#define ENABLE_IF_HASHCODE_U32(T, RT) typename eastl::enable_if<eastl::is_same<T, uint32_t>::value, RT>::type
-	#define ENABLE_IF_TRUETYPE(T) typename eastl::enable_if<BoolConstantT::value>::type*
-	#define DISABLE_IF_TRUETYPE(T) typename eastl::enable_if<!BoolConstantT::value>::type*
+	#define ENABLE_IF_TRUETYPE(T) typename eastl::enable_if<T::value>::type*
+	#define DISABLE_IF_TRUETYPE(T) typename eastl::enable_if<!T::value>::type*
 
 
 	/// node_iterator_base
@@ -1230,11 +1230,11 @@ namespace eastl
 		void        DoFreeBuckets(node_type** pBucketArray, size_type n);
 
 		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <typename BoolConstantT, class... Args>
-			eastl::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args, ENABLE_IF_TRUETYPE(BoolConstantT) = 0);
+			template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT) = 0>
+			eastl::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args);
 
-			template <typename BoolConstantT, class... Args>
-			iterator DoInsertValue(BoolConstantT, Args&&... args, DISABLE_IF_TRUETYPE(BoolConstantT) = 0);
+			template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = 0>
+			iterator DoInsertValue(BoolConstantT, Args&&... args);
 
 			template <class... Args>
 			node_type* DoAllocateNode(Args&&... args);
@@ -1989,9 +1989,9 @@ namespace eastl
 	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
 		template <typename K, typename V, typename A, typename EK, typename Eq,
 				  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-		template <typename BoolConstantT, class... Args>
+		template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT)>
 		eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // true_type means bUniqueKeys is true.
 		{
 			// Adds the value to the hash table if not already present. 
 			// If already present then the existing value is returned via an iterator/bool pair.
@@ -2059,9 +2059,9 @@ namespace eastl
 
 		template <typename K, typename V, typename A, typename EK, typename Eq,
 				  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-		template <typename BoolConstantT, class... Args>
+		template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT)>
 		typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args, DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // false_type means bUniqueKeys is false.
 		{
 			const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 

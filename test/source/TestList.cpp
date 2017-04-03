@@ -65,6 +65,11 @@ namespace
 		bool operator==(const C& rhs) { return mC == rhs.mC; }
 		int mC;
 	};
+
+	struct D
+	{
+		D() = delete;
+	};
 }
 
 
@@ -89,6 +94,12 @@ int TestList()
 	EASTLTest_Printf("TestList\n");
 
 	int nErrorCount = 0;
+
+	{
+		// test T with a deleted default-ctor
+		eastl::list<D> dlist;
+
+	}
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
