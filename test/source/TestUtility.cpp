@@ -546,12 +546,12 @@ static int TestUtilityExchange()
 	// Issue #82; construct pair using single move constructor
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
-		class TestPairSingleMoveConstructor
+		struct TestPairSingleMoveConstructor
 		{
-			public:
-				void test(int && val){
-					eastl::pair<int,int> p(eastl::move(val));
-				}
+			void test(int&& val)
+			{
+				eastl::pair<int,int> p(eastl::move(val));
+			}
 		};
 
 		int i1 = 1;
