@@ -1223,6 +1223,9 @@ namespace eastl
 		}
 
 		node_type*  DoAllocateNodeFromKey(const key_type& key);
+		#if EASTL_MOVE_SEMANTICS_ENABLED
+			node_type*  DoAllocateNodeFromKey(const key_type&& key);
+		#endif
 		void        DoFreeNode(node_type* pNode);
 		void        DoFreeNodes(node_type** pBucketArray, size_type);
 
@@ -1297,6 +1300,10 @@ namespace eastl
 
 		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key);
 		iterator                    DoInsertKey(false_type, const key_type& key);
+		#if EASTL_MOVE_SEMANTICS_ENABLED
+			eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type&& key);
+			iterator                    DoInsertKey(false_type, const key_type&& key);
+		#endif
 
 		void       DoRehash(size_type nBucketCount);
 		node_type* DoFindNode(node_type* pNode, const key_type& k, hash_code_t c) const;
@@ -1618,6 +1625,33 @@ namespace eastl
 		#endif
 	}
 
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename K, typename V, typename A, typename EK, typename Eq,
+					typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+		typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_type*
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(const key_type&& key)
+		{
+			node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+			EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+
+			#if EASTL_EXCEPTIONS_ENABLED
+				try
+				{
+			#endif
+					::new((void*)&pNode->mValue) value_type(eastl::move(key));
+					pNode->mpNext = NULL;
+					return pNode;
+			#if EASTL_EXCEPTIONS_ENABLED
+				}
+				catch(...)
+				{
+					EASTLFree(mAllocator, pNode, sizeof(node_type));
+					throw;
+				}
+			#endif
+		}
+	#endif
 
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
@@ -2554,7 +2588,7 @@ namespace eastl
 
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means bUniqueKeys is false.
 	{
@@ -2593,6 +2627,100 @@ namespace eastl
 
 		return iterator(pNodeNew, mpBucketArray + n);
 	}
+
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename K, typename V, typename A, typename EK, typename Eq,
+					typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+		eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, const key_type&& key) // true_type means bUniqueKeys is true.
+		{
+			const hash_code_t c     = get_hash_code(key);
+			size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
+			node_type* const  pNode = DoFindNode(mpBucketArray[n], key, c);
+
+			if(pNode == NULL)
+			{
+				const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
+
+				// Allocate the new node before doing the rehash so that we don't
+				// do a rehash if the allocation throws.
+				node_type* const pNodeNew = DoAllocateNodeFromKey(eastl::move(key));
+				set_code(pNodeNew, c); // This is a no-op for most hashtables.
+
+				#if EASTL_EXCEPTIONS_ENABLED
+					try
+					{
+				#endif
+						if(bRehash.first)
+						{
+							n = (size_type)bucket_index(key, c, (uint32_t)bRehash.second);
+							DoRehash(bRehash.second);
+						}
+
+						EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+						pNodeNew->mpNext = mpBucketArray[n];
+						mpBucketArray[n] = pNodeNew;
+						++mnElementCount;
+
+						return eastl::pair<iterator, bool>(iterator(pNodeNew, mpBucketArray + n), true);
+				#if EASTL_EXCEPTIONS_ENABLED
+					}
+					catch(...)
+					{
+						DoFreeNode(pNodeNew);
+						throw;
+					}
+				#endif
+			}
+
+			return eastl::pair<iterator, bool>(iterator(pNode, mpBucketArray + n), false);
+		}
+	#endif
+
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+		template <typename K, typename V, typename A, typename EK, typename Eq,
+					typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+		typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+		hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type&& key) // false_type means bUniqueKeys is false.
+		{
+			const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
+
+			if(bRehash.first)
+				DoRehash(bRehash.second);
+
+			const hash_code_t c = get_hash_code(key);
+			const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
+
+			node_type* const pNodeNew = DoAllocateNodeFromKey(eastl::move(key));
+			set_code(pNodeNew, c); // This is a no-op for most hashtables.
+
+			// To consider: Possibly make this insertion not make equal elements contiguous.
+			// As it stands now, we insert equal values contiguously in the hashtable.
+			// The benefit is that equal_range can work in a sensible manner and that
+			// erase(value) can more quickly find equal values. The downside is that
+			// this insertion operation taking some extra time. How important is it to
+			// us that equal_range span all equal items? 
+			node_type* const pNodePrev = DoFindNode(mpBucketArray[n], key, c);
+
+			if(pNodePrev == NULL)
+			{
+				EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+				pNodeNew->mpNext = mpBucketArray[n];
+				mpBucketArray[n] = pNodeNew;
+			}
+			else
+			{
+				pNodeNew->mpNext  = pNodePrev->mpNext;
+				pNodePrev->mpNext = pNodeNew;
+			}
+
+			++mnElementCount;
+
+			return iterator(pNodeNew, mpBucketArray + n);
+		}
+	#endif
 
 
 	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED

@@ -1274,6 +1274,40 @@ int TestHash()
 		#endif
 	}
 
+	// issue #82; Can't use move semantics with hash_map::operator[]
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+	{
+		class Key
+		{
+			public:
+				Key() {}
+				Key(Key && o) {}
+				Key(const Key && o) {}
+				bool operator==(const Key& other) const { return true; }
+			private:
+				Key(const Key & o) {}
+		};
+
+		struct Hash
+		{
+			std::size_t operator()(const Key& k) const { return 0; }
+		};
+
+		struct Tester
+		{
+			int test()
+			{
+				Key key;
+				eastl::hash_map<Key, int, Hash> hm;
+				return hm[eastl::move(key)] = 12345;
+			}
+		};
+
+		Tester tester;
+		EATEST_VERIFY(tester.test() == 12345);
+	}
+	#endif
+
 	return nErrorCount;
 }
 
