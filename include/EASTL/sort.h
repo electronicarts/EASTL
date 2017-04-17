@@ -213,6 +213,52 @@ namespace eastl
 	/// inner for loop with a call to upper_bound, which would be faster.
 	///
 	template <typename BidirectionalIterator, typename StrictWeakOrdering>
+	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare, 
+		typename eastl::enable_if<
+			eastl::is_move_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
+			&& !eastl::is_copy_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
+			>::type* = 0)
+	{
+		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+
+		if(first != last) // if the range is non-empty...
+		{
+			BidirectionalIterator iCurrent, iNext, iSorted = first;
+
+			for(++iSorted; iSorted != last; ++iSorted)
+			{
+				value_type temp( eastl::move(*iSorted) );
+
+				iNext = iCurrent = iSorted;
+
+				// Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
+				// It doesn't dereference the iterator, but std STL disallows that operation. This isn't 
+				// a problem for EASTL containers and ranges, as they support a single decrement of first,
+				// but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
+				// To do: Fix this loop to not decrement like so.
+				for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
+				{
+					EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
+					*iNext = eastl::move(*iCurrent);
+				}
+
+				*iNext = eastl::move(temp);
+			}
+		}
+	} // insertion_sort
+
+
+	/// insertion_sort
+	///
+	/// Since insertion_sort requires that the data be addressed with a BidirectionalIterator and 
+	/// not the more flexible RandomAccessIterator, we implement the sort by doing a for loop within
+	/// a for loop. If we were to specialize this for a RandomAccessIterator, we could replace the
+	/// inner for loop with a call to upper_bound, which would be faster.
+	///
+	template <typename BidirectionalIterator, typename StrictWeakOrdering, typename = 
+		typename eastl::enable_if<
+			eastl::is_copy_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
+			>::type>
 	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
@@ -678,8 +724,7 @@ namespace eastl
 		}
 	}
 
-
-	template <typename RandomAccessIterator, typename T, typename Compare>
+	template <typename RandomAccessIterator, typename T, typename Compare, typename = typename eastl::enable_if<eastl::is_copy_constructible<const T>::value>::type> 
 	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, const T& pivotValue, Compare compare)
 	{
 		const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
@@ -696,6 +741,34 @@ namespace eastl
 			while(compare(pivotCopy, *last))
 			{
 				EASTL_VALIDATE_COMPARE(!compare(*last, pivotCopy)); // Validate that the compare function is sane.
+				--last;
+			}
+
+			if(first >= last) // Random access iterators allow operator >=
+				return first;
+
+			eastl::iter_swap(first, last);
+		}
+	}
+
+
+	template <typename RandomAccessIterator, typename T, typename Compare>
+	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, const T&& pivotValue, Compare compare, typename eastl::enable_if<eastl::is_move_constructible<T>::value>::type* = 0 )
+	{
+		// Note: unlike the copy-constructible variant of get_partition... we can't create a temporary move-constructible object
+
+		for(; ; ++first)
+		{
+			while(compare(*first, pivotValue))
+			{
+				EASTL_VALIDATE_COMPARE(!compare(pivotValue, *first)); // Validate that the compare function is sane.
+				++first;
+			}
+			--last;
+
+			while(compare(pivotValue, *last))
+			{
+				EASTL_VALIDATE_COMPARE(!compare(*last, pivotValue)); // Validate that the compare function is sane.
 				--last;
 			}
 
@@ -738,7 +811,7 @@ namespace eastl
 		// This is because the implementation below makes an assumption about the input
 		// data that quick_sort satisfies but arbitrary data may not.
 		// There is a standalone insertion_sort function. 
-		template <typename RandomAccessIterator, typename Compare>
+		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<!eastl::is_lvalue_reference<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
 		inline void insertion_sort_simple(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
 		{
 			for(RandomAccessIterator current = first; current != last; ++current)
@@ -746,7 +819,31 @@ namespace eastl
 				typedef typename eastl::iterator_traits<RandomAccessIterator>::value_type value_type;
 
 				RandomAccessIterator end(current), prev(current);
-				const value_type     value(*current);
+				value_type     value(eastl::move(*current));
+
+				for(--prev; compare(value, *prev); --end, --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
+				{
+					EASTL_VALIDATE_COMPARE(!compare(*prev, value)); // Validate that the compare function is sane.
+					*end = eastl::move(*prev);
+				}
+
+				*end = eastl::move(value);
+			}
+		}
+		//
+		// This function is used by quick_sort and is not intended to be used by itself. 
+		// This is because the implementation below makes an assumption about the input
+		// data that quick_sort satisfies but arbitrary data may not.
+		// There is a standalone insertion_sort function. 
+		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<eastl::is_rvalue_reference<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
+		inline void insertion_sort_simple(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+		{
+			for(RandomAccessIterator current = first; current != last; ++current)
+			{
+				typedef typename eastl::iterator_traits<RandomAccessIterator>::value_type value_type;
+
+				RandomAccessIterator end(current), prev(current);
+				const value_type     value(eastl::move(*current));
 
 				for(--prev; compare(value, *prev); --end, --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
 				{
@@ -785,7 +882,7 @@ namespace eastl
 
 
 	template <typename RandomAccessIterator, typename Compare>
-	inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last, Compare compare)
+	inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last, Compare compare, typename eastl::enable_if< eastl::is_copy_constructible<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value >::type* = 0)
 	{
 		typedef typename eastl::iterator_traits<RandomAccessIterator>::difference_type difference_type;
 		typedef typename eastl::iterator_traits<RandomAccessIterator>::value_type      value_type;
@@ -801,6 +898,30 @@ namespace eastl
 				*i = *first;
 				eastl::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>
 								  (first, difference_type(0), difference_type(middle - first), difference_type(0), temp, compare);
+			}
+		}
+
+		eastl::sort_heap<RandomAccessIterator, Compare>(first, middle, compare);
+	}
+
+
+	template <typename RandomAccessIterator, typename Compare>
+	inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last, Compare compare, typename eastl::enable_if< !eastl::is_copy_constructible<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value && eastl::is_move_constructible<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value >::type* = 0)
+	{
+		typedef typename eastl::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+		typedef typename eastl::iterator_traits<RandomAccessIterator>::value_type      value_type;
+
+		eastl::make_heap<RandomAccessIterator, Compare>(first, middle, compare);
+
+		for(RandomAccessIterator i = middle; i < last; ++i)
+		{
+			if(compare(*i, *first))
+			{
+				EASTL_VALIDATE_COMPARE(!compare(*first, *i)); // Validate that the compare function is sane.
+				value_type temp(eastl::move(*i));
+				*i = eastl::move(*first);
+				eastl::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>
+								  (first, difference_type(0), difference_type(middle - first), difference_type(0), eastl::move(*i), compare);
 			}
 		}
 
@@ -868,14 +989,31 @@ namespace eastl
 		}
 
 
-		template <typename RandomAccessIterator, typename Size, typename Compare>
+		template <typename RandomAccessIterator, typename Size, typename Compare, typename EnableCopyConstructor = typename eastl::enable_if<eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type >
 		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount, Compare compare)
 		{
 			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
 
 			while(((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
 			{
-				const RandomAccessIterator position(eastl::get_partition<RandomAccessIterator, value_type, Compare>(first, last, eastl::median<value_type, Compare>(*first, *(first + (last - first) / 2), *(last - 1), compare), compare));
+				const RandomAccessIterator position(eastl::get_partition<RandomAccessIterator, value_type, Compare, EnableCopyConstructor>(first, last, eastl::median<value_type, Compare>(*first, *(first + (last - first) / 2), *(last - 1), compare), compare));
+
+				eastl::Internal::quick_sort_impl<RandomAccessIterator, Size, Compare>(position, last, --kRecursionCount, compare);
+				last = position;
+			}
+
+			if(kRecursionCount == 0)
+				eastl::partial_sort<RandomAccessIterator, Compare>(first, last, last, compare);
+		}
+
+		template <typename RandomAccessIterator, typename Size, typename Compare>
+		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount, Compare compare, typename eastl::enable_if<eastl::is_move_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value && !eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
+		{
+			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+
+			while(((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
+			{
+				const RandomAccessIterator position(eastl::get_partition<RandomAccessIterator, value_type, Compare>(first, last, eastl::move(eastl::median<value_type, Compare>(*first, *(first + (last - first) / 2), eastl::move(*(last - 1)), compare)), compare));
 
 				eastl::Internal::quick_sort_impl<RandomAccessIterator, Size, Compare>(position, last, --kRecursionCount, compare);
 				last = position;

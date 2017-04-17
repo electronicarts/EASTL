@@ -11,6 +11,7 @@
 
 #include <EASTL/algorithm.h>
 #include <EASTL/functional.h>
+#include <EASTL/unique_ptr.h>
 #include <EASTL/vector.h>
 #include <EASTL/array.h>
 #include <EASTL/deque.h>
@@ -22,6 +23,7 @@
 #include <EAStdC/EAMemory.h>
 #include "EASTLTest.h"  // Put this after the above so that it doesn't block any warnings from the includes above.
 
+#include <algorithm> // reference sort() implementation
 
 namespace eastl
 {
@@ -2339,6 +2341,45 @@ int TestAlgorithm()
 		}
 	}
 
+	// issue #92
+	{
+		eastl::vector<eastl::unique_ptr<int>> vec;
+		eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+	}
+	{
+		eastl::vector<eastl::unique_ptr<int>> vec;
+		vec.emplace_back(new int(7));
+		vec.emplace_back(new int(-42));
+		vec.emplace_back(new int(5));
+		eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+		EATEST_VERIFY(*vec[0] == -42);
+		EATEST_VERIFY(*vec[1] == 5);
+		EATEST_VERIFY(*vec[2] == 7);
+	}
+	{
+		for(unsigned tests=0; tests<500; ++tests)
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec1;
+			eastl::vector<eastl::unique_ptr<int>> vec2;
+
+			const int numbersToSort = 100;
+
+			for(int i=0; i<numbersToSort; ++i)
+			{
+				int randomNumber = rng();
+				vec1.emplace_back(new int(randomNumber));
+				vec2.emplace_back(new int(randomNumber));
+			}
+
+			// used STL sort as reference for correctness
+			eastl::sort(vec1.begin(), vec1.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+			std::sort(vec2.begin(), vec2.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+
+			for(int i=0; i<numbersToSort; ++i){
+				EATEST_VERIFY(*vec1[i] == *vec2[i]);
+			}
+		}
+	}
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();

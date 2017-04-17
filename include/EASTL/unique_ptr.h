@@ -336,9 +336,9 @@ namespace eastl
 		eastl::compressed_pair<pointer, deleter_type> mPair;
 
 		/// These functions are private in order to prevent copying, for safety.
-		unique_ptr(const this_type&);
-		unique_ptr& operator=(const this_type&);
-		unique_ptr& operator=(pointer pValue);
+		unique_ptr(const this_type&) = delete;
+		unique_ptr& operator=(const this_type&) = delete;
+		unique_ptr& operator=(pointer pValue) = delete;
 
 	}; // class unique_ptr
 
