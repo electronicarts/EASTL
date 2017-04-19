@@ -213,11 +213,13 @@ namespace eastl
 	/// inner for loop with a call to upper_bound, which would be faster.
 	///
 	template <typename BidirectionalIterator, typename StrictWeakOrdering>
-	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare, 
-		typename eastl::enable_if<
-			eastl::is_move_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
-			&& !eastl::is_copy_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
-			>::type* = 0)
+	void insertion_sort(
+	    BidirectionalIterator first,
+	    BidirectionalIterator last,
+	    StrictWeakOrdering compare,
+	    typename eastl::enable_if<
+	        eastl::is_move_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value>::
+	        type* = 0)
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 
@@ -255,10 +257,10 @@ namespace eastl
 	/// a for loop. If we were to specialize this for a RandomAccessIterator, we could replace the
 	/// inner for loop with a call to upper_bound, which would be faster.
 	///
-	template <typename BidirectionalIterator, typename StrictWeakOrdering, typename = 
-		typename eastl::enable_if<
-			eastl::is_copy_constructible<typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value
-			>::type>
+	template <typename BidirectionalIterator,
+	          typename StrictWeakOrdering,
+	          typename = typename eastl::enable_if<!eastl::is_move_constructible<
+	              typename eastl::iterator_traits<BidirectionalIterator>::value_type>::value>::type>
 	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;

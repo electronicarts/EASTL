@@ -2342,44 +2342,47 @@ int TestAlgorithm()
 	}
 
 	// issue #92
-	{
-		eastl::vector<eastl::unique_ptr<int>> vec;
-		eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
-	}
-	{
-		eastl::vector<eastl::unique_ptr<int>> vec;
-		vec.emplace_back(new int(7));
-		vec.emplace_back(new int(-42));
-		vec.emplace_back(new int(5));
-		eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
-		EATEST_VERIFY(*vec[0] == -42);
-		EATEST_VERIFY(*vec[1] == 5);
-		EATEST_VERIFY(*vec[2] == 7);
-	}
-	{
-		for(unsigned tests=0; tests<500; ++tests)
+	// disable in MSVC2013 because eastl::is_copy_constructible is always true...
+	#ifndef EA_COMPILER_MSVC_2013
 		{
-			eastl::vector<eastl::unique_ptr<int>> vec1;
-			eastl::vector<eastl::unique_ptr<int>> vec2;
-
-			const int numbersToSort = 100;
-
-			for(int i=0; i<numbersToSort; ++i)
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+		}
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			vec.emplace_back(new int(7));
+			vec.emplace_back(new int(-42));
+			vec.emplace_back(new int(5));
+			eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+			EATEST_VERIFY(*vec[0] == -42);
+			EATEST_VERIFY(*vec[1] == 5);
+			EATEST_VERIFY(*vec[2] == 7);
+		}
+		{
+			for(unsigned tests=0; tests<500; ++tests)
 			{
-				int randomNumber = rng();
-				vec1.emplace_back(new int(randomNumber));
-				vec2.emplace_back(new int(randomNumber));
-			}
+				eastl::vector<eastl::unique_ptr<int>> vec1;
+				eastl::vector<eastl::unique_ptr<int>> vec2;
 
-			// used STL sort as reference for correctness
-			eastl::sort(vec1.begin(), vec1.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
-			std::sort(vec2.begin(), vec2.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+				const int numbersToSort = 100;
 
-			for(int i=0; i<numbersToSort; ++i){
-				EATEST_VERIFY(*vec1[i] == *vec2[i]);
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					int randomNumber = rng();
+					vec1.emplace_back(new int(randomNumber));
+					vec2.emplace_back(new int(randomNumber));
+				}
+
+				// used STL sort as reference for correctness
+				eastl::sort(vec1.begin(), vec1.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+				std::sort(vec2.begin(), vec2.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+
+				for(int i=0; i<numbersToSort; ++i){
+					EATEST_VERIFY(*vec1[i] == *vec2[i]);
+				}
 			}
 		}
-	}
+	#endif
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
