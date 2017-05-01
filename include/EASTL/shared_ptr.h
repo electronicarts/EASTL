@@ -150,7 +150,7 @@ namespace eastl
 	};
 
 
-	inline ref_count_sp::ref_count_sp(int refCount, int weakRefCount) EA_NOEXCEPT
+	inline ref_count_sp::ref_count_sp(int32_t refCount, int32_t weakRefCount) EA_NOEXCEPT
 		: mRefCount(refCount), mWeakRefCount(weakRefCount) {}
 
 	inline int32_t ref_count_sp::use_count() const EA_NOEXCEPT
