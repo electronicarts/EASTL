@@ -1274,7 +1274,7 @@ int TestHash()
 		#endif
 	}
 
-	// issue #82; Can't use move semantics with hash_map::operator[]
+	// Can't use move semantics with hash_map::operator[]
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		class Key
