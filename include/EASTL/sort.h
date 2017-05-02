@@ -813,7 +813,7 @@ namespace eastl
 		// This is because the implementation below makes an assumption about the input
 		// data that quick_sort satisfies but arbitrary data may not.
 		// There is a standalone insertion_sort function. 
-		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<!eastl::is_rvalue_reference<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
+		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<eastl::is_move_constructible<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
 		inline void insertion_sort_simple(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
 		{
 			for(RandomAccessIterator current = first; current != last; ++current)
@@ -837,7 +837,7 @@ namespace eastl
 		// This is because the implementation below makes an assumption about the input
 		// data that quick_sort satisfies but arbitrary data may not.
 		// There is a standalone insertion_sort function. 
-		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<eastl::is_rvalue_reference<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
+		template <typename RandomAccessIterator, typename Compare, typename eastl::enable_if<!eastl::is_move_constructible<typename eastl::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = nullptr >
 		inline void insertion_sort_simple(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
 		{
 			for(RandomAccessIterator current = first; current != last; ++current)
