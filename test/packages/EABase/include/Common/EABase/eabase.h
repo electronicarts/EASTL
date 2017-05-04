@@ -717,12 +717,12 @@
 		#endif
 	#elif (EA_WCHAR_SIZE == 2)
 		#if (defined(_MSC_VER) && (_MSC_VER >= 1600)) // if VS2010+ or using platforms that use Dinkumware under a compiler that doesn't natively support C++11 char16_t.
-			#if !defined(_CHAR16T)
-				#define _CHAR16T
-			#endif
-			#if !defined(_HAS_CHAR16_T_LANGUAGE_SUPPORT) || !_HAS_CHAR16_T_LANGUAGE_SUPPORT
+			#if (!defined(_HAS_CHAR16_T_LANGUAGE_SUPPORT) || !_HAS_CHAR16_T_LANGUAGE_SUPPORT) && !defined(_CHAR16T)
 				typedef wchar_t  char16_t;
 				typedef uint32_t char32_t;
+			#endif
+			#if !defined(_CHAR16T)
+				#define _CHAR16T
 			#endif
 		#else
 			typedef wchar_t  char16_t;
