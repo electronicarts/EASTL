@@ -118,6 +118,57 @@ struct TestObjectNegate : public eastl::unary_function<TestObject, TestObject>
 		{ return TestObject(-a.mX); }
 };
 
+struct MissingMoveConstructor
+{
+	MissingMoveConstructor()
+	{
+	}
+
+	MissingMoveConstructor(const MissingMoveConstructor & other)
+	{
+	}
+
+	MissingMoveConstructor & operator= (MissingMoveConstructor && other)
+	{
+		return *this;
+	}
+
+	MissingMoveConstructor & operator= (const MissingMoveConstructor & other)
+	{
+		return *this;
+	}
+
+	bool operator< (const MissingMoveConstructor & other) const
+	{
+		return true;
+	}
+};
+
+struct MissingMoveAssignable
+{
+	MissingMoveAssignable()
+	{
+	}
+
+	MissingMoveAssignable(const MissingMoveAssignable & other)
+	{
+	}
+
+	MissingMoveAssignable(MissingMoveAssignable && other)
+	{
+	}
+
+	MissingMoveAssignable & operator= (const MissingMoveAssignable& other)
+	{
+		return *this;
+	}
+
+	bool operator< (const MissingMoveAssignable & other) const
+	{
+		return true;
+	}
+};
+
 
 static int TestMinMax()
 {
@@ -2346,7 +2397,27 @@ int TestAlgorithm()
 	#ifndef EA_COMPILER_MSVC_2013
 		{
 			eastl::vector<eastl::unique_ptr<int>> vec;
-			eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+			eastl::sort(vec.begin(), vec.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+		}
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			eastl::sort(vec.begin(), vec.end());
+		}
+		{
+			eastl::vector<MissingMoveConstructor> vec;
+			eastl::sort(vec.begin(), vec.end(), [](const MissingMoveConstructor& lhs, const MissingMoveConstructor& rhs) { return lhs < rhs; });
+		}
+		{
+			eastl::vector<MissingMoveConstructor> vec;
+			eastl::sort(vec.begin(), vec.end());
+		}
+		{
+			eastl::vector<MissingMoveAssignable> vec;
+			eastl::sort(vec.begin(), vec.end(), [](const MissingMoveAssignable& lhs, const MissingMoveAssignable& rhs) { return lhs < rhs; });
+		}
+		{
+			eastl::vector<MissingMoveAssignable> vec;
+			eastl::sort(vec.begin(), vec.end());
 		}
 		{
 			eastl::vector<eastl::unique_ptr<int>> vec;
@@ -2363,6 +2434,8 @@ int TestAlgorithm()
 			{
 				eastl::vector<eastl::unique_ptr<int>> vec1;
 				eastl::vector<eastl::unique_ptr<int>> vec2;
+				eastl::vector<int> vec3;
+				eastl::vector<int> vec4;
 
 				const int numbersToSort = 100;
 
@@ -2371,14 +2444,24 @@ int TestAlgorithm()
 					int randomNumber = rng();
 					vec1.emplace_back(new int(randomNumber));
 					vec2.emplace_back(new int(randomNumber));
+					vec3.push_back(randomNumber);
+					vec4.push_back(randomNumber);
 				}
 
 				// used STL sort as reference for correctness
-				eastl::sort(vec1.begin(), vec1.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
-				std::sort(vec2.begin(), vec2.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+				eastl::sort(vec1.begin(), vec1.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+				std::sort(vec2.begin(), vec2.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
 
 				for(int i=0; i<numbersToSort; ++i){
 					EATEST_VERIFY(*vec1[i] == *vec2[i]);
+				}
+
+				eastl::sort(vec3.begin(), vec3.end());
+				std::sort(vec4.begin(), vec4.end());
+
+				for(int i=0; i<numbersToSort; ++i){
+					EATEST_VERIFY(*vec2[i] == vec3[i]);
+					EATEST_VERIFY(vec3[i] == vec4[i]);
 				}
 			}
 		}
@@ -2389,16 +2472,3 @@ int TestAlgorithm()
 
 	return nErrorCount;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
