@@ -967,6 +967,33 @@ namespace eastl
 		return b;
 	}
 
+	/// median
+	///
+	/// median finds which element of three (a, b, d) is in-between the other two.
+	/// If two or more elements are equal, the first (e.g. a before b) is chosen.
+	///
+	/// Complexity: Either two or three comparisons will be required, depending 
+	/// on the values.
+	///
+	template <typename T>
+	inline T&& median(T&& a, T&& b, T&& c)
+	{
+		if(a < b)
+		{
+			if(b < c)
+				return eastl::move(b);
+			else if(a < c)
+				return eastl::move(c);
+			else
+				return eastl::move(a);
+		}
+		else if(a < c)
+			return eastl::move(a);
+		else if(b < c)
+			return eastl::move(c);
+		return eastl::move(b);
+	}
+
 
 	/// median
 	///
@@ -993,6 +1020,33 @@ namespace eastl
 		else if(compare(b, c))
 			return c;
 		return b;
+	}
+
+	/// median
+	///
+	/// median finds which element of three (a, b, d) is in-between the other two.
+	/// If two or more elements are equal, the first (e.g. a before b) is chosen.
+	///
+	/// Complexity: Either two or three comparisons will be required, depending 
+	/// on the values.
+	///
+	template <typename T, typename Compare>
+	inline T&& median(T&& a, T&& b, T&& c, Compare compare)
+	{
+		if(compare(a, b))
+		{
+			if(compare(b, c))
+				return eastl::move(b);
+			else if(compare(a, c))
+				return eastl::move(c);
+			else
+				return eastl::move(a);
+		}
+		else if(compare(a, c))
+			return eastl::move(a);
+		else if(compare(b, c))
+			return eastl::move(c);
+		return eastl::move(b);
 	}
 
 
