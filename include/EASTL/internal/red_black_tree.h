@@ -216,7 +216,7 @@ namespace eastl
 	{
 		typedef ExtractKey extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -235,7 +235,7 @@ namespace eastl
 	{
 		typedef ExtractKey extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -252,7 +252,7 @@ namespace eastl
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -269,7 +269,7 @@ namespace eastl
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -364,7 +364,7 @@ namespace eastl
 
 		using base_type::mCompare;
 
-	public:
+	protected:
 		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 		size_type         mnSize;       /// Stores the count of nodes in the tree (not counting the anchor node).
 		allocator_type    mAllocator;   // To do: Use base class optimization to make this go away.
