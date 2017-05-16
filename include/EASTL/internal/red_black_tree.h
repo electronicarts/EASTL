@@ -184,28 +184,19 @@ namespace eastl
 		rbtree_iterator& operator--();
 		rbtree_iterator  operator--(int);
 
-	public:
-		template <typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
-		friend bool operator==(const rbtree_iterator<T, PointerA, ReferenceA>& a, 
-							   const rbtree_iterator<T, PointerB, ReferenceB>& b)
-		{
-			return a.mpNode == b.mpNode;
-		}
-
-
-		template <typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
-		friend bool operator!=(const rbtree_iterator<T, PointerA, ReferenceA>& a, 
-							   const rbtree_iterator<T, PointerB, ReferenceB>& b)
-		{
-			return a.mpNode != b.mpNode;
-		}
-
-		friend bool operator!=(const rbtree_iterator<T, Pointer, Reference>& a, 
-							   const rbtree_iterator<T, Pointer, Reference>& b)
-		{
-			return a.mpNode != b.mpNode;
-		}
 	protected:
+		template <typename Tp, typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
+		friend bool operator==(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerB, ReferenceB>& b);
+
+		template <typename Tp, typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
+		friend bool operator!=(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerB, ReferenceB>& b);
+
+		template <typename Tp, typename PointerA, typename ReferenceA>
+		friend bool operator!=(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerA, ReferenceA>& b);
+
 		template <typename, typename, typename, typename, typename, bool, bool> friend class rbtree;
 		friend const_iterator;
 
@@ -700,7 +691,6 @@ namespace eastl
 	// The C++ defect report #179 requires that we support comparisons between const and non-const iterators.
 	// Thus we provide additional template paremeters here to support this. The defect report does not
 	// require us to support comparisons between reverse_iterators and const_reverse_iterators.
-	/*
 	template <typename T, typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
 	inline bool operator==(const rbtree_iterator<T, PointerA, ReferenceA>& a, 
 						   const rbtree_iterator<T, PointerB, ReferenceB>& b)
@@ -725,7 +715,6 @@ namespace eastl
 	{
 		return a.mpNode != b.mpNode;
 	}
-	*/
 
 
 
