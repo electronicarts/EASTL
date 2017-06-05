@@ -122,6 +122,8 @@
                 #define EATEST_DEBUG_BREAK() {__asm__("int $3\n" : : ); }
             #elif defined(EA_PROCESSOR_ARM) && defined(__APPLE__)
                 #define EATEST_DEBUG_BREAK() asm("trap") // Apparently __builtin_trap() doesn't let you continue execution, so we don't use it.
+            #elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
+                #define EATEST_DEBUG_BREAK() asm("brk 10")
             #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
                 #define EATEST_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
             #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)

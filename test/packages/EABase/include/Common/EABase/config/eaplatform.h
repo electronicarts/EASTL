@@ -151,6 +151,9 @@
 		#define EA_ABI_ARM_LINUX 1  // a.k.a. "ARM eabi"
 		#define EA_PROCESSOR_ARM32 1
 		#define EA_PLATFORM_DESCRIPTION "Android on ARM"
+	#elif defined(__aarch64__)
+		#define EA_PROCESSOR_ARM64 1
+		#define EA_PLATFORM_DESCRIPTION "Android on ARM64"
 	#elif defined(__i386__)
 		#define EA_PROCESSOR_X86 1
 		#define EA_PLATFORM_DESCRIPTION "Android on x86"
