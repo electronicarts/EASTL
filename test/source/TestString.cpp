@@ -80,6 +80,22 @@ int TestString()
 	#endif
 	}
 
+	#if EASTL_USER_LITERALS_ENABLED 
+	{
+		VERIFY("cplusplus"s == "cplusplus");
+		VERIFY(L"cplusplus"s == L"cplusplus");
+		VERIFY(u"cplusplus"s == u"cplusplus");
+		VERIFY(U"cplusplus"s == U"cplusplus");
+	}
+	#endif
+
+
+	{
+		// CustomAllocator has no data members which reduces the size of an eastl::basic_string via the empty base class optimization.
+		typedef eastl::basic_string<char, CustomAllocator> EboString;
+		static_assert(sizeof(EboString) == 3 * sizeof(void*), "");
+	}
+
 	return nErrorCount;
 }
 

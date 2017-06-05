@@ -448,19 +448,6 @@ int TEST_STRING_NAME()
 			VERIFY(sw2 >= sw1);
 		}
 
-		// constexpr string_view operator "" sv(const char* str, size_t len) noexcept;
-		// constexpr u16string_view operator "" sv(const char16_t* str, size_t len) noexcept;
-		// constexpr u32string_view operator "" sv(const char32_t* str, size_t len) noexcept;
-		// constexpr wstring_view   operator "" sv(const wchar_t* str, size_t len) noexcept;
-		#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-		{
-			static_assert(eastl::is_same_v<decltype("abcdef"sv), eastl::string_view>, "string_view literal type mismatch");
-			static_assert(eastl::is_same_v<decltype(u"abcdef"sv), eastl::u16string_view>, "string_view literal type mismatch");
-			static_assert(eastl::is_same_v<decltype(U"abcdef"sv), eastl::u32string_view>, "string_view literal type mismatch");
-			static_assert(eastl::is_same_v<decltype(L"abcdef"sv), eastl::wstring_view>, "string_view literal type mismatch");
-		}
-		#endif
-
 		// template<> struct hash<std::string_view>;
 		// template<> struct hash<std::wstring_view>;
 		// template<> struct hash<std::u16string_view>;

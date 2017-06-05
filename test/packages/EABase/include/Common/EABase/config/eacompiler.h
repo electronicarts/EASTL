@@ -272,8 +272,24 @@
 	#if !defined(EA_COMPILER_CPP14_ENABLED) && defined(__cplusplus)
 		#if (__cplusplus >= 201402L) 								// Clang and GCC defines this like so in C++14 mode.
 			#define EA_COMPILER_CPP14_ENABLED 1
-		#elif defined(_MSC_VER) && (EA_COMPILER_VERSION >= 1900)  	// VS2015+ 
+		#elif defined(_MSC_VER) && (_MSC_VER >= 1900)  	// VS2015+ 
 			#define EA_COMPILER_CPP14_ENABLED 1
+		#endif
+	#endif
+
+
+	// EA_COMPILER_CPP17_ENABLED
+	//
+	// Defined as 1 if the compiler has its available C++17 support enabled, else undefined.
+	// This does not mean that all of C++17 or any particular feature of C++17 is supported
+	// by the compiler. It means that whatever C++17 support the compiler has is enabled.
+ 	// 
+	// We cannot use (__cplusplus >= 201703L) alone because some compiler vendors have 
+	// decided to not define __cplusplus like thus until they have fully completed their
+	// C++17 support.
+	#if !defined(EA_COMPILER_CPP17_ENABLED) && defined(__cplusplus)
+		#if (__cplusplus >= 201703L) 
+			#define EA_COMPILER_CPP17_ENABLED 1
 		#endif
 	#endif
 
@@ -435,9 +451,13 @@
 			#define EA_COMPILER_MSVC_2013 1
 			#define EA_COMPILER_MSVC13_0  1
 
-		#elif (_MSC_VER < 2000) // VS2015       _MSC_VER of 1900 means VS2015
+		#elif (_MSC_VER < 1910) // VS2015       _MSC_VER of 1900 means VS2015
 			#define EA_COMPILER_MSVC_2015 1
 			#define EA_COMPILER_MSVC14_0  1
+
+		#elif (_MSC_VER < 1911) // VS2017       _MSC_VER of 1910 means VS2017
+			#define EA_COMPILER_MSVC_2017 1
+			#define EA_COMPILER_MSVC15_0  1
 
 		#endif
 
@@ -566,7 +586,7 @@
 		#if defined(_MSC_VER)
 			#define EA_DISABLE_ALL_VC_WARNINGS()  \
 				__pragma(warning(push, 0)) \
-				__pragma(warning(disable: 4244 4265 4267 4350 4472 4509 4548 4710 4985 6320 4755)) // Some warnings need to be explicitly called out.
+				__pragma(warning(disable: 4244 4265 4267 4350 4472 4509 4548 4710 4985 6320 4755 4625 4626 4702)) // Some warnings need to be explicitly called out.
 		#else
 			#define EA_DISABLE_ALL_VC_WARNINGS()
 		#endif
@@ -617,18 +637,24 @@
 	//      void  operator delete[](void*, const std::nothrow_t&) EA_THROW_SPEC_DELETE_NONE();
 	//
 	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY)
-		#if defined(EA_PLATFORM_PS4)
-			#define EA_THROW_SPEC_NEW(X)        _THROWS(X)
-		#elif defined(_MSC_VER)
-			// Disabled warning "nonstandard extension used: 'throw (...)'" as this warning is a W4 warning which is usually off by default
-			// and doesn't convey any important information but will still complain when building with /Wall (which most teams do)
-			#define EA_THROW_SPEC_NEW(X)        __pragma(warning(push)) __pragma(warning(disable: 4987)) _THROWS(X) __pragma(warning(pop))
+		#if defined(_MSC_VER) && (_MSC_VER >= 1910)  // VS2017+
+			#define EA_THROW_SPEC_NEW(x)        throw(x)
+			#define EA_THROW_SPEC_NEW_NONE()    throw() 
+			#define EA_THROW_SPEC_DELETE_NONE() throw() 
 		#else
-			#define EA_THROW_SPEC_NEW(X)        _THROW1(X)
+			#if defined(EA_PLATFORM_PS4)
+				#define EA_THROW_SPEC_NEW(X)        _THROWS(X)
+			#elif defined(_MSC_VER)
+				// Disabled warning "nonstandard extension used: 'throw (...)'" as this warning is a W4 warning which is usually off by default
+				// and doesn't convey any important information but will still complain when building with /Wall (which most teams do)
+				#define EA_THROW_SPEC_NEW(X)        __pragma(warning(push)) __pragma(warning(disable: 4987)) _THROWS(X) __pragma(warning(pop))
+			#else
+				#define EA_THROW_SPEC_NEW(X)        _THROW1(X)
+			#endif
+			#define EA_THROW_SPEC_NEW_NONE()    _THROW0()
+			#define EA_THROW_SPEC_DELETE_NONE() _THROW0()
 		#endif
-		#define EA_THROW_SPEC_NEW_NONE()    _THROW0()
-		#define EA_THROW_SPEC_DELETE_NONE() _THROW0()
-	#elif (defined(EA_COMPILER_NO_EXCEPTIONS) || defined(_MSL_NO_THROW_SPECS)) && !defined(EA_COMPILER_RVCT) && !defined(EA_PLATFORM_LINUX) && !defined(EA_PLATFORM_APPLE)
+	#elif defined(EA_COMPILER_NO_EXCEPTIONS) && !defined(EA_COMPILER_RVCT) && !defined(EA_PLATFORM_LINUX) && !defined(EA_PLATFORM_APPLE)
 		#define EA_COMPILER_NO_NEW_THROW_SPEC 1
 
 		#define EA_THROW_SPEC_NEW(x)

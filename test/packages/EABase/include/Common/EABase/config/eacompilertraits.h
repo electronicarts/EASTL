@@ -1443,6 +1443,16 @@
 		#endif
 	#endif
 
+	// EA_FP128 may be used to determine if __float128 is a supported type for use. This type is enabled by a GCC extension (_GLIBCXX_USE_FLOAT128)
+	// but has support by some implementations of clang (__FLOAT128__)
+	#ifndef EA_FP128
+		#if defined __FLOAT128__ || defined _GLIBCXX_USE_FLOAT128
+			#define EA_FP128 1
+		#else
+			#define EA_FP128 0
+		#endif
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// EA_IMPORT

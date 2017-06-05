@@ -395,4 +395,33 @@
 	</Expand>
 </Type>
 
+<Type Name="eastl::bitset&lt;*&gt;">
+  <DisplayString>{{count = {kSize}}}</DisplayString>
+  <Expand>
+    <Item Name="[count]">kSize</Item>
+    <CustomListItems>
+      <Variable Name="iWord" InitialValue="0" />
+      <Variable Name="iBitInWord" InitialValue="0" />
+      <Variable Name="bBitValue" InitialValue="false" />
+
+      <Size>kSize</Size>
+
+      <Loop>
+        <If Condition="iBitInWord == 0">
+          <Exec>bBitValue = (mWord[iWord] % 2 != 0) ? true : false</Exec>
+        </If>
+        <Else>
+          <Exec>bBitValue = (mWord[iWord] >> iBitInWord) != 0 ? true : false</Exec>
+        </Else>
+        <Item>bBitValue</Item>
+        <Exec>iBitInWord++</Exec>
+        <If Condition="iBitInWord == kBitsPerWord">
+          <Exec>iWord++</Exec>
+          <Exec>iBitInWord = 0</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
+</Type>
+
 </AutoVisualizer>

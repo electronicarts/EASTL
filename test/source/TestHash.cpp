@@ -733,14 +733,27 @@ int TestHash()
 
 		for(int i = 0; i < kCount; i++)
 		{
-			HashMapIntInt::value_type vt(i, i << 4);
+			HashMapIntInt::value_type vt(i, i);
 			hashMap.insert(vt);
 		}
 
-		for(hash_map<int, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
+		const HashMapIntInt const_hashMap = hashMap; // creating a const version to test for const correctness
+
+		for(auto& e : hashMap)
 		{
-			int k = (*it).first;
-			int v = (*it).second;
+			int k = e.first;
+			int v = e.second;
+			EATEST_VERIFY(k < kCount);
+			EATEST_VERIFY(v == k);
+			EATEST_VERIFY(hashMap.at(k) == k);
+			EATEST_VERIFY(const_hashMap.at(k) == k);
+			hashMap.at(k) = k << 4;
+		}
+
+		for(auto& e : hashMap)
+		{
+			int k = e.first;
+			int v = e.second;
 			EATEST_VERIFY(k < kCount);
 			EATEST_VERIFY(v == (k << 4));
 		}
@@ -761,6 +774,26 @@ int TestHash()
 				EATEST_VERIFY(it == hashMap.end());
 		}
 
+		for(int i = 0; i < kCount; i++)
+		{
+			int v = hashMap.at(i);
+			EATEST_VERIFY(v == (i << 4));
+		}
+
+		#if EASTL_EXCEPTIONS_ENABLED
+			try
+			{
+				hashMap.at(kCount);
+				EASTL_ASSERT_MSG(false, "at accessor did not throw out_of_range exception");
+			}
+			catch(const std::out_of_range) { }
+			catch(const std::exception& e)
+			{
+				string e_msg(e.what());
+				string msg = "wrong exception with message \"" + e_msg + "\" thrown";
+				EASTL_ASSERT_MSG(false, msg.c_str());
+			}
+		#endif
 		HashMapIntInt::insert_return_type result = hashMap.insert(88888);
 		EATEST_VERIFY(result.second == true);
 		result = hashMap.insert(88888);
@@ -1275,18 +1308,25 @@ int TestHash()
 	}
 
 	// Can't use move semantics with hash_map::operator[]
-	#if EASTL_MOVE_SEMANTICS_ENABLED
+	//
+	// GCC has a bug with overloading rvalue and lvalue function templates.
+	// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54425
+	// 
+	// error: ‘eastl::pair<T1, T2>::pair(T1&&) [with T1 = const int&; T2 = const int&]’ cannot be overloaded
+	// error: with ‘eastl::pair<T1, T2>::pair(const T1&) [with T1 = const int&; T2 = const int&]’
+	#if EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_GNUC)
 	{
-		class Key
+		EA_DISABLE_VC_WARNING(4626)
+		struct Key
 		{
-			public:
 				Key() {}
 				Key(Key && o) {}
 				Key(const Key && o) {}
 				bool operator==(const Key& other) const { return true; }
 			private:
-				Key(const Key & o) {}
+			    Key(const Key& o) {}
 		};
+		EA_RESTORE_VC_WARNING()
 
 		struct Hash
 		{

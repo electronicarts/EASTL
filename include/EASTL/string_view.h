@@ -20,8 +20,6 @@ EA_ONCE()
 
 EA_DISABLE_VC_WARNING(4814)
 
-
-
 namespace eastl
 {
 	template <typename T>
@@ -438,7 +436,7 @@ namespace eastl
 	typedef basic_string_view<wchar_t> wstring_view;
 
 	// C++17 string types
-	typedef basic_string_view<char16_t> u8string_view;  // Actually not a C++17 type, but added for consistency.
+	typedef basic_string_view<char8_t> u8string_view;  // Actually not a C++17 type, but added for consistency.
 	typedef basic_string_view<char16_t> u16string_view;
 	typedef basic_string_view<char32_t> u32string_view;
 
@@ -505,16 +503,24 @@ namespace eastl
 
 
 	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
+		EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
 	    inline namespace literals
 	    {
 		    inline namespace string_view_literals
 		    {
-			    EA_CONSTEXPR string_view operator"" sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR u16string_view operator"" sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR u32string_view operator"" sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR wstring_view operator"" sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline string_view operator "" sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u16string_view operator "" sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u32string_view operator "" sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline wstring_view operator "" sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+
+				// Backwards compatibility.
+			    EA_CONSTEXPR inline string_view operator "" _sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u16string_view operator "" _sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u32string_view operator "" _sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline wstring_view operator "" _sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 		    }
 	    }
+		EA_RESTORE_VC_WARNING() // warning: 4455
 	#endif
 
 } // namespace eastl

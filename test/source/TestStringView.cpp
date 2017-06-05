@@ -45,6 +45,32 @@ int TestStringView()
 	nErrorCount += TestBasicStringView32<eastl::u32string_view>();
 #endif
 
+
+	// constexpr string_view operator "" sv(const char* str, size_t len) noexcept;
+	// constexpr u16string_view operator "" sv(const char16_t* str, size_t len) noexcept;
+	// constexpr u32string_view operator "" sv(const char32_t* str, size_t len) noexcept;
+	// constexpr wstring_view   operator "" sv(const wchar_t* str, size_t len) noexcept;
+	#if EASTL_USER_LITERALS_ENABLED 
+	{
+		VERIFY("cplusplus"_sv.compare("cplusplus") == 0);
+		VERIFY(L"cplusplus"_sv.compare(L"cplusplus") == 0);
+		VERIFY(u"cplusplus"_sv.compare(u"cplusplus") == 0);
+		VERIFY(U"cplusplus"_sv.compare(U"cplusplus") == 0);
+
+		static_assert(eastl::is_same_v<decltype("abcdef"_sv), eastl::string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(u"abcdef"_sv), eastl::u16string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(U"abcdef"_sv), eastl::u32string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(L"abcdef"_sv), eastl::wstring_view>, "string_view literal type mismatch");
+
+		// TODO:  Need to resolve this.  Not sure why on Clang the user literal 'operator ""sv' can't be found.
+		// VERIFY("cplusplus"sv.compare("cplusplus") == 0);
+		// VERIFY(L"cplusplus"sv.compare(L"cplusplus") == 0);
+		// VERIFY(u"cplusplus"sv.compare(u"cplusplus") == 0);
+		// VERIFY(U"cplusplus"sv.compare(U"cplusplus") == 0);
+	}
+	#endif
+
+
 	// strlen(char_t) compatibility
 	{
 		auto* pStr = "Hello, World";

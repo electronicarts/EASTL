@@ -7,20 +7,11 @@
 #include "TestMap.h"
 #include <EASTL/fixed_map.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4702) // VC++ STL headers generate this. warning C4702: unreachable code
-	#pragma warning(disable: 4350) // VC++ 2012 STL headers generate this. warning C4350: behavior change: 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc(const std::_Wrap_alloc<_Alloc> &) throw()' called instead of 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc<std::_Wrap_alloc<_Alloc>>(_Other &) throw()'
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	#include <map>
 #endif
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 using namespace eastl;
 

@@ -158,6 +158,7 @@
 //    result_of
 //
 //    integral_constant
+//    bool_constant
 //    true_type
 //    false_type
 //
@@ -263,6 +264,9 @@ namespace eastl
 		static const T value = v;
 		typedef T value_type;
 		typedef integral_constant<T, v> type;
+
+		EA_CONSTEXPR operator value_type() const EA_NOEXCEPT { return value; }
+		EA_CONSTEXPR value_type operator()() const EA_NOEXCEPT { return value; }
 	};
 
 

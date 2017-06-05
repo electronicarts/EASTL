@@ -635,33 +635,6 @@ namespace eastl
 		}
 
 
-		// To consider: Enable this support for auto_ptr, though it's deprecated by the C++11 Standard.
-		// template <typename U>
-		// #if EASTL_MOVE_SEMANTICS_ENABLED
-		//     shared_ptr(auto_ptr<U>&& autoPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #else
-		//     shared_ptr(auto_ptr<U>   autoPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #endif
-		//     : mpValue(NULL),
-		//       mpRefCount(NULL)
-		// {
-		//     alloc_internal(autoPtr.release(), default_allocator_type(), eastl::default_delete<U>()); // Use of default_delete here assumes that default_delete matches global operator delete.
-		// }
-		//
-		// template <typename U, typename Allocator>
-		// #if EASTL_MOVE_SEMANTICS_ENABLED
-		//     shared_ptr(auto_ptr<U>&& autoPtr, const Allocator& allocator, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #else
-		//     shared_ptr(auto_ptr<U>   autoPtr, const Allocator& allocator, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #endif
-		//     : mpValue(NULL),
-		//       mpRefCount(NULL)
-		// {
-		//     alloc_internal(autoPtr.release(), allocator, eastl::default_delete<U>()); // Use of default_delete here assumes that default_delete matches global operator delete.
-		// }
-
-
-
 		/// shared_ptr(weak_ptr)
 		/// Shares ownership of a pointer with an instance of weak_ptr.
 		/// This function increments the shared reference count on the pointer.
@@ -793,21 +766,8 @@ namespace eastl
 			{
 				// Note that this will use the default EASTL allocator
 				this_type(eastl::move(uniquePtr)).swap(*this);
+				return *this;
 			}
-
-
-			// To consider: Enable this support for auto_ptr, though it's deprecated by the C++11 Standard.
-			// template <typename U>
-			// inline typename eastl::enable_if<!eastl::is_array<U>::value && eastl::is_convertible<U*, element_type*>::value, this_type&>::type
-			// #if EASTL_MOVE_SEMANTICS_ENABLED
-			//     operator=(auto_ptr<U>&& autoPtr)
-			// #else
-			//     operator=(auto_ptr<U>   autoPtr)
-			// #endif
-			// {
-			//     shared_ptr(eastl::move(autoPtr)).swap(*this);
-			//     return *this;
-			// }
 		#endif
 
 

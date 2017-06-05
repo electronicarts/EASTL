@@ -393,19 +393,22 @@ namespace eastl
 			: first(), 
 			  second() {}
 
-		// To consider: Use type traits to enable this ctor only if T2 (second is_default_constructible<T2>::value ==
-		// true.)
+		// To consider: Use type traits to enable this ctor only if T2 (second is_default_constructible<T2>::value == true.)
 		EA_CPP14_CONSTEXPR pair(const T1& x)
 			: first(x),
 			  second()
 		{
 		}
-		
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename U, typename = typename eastl::enable_if<eastl::is_convertible<U&&,typename eastl::remove_reference<T1>::type&&>::value>::type>
-			EA_CPP14_CONSTEXPR pair(U&& x)
+	
+		// GCC has a bug with overloading rvalue and lvalue function templates.
+		// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54425
+		// 
+		// error: ‘eastl::pair<T1, T2>::pair(T1&&) [with T1 = const int&; T2 = const int&]’ cannot be overloaded
+		// error: with ‘eastl::pair<T1, T2>::pair(const T1&) [with T1 = const int&; T2 = const int&]’
+		#if EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_GNUC)
+			EA_CPP14_CONSTEXPR pair(T1&& x)
 				: first(eastl::move(x)),
-					second()
+				  second()
 			{
 			}
 		#endif

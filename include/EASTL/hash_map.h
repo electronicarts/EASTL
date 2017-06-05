@@ -116,6 +116,7 @@ namespace eastl
 		typedef typename base_type::node_type                                     node_type;
 		typedef typename base_type::insert_return_type                            insert_return_type;
 		typedef typename base_type::iterator                                      iterator;
+		typedef typename base_type::const_iterator                                const_iterator;
 
 		using base_type::insert;
 
@@ -225,6 +226,43 @@ namespace eastl
 		insert_return_type insert(const key_type& key)
 		{
 			return base_type::DoInsertKey(true_type(), key);
+		}
+
+		T& at(const key_type& k)
+		{
+			iterator it = base_type::find(k);
+
+			if (it == base_type::end())
+			{
+				#if EASTL_EXCEPTIONS_ENABLED
+					// throw exeption if exceptions enabled
+					throw std::out_of_range("invalid hash_map<K, T> key");
+				#else
+					// assert false if asserts enabled
+					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				#endif
+			}
+			// undefined behaviour if exceptions and asserts are disabled and it == end()
+			return it->second;
+		}
+
+
+		const T& at(const key_type& k) const
+		{
+			const_iterator it = base_type::find(k);
+
+			if (it == base_type::end())
+			{
+				#if EASTL_EXCEPTIONS_ENABLED
+					// throw exeption if exceptions enabled
+					throw std::out_of_range("invalid hash_map<K, T> key");
+				#else
+					// assert false if asserts enabled
+					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				#endif
+			}
+			// undefined behaviour if exceptions and asserts are disabled and it == end()
+			return it->second;
 		}
 
 

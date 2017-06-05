@@ -543,7 +543,7 @@ static int TestUtilityExchange()
 		EATEST_VERIFY(a == "EA Standard Template Library");
 	}
 
-	// Issue #82; construct pair using single move constructor
+	// Construct pair using single move constructor
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		struct TestPairSingleMoveConstructor

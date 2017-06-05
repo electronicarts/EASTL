@@ -15,18 +15,14 @@
 
 #include "ConceptImpls.h"
 
-#ifdef _MSC_VER
-#pragma warning(push, 0)
-#endif
 
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-#include <vector>
-#include <string>
+	#include <vector>
+	#include <string>
 #endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
@@ -769,6 +765,39 @@ int TestVector()
 	TestObject::Reset();
 
 	{
+		const int valueToRemove = 44;
+		int testValues[] = {42, 43, 44, 45, 46, 47};
+
+		eastl::vector<eastl::unique_ptr<int>> v; 
+		
+		for(auto& te : testValues)
+			v.push_back(eastl::make_unique<int>(te));
+
+		// remove 'valueToRemove' from the container
+		auto iterToRemove = eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+		                                   { return *e == valueToRemove; });
+		v.erase_unsorted(iterToRemove); 
+		EATEST_VERIFY(v.size() == 5);
+
+		// verify 'valueToRemove' is no longer in the container
+		EATEST_VERIFY(eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+		                             { return *e == valueToRemove; }) == v.end());
+
+		// verify all other expected values are in the container
+		for (auto& te : testValues)
+		{
+			if (te == valueToRemove)
+				continue;
+
+			EATEST_VERIFY(eastl::find_if(v.begin(), v.end(), [&](eastl::unique_ptr<int>& e)
+			                             { return *e == te; }) != v.end());
+		}
+	}
+
+	EATEST_VERIFY(TestObject::IsClear());
+	TestObject::Reset();
+
+	{
 		using namespace eastl;
 
 		// iterator insert(iterator position, const value_type& value);
@@ -1443,20 +1472,14 @@ int TestVector()
 	{
 		// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
 		// testable result.
-		// Doesn't currently work for EASTL since it handles the case where allocators do not compare equal at runtime
-		// by copying elements so elements are required to be copy constructible
-		// FAILS!
-		/*
+
 		eastl::vector<Destructible> v4, v5;
 		eastl::swap(v4, v5);
 		EATEST_VERIFY(v4.empty() && v5.empty());
-		*/
-		// FAILS!
-		/*
+
 		eastl::vector<DefaultConstructible> v6(1), v7(2);
 		eastl::swap(v6, v7);
 		EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
-		*/
 	}
 
 #if EASTL_MOVE_SEMANTICS_ENABLED
@@ -1558,6 +1581,12 @@ int TestVector()
 			}
 		}
 	#endif
+
+	{
+		// CustomAllocator has no data members which reduces the size of an eastl::vector via the empty base class optimization.
+		typedef eastl::vector<int, CustomAllocator> EboVector;
+		static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
+	}
 
 	return nErrorCount;
 }

@@ -22,11 +22,7 @@
 #include <EASTL/weak_ptr.h>
 #include <eathread/eathread_thread.h>
 
-
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 #include <string.h>
 #ifdef EA_PLATFORM_WINDOWS
@@ -37,12 +33,10 @@
 #elif defined(EA_PLATFORM_ANDROID)
 	#include <android/log.h>
 #endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
-#if defined(_MSC_VER)
-	#pragma warning(disable: 4702)  // unreachable code
-#endif
-
-
+EA_DISABLE_VC_WARNING(4702 4800)  // 4702: unreachable code
+								  // 4800: forcing value to bool 'true' or 'false'
 
 
 
@@ -1017,6 +1011,40 @@ static int Test_shared_ptr()
 		EATEST_VERIFY(pT2.use_count() == 2);
 
 		EATEST_VERIFY(A::mCount == 2);
+	}
+
+
+	// Regression test reported by a user.
+	// typename eastl::enable_if<!eastl::is_array<U>::value && eastl::is_convertible<U*, element_type*>::value, this_type&>::type
+	// operator=(unique_ptr<U, Deleter> && uniquePtr)
+	{
+		{
+			shared_ptr<A> rT1(new A(42));
+			unique_ptr<B> rT2(new B);  // default ctor uses 0
+			rT2->mc = 115;
+
+			EATEST_VERIFY(rT1->mc == 42);
+			EATEST_VERIFY(rT2->mc == 115);
+
+			rT1 = eastl::move(rT2);
+
+			EATEST_VERIFY(rT1->mc == 115);
+			// EATEST_VERIFY(rT2->mc == 115);  // state of object post-move is undefined.
+		}
+
+		// test the state of the shared_ptr::operator= return
+		{
+			shared_ptr<A> rT1(new A(42));
+			unique_ptr<B> rT2(new B);  // default ctor uses 0
+			rT2->mc = 115;
+
+			shared_ptr<A> operatorReturn = (rT1 = eastl::move(rT2));
+
+			EATEST_VERIFY(operatorReturn == rT1);
+
+			EATEST_VERIFY(operatorReturn->mc == 115);
+			// EATEST_VERIFY(rT1->mc == 115); // implied as both are pointing to the same address
+		}
 	}
 
 
@@ -2028,11 +2056,7 @@ int TestSmartPtr()
 	return nErrorCount;
 }
 
-
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING()  // 4702
 
 
 

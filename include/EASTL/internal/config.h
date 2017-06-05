@@ -105,8 +105,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.05.04"
-	#define EASTL_VERSION_N  30504
+	#define EASTL_VERSION   "3.05.06"
+	#define EASTL_VERSION_N  30506
 #endif
 
 
@@ -1785,13 +1785,30 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 
 /// EASTL_USER_LITERALS_ENABLED
 #ifndef EASTL_USER_LITERALS_ENABLED
-	#define EASTL_USER_LITERALS_ENABLED 0
+	#if defined(EA_COMPILER_CPP14_ENABLED)
+		#define EASTL_USER_LITERALS_ENABLED 1
+
+		// Disabling the Clang/GCC/MSVC warning about using user defined literals without a leading '_' as they are
+		// reserved for standard libary usage.
+		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
+		EA_DISABLE_CLANG_WARNING(-Wreserved-user-defined-literal)
+		EA_DISABLE_GCC_WARNING(-Wno-literal-suffix)
+		#ifdef _MSC_VER
+			#pragma warning(disable: 4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
+		#endif
+	#else
+		#define EASTL_USER_LITERALS_ENABLED 0
+	#endif
 #endif
 
 
 /// EASTL_INLINE_NAMESPACES_ENABLED
 #ifndef EASTL_INLINE_NAMESPACES_ENABLED
-	#define EASTL_INLINE_NAMESPACES_ENABLED 0
+	#if defined(EA_COMPILER_CPP14_ENABLED)
+		#define EASTL_INLINE_NAMESPACES_ENABLED 1
+	#else
+		#define EASTL_INLINE_NAMESPACES_ENABLED 0
+	#endif
 #endif
 
 

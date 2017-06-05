@@ -592,7 +592,7 @@ static int TestMinMax()
 		// made it the way they did because of the aforementioned compiler bug.
 		// Recent versions of clang seem to generate a warning of its own. To do: we need to address this.
 		// GCC 4.8 for x86 has a compiler bug in optimized builds for this code, so we currently enable this for non-optimized builds only.
-		#if defined(EA_COMPILER_CPP11_ENABLED) && ((defined(EA_COMPILER_CLANG) && EA_COMPILER_VERSION < 302 && !defined(__apple_build_version)) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4007)) && !defined(__OPTIMIZE__))
+		#if defined(EA_COMPILER_CPP11_ENABLED) && ((defined(EA_COMPILER_CLANG) && EA_COMPILER_VERSION < 302) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4007)) && !defined(__OPTIMIZE__))
 
 			int i3(3), i2(2);
 			eastl::pair<const int&, const int&> resulti = eastl::minmax(i3, i2);

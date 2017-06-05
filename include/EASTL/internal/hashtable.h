@@ -2588,7 +2588,7 @@ namespace eastl
 
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
-				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means bUniqueKeys is false.
 	{
