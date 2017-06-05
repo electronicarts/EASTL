@@ -202,12 +202,13 @@ namespace eastl
 		return eastl::merge<InputIterator1, InputIterator2, OutputIterator, Less>
 						   (first1, last1, first2, last2, result, Less());
 	}
-
-
-
+	
+	
+	
+	
 	/// insertion_sort
 	///
-	/// Since insertion_sort requires that the data be addressed with a BidirectionalIterator and 
+	/// Since insertion_sort requires that the data be addressed with a BidirectionalIterator and
 	/// not the more flexible RandomAccessIterator, we implement the sort by doing a for loop within
 	/// a for loop. If we were to specialize this for a RandomAccessIterator, we could replace the
 	/// inner for loop with a call to upper_bound, which would be faster.
@@ -215,67 +216,175 @@ namespace eastl
 	template <typename BidirectionalIterator, typename StrictWeakOrdering>
 	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
 	{
-		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-		if(first != last) // if the range is non-empty...
-		{
-			BidirectionalIterator iCurrent, iNext, iSorted = first;
-
-			for(++iSorted; iSorted != last; ++iSorted)
-			{
-				const value_type temp(*iSorted);
-
-				iNext = iCurrent = iSorted;
-
-				// Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
-				// It doesn't dereference the iterator, but std STL disallows that operation. This isn't 
-				// a problem for EASTL containers and ranges, as they support a single decrement of first,
-				// but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
-				// To do: Fix this loop to not decrement like so.
-				for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
-				{
-					EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
-					*iNext = *iCurrent;
-				}
-
-				*iNext = temp;
-			}
-		}
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if(first != last) // if the range is non-empty...
+	    {
+	        BidirectionalIterator iCurrent, iNext, iSorted = first;
+	
+	        for(++iSorted; iSorted != last; ++iSorted)
+	        {
+	            const value_type temp(*iSorted);
+	
+	            iNext = iCurrent = iSorted;
+	
+	            // Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
+	            // It doesn't dereference the iterator, but std STL disallows that operation. This isn't
+	            // a problem for EASTL containers and ranges, as they support a single decrement of first,
+	            // but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
+	            // To do: Fix this loop to not decrement like so.
+	            for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
+	            {
+	                EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
+	                *iNext = *iCurrent;
+	            }
+	
+	            *iNext = temp;
+	        }
+	    }
 	} // insertion_sort
-
-
-
+	
+	
+	
 	template <typename BidirectionalIterator>
 	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last)
 	{
-		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-		if(first != last)
-		{
-			BidirectionalIterator iCurrent, iNext, iSorted = first;
-
-			for(++iSorted; iSorted != last; ++iSorted)
-			{
-				const value_type temp(*iSorted);
-
-				iNext = iCurrent = iSorted;
-
-				// Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
-				// It doesn't dereference the iterator, but std STL disallows that operation. This isn't 
-				// a problem for EASTL containers and ranges, as they support a single decrement of first,
-				// but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
-				// To do: Fix this loop to not decrement like so.
-				for(--iCurrent; (iNext != first) && (temp < *iCurrent); --iNext, --iCurrent)
-				{
-					EASTL_VALIDATE_COMPARE(!(*iCurrent < temp)); // Validate that the compare function is sane.
-					*iNext = *iCurrent;
-				}
-
-				*iNext = temp;
-			}
-		}
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if(first != last)
+	    {
+	        BidirectionalIterator iCurrent, iNext, iSorted = first;
+	
+	        for(++iSorted; iSorted != last; ++iSorted)
+	        {
+	            const value_type temp(*iSorted);
+	
+	            iNext = iCurrent = iSorted;
+	
+	            // Note: The following loop has a problem: it can decrement iCurrent to before 'first'.
+	            // It doesn't dereference the iterator, but std STL disallows that operation. This isn't
+	            // a problem for EASTL containers and ranges, as they support a single decrement of first,
+	            // but std STL iterators may have a problem with it. Dinkumware STL, for example, will assert.
+	            // To do: Fix this loop to not decrement like so.
+	            for(--iCurrent; (iNext != first) && (temp < *iCurrent); --iNext, --iCurrent)
+	            {
+	                EASTL_VALIDATE_COMPARE(!(*iCurrent < temp)); // Validate that the compare function is sane.
+	                *iNext = *iCurrent;
+	            }
+	
+	            *iNext = temp;
+	        }
+	    }
 	} // insertion_sort
-
+	
+	
+	
+	///modified insertion sort that fixes the decrement problem
+	///
+	///also it seems that:
+	///for (...; ...; iRight=iLeft--)
+	///can be slighlty faster than:
+	///for (...; ...; --iLeft, --iRight)
+	///
+	///inner loop changed(after above change)
+	///from this:	for(--iLeft; iRight!=first && temp<*iLeft  ; iRight=iLeft--){}
+	///  to this:	for(       ; iRight!=first && temp<*--iLeft; iRight=iLeft  ){}
+	
+	//compare functor version
+	template<typename BidirectionalIterator, typename Compare>//Bidirectional Iterator, though something like a list shouldn't use this
+	void insertion_sort_new(BidirectionalIterator const first, BidirectionalIterator const last, Compare cmp)
+	{
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if (first!=last)//if range not empty
+	    {
+	        BidirectionalIterator iLeft, iRight, iSorted=first;
+	        for (++iSorted; iSorted!=last; ++iSorted)//an array of length 1 is already sorted
+	        {
+	            const value_type temp(*iSorted);
+	
+	            for (iLeft=iRight=iSorted; iRight!=first && cmp(temp, *--iLeft); iRight=iLeft)
+	            {
+	                EASTL_VALIDATE_COMPARE(!cmp(*iLeft, temp));//validate cmp is sane by checking other way
+	                *iRight=*iLeft;
+	            }
+	
+	            *iRight=temp;
+	        }//outer loop
+	    }
+	}//insertion_sort (Compare)
+	
+	template<typename BidirectionalIterator>//default less-than version
+	void insertion_sort_new(BidirectionalIterator const first, BidirectionalIterator const last)
+	{
+	    typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+	
+	    if (first!=last)//if range not empty
+	    {
+	        BidirectionalIterator iLeft, iRight, iSorted=first;
+	        for (++iSorted; iSorted!=last; ++iSorted)//an array of length 1 is already sorted
+	        {
+	            const value_type temp(*iSorted);
+	
+	            for (iLeft=iRight=iSorted; iRight!=first && temp<*--iLeft; iRight=iLeft)
+	            {
+	                EASTL_VALIDATE_COMPARE(!(*iLeft<temp));//validate cmp is sane by checking other way
+	                *iRight=*iLeft;
+	            }
+	
+	            *iRight=temp;
+	        }//outer loop
+	    }
+	}//insertion_sort (less than)
+	
+	///This following Merge Sort or something similar is worth considering compared to the current version.
+	///First, the buffer only needs a length of half the data, not the full length as it does now.
+	///Second, it starts by using Insertion Sort on small arrays, which noticeably improves the performance. The full sort is still stable.
+	
+	//the following is like a normal merge, but nothing remains to be copied if the left range is exhausted first
+	//this is an internal helper and expects both input ranges are not empty
+	template<class BufIter, class DataIter, class Compare>
+	void FinishingMerge(BufIter l, BufIter const lEnd, DataIter r, DataIter const rEnd, DataIter dest, Compare cmp)
+	{
+	    for (;;)//assume both ranges not empty, since caller merge_sort_buffer_new will check for it when it decides on using insertion_sort_new
+	    {
+	        if (cmp(*r, *l))
+	        {
+	            *dest++ = *r++;
+	            if (r==rEnd)
+	                break;//copy remaining left
+	        }
+	        else//equal elements first taken from left for stability
+	        {
+	            *dest++ = *l++;
+	            if (l==lEnd)
+	                return;//nothing left to copy
+	        }
+	    }
+	
+	    eastl::copy(l, lEnd, dest);
+	}
+	
+	template<class DataIter, class BufIter, class Compare>//both random access iterators
+	void merge_sort_buffer_new(DataIter data, size_t n, BufIter buf, Compare cmp)//n is the count of data, buffer must be able to hold at least n/2
+	{
+	    if (n>24u)//must be >=4 for FinishingMerge
+	    {
+	        const size_t nHalf=n>>1u, nFourth=n>>2u;
+	        DataIter const iMid=data+nHalf, iQuad=data+nFourth;
+	        //sort first and second quarters of data, will be merged into buffer
+	        eastl::merge_sort_buffer_new(data, nFourth, buf, cmp);
+	        eastl::merge_sort_buffer_new(iQuad, nHalf-nFourth, buf, cmp);
+	        //sort right Half of data
+	        eastl::merge_sort_buffer_new(iMid, n-nHalf, buf, cmp);
+	        //merge first 2 quarters into buffer.
+	        eastl::merge(data, iQuad, iQuad, iMid, buf, cmp);
+	        //the following is like a normal merge, but nothing remains to be copied if the left range is exhausted first
+	        eastl::FinishingMerge(buf, buf+nHalf, iMid, data+n, data, cmp);
+	    }
+	    else
+	        eastl::insertion_sort_new(data, data+n, cmp);
+	}
 
 	#if 0 /*
 	// STLPort-like variation of insertion_sort. Doesn't seem to run quite as fast for small runs.
