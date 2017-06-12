@@ -1,0 +1,12 @@
+prebuilt_cxx_library(
+  name = 'eamain',
+  header_namespace = 'EAMain',
+  header_only = True,
+  exported_headers = subdir_glob([
+    ('include/EAMain', '**/*.h'),
+    ('include/EAMain', '**/*.inl'),
+  ]),
+  visibility = [
+    'PUBLIC',
+  ],
+)
