@@ -213,10 +213,7 @@ namespace eastl
 	/// inner for loop with a call to upper_bound, which would be faster.
 	///
 	template <typename BidirectionalIterator, typename StrictWeakOrdering>
-	void insertion_sort(
-	    BidirectionalIterator first,
-	    BidirectionalIterator last,
-	    StrictWeakOrdering compare)
+	void insertion_sort( BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 

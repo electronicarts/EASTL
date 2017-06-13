@@ -159,6 +159,57 @@ public:
 private:
 };
 
+struct MissingMoveConstructor
+{
+	MissingMoveConstructor()
+	{
+	}
+
+	MissingMoveConstructor(const MissingMoveConstructor & other)
+	{
+	}
+
+	MissingMoveConstructor & operator= (MissingMoveConstructor && other)
+	{
+		return *this;
+	}
+
+	MissingMoveConstructor & operator= (const MissingMoveConstructor & other)
+	{
+		return *this;
+	}
+
+	bool operator< (const MissingMoveConstructor & other) const
+	{
+		return true;
+	}
+};
+
+struct MissingMoveAssignable
+{
+	MissingMoveAssignable()
+	{
+	}
+
+	MissingMoveAssignable(const MissingMoveAssignable & other)
+	{
+	}
+
+	MissingMoveAssignable(MissingMoveAssignable && other)
+	{
+	}
+
+	MissingMoveAssignable & operator= (const MissingMoveAssignable& other)
+	{
+		return *this;
+	}
+
+	bool operator< (const MissingMoveAssignable & other) const
+	{
+		return true;
+	}
+};
+
 #endif  // !defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) && !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
 
 #endif  // CONCEPTSIMPLS_H

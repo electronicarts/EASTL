@@ -20,6 +20,7 @@
 #include <EASTL/string.h>
 #include <EASTL/set.h>
 #include <EASTL/sort.h>
+#include <ConceptImpls.h>
 #include <EAStdC/EAMemory.h>
 #include "EASTLTest.h"  // Put this after the above so that it doesn't block any warnings from the includes above.
 
@@ -117,58 +118,6 @@ struct TestObjectNegate : public eastl::unary_function<TestObject, TestObject>
 	TestObject operator()(const TestObject& a) const
 		{ return TestObject(-a.mX); }
 };
-
-struct MissingMoveConstructor
-{
-	MissingMoveConstructor()
-	{
-	}
-
-	MissingMoveConstructor(const MissingMoveConstructor & other)
-	{
-	}
-
-	MissingMoveConstructor & operator= (MissingMoveConstructor && other)
-	{
-		return *this;
-	}
-
-	MissingMoveConstructor & operator= (const MissingMoveConstructor & other)
-	{
-		return *this;
-	}
-
-	bool operator< (const MissingMoveConstructor & other) const
-	{
-		return true;
-	}
-};
-
-struct MissingMoveAssignable
-{
-	MissingMoveAssignable()
-	{
-	}
-
-	MissingMoveAssignable(const MissingMoveAssignable & other)
-	{
-	}
-
-	MissingMoveAssignable(MissingMoveAssignable && other)
-	{
-	}
-
-	MissingMoveAssignable & operator= (const MissingMoveAssignable& other)
-	{
-		return *this;
-	}
-
-	bool operator< (const MissingMoveAssignable & other) const
-	{
-		return true;
-	}
-};
-
 
 static int TestMinMax()
 {
@@ -2392,7 +2341,6 @@ int TestAlgorithm()
 		}
 	}
 
-	// issue #92
 	// disable in MSVC2013 because eastl::is_copy_constructible is always true...
 	#ifndef EA_COMPILER_MSVC_2013
 		{
@@ -2452,14 +2400,16 @@ int TestAlgorithm()
 				eastl::sort(vec1.begin(), vec1.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
 				std::sort(vec2.begin(), vec2.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
 
-				for(int i=0; i<numbersToSort; ++i){
+				for(int i=0; i<numbersToSort; ++i)
+				{
 					EATEST_VERIFY(*vec1[i] == *vec2[i]);
 				}
 
 				eastl::sort(vec3.begin(), vec3.end());
 				std::sort(vec4.begin(), vec4.end());
 
-				for(int i=0; i<numbersToSort; ++i){
+				for(int i=0; i<numbersToSort; ++i)
+				{
 					EATEST_VERIFY(*vec2[i] == vec3[i]);
 					EATEST_VERIFY(vec3[i] == vec4[i]);
 				}
