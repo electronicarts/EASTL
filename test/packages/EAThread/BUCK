@@ -1,9 +1,9 @@
 prebuilt_cxx_library(
   name = 'eathread',
-  header_namespace = 'EAThread',
+  header_namespace = 'eathread',
   header_only = True,
   exported_headers = subdir_glob([
-    ('include/EAThread', '**/*.h'),
+    ('include/eathread', '**/*.h'),
   ]),
   visibility = [
     'PUBLIC',

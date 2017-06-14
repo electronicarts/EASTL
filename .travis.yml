@@ -4,22 +4,22 @@ os:
   - linux
   - osx
 
-compiler: 
-    - gcc
-    - clang
+compiler:
+  - gcc
+  - clang
 
 env:
-    - EASTL_CONFIG=Debug
-    - EASTL_CONFIG=Release
+  - EASTL_CONFIG=Debug
+  - EASTL_CONFIG=Release
 
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
+      - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.8
-    - g++-4.8
-    - clang
+      - gcc-4.8
+      - g++-4.8
+      - clang
 
 matrix:
     include:
@@ -30,23 +30,46 @@ matrix:
           env: EASTL_CONFIG=Release USE_CLANG_39=yes
           os: osx
     exclude:
-    - os: osx
-      compiler: gcc
+      - os: osx
+        compiler: gcc
 
 install:
-# Linux Setup 
+# Linux Setup
+  # CMake
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz   ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf cmake-3.1.3-Linux-x86_64.tar.gz                                                  ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8" ;fi                         ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PWD/cmake-3.1.3-Linux-x86_64/bin:$PATH                                       ;fi 
-# OSX Setup 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PWD/cmake-3.1.3-Linux-x86_64/bin:$PATH                                       ;fi
+  # Linuxbrew
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test -d $HOME/.linuxbrew/bin || git clone https://github.com/Linuxbrew/brew.git $HOME/.linuxbrew  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PATH="$HOME/.linuxbrew/bin:$PATH"                                                                 ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo 'export PATH="$HOME/.linuxbrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                              ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
+
+# OSX Setup
+  # CMake
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Darwin-x86_64.tar.gz  ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then tar -xzf cmake-3.1.3-Darwin-x86_64.tar.gz                                                 ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export PATH=$PWD/cmake-3.1.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                   ;fi 
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export PATH=$PWD/cmake-3.1.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                   ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then export CLANG_URL=http://releases.llvm.org/3.9.0/clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz   ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then wget --no-check-certificate $CLANG_URL                                                        ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then tar -xzf clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz                                          ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then export CLANG_39_PATH=$(PWD)/clang+llvm-3.9.0-x86_64-apple-darwin/                             ;fi 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then export CLANG_39_PATH=$(PWD)/clang+llvm-3.9.0-x86_64-apple-darwin/                             ;fi
+  # Homebrew
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then test -d $HOME/.homebrew/bin || git clone https://github.com/Homebrew/brew.git $HOME/.homebrew    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PATH="$HOME/.homebrew/bin:$PATH"                                                                 ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'export PATH="$HOME/.homebrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                             ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                          ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --version                                                                                   ;fi
+
+# Universal Setup
+  # Buck
+  - brew tap facebook/fb
+  - brew install buck
+  - buck --version
 
 before_script:
   - if [[ -n "$USE_CLANG_39" ]]; then export PATH="${CLANG_39_PATH}/bin:$PATH"                                                            ;fi
@@ -60,9 +83,21 @@ before_script:
   - cmake --build . --config $EASTL_CONFIG
 
 script:
-    # Run Tests 
-    - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
-    - ctest -C $EASTL_CONFIG -V || exit 1
-    # Run Benchmarks
-    - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
-    - ctest -C $EASTL_CONFIG -V || exit 1
+  # Run the Buck build
+  - buck build :eastl
+  - buck run :test-runner
+  # Run Tests
+  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
+  - ctest -C $EASTL_CONFIG -V || exit 1
+  # Run Benchmarks
+  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
+  - ctest -C $EASTL_CONFIG -V || exit 1
+
+branches:
+  except:
+    - gh-pages
+
+cache:
+  directories:
+    - $HOME/.linuxbrew/
+    - $HOME/.homebrew/
