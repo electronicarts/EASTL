@@ -63,7 +63,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'export PATH="$HOME/.homebrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                             ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                          ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --version
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --version                                                                                   ;fi
 
 # Universal Setup
   # Buck
