@@ -67,6 +67,11 @@ install:
 
 # Universal Setup
   # Buck
+  - brew install patchelf
+  - brew install zlib
+  - brew install binutils
+  - brew install glibc
+  - brew install ant
   - brew tap facebook/fb
   - brew install buck
   - buck --version
