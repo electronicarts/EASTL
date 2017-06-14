@@ -58,7 +58,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then tar -xzf clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz                                          ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39"  ]]; then export CLANG_39_PATH=$(PWD)/clang+llvm-3.9.0-x86_64-apple-darwin/                             ;fi
   # Homebrew
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then test -d $HOME/.homebrew/bin || git clone https://github.com/Homebrew/brew.git $HOME/.linuxbrew   ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then test -d $HOME/.homebrew/bin || git clone https://github.com/Homebrew/brew.git $HOME/.homebrew    ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PATH="$HOME/.homebrew/bin:$PATH"                                                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'export PATH="$HOME/.homebrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                             ;fi
