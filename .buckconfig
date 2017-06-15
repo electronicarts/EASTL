@@ -2,7 +2,7 @@
   cxxflags = -std=c++14
 
 [cxx#linux-x86_64]
-  cxxflags = -std=c++14
+  cxxflags = -std=c++11
 
 [cxx#macosx-x86_64]
   cxxflags = -std=c++14
