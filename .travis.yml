@@ -67,6 +67,7 @@ install:
 
 # Universal Setup
   # Buck
+  - brew install ant
   - brew tap facebook/fb
   - brew install buck
   - buck --version
