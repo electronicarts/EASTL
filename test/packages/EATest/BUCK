@@ -9,7 +9,6 @@ cxx_library(
     'source/**/*.cpp',
   ]),
   compiler_flags = [
-    '-std=c++11',
     '-DEASTL_OPENSOURCE=1',
     '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
   ],

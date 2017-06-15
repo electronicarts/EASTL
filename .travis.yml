@@ -85,8 +85,10 @@ before_script:
 
 script:
   # Run the Buck build
-  - buck build :eastl
-  - buck run :test-runner
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then buck build :eastl#linux-x86_64          ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then buck run :test-runner#linux-x86_64      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then buck build :eastl#macosx-x86_64           ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then buck run :test-runner#macosx-x86_64       ;fi
   # Run Tests
   - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
   - ctest -C $EASTL_CONFIG -V || exit 1

@@ -8,7 +8,6 @@ cxx_library(
     'source/**/*.cpp',
   ]),
   compiler_flags = [
-    '-std=c++11',
     '-DEASTL_OPENSOURCE=1',
     '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
   ],
@@ -35,7 +34,6 @@ cxx_library(
     'test/source/main.cpp',
   ]),
   compiler_flags = [
-    '-std=c++11',
     '-DEASTL_OPENSOURCE=1',
     '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
   ],
@@ -56,7 +54,6 @@ cxx_binary(
     'test/source/main.cpp',
   ]),
   compiler_flags = [
-    '-std=c++11',
     '-DEASTL_OPENSOURCE=1',
     '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
   ],
@@ -75,7 +72,6 @@ cxx_binary(
     'benchmark/source/**/*.cpp',
   ]),
   compiler_flags = [
-    '-std=c++11',
     '-DEASTL_OPENSOURCE=1',
     '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
   ],
