@@ -1,8 +1,8 @@
 [cxx]
-  cxxflags = -v -std=c++14
+  cxxflags = -std=c++14
 
 [cxx#linux-x86_64]
-  cxxflags = -v -std=c++14
+  cxxflags = -std=c++14
 
 [cxx#macosx-x86_64]
-  cxxflags = -v -std=c++14
+  cxxflags = -std=c++14

@@ -46,7 +46,11 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo 'export PATH="$HOME/.linuxbrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                              ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version
+  # Linuxbrew GCC
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc --version                  ;fi
 
 # OSX Setup
   # CMake
@@ -84,11 +88,9 @@ before_script:
   - cmake --build . --config $EASTL_CONFIG
 
 script:
-  # Run the Buck build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then buck build :eastl#linux-x86_64          ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then buck run :test-runner#linux-x86_64      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then buck build :eastl#macosx-x86_64           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then buck run :test-runner#macosx-x86_64       ;fi
+  # Run the Buck build and tests
+  - buck build :eastl
+  - buck run :test-runner
   # Run Tests
   - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
   - ctest -C $EASTL_CONFIG -V || exit 1
