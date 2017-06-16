@@ -46,7 +46,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo 'export PATH="$HOME/.linuxbrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                              ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
   # Linuxbrew GCC
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
