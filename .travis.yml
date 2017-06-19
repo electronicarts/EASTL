@@ -26,9 +26,15 @@ matrix:
         - compiler: clang "debug build with clang3.9"
           env: EASTL_CONFIG=Debug   USE_CLANG_39=yes
           os: osx
-        - compiler: clang  "release build with clang3.9"
+        - compiler: clang "release build with clang3.9"
           env: EASTL_CONFIG=Release USE_CLANG_39=yes
           os: osx
+        - compiler: clang "build with Buck"
+          env: USE_BUCK=yes
+          os: osx
+        - compiler: gcc "build with Buck"
+          env: USE_BUCK=yes
+          os: linux
     exclude:
       - os: osx
         compiler: gcc
@@ -48,9 +54,9 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
   # Linuxbrew GCC
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc --version                  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then brew install gcc               ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then which gcc                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then gcc --version                  ;fi
 
 # OSX Setup
   # CMake
@@ -71,10 +77,10 @@ install:
 
 # Universal Setup
   # Buck
-  - brew install ant
-  - brew tap facebook/fb
-  - brew install buck
-  - buck --version
+  - if [[ -n "$USE_BUCK" ]]; brew install ant       ;fi
+  - if [[ -n "$USE_BUCK" ]]; brew tap facebook/fb   ;fi
+  - if [[ -n "$USE_BUCK" ]]; brew install buck      ;fi
+  - if [[ -n "$USE_BUCK" ]]; buck --version         ;fi
 
 before_script:
   - if [[ -n "$USE_CLANG_39" ]]; then export PATH="${CLANG_39_PATH}/bin:$PATH"                                                            ;fi
@@ -89,14 +95,14 @@ before_script:
 
 script:
   # Run the Buck build and tests
-  - buck build :eastl
-  - buck run :test-runner
+  - if [[ -n "$USE_BUCK" ]]; buck build :eastl                                        ;fi
+  - if [[ -n "$USE_BUCK" ]]; buck run :test-runner                                    ;fi
   # Run Tests
-  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test
-  - ctest -C $EASTL_CONFIG -V || exit 1
+  - if [[ ! -n "$USE_BUCK" ]]; cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test          ;fi
+  - if [[ ! -n "$USE_BUCK" ]]; ctest -C $EASTL_CONFIG -V || exit 1                    ;fi
   # Run Benchmarks
-  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
-  - ctest -C $EASTL_CONFIG -V || exit 1
+  - if [[ ! -n "$USE_BUCK" ]]; cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark     ;fi
+  - if [[ ! -n "$USE_BUCK" ]]; ctest -C $EASTL_CONFIG -V || exit 1                    ;fi
 
 branches:
   except:
