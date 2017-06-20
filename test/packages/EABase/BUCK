@@ -1,0 +1,11 @@
+prebuilt_cxx_library(
+  name = 'eabase',
+  header_namespace = 'EABase',
+  header_only = True,
+  exported_headers = subdir_glob([
+    ('include/Common/EABase', '**/*.h'),
+  ]),
+  visibility = [
+    'PUBLIC',
+  ],
+)

@@ -14,7 +14,7 @@ Your pull request should:
 	* tests should be minimal and stable
 	* fail before your fix is applied
 * pass the test suite
-* code formatting is encoded in clang format 
+* code formatting is encoded in clang format
 	* limit using clang format on new code
 	* do not deviate from style already established in the files
 
@@ -28,7 +28,7 @@ EASTL uses CMake as its build system.
 * Generate build scripts:
 	* cmake eastl_source_folder -DEASTL_BUILD_TESTS:BOOL=ON
 * Build unit tests for "your_config":
-	* cmake --build . --config your_config 
+	* cmake --build . --config your_config
 * Run the unit tests for "your_config" from the test folder:
 	* cd test && ctest -C your_config
 
@@ -68,4 +68,26 @@ ctest -C RelWithDebInfo
 ctest -C MinSizeRel
 popd
 popd
+```
+
+### Building using Buck
+
+EASTL can also be built using [Buck Build](https://www.buckbuild.com).
+
+To build EASTL:
+
+```bash=
+buck build :eastl
+```
+
+To run the tests:
+
+```bash=
+buck run :test-runner
+```
+
+To run the benchmarks:
+
+```bash=
+buck run :benchmark
 ```
