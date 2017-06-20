@@ -167,12 +167,12 @@ namespace eastl
 		typedef Reference                                   reference;
 		typedef EASTL_ITC_NS::bidirectional_iterator_tag    iterator_category;
 
-	public:
+	protected:
 		node_type* mpNode;
+		explicit rbtree_iterator(const node_type* pNode);
 
 	public:
 		rbtree_iterator();
-		explicit rbtree_iterator(const node_type* pNode);
 		rbtree_iterator(const iterator& x);
 
 		reference operator*() const;
@@ -183,6 +183,22 @@ namespace eastl
 
 		rbtree_iterator& operator--();
 		rbtree_iterator  operator--(int);
+
+	protected:
+		template <typename Tp, typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
+		friend bool operator==(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerB, ReferenceB>& b);
+
+		template <typename Tp, typename PointerA, typename ReferenceA, typename PointerB, typename ReferenceB>
+		friend bool operator!=(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerB, ReferenceB>& b);
+
+		template <typename Tp, typename PointerA, typename ReferenceA>
+		friend bool operator!=(const rbtree_iterator<Tp, PointerA, ReferenceA>& a, 
+							   const rbtree_iterator<Tp, PointerA, ReferenceA>& b);
+
+		template <typename, typename, typename, typename, typename, bool, bool> friend class rbtree;
+		friend const_iterator;
 
 	}; // rbtree_iterator
 
@@ -216,7 +232,7 @@ namespace eastl
 	{
 		typedef ExtractKey extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -235,7 +251,7 @@ namespace eastl
 	{
 		typedef ExtractKey extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -252,7 +268,7 @@ namespace eastl
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -269,7 +285,7 @@ namespace eastl
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-	public:
+	protected:
 		Compare mCompare; // To do: Make sure that empty Compare classes go away via empty base optimizations.
 
 	public:
@@ -364,7 +380,7 @@ namespace eastl
 
 		using base_type::mCompare;
 
-	public:
+	protected:
 		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 		size_type         mnSize;       /// Stores the count of nodes in the tree (not counting the anchor node).
 		allocator_type    mAllocator;   // To do: Use base class optimization to make this go away.
