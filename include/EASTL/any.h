@@ -526,10 +526,14 @@ namespace eastl
 		return *p;
 	}
 
+	// NOTE(rparolin): The runtime type check was commented out because in DLL builds the templated function pointer
+	// value will be different -- completely breaking the validation mechanism.  Due to the fact that eastl::any uses
+	// type erasure we can't refesh (on copy/move) the cached function pointer to the internal handler function because
+	// we don't statically know the type.
 	template <class ValueType>
 	inline const ValueType* any_cast(const any* pAny) EA_NOEXCEPT
 	{
-		return (pAny && pAny->m_handler == &any::storage_handler<decay_t<ValueType>>::handler_func
+		return (pAny && pAny->m_handler //== &any::storage_handler<decay_t<ValueType>>::handler_func
 				#if EASTL_RTTI_ENABLED
 					&& pAny->type() == typeid(typename remove_reference<ValueType>::type)
 				#endif
@@ -541,7 +545,7 @@ namespace eastl
 	template <class ValueType>
 	inline ValueType* any_cast(any* pAny) EA_NOEXCEPT
 	{
-		return (pAny && pAny->m_handler == &any::storage_handler<decay_t<ValueType>>::handler_func
+		return (pAny && pAny->m_handler //== &any::storage_handler<decay_t<ValueType>>::handler_func
 				#if EASTL_RTTI_ENABLED
 					&& pAny->type() == typeid(typename remove_reference<ValueType>::type)
 				#endif

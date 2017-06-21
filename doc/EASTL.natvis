@@ -424,4 +424,11 @@
   </Expand>
 </Type>
 
+<Type Name="eastl::ring_buffer&lt;*,*,*&gt;">
+  <DisplayString>{c}</DisplayString>
+  <Expand>
+    <ExpandedItem>c</ExpandedItem>
+  </Expand>
+</Type>
+
 </AutoVisualizer>

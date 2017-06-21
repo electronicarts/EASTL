@@ -270,7 +270,7 @@ namespace eastl
 
 			mpBegin = mpEnd = (value_type*)&mBuffer.buffer[0];
 			internalCapacityPtr() = mpBegin + nodeCount;
-			base_type::template DoAssign<iterator, true>(x.begin(), x.end(), false_type());
+			base_type::template DoAssign<move_iterator<iterator>, true>(make_move_iterator(x.begin()), make_move_iterator(x.end()), false_type());
 		}
 
 
@@ -359,12 +359,22 @@ namespace eastl
 		inline typename fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::this_type& 
 		fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::operator=(this_type&& x)
 		{
-			// Since we are a fixed_vector, we can't swap pointers. We can possibly so something like fixed_swap or
+			// Since we are a fixed_vector, we can't swap pointers. We can possibly do something like fixed_swap or
 			// we can just do an assignment from x. If we want to do the former then we need to have some complicated
 			// code to deal with overflow or no overflow, and whether the memory is in the fixed-size buffer or in 
 			// the overflow allocator. 90% of the time the memory should be in the fixed buffer, in which case
 			// a simple assignment is no worse than the fancy pathway.
-			return operator=(x);
+			if (this != &x)
+			{
+				clear();
+
+				#if EASTL_ALLOCATOR_COPY_ENABLED
+					get_allocator() = x.get_allocator(); // The primary effect of this is to copy the overflow allocator.
+				#endif
+
+				base_type::template DoAssign<move_iterator<iterator>, true>(make_move_iterator(x.begin()), make_move_iterator(x.end()), false_type()); // Shorter route.
+			}
+			return *this;
 		}
 	#endif
 

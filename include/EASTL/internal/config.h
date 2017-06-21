@@ -105,8 +105,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.05.06"
-	#define EASTL_VERSION_N  30506
+	#define EASTL_VERSION   "3.05.07"
+	#define EASTL_VERSION_N  30507
 #endif
 
 
@@ -634,8 +634,8 @@ namespace eastl
             #include <signal.h>
             #include <unistd.h>
             #define EASTL_DEBUG_BREAK() kill( getpid(), SIGINT )
-        #elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
-            #define EASTL_DEBUG_BREAK() asm("brk 10")
+		#elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
+			#define EASTL_DEBUG_BREAK() asm("brk 10")
         #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
             #define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
         #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)

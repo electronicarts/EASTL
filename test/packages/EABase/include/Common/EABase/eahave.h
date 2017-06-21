@@ -568,7 +568,7 @@
 	#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 		#define EA_HAVE_ISNAN(x)  _isnan(x)          /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  !_finite(x)
-	#elif defined(EA_PLATFORM_APPLE) || defined(EA_PLATFORM_LINUX)
+	#elif defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
 		#define EA_HAVE_ISINF(x)  std::isinf(x)
 	#elif defined(EA_PLATFORM_ANDROID)

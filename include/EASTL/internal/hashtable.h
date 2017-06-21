@@ -185,7 +185,7 @@ namespace eastl
 	// convenience macros to increase the readability of the code paths that must SFINAE on if the 'hash_node'
 	// contains the cached hashed value or not. 
 	#define ENABLE_IF_HAS_HASHCODE(T, RT) typename eastl::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
-	#define ENABLE_IF_HASHCODE_U32(T, RT) typename eastl::enable_if<eastl::is_same<T, uint32_t>::value, RT>::type
+	#define ENABLE_IF_HASHCODE_EASTLSIZET(T, RT) typename eastl::enable_if<eastl::is_convertible<T, eastl_size_t>::value, RT>::type
 	#define ENABLE_IF_TRUETYPE(T) typename eastl::enable_if<T::value>::type*
 	#define DISABLE_IF_TRUETYPE(T) typename eastl::enable_if<!T::value>::type*
 
@@ -1134,7 +1134,7 @@ namespace eastl
 		/// It returns an iterator to the first element that matches the given hash. However, there may be multiple elements that match the given hash.
 
 		template<typename HashCodeT>
-		ENABLE_IF_HASHCODE_U32(HashCodeT, iterator) find_by_hash(HashCodeT c)
+		ENABLE_IF_HASHCODE_EASTLSIZET(HashCodeT, iterator) find_by_hash(HashCodeT c)
 		{
 			EASTL_CT_ASSERT_MSG(bCacheHashCode,
 				"find_by_hash(hash_code_t c) is designed to avoid recomputing hashes, "
@@ -1150,7 +1150,7 @@ namespace eastl
 		}
 
 		template<typename HashCodeT>
-		ENABLE_IF_HASHCODE_U32(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
+		ENABLE_IF_HASHCODE_EASTLSIZET(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
 		{
 			EASTL_CT_ASSERT_MSG(bCacheHashCode,
 								"find_by_hash(hash_code_t c) is designed to avoid recomputing hashes, "
