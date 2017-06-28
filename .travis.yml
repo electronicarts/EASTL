@@ -23,6 +23,9 @@ addons:
 
 matrix:
     include:
+        - compiler: clang "release build with clang to trigger MOJI check"
+          env: EASTL_CONFIG=Release USE_MOJI_CHECK=yes
+          os: linux
         - compiler: clang "debug build with clang3.9"
           env: EASTL_CONFIG=Debug   USE_CLANG_39=yes
           os: osx
@@ -40,6 +43,9 @@ matrix:
         compiler: gcc
 
 install:
+# MOJI check; exit 1 if non-ascii characters detected in C++
+  - if [[ -n "$USE_MOJI_CHECK" && -n `git grep -P "[^[:ascii:]]" source test` ]]; then echo "Moji Detected" && exit 1             ;fi
+  - if [[ -n "$USE_MOJI_CHECK" ]]; then exit 0                                                                                    ;fi
 # Linux Setup
   # CMake
   - if [[ "$TRAVIS_OS_NAME" == "linux" && ! -n "$USE_BUCK" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz   ;fi
