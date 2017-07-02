@@ -51,6 +51,20 @@ namespace eastl
 	// promote_heap (internal function)
 	///////////////////////////////////////////////////////////////////////
 
+	template <typename RandomAccessIterator, typename Distance, typename T, typename ValueType>
+	inline void promote_heap_impl(RandomAccessIterator first, Distance topPosition, Distance position, T value)
+	{
+		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
+			(position > topPosition) && (*(first + parentPosition) < value);
+			parentPosition = (position - 1) >> 1)
+		{
+			*(first + position) = eastl::forward<ValueType>(*(first + parentPosition)); // Swap the node with its parent.
+			position = parentPosition;
+		}
+
+		*(first + position) = eastl::forward<ValueType>(value);
+	}
+
 	/// promote_heap
 	///
 	/// Moves a value in the heap from a given position upward until 
@@ -65,15 +79,8 @@ namespace eastl
 	template <typename RandomAccessIterator, typename Distance, typename T>
 	inline void promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, const T& value)
 	{
-		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
-			(position > topPosition) && (*(first + parentPosition) < value);
-			parentPosition = (position - 1) >> 1)
-		{
-			*(first + position) = *(first + parentPosition); // Swap the node with its parent.
-			position = parentPosition;
-		}
-
-		*(first + position) = value;
+		typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+		promote_heap_impl<RandomAccessIterator, Distance, const T&, const value_type>(first, topPosition, position, value);
 	}
 
 
@@ -92,16 +99,22 @@ namespace eastl
 	inline void promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, T&& value)
 	{
 		typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+		promote_heap_impl<RandomAccessIterator, Distance, T&&, value_type>(first, topPosition, position, eastl::forward<T>(value));
+	}
 
+
+	template <typename RandomAccessIterator, typename Distance, typename T, typename Compare, typename ValueType>
+	inline void promote_heap_impl(RandomAccessIterator first, Distance topPosition, Distance position, T value, Compare compare)
+	{
 		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
-			(position > topPosition) && (*(first + parentPosition) < value);
+			(position > topPosition) && compare(*(first + parentPosition), value);
 			parentPosition = (position - 1) >> 1)
 		{
-			*(first + position) = eastl::forward<value_type>(*(first + parentPosition)); // Swap the node with its parent.
+			*(first + position) = eastl::forward<ValueType>(*(first + parentPosition)); // Swap the node with its parent.
 			position = parentPosition;
 		}
 
-		*(first + position) = eastl::forward<value_type>(value);
+		*(first + position) = eastl::forward<ValueType>(value);
 	}
 
 
@@ -119,15 +132,8 @@ namespace eastl
 	template <typename RandomAccessIterator, typename Distance, typename T, typename Compare>
 	inline void promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, const T& value, Compare compare)
 	{
-		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
-			(position > topPosition) && compare(*(first + parentPosition), value);
-			parentPosition = (position - 1) >> 1)
-		{
-			*(first + position) = *(first + parentPosition); // Swap the node with its parent.
-			position = parentPosition;
-		}
-
-		*(first + position) = value;
+		typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+		promote_heap_impl<RandomAccessIterator, Distance, const T&, Compare, const value_type>(first, topPosition, position, value, compare);
 	}
 
 
@@ -146,16 +152,7 @@ namespace eastl
 	inline void promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, T&& value, Compare compare)
 	{
 		typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
-		
-		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
-			(position > topPosition) && compare(*(first + parentPosition), value);
-			parentPosition = (position - 1) >> 1)
-		{
-			*(first + position) = eastl::forward<value_type>(*(first + parentPosition)); // Swap the node with its parent.
-			position = parentPosition;
-		}
-
-		*(first + position) = eastl::forward<value_type>(value);
+		promote_heap_impl<RandomAccessIterator, Distance, T&&, Compare, value_type>(first, topPosition, position, eastl::forward<T>(value), compare);
 	}
 
 
