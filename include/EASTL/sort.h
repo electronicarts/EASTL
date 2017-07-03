@@ -643,6 +643,30 @@ namespace eastl
 		// }
 	}
 
+	template <typename RandomAccessIterator, typename T>
+	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T pivotValue)
+	{
+		for(; ; ++first)
+		{
+			while(*first < pivotValue)
+			{
+				EASTL_VALIDATE_COMPARE(!(pivotValue < *first)); // Validate that the compare function is sane.
+				++first;
+			}
+			--last;
+
+			while(pivotValue < *last)
+			{
+				EASTL_VALIDATE_COMPARE(!(*last < pivotValue)); // Validate that the compare function is sane.
+				--last;
+			}
+
+			if(first >= last) // Random access iterators allow operator >=
+				return first;
+
+			eastl::iter_swap(first, last);
+		}
+	}
 
 	/// get_partition
 	///
@@ -654,89 +678,19 @@ namespace eastl
 	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, const T& pivotValue)
 	{
 		const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-
-		for(; ; ++first)
-		{
-			while(*first < pivotCopy)
-			{
-				EASTL_VALIDATE_COMPARE(!(pivotCopy < *first)); // Validate that the compare function is sane.
-				++first;
-			}
-			--last;
-
-			while(pivotCopy < *last)
-			{
-				EASTL_VALIDATE_COMPARE(!(*last < pivotCopy)); // Validate that the compare function is sane.
-				--last;
-			}
-
-			if(first >= last) // Random access iterators allow operator >=
-				return first;
-
-			eastl::iter_swap(first, last);
-		}
+		return get_partition_impl<RandomAccessIterator, const T&>(first, last, pivotCopy);
 	}
 
 	template <typename RandomAccessIterator, typename T>
-	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, T&& pivotCopy)
+	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, T&& pivotValue)
 	{
 		// Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
-
-		for(; ; ++first)
-		{
-			while(*first < pivotCopy)
-			{
-				EASTL_VALIDATE_COMPARE(!(pivotCopy < *first)); // Validate that the compare function is sane.
-				++first;
-			}
-			--last;
-
-			while(pivotCopy < *last)
-			{
-				EASTL_VALIDATE_COMPARE(!(*last < pivotCopy)); // Validate that the compare function is sane.
-				--last;
-			}
-
-			if(first >= last) // Random access iterators allow operator >=
-				return first;
-
-			eastl::iter_swap(first, last);
-		}
+		return get_partition_impl<RandomAccessIterator, T&&>(first, last, eastl::move(pivotValue));
 	}
-
-	template <typename RandomAccessIterator, typename T, typename Compare> 
-	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, const T& pivotValue, Compare compare)
-	{
-		const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-
-		for(; ; ++first)
-		{
-			while(compare(*first, pivotCopy))
-			{
-				EASTL_VALIDATE_COMPARE(!compare(pivotCopy, *first)); // Validate that the compare function is sane.
-				++first;
-			}
-			--last;
-
-			while(compare(pivotCopy, *last))
-			{
-				EASTL_VALIDATE_COMPARE(!compare(*last, pivotCopy)); // Validate that the compare function is sane.
-				--last;
-			}
-
-			if(first >= last) // Random access iterators allow operator >=
-				return first;
-
-			eastl::iter_swap(first, last);
-		}
-	}
-
 
 	template <typename RandomAccessIterator, typename T, typename Compare>
-	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, T&& pivotValue, Compare compare)
+	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T pivotValue, Compare compare)
 	{
-		// Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
-
 		for(; ; ++first)
 		{
 			while(compare(*first, pivotValue))
@@ -757,6 +711,20 @@ namespace eastl
 
 			eastl::iter_swap(first, last);
 		}
+	}
+
+	template <typename RandomAccessIterator, typename T, typename Compare> 
+	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, const T& pivotValue, Compare compare)
+	{
+		const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
+		return get_partition_impl<RandomAccessIterator, const T&, Compare>(first, last, pivotCopy, compare);
+	}
+
+	template <typename RandomAccessIterator, typename T, typename Compare>
+	inline RandomAccessIterator get_partition(RandomAccessIterator first, RandomAccessIterator last, T&& pivotValue, Compare compare)
+	{
+		// Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
+		return get_partition_impl<RandomAccessIterator, T&&, Compare>(first, last, eastl::forward<T>(pivotValue), compare);
 	}
 
 
