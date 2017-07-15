@@ -2384,6 +2384,8 @@ int TestAlgorithm()
 				eastl::vector<eastl::unique_ptr<int>> vec2;
 				eastl::vector<int> vec3;
 				eastl::vector<int> vec4;
+				eastl::vector<int> vec5;
+				eastl::vector<int> vec6;
 
 				const int numbersToSort = 100;
 
@@ -2394,6 +2396,8 @@ int TestAlgorithm()
 					vec2.emplace_back(new int(randomNumber));
 					vec3.push_back(randomNumber);
 					vec4.push_back(randomNumber);
+					vec5.push_back(randomNumber);
+					vec6.push_back(randomNumber);
 				}
 
 				// used STL sort as reference for correctness
@@ -2412,6 +2416,15 @@ int TestAlgorithm()
 				{
 					EATEST_VERIFY(*vec2[i] == vec3[i]);
 					EATEST_VERIFY(vec3[i] == vec4[i]);
+				}
+
+				eastl::sort(vec5.begin(), vec5.end(), [](const int& lhs, const int& rhs) { return lhs < rhs; } );
+				std::sort(vec6.begin(), vec6.end(), [](const int& lhs, const int& rhs) { return lhs < rhs; } );
+
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					EATEST_VERIFY(vec4[i] == vec5[i]);
+					EATEST_VERIFY(vec5[i] == vec6[i]);
 				}
 			}
 		}

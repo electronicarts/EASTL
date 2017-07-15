@@ -213,7 +213,6 @@ namespace eastl
 	/// This function requires that the value argument refer to a value
 	/// that is currently not within the heap.
 	///
-	/// TODO: reduce code duplication here
 	template <typename RandomAccessIterator, typename Distance, typename T>
 	void adjust_heap(RandomAccessIterator first, Distance topPosition, Distance heapSize, Distance position, T&& value)
 	{

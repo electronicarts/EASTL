@@ -940,7 +940,7 @@ namespace eastl
 	}
 
 	template <typename T>
-	inline T median_impl(T a, T b, T c)
+	inline T&& median_impl(T&& a, T&& b, T&& c)
 	{
 		if(a < b)
 		{
@@ -969,7 +969,7 @@ namespace eastl
 	template <typename T>
 	inline const T& median(const T& a, const T& b, const T& c)
 	{
-		return median_impl<const T&>(a, b, c);
+		return median_impl(a, b, c);
 	}
 
 	/// median
@@ -983,12 +983,12 @@ namespace eastl
 	template <typename T>
 	inline T&& median(T&& a, T&& b, T&& c)
 	{
-		return eastl::forward<T>(median_impl<T&&>(eastl::forward<T>(a), eastl::forward<T>(b), eastl::forward<T>(c)));
+		return eastl::forward<T>(median_impl(eastl::forward<T>(a), eastl::forward<T>(b), eastl::forward<T>(c)));
 	}
 
 
 	template <typename T, typename Compare>
-	inline T median_impl(T a, T b, T c, Compare compare)
+	inline T&& median_impl(T&& a, T&& b, T&& c, Compare compare)
 	{
 		if(compare(a, b))
 		{

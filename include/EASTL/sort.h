@@ -213,7 +213,7 @@ namespace eastl
 	/// inner for loop with a call to upper_bound, which would be faster.
 	///
 	template <typename BidirectionalIterator, typename StrictWeakOrdering>
-	void insertion_sort( BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
+	void insertion_sort(BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering compare)
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 
@@ -644,7 +644,7 @@ namespace eastl
 	}
 
 	template <typename RandomAccessIterator, typename T>
-	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T pivotValue)
+	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T&& pivotValue)
 	{
 		for(; ; ++first)
 		{
@@ -689,7 +689,7 @@ namespace eastl
 	}
 
 	template <typename RandomAccessIterator, typename T, typename Compare>
-	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T pivotValue, Compare compare)
+	inline RandomAccessIterator get_partition_impl(RandomAccessIterator first, RandomAccessIterator last, T&& pivotValue, Compare compare)
 	{
 		for(; ; ++first)
 		{
@@ -821,7 +821,7 @@ namespace eastl
 				value_type temp(eastl::forward<value_type>(*i));
 				*i = eastl::forward<value_type>(*first);
 				eastl::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>
-								  (first, difference_type(0), difference_type(middle - first), difference_type(0), eastl::forward<value_type>(*i), compare);
+								  (first, difference_type(0), difference_type(middle - first), difference_type(0), eastl::forward<value_type>(temp), compare);
 			}
 		}
 
