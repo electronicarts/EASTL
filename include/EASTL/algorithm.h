@@ -2670,10 +2670,16 @@ namespace eastl
 	remove(ForwardIterator first, ForwardIterator last, const T& value)
 	{
 		first = eastl::find(first, last, value);
-		if(first != last)
+		if(first != last) 
 		{
-			ForwardIterator i(first);
-			return eastl::remove_copy(++i, last, first, value);
+			for(ForwardIterator i = first; ++i != last;) 
+			{
+				if(!(*i == value)) // Note that we always express value comparisons in terms of < or ==.
+				{
+					*first = eastl::move(*i);
+					++first;
+				}
+			}
 		}
 		return first;
 	}
@@ -2707,10 +2713,16 @@ namespace eastl
 	remove_if(ForwardIterator first, ForwardIterator last, Predicate predicate)
 	{
 		first = eastl::find_if(first, last, predicate);
-		if(first != last)
+		if(first != last) 
 		{
-			ForwardIterator i(first);
-			return eastl::remove_copy_if<ForwardIterator, ForwardIterator, Predicate>(++i, last, first, predicate);
+			for(ForwardIterator i = first; ++i != last;) 
+			{
+				if(!predicate(*i))
+				{
+					*first = eastl::move(*i);
+					++first;
+				}
+			}
 		}
 		return first;
 	}
