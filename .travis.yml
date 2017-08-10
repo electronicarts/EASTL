@@ -35,10 +35,6 @@ matrix:
         - compiler: clang "build with Buck"
           env: USE_BUCK=yes
           os: osx
-		# Fails most of the time.
-        # - compiler: gcc "build with Buck"
-        #   env: USE_BUCK=yes
-        #   os: linux
     exclude:
       - os: osx
         compiler: gcc
