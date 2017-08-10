@@ -1425,6 +1425,15 @@ inline bool operator!=(const ThrowingAllocator<initialShouldThrow>&, const Throw
 }
 
 
+// Helper utility that does a case insensitive string comparsion with two sets of overloads
+//
+struct TestStrCmpI_2
+{
+	bool operator()(const char* pCStr, const eastl::string& str) const { return str.comparei(pCStr) == 0; }
+	bool operator()(const eastl::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
+};
+
+
 
 #endif // Header include guard
 

@@ -55,15 +55,10 @@
 	#include <exception>
 #endif
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#include <stddef.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
+#include <new>
+#include <stddef.h>
+EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifdef _MSC_VER
 	#pragma warning(push)

@@ -30,8 +30,6 @@ using namespace eastl;
 
 int TestString()
 {
-	EASTLTest_Printf("TestString\n");
-
 	int nErrorCount = 0;
 
 	nErrorCount += TestBasicString<eastl::basic_string<char>>();

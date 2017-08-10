@@ -84,8 +84,6 @@ template class eastl::intrusive_list<IntNode>;
 
 int TestIntrusiveList()
 {
-	EASTLTest_Printf("TestIntrusiveList\n");
-
 	int nErrorCount = 0;
 	int i;
 

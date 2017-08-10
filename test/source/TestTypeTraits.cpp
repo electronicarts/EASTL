@@ -458,8 +458,6 @@ namespace
 
 int TestTypeTraits()
 {
-	EASTLTest_Printf("TestTypeTraits\n");
-
 	int nErrorCount = 0;
 
 
@@ -1745,6 +1743,83 @@ int TestTypeTraits()
 		}
 	}
 	#endif
+
+	// conjunction
+	{
+		static_assert( conjunction<>::value, "conjunction failure");
+		static_assert(!conjunction<false_type>::value, "conjunction failure");
+		static_assert(!conjunction<false_type, false_type>::value, "conjunction failure");
+		static_assert(!conjunction<false_type, false_type, false_type>::value, "conjunction failure");
+		static_assert(!conjunction<false_type, false_type, false_type, true_type>::value, "conjunction failure");
+		static_assert(!conjunction<false_type, false_type, true_type, true_type>::value, "conjunction failure");
+		static_assert(!conjunction<false_type, true_type, true_type, true_type>::value, "conjunction failure");
+		static_assert(!conjunction<true_type, true_type, true_type, true_type, false_type>::value, "conjunction failure");
+		static_assert(!conjunction<true_type, false_type, true_type, true_type, true_type>::value, "conjunction failure");
+		static_assert( conjunction<true_type, true_type, true_type, true_type, true_type>::value, "conjunction failure");
+		static_assert( conjunction<true_type, true_type, true_type, true_type>::value, "conjunction failure");
+		static_assert( conjunction<true_type, true_type, true_type>::value, "conjunction failure");
+		static_assert( conjunction<true_type>::value, "conjunction failure");
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert( conjunction_v<>, "conjunction failure");
+		static_assert(!conjunction_v<false_type>, "conjunction failure");
+		static_assert(!conjunction_v<false_type, false_type>, "conjunction failure");
+		static_assert(!conjunction_v<false_type, false_type, false_type>, "conjunction failure");
+		static_assert(!conjunction_v<false_type, false_type, false_type, true_type>, "conjunction failure");
+		static_assert(!conjunction_v<false_type, false_type, true_type, true_type>, "conjunction failure");
+		static_assert(!conjunction_v<false_type, true_type, true_type, true_type>, "conjunction failure");
+		static_assert(!conjunction_v<true_type, true_type, true_type, true_type, false_type>, "conjunction failure");
+		static_assert(!conjunction_v<true_type, false_type, true_type, true_type, true_type>, "conjunction failure");
+		static_assert( conjunction_v<true_type, true_type, true_type, true_type, true_type>, "conjunction failure");
+		static_assert( conjunction_v<true_type, true_type, true_type, true_type>, "conjunction failure");
+		static_assert( conjunction_v<true_type, true_type, true_type>, "conjunction failure");
+		static_assert( conjunction_v<true_type>, "conjunction failure");
+	#endif
+	}
+	
+	// disjunction
+	{
+		static_assert(!disjunction<>::value, "disjunction failure");
+		static_assert(!disjunction<false_type>::value, "disjunction failure");
+		static_assert(!disjunction<false_type, false_type>::value, "disjunction failure");
+		static_assert(!disjunction<false_type, false_type, false_type>::value, "disjunction failure");
+		static_assert( disjunction<false_type, false_type, false_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<false_type, false_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<false_type, true_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type, true_type, true_type, true_type, false_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type, false_type, true_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type, true_type, true_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type, true_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type, true_type, true_type>::value, "disjunction failure");
+		static_assert( disjunction<true_type>::value, "disjunction failure");
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert(!disjunction_v<>, "disjunction failure");
+		static_assert(!disjunction_v<false_type>, "disjunction failure");
+		static_assert(!disjunction_v<false_type, false_type>, "disjunction failure");
+		static_assert(!disjunction_v<false_type, false_type, false_type>, "disjunction failure");
+		static_assert( disjunction_v<false_type, false_type, false_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<false_type, false_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<false_type, true_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type, true_type, true_type, true_type, false_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type, false_type, true_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type, true_type, true_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type, true_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type, true_type, true_type>, "disjunction failure");
+		static_assert( disjunction_v<true_type>, "disjunction failure");
+	#endif
+	}
+
+	// negation
+	{
+		static_assert( negation<false_type>::value, "negation failure");
+		static_assert(!negation<true_type>::value, "negation failure");
+
+		#if EASTL_VARIABLE_TEMPLATES_ENABLED
+			static_assert( negation_v<false_type>, "negation failure");
+			static_assert(!negation_v<true_type>, "negation failure");
+		#endif
+	}
 
 	return nErrorCount;
 }

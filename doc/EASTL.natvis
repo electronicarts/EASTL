@@ -47,20 +47,20 @@
 </Type>
 
 <Type Name="eastl::basic_string&lt;char,*&gt;">
-	<DisplayString>{mpBegin,s}</DisplayString>
+	<DisplayString>{mPair.mFirst.mpBegin,s}</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sb</Item>
+		<Item Name="length">mPair.mFirst.mpEnd-mPair.mFirst.mpBegin</Item>
+		<Item Name="capacity">mPair.mFirst.mpCapacity-mPair.mFirst.mpBegin</Item>
+		<Item Name="value">mPair.mFirst.mpBegin,sb</Item>
 	</Expand>
 </Type>
 
 <Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
-	<DisplayString>{mpBegin,su}</DisplayString>
+	<DisplayString>{mPair.mFirst.mpBegin,su}</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sub</Item>
+		<Item Name="length">mPair.mFirst.mpEnd-mPair.mFirst.mpBegin</Item>
+		<Item Name="capacity">mPair.mFirst.mpCapacity-mPair.mFirst.mpBegin</Item>
+		<Item Name="value">mPair.mFirst.mpBegin,sub</Item>
 	</Expand>
 </Type>
 
@@ -83,7 +83,7 @@
 	<DisplayString Condition="mpEnd - mpBegin &gt; 6">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)}, {*(mpBegin+5)}, ... }}</DisplayString>
     <Expand>
         <Item Name="[size]">mpEnd - mpBegin</Item>
-        <Item Name="[capacity]">mpCapacity - mpBegin</Item>
+        <Item Name="[capacity]">mCapacityAllocator.mFirst - mpBegin</Item>
         <ArrayItems>
             <Size>mpEnd - mpBegin</Size>
             <ValuePointer>mpBegin</ValuePointer>

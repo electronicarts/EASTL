@@ -131,8 +131,6 @@ int TestFunctional()
 {
 	using namespace eastl;
 
-	EASTLTest_Printf("TestFunctional\n");
-
 	int nErrorCount = 0;
 
 	{
@@ -967,6 +965,17 @@ int TestFunctional()
 		}
 	}
 	#endif
+
+	// not_fn
+	{
+		{
+			auto ft = eastl::not_fn([] { return true; });
+			auto ff = eastl::not_fn([] { return false; });
+
+			EATEST_VERIFY(ft() == false);
+			EATEST_VERIFY(ff() == true);
+		}
+	}
 
 	return nErrorCount;
 }

@@ -92,6 +92,9 @@
  *
  *  C++14 functionality
  *     EA_COMPILER_NO_VARIABLE_TEMPLATES
+ * 
+ *  C++17 functionality
+ *     EA_COMPILER_NO_INLINE_VARIABLES
  *     
  *-----------------------------------------------------------------------------
  *
@@ -1089,6 +1092,24 @@
 		#elif !defined(EA_COMPILER_CPP14_ENABLED) 
 			#define EA_COMPILER_NO_VARIABLE_TEMPLATES 1
 		#endif
+	#endif
+
+
+	// EA_COMPILER_NO_INLINE_VARIABLES
+	//
+	// Refers to C++17 inline variables that allows the definition of variables in header files
+	//
+	// Example usage:
+	//    struct Foo 
+	//    {
+	//        static inline constexpr int kConstant = 42;  // no out of class definition
+	//    };
+	//
+	// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4424.pdf
+	// http://en.cppreference.com/w/cpp/language/inline
+	//
+	#if !defined(EA_COMPILER_NO_INLINE_VARIABLES)
+		#define EA_COMPILER_NO_INLINE_VARIABLES 1
 	#endif
 
 

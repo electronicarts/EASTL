@@ -32,8 +32,6 @@ int TestBitVector()
 {
 	using namespace eastl;
 
-	EASTLTest_Printf("TestBitVector\n");
-
 	int nErrorCount = 0;
 
 	{

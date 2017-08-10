@@ -48,6 +48,14 @@
 	#include <stddef.h>
 #endif
 
+// ------------------------------------------------------------------------
+// Include assert.h on C11 supported compilers so we may allow static_assert usage
+// http://en.cppreference.com/w/c/error/static_assert
+// C11 standard(ISO / IEC 9899:2011) :
+// 7.2/3 Diagnostics <assert.h>(p : 186)
+#if !defined(__cplusplus) && defined(__STDC_VERSION__)  && __STDC_VERSION__ >= 201100L
+	#include <assert.h>
+#endif
 
 // ------------------------------------------------------------------------
 // Ensure this header file is only processed once (with certain compilers)
@@ -891,7 +899,11 @@
 //
 #if defined(_MSC_VER) && (_MSC_VER >= 1600) && defined(__cplusplus)
 	// static_assert is defined by the compiler for both C and C++.
-#elif defined(__clang__) && defined(__cplusplus) 
+#elif !defined(__cplusplus) && defined(EA_PLATFORM_ANDROID) 
+	// AndroidNDK does not support static_assert despite claiming it's a C11 compiler
+	#define NEED_CUSTOM_STATIC_ASSERT
+#elif defined(__clang__) && defined(__cplusplus)
+	// We need to separate these checks on a new line, as the pre-processor on other compilers will fail on the _has_feature macros
 	#if !(__has_feature(cxx_static_assert) || __has_extension(cxx_static_assert))
 		#define NEED_CUSTOM_STATIC_ASSERT
 	#endif
@@ -900,6 +912,8 @@
 #elif defined(__EDG_VERSION__) && (__EDG_VERSION__ >= 401) && defined(EA_COMPILER_CPP11_ENABLED)
 	// static_assert is defined by the compiler.
 #elif !defined(__cplusplus) && defined(__GLIBC__) && defined(__USE_ISOC11)
+	// static_assert is defined by the compiler.
+#elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201100L
 	// static_assert is defined by the compiler.
 #else
 	#define NEED_CUSTOM_STATIC_ASSERT

@@ -50,8 +50,6 @@ struct TestObj
 // TestSList
 int TestSList()
 {
-	EASTLTest_Printf("TestSList\n");
-
 	int nErrorCount = 0;
 
 	// slist();

@@ -140,8 +140,6 @@ template class eastl::fixed_hash_multimap<A, A, 1, 2, true, eastl::hash<A>, east
 EA_DISABLE_VC_WARNING(6262)
 int TestFixedHash()
 {
-	EASTLTest_Printf("TestFixedHash\n");
-
 	int nErrorCount = 0;
 
 	{ // fixed_hash_map

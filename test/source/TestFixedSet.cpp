@@ -53,8 +53,6 @@ typedef eastl::fixed_multiset<TestObject, kContainerSize> VMS4;
 EA_DISABLE_VC_WARNING(6262)
 int TestFixedSet()
 {
-	EASTLTest_Printf("TestFixedSet\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY

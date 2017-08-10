@@ -466,6 +466,93 @@ namespace eastl
 		using conditional_t = typename conditional<B, T, F>::type;
 	#endif
 
+
+
+	///////////////////////////////////////////////////////////////////////
+	// conjunction 
+	//
+	// This is a C++17 standard utility class that performs a short-circuiting
+	// logical AND on a sequence of type traits.
+	//
+	// http://en.cppreference.com/w/cpp/types/conjunction
+	//
+	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+		template <class...>
+		struct conjunction : eastl::true_type {};
+
+		template <class B>
+		struct conjunction<B> : B {};
+
+	    template <class B, class... Bn>
+	    struct conjunction<B, Bn...> : conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+
+        #if EASTL_VARIABLE_TEMPLATES_ENABLED
+			#if EASTL_INLINE_VARIABLE_ENABLED
+				template<class... Bn>
+				inline constexpr bool conjunction_v = conjunction<Bn...>::value;
+			#else
+				template<class... Bn>
+				static const constexpr bool conjunction_v = conjunction<Bn...>::value;
+			#endif
+		#endif
+    #endif
+
+
+
+	///////////////////////////////////////////////////////////////////////
+	// disjunction 
+	//
+	// This is a C++17 standard utility class that performs a short-circuiting
+	// logical OR on a sequence of type traits.
+	//
+	// http://en.cppreference.com/w/cpp/types/disjunction
+	//
+	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+		template <class...>
+		struct disjunction : eastl::false_type {};
+
+		template <class B>
+		struct disjunction<B> : B {};
+
+	    template <class B, class... Bn>
+	    struct disjunction<B, Bn...> : conditional<bool(B::value), B, disjunction<Bn...>>::type {};
+
+        #if EASTL_VARIABLE_TEMPLATES_ENABLED
+			#if EASTL_INLINE_VARIABLE_ENABLED
+				template<class... B>
+				inline constexpr bool disjunction_v = disjunction<B...>::value;
+			#else
+				template<class... B>
+				static const constexpr bool disjunction_v = disjunction<B...>::value;
+			#endif
+		#endif
+    #endif
+
+
+
+	///////////////////////////////////////////////////////////////////////
+	// negation 
+	//
+	// This is a C++17 standard utility class that performs a logical NOT on a
+	// single type trait.
+	//
+	// http://en.cppreference.com/w/cpp/types/negation
+	//
+	template <class B>
+	struct negation : eastl::bool_constant<!bool(B::value)> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		#if EASTL_INLINE_VARIABLE_ENABLED
+			template<class B>
+			inline constexpr bool negation_v = negation<B>::value;
+		#else
+			template<class B>
+			static const constexpr bool negation_v = negation<B>::value;
+		#endif
+	#endif
+
+
+
 	///////////////////////////////////////////////////////////////////////
 	// identity
 	//

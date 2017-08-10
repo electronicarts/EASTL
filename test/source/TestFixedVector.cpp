@@ -49,8 +49,6 @@ namespace
 
 int TestFixedVector()
 {
-	EASTLTest_Printf("TestFixedVector\n");
-
 	int nErrorCount = 0;
 
 	TestObject::Reset();

@@ -66,8 +66,6 @@ using namespace eastl;
 
 int TestBitset()
 {
-	EASTLTest_Printf("TestBitset\n");
-
 	int nErrorCount = 0;
 
 	{

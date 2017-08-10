@@ -243,11 +243,11 @@ namespace eastl
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// invoke_return
+	// invoke_result
 	//
 #if EASTL_VARIADIC_TEMPLATES_ENABLED
     template <class T, class... Args>
-    struct invoke_return
+    struct invoke_result
     {
 	    typedef decltype(invoke_impl(eastl::declval<T>(), eastl::declval<Args>()...)) type;
     };
@@ -256,55 +256,59 @@ namespace eastl
 	// Since this isn't important for our environment this is left as future work.
 	//
 	// template <class F, bool = has_result_type<typename weak_result_type<F>::value>> 
-	// struct invoke_return
+	// struct invoke_result
 	// {
 	//     typedef typename weak_result_type<F>::result_type type;
 	// };
 
 	// template <class F>
-	// struct invoke_return<F, false>
+	// struct invoke_result<F, false>
 	// {
 	//     typedef decltype(invoke_impl(eastl::declval<F&>())) type;
 	// };
 
 	template <class T, class Arg = void>
-	struct invoke_return
+	struct invoke_result
 	{
 		typedef decltype(invoke_impl(eastl::declval<T>(), eastl::declval<Arg>())) type;
 	};
 
     template <class T, class A0>
-    struct invoke_return0
+    struct invoke_result0
     {
 	    typedef decltype(invoke_impl(eastl::declval<T>(), eastl::declval<A0>())) type;
     };
 
     template <class R, class T, class A0>
-    struct invoke_return0<R T::*, A0>
+    struct invoke_result0<R T::*, A0>
     {
 	    typedef typename apply_cv<A0, R>::type& type;
     };
 
     template <class R, class T, class A0>
-    struct invoke_return0<R T::*, A0*>
+    struct invoke_result0<R T::*, A0*>
     {
 	    typedef typename apply_cv<A0, R>::type& type;
     };
 
     template <class T, class A0, class A1>
-    struct invoke_return1
+    struct invoke_result1
     {
 	    typedef decltype(invoke_impl(eastl::declval<T>(), eastl::declval<A0>(), eastl::declval<A1>())) type;
     };
 
     template <class T, class A0, class A1, class A2>
-    struct invoke_return2
+    struct invoke_result2
     {
 	    typedef decltype(
 	        invoke_impl(eastl::declval<T>(), eastl::declval<A0>(), eastl::declval<A1>(), eastl::declval<A2>())) type;
     };
 #endif
 
+	#ifndef EA_COMPILER_NO_TEMPLATE_ALIASES
+		template <typename... Ts>
+		using invoke_result_t = typename invoke_result<Ts...>::type;
+	#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -312,28 +316,28 @@ namespace eastl
 	//
 #if EASTL_VARIADIC_TEMPLATES_ENABLED 
 	template <class F, class... Args>
-	typename invoke_return<F, Args...>::type
+	typename invoke_result<F, Args...>::type
 	invoke(F&& f, Args&&... args)
 	{
 		return invoke_impl(eastl::forward<F>(f), eastl::forward<Args>(args)...);
 	}
 #else
 	template <class F, class A0>
-	typename invoke_return0<F, A0>::type
+	typename invoke_result0<F, A0>::type
 	invoke(F&& f, A0&& a0)
 	{
 		return invoke_impl(eastl::forward<F>(f), eastl::forward<A0>(a0));
 	}
 
 	template <class F, class A0, class A1>
-	typename invoke_return1<F, A0, A1>::type
+	typename invoke_result1<F, A0, A1>::type
 	invoke(F&& f, A0&& a0, A1&& a1)
 	{
 		return invoke_impl(eastl::forward<F>(f), eastl::forward<A0>(a0), eastl::forward<A1>(a1));
 	}
 
 	template <class F, class A0, class A1, class A2>
-	typename invoke_return2<F, A0, A1, A2>::type
+	typename invoke_result2<F, A0, A1, A2>::type
 	invoke(F&& f, A0&& a0, A1&& a1, A2&& a2)
 	{
 		return invoke_impl(eastl::forward<F>(f), eastl::forward<A0>(a0), eastl::forward<A1>(a1), eastl::forward<A2>(a2));
@@ -365,27 +369,27 @@ namespace eastl
 
 #if EASTL_VARIADIC_TEMPLATES_ENABLED
 	    template <class... ArgTypes>
-	    typename invoke_return<type, ArgTypes...>::type operator()(ArgTypes&&... args) const
+	    typename invoke_result<type, ArgTypes...>::type operator()(ArgTypes&&... args) const
 	    {
 		    return invoke_impl(func, eastl::forward<ArgTypes>(args)...);
 	    }
 #else
-	    typename invoke_return<type>::type operator()() const { return invoke_impl(func); }
+	    typename invoke_result<type>::type operator()() const { return invoke_impl(func); }
 
 	    template <class A0>
-	    typename invoke_return0<type, A0>::type operator()(A0& a0) const
+	    typename invoke_result0<type, A0>::type operator()(A0& a0) const
 	    {
 		    return invoke_impl(func, a0);
 	    }
 
 	    template <class A0, class A1>
-	    typename invoke_return1<type, A0, A1>::type operator()(A0& a0, A1& a1) const
+	    typename invoke_result1<type, A0, A1>::type operator()(A0& a0, A1& a1) const
 	    {
 		    return invoke_impl(func, a0, a1);
 	    }
 
 	    template <class A0, class A1, class A2>
-	    typename invoke_return2<type, A0, A1, A2>::type operator()(A0& a0, A1& a1, A2& a2) const
+	    typename invoke_result2<type, A0, A1, A2>::type operator()(A0& a0, A1& a1, A2& a2) const
 	    {
 		    return invoke_impl(func, a0, a1, a2);
 	    }

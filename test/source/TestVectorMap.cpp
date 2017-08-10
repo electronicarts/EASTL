@@ -58,8 +58,6 @@ typedef eastl::vector_multimap<TestObject, TestObject, eastl::less<TestObject>, 
 
 int TestVectorMap()
 {
-	EASTLTest_Printf("TestVectorMap\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -184,6 +182,34 @@ int TestVectorMap()
 		tvm["RamCacheInfo"]    = NULL;
 		tvm["SSLCert"]         = NULL;
 		tvm["AllowedDomain"]   = NULL;
+	}
+
+	{     // find_as predicate
+		{ // vector_map
+			eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+												  {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		{ // const vector_map
+			const eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+														{"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		// vector_multimap
+		{
+			eastl::vector_multimap<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+													   {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		// const vector_multimap
+		{
+			const eastl::vector_multimap<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+															 {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
 	}
 
 	return nErrorCount;

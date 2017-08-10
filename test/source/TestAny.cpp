@@ -44,7 +44,6 @@ struct RequiresInitList
 int TestAny()
 {
 	using namespace eastl;
-	EASTLTest_Printf("TestAny\n");
 	int nErrorCount = 0;
 
 	// NOTE(rparolin): Ensure 'any' is at least the size of an eastl::string and an eastl::vector to prevent heap

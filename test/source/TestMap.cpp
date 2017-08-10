@@ -47,8 +47,6 @@ typedef eastl::multimap<TestObject, TestObject> VMM4;
 
 int TestMap()
 {
-	EASTLTest_Printf("TestMap\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY

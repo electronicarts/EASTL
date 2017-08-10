@@ -12,6 +12,7 @@
 #include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/internal/functional_base.h>
+#include <EASTL/internal/mem_fn.h>
 
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -945,6 +946,61 @@ namespace eastl
 	}
 
 
+	// not_fn_ret
+	// not_fn_ret is a implementation specified return type of eastl::not_fn.
+	// The type name is not specified but it does have mandated functions that conforming implementations must support.
+	//
+	// http://en.cppreference.com/w/cpp/utility/functional/not_fn
+	//
+	template <typename F>
+	struct not_fn_ret
+	{
+		explicit not_fn_ret(F&& f) : mDecayF(eastl::forward<F>(f)) {}
+		not_fn_ret(not_fn_ret&& f) = default;
+		not_fn_ret(const not_fn_ret& f) = default;
+
+		// overloads for lvalues
+		template <class... Args>
+		auto operator()(Args&&... args) &
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F>&, Args...>>())
+		{ return !eastl::invoke(mDecayF, eastl::forward<Args>(args)...); }
+
+		template <class... Args>
+		auto operator()(Args&&... args) const &
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F> const&, Args...>>())
+		{ return !eastl::invoke(mDecayF, eastl::forward<Args>(args)...); }
+
+		// overloads for rvalues
+		template <class... Args>
+		auto operator()(Args&&... args) &&
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F>, Args...>>())
+		{ return !eastl::invoke(eastl::move(mDecayF), eastl::forward<Args>(args)...); }
+
+		template <class... Args>
+		auto operator()(Args&&... args) const &&
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F> const, Args...>>())
+		{ return !eastl::invoke(eastl::move(mDecayF), eastl::forward<Args>(args)...); }
+
+		eastl::decay_t<F> mDecayF;
+	};
+
+	/// not_fn
+	///
+	/// Creates an implementation specified functor that returns the complement of the callable object it was passed.
+	/// not_fn is intended to replace the C++03-era negators eastl::not1 and eastl::not2.
+	///
+	/// http://en.cppreference.com/w/cpp/utility/functional/not_fn
+	///
+	/// Example usage:
+	///
+	///		auto nf = eastl::not_fn([]{ return false; });
+	///     assert(nf());  // return true
+	///
+	template <class F>
+	inline not_fn_ret<F> not_fn(F&& f)
+	{
+		return not_fn_ret<F>(eastl::forward<F>(f));
+	}
 
 
 	///////////////////////////////////////////////////////////////////////

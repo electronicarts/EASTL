@@ -11,7 +11,6 @@
 int TestRatio()
 {
 	using namespace eastl;
-	EASTLTest_Printf("TestRatio\n");
 
 	int nErrorCount = 0;
 	{

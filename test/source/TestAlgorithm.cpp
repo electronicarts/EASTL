@@ -667,8 +667,6 @@ int TestAlgorithm()
 {
 	using namespace eastl;
 
-	EASTLTest_Printf("TestAlgorithm\n");
-
 	int nErrorCount = 0;
 
 	EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());

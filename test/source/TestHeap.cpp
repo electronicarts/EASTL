@@ -70,8 +70,6 @@ int VerifyHeaps(uint32_t* pArray2, uint32_t* pArray3, uint32_t nArraySize)
 
 int TestHeap()
 {
-	EASTLTest_Printf("TestHeap\n");
-
 	int nErrorCount = 0;
 
 	// We do a bit of our heap testing by simply doing rng operations and comparing

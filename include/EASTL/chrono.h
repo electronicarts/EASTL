@@ -35,6 +35,12 @@
 	#undef NOMINMAX
 	#define NOMINMAX
 	#include <Windows.h>
+	#ifdef min
+		#undef min
+	#endif
+	#ifdef max 
+		#undef max
+	#endif
 	EA_RESTORE_ALL_VC_WARNINGS()
 	#pragma warning(pop)
 #endif
@@ -220,7 +226,7 @@ namespace chrono
 			: mRep(Rep(other.mRep)) {}
 
 		duration& operator=(const duration& other)
-			{ mRep = other.mRep; }
+			{ mRep = other.mRep; return *this; }
 	#else
 		EA_CONSTEXPR duration() = default;
 		duration(const duration&) = default;

@@ -155,8 +155,6 @@ struct colliding_hash
 
 int TestHash()
 {   
-	EASTLTest_Printf("TestHash\n");
-
 	int nErrorCount = 0;
 
 	{  // Test declarations

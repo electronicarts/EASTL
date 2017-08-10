@@ -77,8 +77,6 @@ bool VerifyListMapSequence(const char* pName,
 
 int TestListMap()
 {
-	EASTLTest_Printf("TestListMap\n");
-
 	int nErrorCount = 0;
 
 	{

@@ -17,8 +17,6 @@ using namespace eastl;
 
 int TestCppCXTypeTraits()
 {
-	EASTLTest_Printf("TestCppCXTypeTraits\n");
-
 	int nErrorCount = 0;
 
 	// We can only build this code if C++/CX is enabled

@@ -40,8 +40,6 @@ template class eastl::ring_buffer<RBFixedString, RBFixedStringVector, RBFixedStr
 
 int TestRingBuffer()
 {
-	EASTLTest_Printf("TestRingBuffer\n");
-
 	int nErrorCount = 0;
 
 	// GCC prior to 4.1 has a fatal code generation bug in string arrays, which we use below.

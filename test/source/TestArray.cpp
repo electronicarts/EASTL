@@ -21,8 +21,6 @@ template struct eastl::array<Align32>; // VC++ fails to compile due to error gen
 
 int TestArray()
 {
-	EASTLTest_Printf("TestArray\n");
-
 	int nErrorCount = 0;
 
 	{ 

@@ -31,6 +31,33 @@ template class eastl::vector<int>;
 template class eastl::vector<Align64>;
 template class eastl::vector<TestObject>;
 
+// TODO(rparolin): Fix compiler errors and enable this 
+// template class eastl::vector<eastl::unique_ptr<int>>;
+
+
+// This tests "uninitialized_fill" usage in vector when T has a user provided
+// address-of operator overload.  In these situations, EASTL containers must use
+// the standard utility "eastl::addressof(T)" which is designed to by-pass user
+// provided address-of operator overloads.
+// 
+// Previously written as: 
+// 	for(; first != last; ++first, ++currentDest)
+// 		::new((void*)&*currentDest) value_type(*first); // & not guaranteed to be a pointer
+//
+// Bypasses user 'addressof' operators:
+// 	for(; n > 0; --n, ++currentDest)
+// 		::new(eastl::addressof(*currentDest)) value_type(value);  // guaranteed to be a pointer
+//
+struct AddressOfOperatorResult {};
+struct HasAddressOfOperator 
+{
+	// problematic 'addressof' operator that doesn't return a pointer type
+    AddressOfOperatorResult operator&() const { return {}; }
+};
+template class eastl::vector<HasAddressOfOperator>;  // force compile all functions of vector
+
+
+
 // Test compiler issue that appeared in VS2012 relating to kAlignment
 struct StructWithContainerOfStructs
 {
@@ -132,8 +159,6 @@ public:
 
 int TestVector()
 {
-	EASTLTest_Printf("TestVector\n");
-
 	int nErrorCount = 0;
 	eastl_size_t i;
 

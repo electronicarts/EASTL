@@ -53,8 +53,6 @@ typedef eastl::multiset<TestObject> VMS4;
 
 int TestSet()
 {
-	EASTLTest_Printf("TestSet\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY

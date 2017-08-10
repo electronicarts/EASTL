@@ -1750,6 +1750,62 @@
 		#endif
 	#endif
 
+	
+
+	// ------------------------------------------------------------------------
+	// EA_NO_UBSAN
+	// 
+	// The LLVM/Clang undefined behaviour sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-undefined
+	//
+	// Example usage:
+	//     EA_NO_UBSAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_UBSAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_UBSAN __attribute__((no_sanitize("undefined")))
+		#else
+			#define EA_NO_UBSAN
+		#endif
+	#endif
+	
+
+	// ------------------------------------------------------------------------
+	// EA_NO_ASAN
+	// 
+	// The LLVM/Clang address sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/AddressSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-address
+	//
+	// Example usage:
+	//     EA_NO_ASAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_ASAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_ASAN __attribute__((no_sanitize("address")))
+		#else
+			#define EA_NO_ASAN
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_ASAN_ENABLED
+	//
+	// Defined as 0 or 1. It's value depends on the compile environment.
+	// Specifies whether the code is being built with Clang's Address Sanitizer.
+	//
+	#if defined(__has_feature)
+		#if __has_feature(address_sanitizer)
+			#define EA_ASAN_ENABLED 1
+		#else
+			#define EA_ASAN_ENABLED 0
+		#endif
+	#else
+		#define EA_ASAN_ENABLED 0
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// EA_NON_COPYABLE

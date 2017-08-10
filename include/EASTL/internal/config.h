@@ -105,8 +105,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.05.07"
-	#define EASTL_VERSION_N  30507
+	#define EASTL_VERSION   "3.05.08"
+	#define EASTL_VERSION_N  30508
 #endif
 
 
@@ -1462,6 +1462,20 @@ namespace eastl
 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 0
 	#else
 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
+	#endif
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_INLINE_VARIABLE_ENABLED
+//
+// Defined as 0 or 1. 
+// If enabled then C++17-like functionality with inline variable is enabled.
+///////////////////////////////////////////////////////////////////////////////
+#if !defined(EASTL_INLINE_VARIABLE_ENABLED)
+	#if((EABASE_VERSION_N < 20707) || defined(EA_COMPILER_NO_INLINE_VARIABLES))
+		#define EASTL_INLINE_VARIABLE_ENABLED 0
+	#else
+		#define EASTL_INLINE_VARIABLE_ENABLED 1
 	#endif
 #endif
 

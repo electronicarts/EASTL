@@ -16,8 +16,6 @@ template class eastl::segmented_vector<TestObject, 16>;
 
 int TestSegmentedVector()
 {
-	EASTLTest_Printf("TestSegmentedVector\n");
-
 	int nErrorCount = 0;
 
 	TestObject::Reset();

@@ -2025,8 +2025,6 @@ static int Test_safe_ptr()
 
 int TestSmartPtr()
 {
-	EASTLTest_Printf("TestSmartPtr\n");
-
 	using namespace SmartPtrTest;
 	using namespace eastl;
 

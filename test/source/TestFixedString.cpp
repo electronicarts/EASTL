@@ -124,8 +124,6 @@ struct StructWithContainerOfStructsAbstract
 
 int TestFixedSubstring()
 {
-	EASTLTest_Printf("TestFixedSubstring\n");
-
 	int nErrorCount = 0;
 
 	{
@@ -200,8 +198,6 @@ int TestFixedSubstring()
 
 int TestFixedString()
 {
-	EASTLTest_Printf("TestFixedString\n");
-
 	int nErrorCount = 0;
 
 	{

@@ -52,8 +52,6 @@ typedef eastl::fixed_multimap<TestObject, TestObject, kContainerSize> VMM4;
 EA_DISABLE_VC_WARNING(6262)
 int TestFixedMap()
 {
-	EASTLTest_Printf("TestFixedMap\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
