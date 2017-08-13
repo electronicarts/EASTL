@@ -11,6 +11,7 @@
 
 #include <EASTL/algorithm.h>
 #include <EASTL/functional.h>
+#include <EASTL/unique_ptr.h>
 #include <EASTL/vector.h>
 #include <EASTL/array.h>
 #include <EASTL/deque.h>
@@ -19,9 +20,11 @@
 #include <EASTL/string.h>
 #include <EASTL/set.h>
 #include <EASTL/sort.h>
+#include <ConceptImpls.h>
 #include <EAStdC/EAMemory.h>
 #include "EASTLTest.h"  // Put this after the above so that it doesn't block any warnings from the includes above.
 
+#include <algorithm> // reference sort() implementation
 
 namespace eastl
 {
@@ -115,7 +118,6 @@ struct TestObjectNegate : public eastl::unary_function<TestObject, TestObject>
 	TestObject operator()(const TestObject& a) const
 		{ return TestObject(-a.mX); }
 };
-
 
 static int TestMinMax()
 {
@@ -2337,22 +2339,97 @@ int TestAlgorithm()
 		}
 	}
 
+	// disable in MSVC2013 because eastl::is_copy_constructible is always true...
+	#ifndef EA_COMPILER_MSVC_2013
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			eastl::sort(vec.begin(), vec.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+		}
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			eastl::sort(vec.begin(), vec.end());
+		}
+		{
+			eastl::vector<MissingMoveConstructor> vec;
+			eastl::sort(vec.begin(), vec.end(), [](const MissingMoveConstructor& lhs, const MissingMoveConstructor& rhs) { return lhs < rhs; });
+		}
+		{
+			eastl::vector<MissingMoveConstructor> vec;
+			eastl::sort(vec.begin(), vec.end());
+		}
+		{
+			eastl::vector<MissingMoveAssignable> vec;
+			eastl::sort(vec.begin(), vec.end(), [](const MissingMoveAssignable& lhs, const MissingMoveAssignable& rhs) { return lhs < rhs; });
+		}
+		{
+			eastl::vector<MissingMoveAssignable> vec;
+			eastl::sort(vec.begin(), vec.end());
+		}
+		{
+			eastl::vector<eastl::unique_ptr<int>> vec;
+			vec.emplace_back(new int(7));
+			vec.emplace_back(new int(-42));
+			vec.emplace_back(new int(5));
+			eastl::sort(vec.begin(), vec.end(),  [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+			EATEST_VERIFY(*vec[0] == -42);
+			EATEST_VERIFY(*vec[1] == 5);
+			EATEST_VERIFY(*vec[2] == 7);
+		}
+		{
+			for(unsigned tests=0; tests<500; ++tests)
+			{
+				eastl::vector<eastl::unique_ptr<int>> vec1;
+				eastl::vector<eastl::unique_ptr<int>> vec2;
+				eastl::vector<int> vec3;
+				eastl::vector<int> vec4;
+				eastl::vector<int> vec5;
+				eastl::vector<int> vec6;
+
+				const int numbersToSort = 100;
+
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					int randomNumber = rng();
+					vec1.emplace_back(new int(randomNumber));
+					vec2.emplace_back(new int(randomNumber));
+					vec3.push_back(randomNumber);
+					vec4.push_back(randomNumber);
+					vec5.push_back(randomNumber);
+					vec6.push_back(randomNumber);
+				}
+
+				// used STL sort as reference for correctness
+				eastl::sort(vec1.begin(), vec1.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+				std::sort(vec2.begin(), vec2.end(), [](const eastl::unique_ptr<int>& lhs, const eastl::unique_ptr<int>& rhs) { return *lhs < *rhs; });
+
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					EATEST_VERIFY(*vec1[i] == *vec2[i]);
+				}
+
+				eastl::sort(vec3.begin(), vec3.end());
+				std::sort(vec4.begin(), vec4.end());
+
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					EATEST_VERIFY(*vec2[i] == vec3[i]);
+					EATEST_VERIFY(vec3[i] == vec4[i]);
+				}
+
+				eastl::sort(vec5.begin(), vec5.end(), [](const int& lhs, const int& rhs) { return lhs < rhs; } );
+				std::sort(vec6.begin(), vec6.end(), [](const int& lhs, const int& rhs) { return lhs < rhs; } );
+
+				for(int i=0; i<numbersToSort; ++i)
+				{
+					EATEST_VERIFY(vec4[i] == vec5[i]);
+					EATEST_VERIFY(vec5[i] == vec6[i]);
+				}
+			}
+		}
+	#endif
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
 
 	return nErrorCount;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
