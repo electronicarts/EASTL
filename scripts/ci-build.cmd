@@ -14,11 +14,14 @@ if not [x%PLATFORM:MinGW=%]==[x%PLATFORM%] (
 mkdir build
 cd build
 
-rem Check if the platform variable contains 2013
-if not [x%PLATFORM:2013=%]==[x%PLATFORM%] (
-	set vs_generator=Visual Studio 12 2013
-) else (
-	set vs_generator=Visual Studio 14 2015
+rem Set the request Visual Studio Version 
+if not [x%PLATFORM:2013=%]==[x%PLATFORM%] ( 
+	set vs_generator=Visual Studio 12 2013 
+) else ( 
+	if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
+		set vs_generator=Visual Studio 14 2015 
+	) else ( 
+		set vs_generator=Visual Studio 15 2017 )
 )
 
 rem Check if the platform variable contains x64
