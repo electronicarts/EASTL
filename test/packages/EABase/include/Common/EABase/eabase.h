@@ -588,8 +588,10 @@
 	// uintptr_t the same as size_t. However, this isn't guaranteed to be 
 	// so for all compilers, as size_t may be based on int, long, or long long.
 	#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
+        #define _SSIZE_T_DEFINED
 		typedef __int64 ssize_t;
 	#else
+        #define _SSIZE_T_DEFINED
 		typedef long ssize_t;
 	#endif
 #else
