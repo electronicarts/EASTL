@@ -2674,7 +2674,7 @@ namespace eastl
 		{
 			if(!predicate(*first))
 			{
-				*result = *first;
+				*result = move(*first);
 				++result;
 			}
 		}
