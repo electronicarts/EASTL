@@ -89,7 +89,8 @@ install:
   - if [[ -n "$USE_BUCK" ]]; then buck --version         ;fi
 
 before_script:
-  - if [[ "$CXX" == "clang++" ]]; then export CXXFLAGS="$CXXFLAGS -std=c++14 -stdlib=libc++"                                      ;fi
+  - if [[ "$CXX" == "clang++" ]]; then export CXXFLAGS="$CXXFLAGS -I${LLVM_ROOT}/install/include -std=c++14 -stdlib=libc++"       ;fi
+  - if [[ "$CXX" == "clang++" ]]; then export LDFLAGS="$LDFLAGS -L${LLVM_ROOT}/install/lib"                                       ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export PATH="${CLANG_39_PATH}/bin:$PATH"                                                    ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CC="clang"                                                                           ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"                                                                        ;fi
