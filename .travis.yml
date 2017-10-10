@@ -96,6 +96,7 @@ before_script:
   - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"                                                                        ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CXXFLAGS="$CXXFLAGS -I${CLANG_39_PATH}/include -std=c++14 -stdlib=libc++"            ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export LDFLAGS="$LDFLAGS -L${CLANG_39_PATH}/lib"                                            ;fi
+  - if [[ -n "$USE_CLANG_39" ]]; then export LD_LIBRARY_PATH="${LLVM_ROOT}/install/lib"                                           ;fi
   - if [[ ! -n "$USE_BUCK" ]]; then mkdir build_$EASTL_CONFIG                                                                     ;fi
   - if [[ ! -n "$USE_BUCK" ]]; then cd build_$EASTL_CONFIG                                                                        ;fi
   - if [[ ! -n "$USE_BUCK" ]]; then cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON                          ;fi
