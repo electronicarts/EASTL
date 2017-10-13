@@ -145,12 +145,12 @@ public:
 };
 
 #if EASTL_MOVE_SEMANTICS_ENABLED
-struct testmovetoself
+struct TestMoveAssignToSelf
 {
-	testmovetoself() : movedtoself(false) { }
-	testmovetoself(const testmovetoself & other) { movedtoself = other.movedtoself; }
-	testmovetoself & operator= (testmovetoself && other) { movedtoself = true; return *this; }
-	bool movedtoself;
+	TestMoveAssignToSelf() : mMovedToSelf(false) { }
+	TestMoveAssignToSelf(const TestMoveAssignToSelf & other) { mMovedToSelf = other.mMovedToSelf; }
+	TestMoveAssignToSelf & operator= (TestMoveAssignToSelf && other) { mMovedToSelf = true; return *this; }
+	bool mMovedToSelf;
 };
 #endif
 
@@ -1440,11 +1440,11 @@ int TestVector()
 
 	{
 		// Calling erase of empty range should not call a move assignment to self
-		eastl::vector<testmovetoself> moveablevec;
-		moveablevec.push_back(testmovetoself());
-		EATEST_VERIFY(!moveablevec[0].movedtoself);
-		moveablevec.erase(moveablevec.begin(), moveablevec.begin());
-		EATEST_VERIFY(!moveablevec[0].movedtoself);
+		eastl::vector<TestMoveAssignToSelf> v1;
+		v1.push_back(TestMoveAssignToSelf());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
+		v1.erase(v1.begin(), v1.begin());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
 	}
 #endif
 
