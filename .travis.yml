@@ -20,6 +20,7 @@ addons:
       - gcc-4.8
       - g++-4.8
       - clang
+      - libc++-dev
 
 matrix:
     include:

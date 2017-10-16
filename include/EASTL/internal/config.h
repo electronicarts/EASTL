@@ -1808,7 +1808,7 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 		// reserved for standard libary usage.
 		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
 		EA_DISABLE_CLANG_WARNING(-Wreserved-user-defined-literal)
-		EA_DISABLE_GCC_WARNING(-Wno-literal-suffix)
+		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
 		#ifdef _MSC_VER
 			#pragma warning(disable: 4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
 		#endif
