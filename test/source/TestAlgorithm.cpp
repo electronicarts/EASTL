@@ -995,11 +995,11 @@ int TestAlgorithm()
 		// void fill( int16_t* first,  int16_t* last,  int16_t c);
 		const eastl_size_t kMaxSize = 300;
 		eastl::vector<uint64_t> vU64(kMaxSize, 0);
-		eastl::vector< int64_t> vI64(kMaxSize, 0);
+		eastl::vector<int64_t> vI64(kMaxSize, 0);
 		eastl::vector<uint32_t> vU32(kMaxSize, 0);
-		eastl::vector< int32_t> vI32(kMaxSize, 0);
+		eastl::vector<int32_t> vI32(kMaxSize, 0);
 		eastl::vector<uint16_t> vU16(kMaxSize, 0);
-		eastl::vector< int16_t> vI16(kMaxSize, 0);
+		eastl::vector<int16_t> vI16(kMaxSize, 0);
 
 		for(eastl_size_t i = 0; i < kMaxSize; ++i)
 		{
@@ -1066,11 +1066,11 @@ int TestAlgorithm()
 		//  int16_t* fill_n( int16_t* first, Size n,  int16_t c);
 		const eastl_size_t kMaxSize = 17;
 		eastl::vector<uint64_t> vU64(kMaxSize, 0);
-		eastl::vector< int64_t> vI64(kMaxSize, 0);
+		eastl::vector<int64_t> vI64(kMaxSize, 0);
 		eastl::vector<uint32_t> vU32(kMaxSize, 0);
-		eastl::vector< int32_t> vI32(kMaxSize, 0);
+		eastl::vector<int32_t> vI32(kMaxSize, 0);
 		eastl::vector<uint16_t> vU16(kMaxSize, 0);
-		eastl::vector< int16_t> vI16(kMaxSize, 0);
+		eastl::vector<int16_t> vI16(kMaxSize, 0);
 
 		eastl::vector<uint64_t>::iterator itU64 = eastl::fill_n(vU64.begin(), kMaxSize, UINT64_C(0x0123456789abcdef));
 		EATEST_VERIFY(EA::StdC::Memcheck64(&vU64[0], UINT64_C(0x0123456789abcdef), kMaxSize) == NULL);
@@ -1456,7 +1456,7 @@ int TestAlgorithm()
 		bool b = lexicographical_compare(intArray1, intArray1, intArray2, intArray2); // Test empty range.
 		EATEST_VERIFY(!b);
 		b = lexicographical_compare(intArray1, intArray1 + 6, intArray2, intArray2 + 6);
-		EATEST_VERIFY( b);
+		EATEST_VERIFY(b);
 		b = lexicographical_compare(intArray2, intArray2 + 6, intArray1, intArray1 + 6);
 		EATEST_VERIFY(!b);
 		b = lexicographical_compare(intArray1, intArray1 + 6, intArray3, intArray3 + 5);
@@ -1467,9 +1467,9 @@ int TestAlgorithm()
 		b = lexicographical_compare(intArray1, intArray1 + 6, intArray2, intArray2 + 6, greater<int>());
 		EATEST_VERIFY(!b);
 		b = lexicographical_compare(intArray2, intArray2 + 6, intArray1, intArray1 + 6, greater<int>());
-		EATEST_VERIFY( b);
+		EATEST_VERIFY(b);
 		b = lexicographical_compare(intArray3, intArray3 + 5, intArray1, intArray1 + 6, less<int>());
-		EATEST_VERIFY( b);
+		EATEST_VERIFY(b);
 	}
 
 
@@ -1757,7 +1757,6 @@ int TestAlgorithm()
 
 	{
 		// ForwardIterator remove(ForwardIterator first, ForwardIterator last, const T& value)
-		// ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, Predicate predicate)
 
 		int intArray1[12] = { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1 };
 		int intArray2[12] = { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
@@ -1776,6 +1775,66 @@ int TestAlgorithm()
 		EATEST_VERIFY(pInt == intArray2 + 12);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove", 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -1));
 	}
+
+	{
+		// ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, Predicate predicate)
+
+		int intArray1[12] = { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1 };
+		int intArray2[12] = { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
+
+		int* pInt = remove_if(intArray1, intArray1, bind2nd(equal_to<int>(), (int)1));
+		EATEST_VERIFY(pInt == intArray1);
+		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 12, int(), "remove_if", 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, -1));
+		pInt = remove_if(intArray1, intArray1 + 12, bind2nd(equal_to<int>(), (int)1));
+		EATEST_VERIFY(pInt == intArray1 + 6);
+		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 12, int(), "remove_if", 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, -1));
+
+		pInt = remove_if(intArray2, intArray2, bind2nd(equal_to<int>(), (int)1));
+		EATEST_VERIFY(pInt == intArray2);
+		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove_if", 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -1));
+		pInt = remove_if(intArray2, intArray2 + 12, bind2nd(equal_to<int>(), (int)1));
+		EATEST_VERIFY(pInt == intArray2 + 12);
+		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove_if", 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -1));
+	}
+
+#if EASTL_MOVE_SEMANTICS_ENABLED
+	{
+		// ForwardIterator remove(ForwardIterator first, ForwardIterator last, const T& value)
+		// ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, Predicate predicate)
+		// Ensure we use move assignment, not copy assignment.
+		int intArray[12] = { 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2 };
+
+		eastl::vector<TestObject> toVector1;
+		for(size_t n = 0; n < 12; ++n)
+			toVector1.push_back(TestObject(intArray[n]));
+
+		eastl::vector<TestObject> toVector2 = toVector1;
+
+		int64_t copyAssignCount = TestObject::sTOCopyAssignCount;
+		int64_t moveAssignCount = TestObject::sTOMoveAssignCount;
+
+		auto it = remove(toVector1.begin(), toVector1.begin(), TestObject(1));
+		EATEST_VERIFY(it == toVector1.begin());
+		EATEST_VERIFY(VerifySequence(toVector1.begin(), toVector1.end(), int(), "remove", 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, -1));
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount - copyAssignCount == 0);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount - moveAssignCount == 0);
+
+		it = remove(toVector1.begin(), toVector1.end(), TestObject(1));
+		EATEST_VERIFY(it == toVector1.begin() + 6);
+		EATEST_VERIFY(VerifySequence(toVector1.begin(), toVector1.end(), int(), "remove", 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, -1));
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount - copyAssignCount == 0);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount - moveAssignCount == 6);
+
+		copyAssignCount = TestObject::sTOCopyAssignCount;
+		moveAssignCount = TestObject::sTOMoveAssignCount;
+
+ 		it = remove_if(toVector2.begin(), toVector2.end(), bind2nd(equal_to<TestObject>(), (int)2));
+ 		EATEST_VERIFY(it == toVector2.begin() + 6);
+ 		EATEST_VERIFY(VerifySequence(toVector2.begin(), toVector2.end(), int(), "remove_if", 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, -1));
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount - copyAssignCount == 0);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount - moveAssignCount == 4);
+	}
+#endif	// EASTL_MOVE_SEMANTICS_ENABLED
 
 
 	{
