@@ -25,6 +25,9 @@
 // Always include version.h for backwards compatibility.
 #include <EABase/version.h>
 
+// Define common SI unit macros
+#include <EABase/eaunits.h>
+
 // ------------------------------------------------------------------------
 // The C++ standard defines size_t as a built-in type. Some compilers are
 // not standards-compliant in this respect, so we need an additional include.

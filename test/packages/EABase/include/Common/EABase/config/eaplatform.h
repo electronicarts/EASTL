@@ -8,6 +8,11 @@
 #ifdef EA_PLATFORM_PS4 // ifdef for code stripping purposes 
     // EA_PLATFORM_PS4 (EA_PLATFORM_KETTLE)
 #endif
+#ifdef EA_PLATFORM_XBOXONE // ifdef for code stripping purposes 
+     // EA_PLATFORM_XBOXONE (EA_PLATFORM_CAPILANO)
+     // EA_PLATFORM_XBOXONE_XDK (EA_PLATFORM_CAPILANO_XDK), set by capilano_config package
+     // EA_PLATFORM_XBOXONE_ADK (EA_PLATFORM_CAPILANO_ADK), set by capilano_config package
+#endif
 /*
  *    EA_PLATFORM_ANDROID
  *    EA_PLATFORM_APPLE
@@ -121,6 +126,86 @@
 	#endif
 
 
+#elif defined(EA_PLATFORM_XBOXONE) || defined(_DURANGO) || defined(EA_PLATFORM_CAPILANO)
+	// XBox One
+	// Durango was Microsoft's code-name for the platform, which is now obsolete.
+	// Microsoft uses _DURANGO instead of some variation of _XBOX, though it's not natively defined by the compiler.
+	// Capilano was an EA-specific code-name for the platform, which is now obsolete.
+	#if defined(EA_PLATFORM_XBOXONE)
+		#undef  EA_PLATFORM_XBOXONE
+	#endif
+	#define EA_PLATFORM_XBOXONE 1
+
+	// Backward compatibility:
+		#if defined(EA_PLATFORM_CAPILANO)
+			#undef  EA_PLATFORM_CAPILANO
+		#endif
+		#define EA_PLATFORM_CAPILANO 1
+		#if defined(EA_PLATFORM_CAPILANO_XDK) && !defined(EA_PLATFORM_XBOXONE_XDK)
+			#define EA_PLATFORM_XBOXONE_XDK 1
+		#endif
+		#if defined(EA_PLATFORM_CAPILANO_ADK) && !defined(EA_PLATFORM_XBOXONE_ADK)
+			#define EA_PLATFORM_XBOXONE_ADK 1
+		#endif
+	// End backward compatibility
+
+	#if !defined(_DURANGO)
+		#define _DURANGO
+	#endif
+	#define EA_PLATFORM_NAME "XBox One"
+  //#define EA_PROCESSOR_X86  Currently our policy is that we don't define this, even though x64 is something of a superset of x86.
+	#define EA_PROCESSOR_X86_64 1
+	#define EA_SYSTEM_LITTLE_ENDIAN 1
+	#define EA_PLATFORM_DESCRIPTION "XBox One on x64"
+	#define EA_ASM_STYLE_INTEL 1
+	#define EA_PLATFORM_CONSOLE 1
+	#define EA_PLATFORM_MICROSOFT 1
+
+	// WINAPI_FAMILY defines - mirrored from winapifamily.h
+	#define EA_WINAPI_FAMILY_APP         1000
+	#define EA_WINAPI_FAMILY_DESKTOP_APP 1001
+	#define EA_WINAPI_FAMILY_PHONE_APP   1002
+	#define EA_WINAPI_FAMILY_TV_APP      1003
+	#define EA_WINAPI_FAMILY_TV_TITLE    1004
+	
+	#if defined(WINAPI_FAMILY) 
+		#include <winapifamily.h>
+		#if WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
+			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_TV_TITLE
+		#elif WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_DESKTOP_APP
+		#else
+			#error Unsupported WINAPI_FAMILY
+		#endif
+	#else
+		#error WINAPI_FAMILY should always be defined on Capilano.
+	#endif
+
+	// Macro to determine if a partition is enabled.
+	#define EA_WINAPI_FAMILY_PARTITION(Partition)	(Partition)
+
+	#if EA_WINAPI_FAMILY == EA_WINAPI_FAMILY_DESKTOP_APP
+		#define EA_WINAPI_PARTITION_CORE     1
+		#define EA_WINAPI_PARTITION_DESKTOP  1
+		#define EA_WINAPI_PARTITION_APP      1
+		#define EA_WINAPI_PARTITION_PC_APP   0
+		#define EA_WIANPI_PARTITION_PHONE    0
+		#define EA_WINAPI_PARTITION_TV_APP   0
+		#define EA_WINAPI_PARTITION_TV_TITLE 0
+	#elif EA_WINAPI_FAMILY == EA_WINAPI_FAMILY_TV_TITLE
+		#define EA_WINAPI_PARTITION_CORE     1
+		#define EA_WINAPI_PARTITION_DESKTOP  0
+		#define EA_WINAPI_PARTITION_APP      0
+		#define EA_WINAPI_PARTITION_PC_APP   0
+		#define EA_WIANPI_PARTITION_PHONE    0
+		#define EA_WINAPI_PARTITION_TV_APP   0
+		#define EA_WINAPI_PARTITION_TV_TITLE 1
+	#else
+		#error Unsupported WINAPI_FAMILY
+	#endif
+	
+
+// Larrabee                                           // This part to be removed once __LRB__ is supported by the Larrabee compiler in 2009.
 #elif defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
 	#undef  EA_PLATFORM_LRB
 	#define EA_PLATFORM_LRB         1
