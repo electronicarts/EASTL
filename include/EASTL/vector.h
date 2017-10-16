@@ -1283,9 +1283,12 @@ namespace eastl
 				EASTL_FAIL_MSG("vector::erase -- invalid position");
 		#endif
  
-		iterator const position = const_cast<value_type*>(eastl::move(const_cast<value_type*>(last), const_cast<value_type*>(mpEnd), const_cast<value_type*>(first)));
-		eastl::destruct(position, mpEnd);
-		mpEnd -= (last - first);
+		if (first != last)
+		{
+			iterator const position = const_cast<value_type*>(eastl::move(const_cast<value_type*>(last), const_cast<value_type*>(mpEnd), const_cast<value_type*>(first)));
+			eastl::destruct(position, mpEnd);
+			mpEnd -= (last - first);
+		}
  
 		return const_cast<value_type*>(first);
 	}
