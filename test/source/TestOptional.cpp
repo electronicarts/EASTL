@@ -32,6 +32,16 @@ struct destructor_test
 };
 bool destructor_test::destructor_ran = false;
 
+/////////////////////////////////////////////////////////////////////////////
+struct move_test
+{
+    move_test() {}
+    move_test(move_test const &other) { was_moved = false; }
+    move_test(move_test &&other) { was_moved = true; }
+    static bool was_moved;
+};
+bool move_test::was_moved = false;
+
 
 /////////////////////////////////////////////////////////////////////////////
 // TestOptional
@@ -176,6 +186,12 @@ int TestOptional()
 			}
 		}
 	}
+
+    {
+        move_test t;
+        optional<move_test> o(eastl::move(t));
+        VERIFY(move_test::was_moved);
+    }
 
 	#if EASTL_VARIADIC_TEMPLATES_ENABLED 
 	{
