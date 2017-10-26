@@ -81,6 +81,7 @@ namespace eastl
 			inline optional_storage() EA_NOEXCEPT : empty_val('\0') {}
 			inline optional_storage(const optional_storage& other) : val(other.val), engaged(other.engaged) { }
 			inline optional_storage(const value_type& v) : val(v), engaged(true) {}
+			inline optional_storage(value_type &&v) : val(eastl::move(v)), engaged(true) {}
 			inline ~optional_storage()
 			{
 				if (engaged)
@@ -129,6 +130,7 @@ namespace eastl
 			inline optional_storage() EA_NOEXCEPT : empty_val('\0') {}
 			inline optional_storage(const optional_storage& other) : val(other.val), engaged(other.engaged) { }
 			inline optional_storage(const value_type& v) : val(v), engaged(true) {}
+			inline optional_storage(value_type &&v) : val(eastl::move(v)), engaged(true) {}
 
 			// Removed to make optional<T> trivially destructible when T is trivially destructible.
 			//
