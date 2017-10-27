@@ -144,6 +144,15 @@ public:
 	testmovable& operator=(testmovable&&) EA_NOEXCEPT { return *this; }
 };
 
+#if EASTL_MOVE_SEMANTICS_ENABLED
+struct TestMoveAssignToSelf
+{
+	TestMoveAssignToSelf() : mMovedToSelf(false) { }
+	TestMoveAssignToSelf(const TestMoveAssignToSelf & other) { mMovedToSelf = other.mMovedToSelf; }
+	TestMoveAssignToSelf & operator= (TestMoveAssignToSelf && other) { mMovedToSelf = true; return *this; }
+	bool mMovedToSelf;
+};
+#endif
 
 #if EASTL_VARIABLE_TEMPLATES_ENABLED
 	/// custom type-trait which checks if a type is comparable via the <operator.
@@ -1427,6 +1436,15 @@ int TestVector()
 		eastl::vector<testmovable> moveablevec;
 		testmovable moveable;
 		moveablevec.insert(moveablevec.end(), eastl::move(moveable));
+	}
+
+	{
+		// Calling erase of empty range should not call a move assignment to self
+		eastl::vector<TestMoveAssignToSelf> v1;
+		v1.push_back(TestMoveAssignToSelf());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
+		v1.erase(v1.begin(), v1.begin());
+		EATEST_VERIFY(!v1[0].mMovedToSelf);
 	}
 #endif
 

@@ -68,6 +68,9 @@
  *     EA_COMPILER_NO_INITIALIZER_LISTS
  *     EA_COMPILER_NO_NORETURN
  *     EA_COMPILER_NO_CARRIES_DEPENDENCY
+ *     EA_COMPILER_NO_FALLTHROUGH
+ *     EA_COMPILER_NO_NODISCARD
+ *     EA_COMPILER_NO_MAYBE_UNUSED
  *     EA_COMPILER_NO_NONSTATIC_MEMBER_INITIALIZERS
  *     EA_COMPILER_NO_RIGHT_ANGLE_BRACKETS
  *     EA_COMPILER_NO_ALIGNOF
@@ -657,7 +660,7 @@
 			#define EA_THROW_SPEC_NEW_NONE()    _THROW0()
 			#define EA_THROW_SPEC_DELETE_NONE() _THROW0()
 		#endif
-	#elif defined(EA_COMPILER_NO_EXCEPTIONS) && !defined(EA_COMPILER_RVCT) && !defined(EA_PLATFORM_LINUX) && !defined(EA_PLATFORM_APPLE)
+	#elif defined(EA_COMPILER_NO_EXCEPTIONS) && !defined(EA_COMPILER_RVCT) && !defined(EA_PLATFORM_LINUX) && !defined(EA_PLATFORM_APPLE) && !defined(CS_UNDEFINED_STRING)
 		#define EA_COMPILER_NO_NEW_THROW_SPEC 1
 
 		#define EA_THROW_SPEC_NEW(x)
@@ -1160,7 +1163,6 @@
 	#endif
 
 
-	// ------------------------------------------------------------------------
 	// EA_COMPILER_NO_CARRIES_DEPENDENCY
 	// 
 	// Refers to C++11 declaration attribute: carries_dependency.
@@ -1179,6 +1181,50 @@
 		//    // supported.
 		#else
 			#define EA_COMPILER_NO_CARRIES_DEPENDENCY 1
+		#endif
+	#endif
+
+
+	// EA_COMPILER_NO_FALLTHROUGH
+	// 
+	// Refers to C++17 declaration attribute: fallthrough.
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	#if !defined(EA_COMPILER_NO_FALLTHROUGH)
+		#if defined(EA_COMPILER_CPP17_ENABLED) 
+			// supported.
+		#else
+			#define EA_COMPILER_NO_FALLTHROUGH 1
+		#endif
+	#endif
+
+
+	// EA_COMPILER_NO_NODISCARD
+	// 
+	// Refers to C++17 declaration attribute: nodiscard.
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	#if !defined(EA_COMPILER_NO_NODISCARD)
+		#if defined(EA_COMPILER_CPP17_ENABLED) 
+			// supported.
+		#else
+			#define EA_COMPILER_NO_NODISCARD 1
+		#endif
+	#endif
+
+
+	// EA_COMPILER_NO_MAYBE_UNUSED
+	// 
+	// Refers to C++17 declaration attribute: maybe_unused.
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	#if !defined(EA_COMPILER_NO_MAYBE_UNUSED)
+		#if defined(EA_COMPILER_CPP17_ENABLED) 
+			// supported.
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION >= 1910) // VS2017+
+			// supported.
+		#else
+			#define EA_COMPILER_NO_MAYBE_UNUSED 1
 		#endif
 	#endif
 

@@ -1016,27 +1016,27 @@ namespace eastl
 		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 1
 		#define EASTL_TYPE_TRAIT_static_max_CONFORMANCE 1
 
-		template <size_t I0, size_t ...IN>
+		template <size_t I0, size_t ...in>
 		struct static_min;
 
 		template <size_t I0>
 		struct static_min<I0>
 			{ static const size_t value = I0; };
 
-		template <size_t I0, size_t I1, size_t ...IN>
-		struct static_min<I0, I1, IN...>
-			{ static const size_t value = ((I0 <= I1) ? static_min<I0, IN...>::value : static_min<I1, IN...>::value); };
+		template <size_t I0, size_t I1, size_t ...in>
+		struct static_min<I0, I1, in...>
+			{ static const size_t value = ((I0 <= I1) ? static_min<I0, in...>::value : static_min<I1, in...>::value); };
 
-		template <size_t I0, size_t ...IN>
+		template <size_t I0, size_t ...in>
 		struct static_max;
 
 		template <size_t I0>
 		struct static_max<I0>
 			{ static const size_t value = I0; };
 
-		template <size_t I0, size_t I1, size_t ...IN>
-		struct static_max<I0, I1, IN...>
-			{ static const size_t value = ((I0 >= I1) ? static_max<I0, IN...>::value : static_max<I1, IN...>::value); };
+		template <size_t I0, size_t I1, size_t ...in>
+		struct static_max<I0, I1, in...>
+			{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
 	#endif
 
 

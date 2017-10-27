@@ -25,6 +25,9 @@
 // Always include version.h for backwards compatibility.
 #include <EABase/version.h>
 
+// Define common SI unit macros
+#include <EABase/eaunits.h>
+
 // ------------------------------------------------------------------------
 // The C++ standard defines size_t as a built-in type. Some compilers are
 // not standards-compliant in this respect, so we need an additional include.
@@ -587,10 +590,15 @@
 	// As of this writing, all non-GCC compilers significant to us implement 
 	// uintptr_t the same as size_t. However, this isn't guaranteed to be 
 	// so for all compilers, as size_t may be based on int, long, or long long.
-	#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
-		typedef __int64 ssize_t;
-	#else
-		typedef long ssize_t;
+	#if !defined(_SSIZE_T_) && !defined(_SSIZE_T_DEFINED)
+		#define _SSIZE_T_
+		#define _SSIZE_T_DEFINED
+
+		#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
+			typedef __int64 ssize_t;
+		#else
+			typedef long ssize_t;
+		#endif
 	#endif
 #else
 	#include <sys/types.h>

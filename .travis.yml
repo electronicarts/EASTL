@@ -20,6 +20,7 @@ addons:
       - gcc-4.8
       - g++-4.8
       - clang
+      - libc++-dev
 
 matrix:
     include:
@@ -43,6 +44,7 @@ install:
 # MOJI check; exit 1 if non-ascii characters detected in C++
   - if [[ -n "$USE_MOJI_CHECK" && -n `git grep -P "[^[:ascii:]]" source test` ]]; then echo "Moji Detected" && exit 1             ;fi
   - if [[ -n "$USE_MOJI_CHECK" ]]; then exit 0                                                                                    ;fi
+
 # Linux Setup
   # CMake
   - if [[ "$TRAVIS_OS_NAME" == "linux" && ! -n "$USE_BUCK" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz   ;fi
@@ -88,10 +90,12 @@ install:
   - if [[ -n "$USE_BUCK" ]]; then buck --version         ;fi
 
 before_script:
+  - if [[ "$CXX" == "clang++" ]]; then export CXXFLAGS="$CXXFLAGS -I${LLVM_ROOT}/install/include -std=c++14 -stdlib=libc++"       ;fi
+  - if [[ "$CXX" == "clang++" ]]; then export LDFLAGS="$LDFLAGS -L${LLVM_ROOT}/install/lib"                                       ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export PATH="${CLANG_39_PATH}/bin:$PATH"                                                    ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CC="clang"                                                                           ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"                                                                        ;fi
-  - if [[ -n "$USE_CLANG_39" ]]; then export CXXFLAGS="$CXXFLAGS -I${CLANG_39_PATH}/include -std=c++11 -stdlib=libc++"            ;fi
+  - if [[ -n "$USE_CLANG_39" ]]; then export CXXFLAGS="$CXXFLAGS -I${CLANG_39_PATH}/include -std=c++14 -stdlib=libc++"            ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export LDFLAGS="$LDFLAGS -L${CLANG_39_PATH}/lib"                                            ;fi
   - if [[ ! -n "$USE_BUCK" ]]; then mkdir build_$EASTL_CONFIG                                                                     ;fi
   - if [[ ! -n "$USE_BUCK" ]]; then cd build_$EASTL_CONFIG                                                                        ;fi

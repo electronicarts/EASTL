@@ -705,6 +705,8 @@ EATEST_API uint64_t GetSystemMemoryMB()
 
         return (uint64_t)(pageCount * pageSize) / (1024 * 1024);
 
+    #elif defined(EA_PLATFORM_XBOXONE)  // Less than 8 GiB is available to the application at runtime.
+        return 8192;
     #elif defined(EA_PLATFORM_PS4)      // As of SDK 1.6 (May 2014), the normal max direct memory available to applications is 4.5 GiB. On dev kits the max direct memory available is 5.25 GiB when enabled in debug settings.
         return 4096;
     #elif defined(EA_PLATFORM_DESKTOP)  // Generic desktop catchall, which includes Unix and OSX.
