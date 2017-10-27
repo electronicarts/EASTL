@@ -230,7 +230,7 @@ struct NoThrowDestructible
 #if !defined(EA_COMPILER_NO_EXCEPTIONS)
 	struct ThrowDestructible
 	{
-		~ThrowDestructible() throw(int) { throw(int()); }
+		~ThrowDestructible() { throw(int()); }
 	};
 
 	struct ThrowDestructibleNoexceptFalse
