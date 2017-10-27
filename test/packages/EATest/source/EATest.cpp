@@ -130,7 +130,8 @@ namespace UnitTest
                     EATEST_VERIFY_IMP(bExpression, nErrorCount, pFile, nLine, buffer);
                 else
                 {
-                    char* pBuffer = new char[nReturnValue + 1];
+                    const int nExpectedLen = EA::StdC::Vsnprintf(buffer, 0, pFormat, arguments); // calculate string length for allocation 
+                    char* pBuffer = new char[nExpectedLen + 1];
 
                     if(pBuffer)
                     {
@@ -138,7 +139,7 @@ namespace UnitTest
                             va_end(arguments);
                             va_copy(arguments, argumentsSaved);
                         #endif
-                        EA::StdC::Vsnprintf(pBuffer, nReturnValue + 1, pFormat, arguments);
+                        EA::StdC::Vsnprintf(pBuffer, nExpectedLen + 1, pFormat, arguments);
                         EATEST_VERIFY_IMP(bExpression, nErrorCount, pFile, nLine, pBuffer);
                         delete[] pBuffer;
                     }
@@ -185,7 +186,8 @@ namespace UnitTest
                     EATEST_VERIFY_IMP(bExpression, nErrorCount, __FILE__, __LINE__, buffer);
                 else
                 {
-                    char* pBuffer = new char[nReturnValue + 1];
+                    const int nExpectedLen = EA::StdC::Vsnprintf(buffer, 0, pFormat, arguments); // calculate string length for allocation 
+                    char* pBuffer = new char[nExpectedLen + 1];
 
                     if(pBuffer)
                     {
@@ -193,7 +195,7 @@ namespace UnitTest
                             va_end(arguments);
                             va_copy(arguments, argumentsSaved);
                         #endif
-                        EA::StdC::Vsnprintf(pBuffer, nReturnValue + 1, pFormat, arguments);
+                        EA::StdC::Vsnprintf(pBuffer, nExpectedLen + 1, pFormat, arguments);
                         EATEST_VERIFY_IMP(bExpression, nErrorCount, __FILE__, __LINE__, pBuffer);
                         delete[] pBuffer;
                     }
