@@ -1,5 +1,8 @@
 version: 1.0.{build}
 
+image:
+- Visual Studio 2017
+
 platform:
     - MinGW_x86
     - MinGW_x64
