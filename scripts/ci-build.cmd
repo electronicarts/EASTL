@@ -17,7 +17,7 @@ cd build
 rem Set the request Visual Studio Version 
 if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
     set vs_generator=Visual Studio 14 2015
-) else ( 
+) else (
     set vs_generator=Visual Studio 15 2017
 )
  
