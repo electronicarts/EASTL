@@ -16,10 +16,11 @@ cd build
 
 rem Set the request Visual Studio Version 
 if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
-    set vs_generator=Visual Studio 14 2015 
+    set vs_generator=Visual Studio 14 2015
 ) else ( 
-    set vs_generator=Visual Studio 15 2017 )
-
+    set vs_generator=Visual Studio 15 2017
+)
+ 
 rem Check if the platform variable contains x64
 if not [x%PLATFORM:x64=%]==[x%PLATFORM%] set vs_generator=%vs_generator% Win64
 cmake .. -G "%vs_generator%" -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON 
