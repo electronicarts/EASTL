@@ -15,14 +15,10 @@ mkdir build
 cd build
 
 rem Set the request Visual Studio Version 
-if not [x%PLATFORM:2013=%]==[x%PLATFORM%] ( 
-	set vs_generator=Visual Studio 12 2013 
+if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
+    set vs_generator=Visual Studio 14 2015 
 ) else ( 
-	if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
-		set vs_generator=Visual Studio 14 2015 
-	) else ( 
-		set vs_generator=Visual Studio 15 2017 )
-)
+    set vs_generator=Visual Studio 15 2017 )
 
 rem Check if the platform variable contains x64
 if not [x%PLATFORM:x64=%]==[x%PLATFORM%] set vs_generator=%vs_generator% Win64
