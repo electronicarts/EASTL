@@ -38,7 +38,7 @@ int TEST_STRING_NAME()
 			VERIFY(str.empty());
 		}
 
-		if(!is_same_v<typename StringType::value_type, char32_t> && (EA_PLATFORM_WORD_SIZE == 4))  // not even a single char32_t (plus null-terminator) can fit into the SSO buffer on 32-bit platforms
+		if(!is_same<typename StringType::value_type, char32_t>::value && (EA_PLATFORM_WORD_SIZE == 4))  // not even a single char32_t (plus null-terminator) can fit into the SSO buffer on 32-bit platforms
 		{
 			SSOString str(LITERAL("a"));
 			VERIFY(str == LITERAL("a"));
