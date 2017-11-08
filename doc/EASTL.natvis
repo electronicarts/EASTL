@@ -47,20 +47,32 @@
 </Type>
 
 <Type Name="eastl::basic_string&lt;char,*&gt;">
-	<DisplayString>{mPair.mFirst.mpBegin,s}</DisplayString>
+	<DisplayString>{mPair.mFirst.heap.mpBegin,s}</DisplayString>
 	<Expand>
-		<Item Name="length">mPair.mFirst.mpEnd-mPair.mFirst.mpBegin</Item>
-		<Item Name="capacity">mPair.mFirst.mpCapacity-mPair.mFirst.mpBegin</Item>
-		<Item Name="value">mPair.mFirst.mpBegin,sb</Item>
+		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpEnd - mPair.mFirst.heap.mpBegin</Item>
+		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpCapacity - mPair.mFirst.heap.mpBegin</Item>
+		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpBegin,sb</Item>
+
+		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">SSOLayout::SSO_SIZE_IN_BYTES-0</Item>
+		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mpBegin,sb</Item>
+
+		<Item Name="uses heap">mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer</Item>
 	</Expand>
 </Type>
 
 <Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
-	<DisplayString>{mPair.mFirst.mpBegin,su}</DisplayString>
+	<DisplayString>{mPair.mFirst.heap.mpBegin,su}</DisplayString>
 	<Expand>
-		<Item Name="length">mPair.mFirst.mpEnd-mPair.mFirst.mpBegin</Item>
-		<Item Name="capacity">mPair.mFirst.mpCapacity-mPair.mFirst.mpBegin</Item>
-		<Item Name="value">mPair.mFirst.mpBegin,sub</Item>
+		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpEnd - mPair.mFirst.heap.mpBegin</Item>
+		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpCapacity - mPair.mFirst.heap.mpBegin</Item>
+		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpBegin,sub</Item>
+
+		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">SSOLayout::SSO_SIZE_IN_BYTES-0</Item>
+		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mpBegin,sub</Item>
+
+		<Item Name="uses heap">mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer</Item>
 	</Expand>
 </Type>
 
@@ -314,13 +326,13 @@
 	<DisplayString Condition="mnSize == 1">
 		[1] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
 		}}
 	</DisplayString>
 	<DisplayString Condition="mnSize &gt; 1">
 		[{mnSize}] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
 			...
 		}}
 	</DisplayString>
@@ -343,9 +355,9 @@
 		<Synthetic Name="NOTE!">
 		  <DisplayString>It is possible to expand parents that do not exist.</DisplayString> 
 		</Synthetic>
-		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
-		<Item Name="Left">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeLeft</Item>
-		<Item Name="Right">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeRight</Item>
+		<Item Name="Parent">*(eastl::rbtree_node&lt;$T2&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
+		<Item Name="Left">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeLeft</Item>
+		<Item Name="Right">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeRight</Item>
 	</Expand>
 </Type>
 

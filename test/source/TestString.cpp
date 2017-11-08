@@ -5,6 +5,7 @@
 #include "EASTLTest.h"
 #include <EABase/eabase.h>
 #include <EAStdC/EAMemory.h>
+#include <EAStdC/EAString.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/allocator_malloc.h>
@@ -32,17 +33,17 @@ int TestString()
 {
 	int nErrorCount = 0;
 
-	nErrorCount += TestBasicString<eastl::basic_string<char>>();
+	nErrorCount += TestBasicString<eastl::basic_string<char, StompDetectAllocator>>();
 	nErrorCount += TestBasicString<eastl::string>();
 
-	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t>>();
+	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicStringW<eastl::wstring>();
 
-	nErrorCount += TestBasicString16<eastl::basic_string<char16_t>>();
+	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString16<eastl::u16string>();
 
 #if EA_CHAR32_NATIVE
-	nErrorCount += TestBasicString32<eastl::basic_string<char32_t>>();
+	nErrorCount += TestBasicString32<eastl::basic_string<char32_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString32<eastl::u32string>();
 #endif
 

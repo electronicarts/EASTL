@@ -98,6 +98,7 @@
  * 
  *  C++17 functionality
  *     EA_COMPILER_NO_INLINE_VARIABLES
+ *     EA_COMPILER_NO_ALIGNED_NEW
  *     
  *-----------------------------------------------------------------------------
  *
@@ -624,12 +625,26 @@
 		#endif
 	#endif
 
+
+	// EA_COMPILER_NO_ALIGNED_NEW
+	//
+	//
+	#if !defined(EA_COMPILER_NO_ALIGNED_NEW)
+		#if defined(_HAS_ALIGNED_NEW) && _HAS_ALIGNED_NEW // VS2017 15.5 Preview 
+			// supported.
+		#elif defined(EA_COMPILER_CPP17_ENABLED)
+			// supported.
+		#else
+			#define EA_COMPILER_NO_ALIGNED_NEW 1
+		#endif
+	#endif
+
 	// EA_COMPILER_NO_NEW_THROW_SPEC / EA_THROW_SPEC_NEW / EA_THROW_SPEC_DELETE
 	//
 	// If defined then the compiler's version of operator new is not decorated
 	// with a throw specification. This is useful for us to know because we 
 	// often want to write our own overloaded operator new implementations.
-	// We needs such operator new overrides to be declared identically to the
+	// We need such operator new overrides to be declared identically to the
 	// way the compiler is defining operator new itself.
 	//
 	// Example usage:
@@ -643,10 +658,16 @@
 	//      void  operator delete[](void*, const std::nothrow_t&) EA_THROW_SPEC_DELETE_NONE();
 	//
 	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY)
-		#if defined(_MSC_VER) && (_MSC_VER >= 1910)  // VS2017+
+		#if defined(_MSC_VER) && (_MSC_VER >= 1912)  // VS2017 15.3+ 
+			#define EA_THROW_SPEC_NEW(x)        noexcept(false)
+			#define EA_THROW_SPEC_NEW_NONE()    noexcept 
+			#define EA_THROW_SPEC_DELETE_NONE() noexcept 
+
+		#elif defined(_MSC_VER) && (_MSC_VER >= 1910)  // VS2017+
 			#define EA_THROW_SPEC_NEW(x)        throw(x)
 			#define EA_THROW_SPEC_NEW_NONE()    throw() 
 			#define EA_THROW_SPEC_DELETE_NONE() throw() 
+
 		#else
 			#if defined(EA_PLATFORM_PS4)
 				#define EA_THROW_SPEC_NEW(X)        _THROWS(X)
@@ -659,6 +680,7 @@
 			#endif
 			#define EA_THROW_SPEC_NEW_NONE()    _THROW0()
 			#define EA_THROW_SPEC_DELETE_NONE() _THROW0()
+
 		#endif
 	#elif defined(EA_COMPILER_NO_EXCEPTIONS) && !defined(EA_COMPILER_RVCT) && !defined(EA_PLATFORM_LINUX) && !defined(EA_PLATFORM_APPLE) && !defined(CS_UNDEFINED_STRING)
 		#define EA_COMPILER_NO_NEW_THROW_SPEC 1
@@ -1221,7 +1243,7 @@
 	#if !defined(EA_COMPILER_NO_MAYBE_UNUSED)
 		#if defined(EA_COMPILER_CPP17_ENABLED) 
 			// supported.
-		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION >= 1910) // VS2017+
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION >= 1912) // VS2017 15.3+
 			// supported.
 		#else
 			#define EA_COMPILER_NO_MAYBE_UNUSED 1

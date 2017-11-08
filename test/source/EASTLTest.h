@@ -1425,6 +1425,7 @@ inline bool operator!=(const ThrowingAllocator<initialShouldThrow>&, const Throw
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
 // Helper utility that does a case insensitive string comparsion with two sets of overloads
 //
 struct TestStrCmpI_2
@@ -1433,6 +1434,56 @@ struct TestStrCmpI_2
 	bool operator()(const eastl::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+// StompDetectAllocator
+// 
+// An allocator that has sentinal values surrounding its allocator in an 
+// effort to detected if its internal memory has been stomped.
+//
+static uint64_t STOMP_MAGIC_V1 = 0x0101DEC1A551F1ED;
+static uint64_t STOMP_MAGIC_V2 = 0x12345C1A551F1ED5;
+
+struct StompDetectAllocator
+{
+	StompDetectAllocator() { Validate(); }
+	~StompDetectAllocator() { Validate(); }
+
+	StompDetectAllocator(const char*) { Validate(); }
+
+	void* allocate(size_t n, int = 0) { return mMallocAllocator.allocate(n); }
+	void* allocate(size_t n, size_t, size_t, int = 0) { return mMallocAllocator.allocate(n); }
+	void deallocate(void* p, size_t n) { mMallocAllocator.deallocate(p, n); }
+
+	const char* get_name() const { return "FatAllocator"; }
+	void set_name(const char*) {}
+
+	void Validate() const
+	{
+		EASTL_ASSERT(mSentinal1 == STOMP_MAGIC_V1);
+		EASTL_ASSERT(mSentinal2 == STOMP_MAGIC_V2);
+	}
+
+	uint64_t mSentinal1 = STOMP_MAGIC_V1;
+	MallocAllocator mMallocAllocator;
+	uint64_t mSentinal2 = STOMP_MAGIC_V2;
+};
+
+inline bool operator==(const StompDetectAllocator& a, const StompDetectAllocator& b)
+{
+	a.Validate();
+	b.Validate();
+
+	return (a.mMallocAllocator == b.mMallocAllocator);
+}
+
+inline bool operator!=(const StompDetectAllocator& a, const StompDetectAllocator& b)
+{
+	a.Validate();
+	b.Validate();
+
+	return (a.mMallocAllocator != b.mMallocAllocator);
+}
 
 
 #endif // Header include guard

@@ -26,11 +26,9 @@ include_directories(../test/source)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../scripts/CMake")
 include(CommonCppFlags)
 
-#-------------------------------------------------------------------------------------------
 # Libstdc++ calls new internally, since DLLs have no weak symbols, runtime symbol resolution fails and EASTL's new is not called.
 # Linking against static libstdc++ fixes this.
 # See https://github.com/electronicarts/EASTL/issues/40 for more info.
-#-------------------------------------------------------------------------------------------
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND MINGW)
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -static-libstdc++")
     set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -static-libstdc++")

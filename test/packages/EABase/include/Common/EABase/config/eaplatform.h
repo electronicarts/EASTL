@@ -6,50 +6,49 @@
  * Currently supported platform indentification defines include:
  */
 #ifdef EA_PLATFORM_PS4 // ifdef for code stripping purposes 
-    // EA_PLATFORM_PS4 (EA_PLATFORM_KETTLE)
+// EA_PLATFORM_PS4 (EA_PLATFORM_KETTLE)
 #endif
 #ifdef EA_PLATFORM_XBOXONE // ifdef for code stripping purposes 
-     // EA_PLATFORM_XBOXONE (EA_PLATFORM_CAPILANO)
-     // EA_PLATFORM_XBOXONE_XDK (EA_PLATFORM_CAPILANO_XDK), set by capilano_config package
-     // EA_PLATFORM_XBOXONE_ADK (EA_PLATFORM_CAPILANO_ADK), set by capilano_config package
+ // EA_PLATFORM_XBOXONE (EA_PLATFORM_CAPILANO)
+ // EA_PLATFORM_XBOXONE_XDK (EA_PLATFORM_CAPILANO_XDK), set by capilano_config package
+ // EA_PLATFORM_XBOXONE_ADK (EA_PLATFORM_CAPILANO_ADK), set by capilano_config package
 #endif
-/*
- *    EA_PLATFORM_ANDROID
- *    EA_PLATFORM_APPLE
- *    EA_PLATFORM_IPHONE
- *    EA_PLATFORM_IPHONE_SIMULATOR
- *    EA_PLATFORM_OSX
- *    EA_PLATFORM_LINUX
- *    EA_PLATFORM_SAMSUNG_TV
- *    EA_PLATFORM_WINDOWS
- *    EA_PLATFORM_WIN32
- *    EA_PLATFORM_WIN64
- *    EA_PLATFORM_WINDOWS_PHONE
- *    EA_PLATFORM_WINRT
- *    EA_PLATFORM_SUN
- *    EA_PLATFORM_LRB (Larrabee)
- *    EA_PLATFORM_POSIX     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX, EA_PLATFORM_UNIX, EA_PLATFORM_QNX)
- *    EA_PLATFORM_UNIX      (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
- *    EA_PLATFORM_CYGWIN    (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
- *    EA_PLATFORM_MINGW     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
- *    EA_PLATFORM_MICROSOFT (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
- *
- *    EA_ABI_ARM_LINUX      (a.k.a. "eabi". for all platforms that use the CodeSourcery GNU/Linux toolchain, like Android)
- *    EA_ABI_ARM_APPLE      (similar to eabi but not identical)
- *    EA_ABI_ARM64_APPLE    (similar to eabi but not identical) https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARM64FunctionCallingConventions.html
- *    EA_ABI_ARM_WINCE      (similar to eabi but not identical)
- *
- * Other definitions emanated from this file inclue:
- *    EA_PLATFORM_NAME = <string>
- *    EA_PLATFORM_DESCRIPTION = <string>
- *    EA_PROCESSOR_XXX
- *    EA_MISALIGNED_SUPPORT_LEVEL=0|1|2
- *    EA_SYSTEM_LITTLE_ENDIAN | EA_SYSTEM_BIG_ENDIAN
- *    EA_ASM_STYLE_ATT | EA_ASM_STYLE_INTEL | EA_ASM_STYLE_MOTOROLA
- *    EA_PLATFORM_PTR_SIZE = <integer size in bytes>
- *    EA_PLATFORM_WORD_SIZE = <integer size in bytes>
- *    EA_CACHE_LINE_SIZE = <integer size in bytes>
- *---------------------------------------------------------------------------*/
+//    EA_PLATFORM_ANDROID
+//    EA_PLATFORM_APPLE
+//    EA_PLATFORM_IPHONE
+//    EA_PLATFORM_IPHONE_SIMULATOR
+//    EA_PLATFORM_OSX
+//    EA_PLATFORM_LINUX
+//    EA_PLATFORM_SAMSUNG_TV
+//    EA_PLATFORM_WINDOWS
+//    EA_PLATFORM_WIN32
+//    EA_PLATFORM_WIN64
+//    EA_PLATFORM_WINDOWS_PHONE
+//    EA_PLATFORM_WINRT
+//    EA_PLATFORM_SUN
+//    EA_PLATFORM_LRB (Larrabee)
+//    EA_PLATFORM_POSIX     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX, EA_PLATFORM_UNIX, EA_PLATFORM_QNX)
+//    EA_PLATFORM_UNIX      (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
+//    EA_PLATFORM_CYGWIN    (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
+//    EA_PLATFORM_MINGW     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
+//    EA_PLATFORM_MICROSOFT (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
+//
+//    EA_ABI_ARM_LINUX      (a.k.a. "eabi". for all platforms that use the CodeSourcery GNU/Linux toolchain, like Android)
+//    EA_ABI_ARM_APPLE      (similar to eabi but not identical)
+//    EA_ABI_ARM64_APPLE    (similar to eabi but not identical) https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARM64FunctionCallingConventions.html
+//    EA_ABI_ARM_WINCE      (similar to eabi but not identical)
+//
+// Other definitions emanated from this file inclue:
+//    EA_PLATFORM_NAME = <string>
+//    EA_PLATFORM_DESCRIPTION = <string>
+//    EA_PROCESSOR_XXX
+//    EA_MISALIGNED_SUPPORT_LEVEL=0|1|2
+//    EA_SYSTEM_LITTLE_ENDIAN | EA_SYSTEM_BIG_ENDIAN
+//    EA_ASM_STYLE_ATT | EA_ASM_STYLE_INTEL | EA_ASM_STYLE_MOTOROLA
+//    EA_PLATFORM_PTR_SIZE = <integer size in bytes>
+//    EA_PLATFORM_WORD_SIZE = <integer size in bytes>
+//    EA_CACHE_LINE_SIZE = <integer size in bytes>
+//---------------------------------------------------------------------------
 
 /*
 	EA_PLATFORM_MOBILE
@@ -59,20 +58,20 @@
 	tests for multiple mobile platforms on a line and needs to be updated every time we get a new one.
 	For example, mobile platforms tend to have weaker ARM processors, don't have full multiple processor support,
 	are hand-held, don't have mice (though may have touch screens or basic cursor controls), have writable solid
-	state permanent storage. Production user code shouldn't have too many expecations about the meaning of this define.
+	state permanent storage. Production user code shouldn't have too many expectations about the meaning of this define.
 
 	EA_PLATFORM_DESKTOP
 	This is similar to EA_PLATFORM_MOBILE in its qualitative nature and refers to platforms that are powerful.
-	For example, they nearly always have virtual memory, mapped memory, hundreds of GB of writable disk sto rage,
+	For example, they nearly always have virtual memory, mapped memory, hundreds of GB of writable disk storage,
 	TCP/IP network connections, mice, keyboards, 512+ MB of RAM, multiprocessing, multiple display support.
-	Production user code shouldn't have too many expecations about the meaning of this define.
+	Production user code shouldn't have too many expectations about the meaning of this define.
 
 	EA_PLATFORM_CONSOLE
 	This is similar to EA_PLATFORM_MOBILE in its qualitative nature and refers to platforms that are consoles.
 	This means platforms that are connected to TVs, are fairly powerful (especially graphics-wise), are tightly
 	controlled by vendors, tend not to have mapped memory, tend to have TCP/IP, don't have multiple process support
 	though they might have multiple CPUs, support TV output only. Production user code shouldn't have too many
-	expecations about the meaning of this define.
+	expectations about the meaning of this define.
 
 */
 
@@ -242,6 +241,9 @@
 	#elif defined(__i386__)
 		#define EA_PROCESSOR_X86 1
 		#define EA_PLATFORM_DESCRIPTION "Android on x86"
+	#elif defined(__x86_64)
+		#define EA_PROCESSOR_X86_64 1
+		#define EA_PLATFORM_DESCRIPTION "Android on x64"
 	#else
 		#error Unknown processor
 	#endif

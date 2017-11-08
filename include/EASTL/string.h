@@ -133,6 +133,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
 #include <EASTL/internal/char_traits.h>
+#include <EASTL/string_view.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_STRING_EXPLICIT
@@ -318,15 +319,8 @@ namespace eastl
 		typedef ptrdiff_t                                       difference_type;
 		typedef Allocator                                       allocator_type;
 
-		#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (_MSC_VER <= 1600) && !EASTL_STD_CPP_ONLY  // _MSC_VER of 1400 means VS2005, 1600 means VS2010. VS2012 generates errors with usage of enum:size_type.
-			enum : size_type {                      // Use Microsoft enum language extension, allowing for smaller debug symbols than using a static const. Users have been affected by this.
-				npos     = (size_type)-1,
-				kMaxSize = (size_type)-2
-			};
-		#else
-			static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
-			static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
-		#endif
+		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
+		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
 
 	public:
 		// CtorDoNotInitialize exists so that we can create a constructor that allocates but doesn't 
@@ -342,20 +336,133 @@ namespace eastl
 		struct CtorConvert{};
 
 	protected:
-		struct layout
+		// The view of memory when the string data is obtained from the allocator.
+		struct HeapLayout
 		{
-			value_type* mpBegin    = nullptr;  // Begin of string.
-			value_type* mpEnd      = nullptr;  // End of string. *mpEnd is always '0', as we 0-terminate our string. mpEnd is always < mpCapacity.
-			value_type* mpCapacity = nullptr;  // End of allocated space, including the space needed to store the trailing '0' char. mpCapacity is always at least mpEnd + 1.
+			value_type* mpBegin;    // Begin of string.
+			value_type* mpEnd;      // End of string. *mpEnd is always '0', as we 0-terminate our string. mpEnd is always < mpCapacity.
+			value_type* mpCapacity; // End of allocated space, including the space needed to store the trailing '0' char. mpCapacity is always at least mpEnd + 1.
+		};
+		
+		// The view of memory when the string data is able to store the string data locally (without a heap allocation). 
+		struct SSOLayout
+		{
+			// NOTE(rparolin): The sizes subtracted must match the data members in the SSO layout structure.
+			enum { SSO_SIZE_IN_BYTES = sizeof(HeapLayout) - sizeof(value_type*) - sizeof(char) };
+
+			value_type* mpBegin;             // Begin of string.
+			char mnSize;                     // Character count.
+			char mBuffer[SSO_SIZE_IN_BYTES]; // Local buffer for string data.
 		};
 
-		eastl::compressed_pair<layout, allocator_type> mPair;
-	
-		layout& internalLayout() { return mPair.first(); }
-		const layout& internalLayout() const { return mPair.first(); }
+		// This view of memory is a utility structure for easy copying of the string data.
+		struct RawLayout
+		{
+			char mBuffer[sizeof(HeapLayout)];
+		};
 
-		allocator_type& internalAllocator() { return mPair.second(); }
-		const allocator_type& internalAllocator() const { return mPair.second(); }
+		static_assert(sizeof(SSOLayout) == sizeof(HeapLayout), "heap and sso layout structures must be the same size");
+		static_assert(sizeof(HeapLayout) == sizeof(RawLayout), "heap and raw layout structures must be the same size");
+
+		
+		// This implements the 'short string optimization' or SSO. SSO reuses the existing storage of string class to
+		// hold string data short enough to fit therefore avoiding a heap allocation. The number of characters stored in
+		// the string SSO buffer is variable and depends on the string character width. This implementation favors a
+		// consistent string size than increasing the size of the string local data to accommodate a consistent number
+		// of characters despite character width. 
+		struct Layout
+		{
+			union
+			{
+				HeapLayout heap;
+				SSOLayout sso;
+				RawLayout raw;
+			};
+
+			Layout() = default;
+			Layout(const Layout& other)                               { Copy(*this, other); }
+			Layout(Layout&& other)                                    { Move(*this, other); }
+			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
+			Layout& operator=(Layout&& other)                         { Move(*this, other); return *this; }
+
+			inline bool IsSSO() const EA_NOEXCEPT                     { return heap.mpBegin == SSOBufferPtr(); }
+			inline value_type* SSOBufferPtr() EA_NOEXCEPT             { return reinterpret_cast<value_type*>(sso.mBuffer); }
+			inline const value_type* SSOBufferPtr() const EA_NOEXCEPT { return reinterpret_cast<const value_type*>(sso.mBuffer); }
+			inline size_type GetSize() const EA_NOEXCEPT              { return IsSSO() ? sso.mnSize : size_type(heap.mpEnd - heap.mpBegin); }
+			inline size_type GetRemainingCapacity() const EA_NOEXCEPT { return size_type(CapacityPtr() - EndPtr()); }
+
+			inline value_type* BeginPtr() EA_NOEXCEPT                 { return IsSSO() ? SSOBufferPtr() : heap.mpBegin; }
+			inline const value_type* BeginPtr() const EA_NOEXCEPT     { return IsSSO() ? SSOBufferPtr() : heap.mpBegin; }
+			inline value_type* EndPtr() EA_NOEXCEPT                   { return IsSSO() ? SSOBufferPtr() + sso.mnSize : heap.mpEnd; }
+			inline const value_type* EndPtr() const EA_NOEXCEPT       { return IsSSO() ? SSOBufferPtr() + sso.mnSize : heap.mpEnd; }
+			inline value_type* CapacityPtr() EA_NOEXCEPT              { return IsSSO() ? ((value_type*)(sso.mBuffer + SSOLayout::SSO_SIZE_IN_BYTES)) : heap.mpCapacity; }
+			inline const value_type* CapacityPtr() const EA_NOEXCEPT  { return IsSSO() ? ((value_type*)(sso.mBuffer + SSOLayout::SSO_SIZE_IN_BYTES)) : heap.mpCapacity; }
+
+			void Copy(Layout& dst, const Layout& src)
+			{
+				dst.raw = src.raw;
+
+				if (src.IsSSO())
+				{
+					// NOTE(rparolin): Refresh the pointer used to check if SSO is enabled.
+					dst.sso.mpBegin = dst.SSOBufferPtr();
+				}
+			}
+
+			void Move(Layout& dst, Layout& src)
+			{
+				const bool isSrcSSO = src.IsSSO();
+
+				eastl::swap(dst.raw, src.raw);
+
+				if (isSrcSSO)
+				{
+					// NOTE(rparolin): Refresh the pointer used to check if SSO is enabled.
+					dst.sso.mpBegin = dst.SSOBufferPtr();
+				}
+			}
+
+			inline void SetEndPtr(value_type* pEnd)
+			{
+				if(IsSSO())
+					sso.mnSize = char(pEnd - SSOBufferPtr());
+				else
+					heap.mpEnd = pEnd;
+			}
+
+			inline void SetBeginPtr(value_type* pBegin)
+			{
+				// NOTE(rparolin): sso.mpBegin and heap.mpBegin occupy the same memory location so only one write is necessary.
+				//
+				// (IsSSO() ? sso.mpBegin : sso.mpEnd) = pBegin;
+				heap.mpBegin = pBegin;
+			}
+
+			inline void SetCapacityPtr(value_type* pCapacity)
+			{
+				if(!IsSSO())
+					heap.mpCapacity = pCapacity;
+			 // else
+			 // {
+			 // 	// do nothing, the SSO buffer capacity is statically sized.
+			 // }
+			}
+
+			inline void ClearSSOBuffer()
+			{
+				if(IsSSO())
+				{
+					*SSOBufferPtr() = 0;  // casts to necessary the character width.
+				}
+			}
+		};
+
+		eastl::compressed_pair<Layout, allocator_type> mPair;
+
+		inline Layout& internalLayout() EA_NOEXCEPT                        { return mPair.first(); }
+		inline const Layout& internalLayout() const EA_NOEXCEPT            { return mPair.first(); }
+		inline allocator_type& internalAllocator() EA_NOEXCEPT             { return mPair.second(); }
+		inline const allocator_type& internalAllocator() const EA_NOEXCEPT { return mPair.second(); }
 
 	public:
 		// Constructor, destructor
@@ -392,6 +499,9 @@ namespace eastl
 		const allocator_type& get_allocator() const EA_NOEXCEPT;
 		allocator_type&       get_allocator() EA_NOEXCEPT;
 		void                  set_allocator(const allocator_type& allocator);
+
+		// implicit conversion operator
+		operator basic_string_view<T>() const EA_NOEXCEPT;
 
 		// Operator =
 		this_type& operator=(const this_type& x);
@@ -673,9 +783,9 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::basic_string(const this_type& x)
-	    : mPair(x.internalAllocator())
+	    : mPair(x.get_allocator())
 	{
-		RangeInitialize(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -691,24 +801,24 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>::basic_string(const this_type& x, size_type position, size_type n) 
-		: mPair(x.internalAllocator())
+		: mPair(x.get_allocator())
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if (EASTL_UNLIKELY(position > (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))) // 21.4.2 p4
+			if (EASTL_UNLIKELY(position > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))) // 21.4.2 p4
 			{
 				ThrowRangeException();
 				AllocateSelf();
 			}
 			else
 				RangeInitialize(
-					x.internalLayout().mpBegin + position,
-					x.internalLayout().mpBegin + position +
-						eastl::min_alt(n, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - position));
+					x.internalLayout().BeginPtr() + position,
+					x.internalLayout().BeginPtr() + position +
+						eastl::min_alt(n, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - position));
         #else
 			RangeInitialize(
-				x.internalLayout().mpBegin + position,
-				x.internalLayout().mpBegin + position +
-					eastl::min_alt(n, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - position));
+				x.internalLayout().BeginPtr() + position,
+				x.internalLayout().BeginPtr() + position +
+					eastl::min_alt(n, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - position));
         #endif
 	}
 
@@ -773,7 +883,7 @@ namespace eastl
 	{
 		// Note that we do not call SizeInitialize here.
 		AllocateSelf(n + 1); // '+1' so that we have room for the terminating 0.
-		*internalLayout().mpEnd = 0;
+		*internalLayout().EndPtr() = 0;
 	}
 
 
@@ -804,11 +914,9 @@ namespace eastl
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 		template <typename T, typename Allocator>
 		basic_string<T, Allocator>::basic_string(this_type&& x)
-			: mPair(x.internalAllocator())
+			: mPair(x.get_allocator())
 		{
-			internalLayout().mpBegin = x.internalLayout().mpBegin;
-			internalLayout().mpEnd = x.internalLayout().mpEnd;
-			internalLayout().mpCapacity = x.internalLayout().mpCapacity;
+			internalLayout() = x.internalLayout();
 
 			x.AllocateSelf();
 		}
@@ -817,16 +925,14 @@ namespace eastl
 		basic_string<T, Allocator>::basic_string(this_type&& x, const allocator_type& allocator)
 		: mPair(allocator)
 		{
-			if(internalAllocator() == x.internalAllocator()) // If we can borrow from x...
+			if(get_allocator() == x.get_allocator()) // If we can borrow from x...
 			{
-				internalLayout().mpBegin      = x.internalLayout().mpBegin;    // It's OK if x.mpBegin is NULL.
-				internalLayout().mpEnd        = x.internalLayout().mpEnd;
-				internalLayout().mpCapacity   = x.internalLayout().mpCapacity;
+				internalLayout() = x.internalLayout();
 				x.AllocateSelf();
 			}
-			else if(x.internalLayout().mpBegin)
+			else if(x.internalLayout().BeginPtr())
 			{
-				RangeInitialize(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+				RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 				// Let x destruct its own items.
 			}
 		}
@@ -859,7 +965,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::set_allocator(const allocator_type& allocator)
 	{
-		internalAllocator() = allocator;
+		get_allocator() = allocator;
 	}
 
 
@@ -867,7 +973,7 @@ namespace eastl
 	inline const typename basic_string<T, Allocator>::value_type*
 	basic_string<T, Allocator>::data()  const EA_NOEXCEPT
 	{
-		return internalLayout().mpBegin;
+		return internalLayout().BeginPtr();
 	}
 
 
@@ -875,7 +981,7 @@ namespace eastl
 	inline const typename basic_string<T, Allocator>::value_type*
 	basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
 	{
-		return internalLayout().mpBegin;
+		return internalLayout().BeginPtr();
 	}
 
 
@@ -883,7 +989,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::begin() EA_NOEXCEPT
 	{
-		return internalLayout().mpBegin;
+		return internalLayout().BeginPtr();
 	}
 
 
@@ -891,7 +997,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::end() EA_NOEXCEPT
 	{
-		return internalLayout().mpEnd;
+		return internalLayout().EndPtr();
 	}
 
 
@@ -899,7 +1005,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::begin() const EA_NOEXCEPT
 	{
-		return internalLayout().mpBegin;
+		return internalLayout().BeginPtr();
 	}
 
 
@@ -907,7 +1013,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::cbegin() const EA_NOEXCEPT
 	{
-		return internalLayout().mpBegin;
+		return internalLayout().BeginPtr();
 	}
 
 
@@ -915,7 +1021,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::end() const EA_NOEXCEPT
 	{
-		return internalLayout().mpEnd;
+		return internalLayout().EndPtr();
 	}
 
 
@@ -923,7 +1029,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::cend() const EA_NOEXCEPT
 	{
-		return internalLayout().mpEnd;
+		return internalLayout().EndPtr();
 	}
 
 
@@ -931,7 +1037,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::reverse_iterator
 	basic_string<T, Allocator>::rbegin() EA_NOEXCEPT
 	{
-		return reverse_iterator(internalLayout().mpEnd);
+		return reverse_iterator(internalLayout().EndPtr());
 	}
 
 
@@ -939,7 +1045,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::reverse_iterator
 	basic_string<T, Allocator>::rend() EA_NOEXCEPT
 	{
-		return reverse_iterator(internalLayout().mpBegin);
+		return reverse_iterator(internalLayout().BeginPtr());
 	}
 
 
@@ -947,7 +1053,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::rbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().mpEnd);
+		return const_reverse_iterator(internalLayout().EndPtr());
 	}
 
 
@@ -955,7 +1061,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::crbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().mpEnd);
+		return const_reverse_iterator(internalLayout().EndPtr());
 	}
 
 
@@ -963,7 +1069,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::rend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().mpBegin);
+		return const_reverse_iterator(internalLayout().BeginPtr());
 	}
 
 
@@ -971,14 +1077,14 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::crend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().mpBegin);
+		return const_reverse_iterator(internalLayout().BeginPtr());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline bool basic_string<T, Allocator>::empty() const EA_NOEXCEPT
 	{
-		return (internalLayout().mpBegin == internalLayout().mpEnd);
+		return (internalLayout().BeginPtr() == internalLayout().EndPtr());
 	}     
 
 
@@ -986,7 +1092,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::size() const EA_NOEXCEPT
 	{
-		return (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		return (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 	}
 
 
@@ -994,7 +1100,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::length() const EA_NOEXCEPT
 	{
-		return (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		return (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 	}
 
 
@@ -1010,7 +1116,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::capacity() const EA_NOEXCEPT
 	{
-		return (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1); // '-1' because we pretend that we didn't allocate memory for the terminating 0.
+		return (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1); // '-1' because we pretend that we didn't allocate memory for the terminating 0.
 	}
 
 
@@ -1019,11 +1125,11 @@ namespace eastl
 	basic_string<T, Allocator>::operator[](size_type n) const
 	{
 		#if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
-			if(EASTL_UNLIKELY(n > (static_cast<size_type>(internalLayout().mpEnd - internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY(n > (static_cast<size_type>(internalLayout().EndPtr() - internalLayout().BeginPtr()))))
 				EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
 		#endif
 
-		return internalLayout().mpBegin[n]; // Sometimes done as *(mpBegin + n)
+		return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
 	}
 
 
@@ -1032,11 +1138,18 @@ namespace eastl
 	basic_string<T, Allocator>::operator[](size_type n)
 	{
 		#if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
-			if(EASTL_UNLIKELY(n > (static_cast<size_type>(internalLayout().mpEnd - internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY(n > (static_cast<size_type>(internalLayout().EndPtr() - internalLayout().BeginPtr()))))
 				EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
 		#endif
 
-		return internalLayout().mpBegin[n]; // Sometimes done as *(mpBegin + n)
+		return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
+	}
+
+
+	template <typename T, typename Allocator>
+	basic_string<T,Allocator>::operator basic_string_view<T>() const EA_NOEXCEPT
+	{
+		return basic_string_view<T>(data(), size());
 	}
 
 
@@ -1046,7 +1159,7 @@ namespace eastl
 		if(&x != this)
 		{
 			#if EASTL_ALLOCATOR_COPY_ENABLED
-				bool bSlowerPathwayRequired = (internalAllocator() != x.internalAllocator());
+				bool bSlowerPathwayRequired = (get_allocator() != x.get_allocator());
 			#else
 				bool bSlowerPathwayRequired = false;
 			#endif
@@ -1056,11 +1169,11 @@ namespace eastl
 				set_capacity(0); // Must use set_capacity instead of clear because set_capacity frees our memory, unlike clear.
 
 				#if EASTL_ALLOCATOR_COPY_ENABLED
-					internalAlloctor() = x.internalAllocator();
+					get_allocator() = x.get_allocator();
 				#endif
 			}
 
-			assign(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+			assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 		}
 		return *this;
 	}
@@ -1082,7 +1195,7 @@ namespace eastl
 			//if(&x != this) // Unnecessary because &x cannot possibly equal this. 
 			{
 				#if EASTL_ALLOCATOR_COPY_ENABLED
-					internalAllocator() = x.get_allocator();
+					get_allocator() = x.get_allocator();
 				#endif
 
 				assign_convert(x.c_str(), x.length());
@@ -1141,10 +1254,10 @@ namespace eastl
 	template <typename T, typename Allocator>
 	void basic_string<T, Allocator>::resize(size_type n, value_type c)
 	{
-		const size_type s = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type s = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(n < s)
-			erase(internalLayout().mpBegin + n, internalLayout().mpEnd);
+			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		else if(n > s)
 			append(n - s, c);
 	}
@@ -1158,10 +1271,10 @@ namespace eastl
 		// We can improve the efficiency (especially for long strings) of this 
 		// string class by resizing without assigning to anything.
 		
-		const size_type s = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type s = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(n < s)
-			erase(internalLayout().mpBegin + n, internalLayout().mpEnd);
+			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		else if(n > s)
 		{
 			#if EASTL_STRING_OPT_CHAR_INIT
@@ -1190,9 +1303,9 @@ namespace eastl
 		// the container and only reallocate if increasing the size. The user 
 		// can use the set_capacity function to reduce the capacity.
 
-		n = eastl::max_alt(n, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)); // Calculate the new capacity, which needs to be >= container size.
+		n = eastl::max_alt(n, internalLayout().GetSize()); // Calculate the new capacity, which needs to be >= container size.
 
-		if(n >= (size_type)(internalLayout().mpCapacity - internalLayout().mpBegin))  // If there is something to do... // We use >= because mpCapacity accounts for the trailing zero.
+		if(n >= (size_type)(internalLayout().GetRemainingCapacity()))  // If there is something to do... // We use >= because mpCapacity accounts for the trailing zero.
 			set_capacity(n);
 	}
 
@@ -1201,24 +1314,24 @@ namespace eastl
 	inline void basic_string<T, Allocator>::set_capacity(size_type n)
 	{
 		if(n == npos) // If the user wants to set the capacity to equal the current size... // '-1' because we pretend that we didn't allocate memory for the terminating 0.
-			n = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
-		else if(n < (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))
-			internalLayout().mpEnd = internalLayout().mpBegin + n;
+			n = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
+		else if(n < (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))
+			internalLayout().SetEndPtr(internalLayout().BeginPtr() + n);
 
-		if(n != (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1)) // If there is any capacity change...
+		if(n != (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1)) // If there is any capacity change...
 		{
 			if(n)
 			{
 				pointer pNewBegin = DoAllocate(n + 1); // We need the + 1 to accomodate the trailing 0.
 				pointer pNewEnd   = pNewBegin;
 
-				pNewEnd = CharStringUninitializedCopy(internalLayout().mpBegin, internalLayout().mpEnd, pNewBegin);
+				pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin);
 			   *pNewEnd = 0;
 
 				DeallocateSelf();
-				internalLayout().mpBegin    = pNewBegin;
-				internalLayout().mpEnd      = pNewEnd;
-				internalLayout().mpCapacity = pNewBegin + (n + 1);
+				internalLayout().SetBeginPtr(pNewBegin);
+				internalLayout().SetEndPtr(pNewEnd);
+				internalLayout().SetCapacityPtr(pNewBegin + (n + 1));
 			}
 			else
 			{
@@ -1233,24 +1346,24 @@ namespace eastl
 	inline void basic_string<T, Allocator>::force_size(size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpCapacity - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().CapacityPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpCapacity - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().CapacityPtr() - internalLayout().BeginPtr())))
 				EASTL_FAIL_MSG("basic_string::force_size -- out of range");
 		#endif
 
-		internalLayout().mpEnd = internalLayout().mpBegin + n;
+		internalLayout().SetEndPtr(internalLayout().BeginPtr() + n);
 	}
 
 
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::clear() EA_NOEXCEPT
 	{
-		if(internalLayout().mpBegin != internalLayout().mpEnd)
+		if(internalLayout().BeginPtr() != internalLayout().EndPtr())
 		{
-		   *internalLayout().mpBegin = value_type(0);
-			internalLayout().mpEnd   = internalLayout().mpBegin;
+		   *internalLayout().BeginPtr() = value_type(0);
+			internalLayout().SetEndPtr(internalLayout().BeginPtr());
 		}
 	} 
 
@@ -1281,14 +1394,14 @@ namespace eastl
 	basic_string<T, Allocator>::at(size_type n) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				EASTL_FAIL_MSG("basic_string::at -- out of range");
 		#endif
 
-		return internalLayout().mpBegin[n];
+		return internalLayout().BeginPtr()[n];
 	}
 
 
@@ -1297,14 +1410,14 @@ namespace eastl
 	basic_string<T, Allocator>::at(size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
-			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(n >= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				EASTL_FAIL_MSG("basic_string::at -- out of range");
 		#endif
 
-		return internalLayout().mpBegin[n];
+		return internalLayout().BeginPtr()[n];
 	}
 
 
@@ -1315,11 +1428,11 @@ namespace eastl
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(internalLayout().mpEnd <= internalLayout().mpBegin)) // We assert if the user references the trailing 0 char.
+			if(EASTL_UNLIKELY(internalLayout().EndPtr() <= internalLayout().BeginPtr())) // We assert if the user references the trailing 0 char.
 				EASTL_FAIL_MSG("basic_string::front -- empty string");
 		#endif
 
-		return *internalLayout().mpBegin;
+		return *internalLayout().BeginPtr();
 	}
 
 
@@ -1330,11 +1443,11 @@ namespace eastl
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(internalLayout().mpEnd <= internalLayout().mpBegin)) // We assert if the user references the trailing 0 char.
+			if(EASTL_UNLIKELY(internalLayout().EndPtr() <= internalLayout().BeginPtr())) // We assert if the user references the trailing 0 char.
 				EASTL_FAIL_MSG("basic_string::front -- empty string");
 		#endif
 
-		return *internalLayout().mpBegin;
+		return *internalLayout().BeginPtr();
 	}
 
 
@@ -1345,11 +1458,11 @@ namespace eastl
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(internalLayout().mpEnd <= internalLayout().mpBegin)) // We assert if the user references the trailing 0 char.
+			if(EASTL_UNLIKELY(internalLayout().EndPtr() <= internalLayout().BeginPtr())) // We assert if the user references the trailing 0 char.
 				EASTL_FAIL_MSG("basic_string::back -- empty string");
 		#endif
 
-		return *(internalLayout().mpEnd - 1);
+		return *(internalLayout().EndPtr() - 1);
 	}
 
 
@@ -1360,11 +1473,11 @@ namespace eastl
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(internalLayout().mpEnd <= internalLayout().mpBegin)) // We assert if the user references the trailing 0 char.
+			if(EASTL_UNLIKELY(internalLayout().EndPtr() <= internalLayout().BeginPtr())) // We assert if the user references the trailing 0 char.
 				EASTL_FAIL_MSG("basic_string::back -- empty string");
 		#endif
 
-		return *(internalLayout().mpEnd - 1);
+		return *(internalLayout().EndPtr() - 1);
 	}
 
 
@@ -1393,7 +1506,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const this_type& x)
 	{
-		return append(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return append(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -1401,14 +1514,12 @@ namespace eastl
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const this_type& x, size_type position, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))) // position must be < x.mpEnd, but position + n may be > mpEnd.
+			if(EASTL_UNLIKELY(position > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))) // position must be < x.mpEnd, but position + n may be > mpEnd.
 				ThrowRangeException();
 		#endif
 
-		    return append(
-		        x.internalLayout().mpBegin + position,
-		        x.internalLayout().mpBegin + position +
-		            eastl::min_alt(n, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - position));
+		    return append(x.internalLayout().BeginPtr() + position, 
+				          x.internalLayout().BeginPtr() + position + eastl::min_alt(n, x.internalLayout().GetSize() - position));
 	}
 
 
@@ -1472,24 +1583,24 @@ namespace eastl
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::append(size_type n, value_type c)
 	{
-		const size_type s = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type s = (size_type)(internalLayout().GetSize());
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			if(EASTL_UNLIKELY((n > kMaxSize) || (s > (kMaxSize - n))))
 				ThrowLengthException();
 		#endif
 
-		const size_type nCapacity = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+		const size_type nCapacity = internalLayout().GetRemainingCapacity() - 1;
 
 		if((s + n) > nCapacity)
 			reserve(eastl::max_alt((size_type)GetNewCapacity(nCapacity), (size_type)(s + n)));
 
 		if(n > 0)
 		{
-			CharStringUninitializedFillN(internalLayout().mpEnd + 1, n - 1, c);
-		   *internalLayout().mpEnd  = c;
-			internalLayout().mpEnd += n;
-		   *internalLayout().mpEnd  = 0;
+			CharStringUninitializedFillN(internalLayout().EndPtr() + 1, n - 1, c);
+		   *internalLayout().EndPtr()  = c;
+			internalLayout().SetEndPtr(internalLayout().EndPtr() + n);
+		   *internalLayout().EndPtr()  = 0;
 		}
 
 		return *this;
@@ -1501,7 +1612,7 @@ namespace eastl
 	{
 		if(pBegin != pEnd)
 		{
-			const size_type nOldSize = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+			const size_type nOldSize = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 			const size_type n        = (size_type)(pEnd - pBegin);
 
 			#if EASTL_STRING_OPT_LENGTH_ERRORS
@@ -1509,7 +1620,7 @@ namespace eastl
 					ThrowLengthException();
 			#endif
 
-			const size_type nCapacity = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+			const size_type nCapacity = (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1);
 
 			if((nOldSize + n) > nCapacity)
 			{
@@ -1518,23 +1629,23 @@ namespace eastl
 				pointer pNewBegin = DoAllocate(nLength);
 				pointer pNewEnd   = pNewBegin;
 
-				pNewEnd = CharStringUninitializedCopy(internalLayout().mpBegin, internalLayout().mpEnd, pNewBegin);
+				pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin);
 				pNewEnd = CharStringUninitializedCopy(pBegin,  pEnd,  pNewEnd);
 			   *pNewEnd = 0;
 
 				DeallocateSelf();
-				internalLayout().mpBegin    = pNewBegin;
-				internalLayout().mpEnd      = pNewEnd;
-				internalLayout().mpCapacity = pNewBegin + nLength; 
+				internalLayout().SetBeginPtr(pNewBegin);
+				internalLayout().SetEndPtr(pNewEnd);
+				internalLayout().SetCapacityPtr(pNewBegin + nLength); 
 			}
 			else
 			{
 				const value_type* pTemp = pBegin;
 				++pTemp;
-				CharStringUninitializedCopy(pTemp, pEnd, internalLayout().mpEnd + 1);
-				internalLayout().mpEnd[n] = 0;
-			   *internalLayout().mpEnd    = *pBegin;
-				internalLayout().mpEnd   += n;
+				CharStringUninitializedCopy(pTemp, pEnd, internalLayout().EndPtr() + 1);
+				internalLayout().EndPtr()[n] = 0;
+			   *internalLayout().EndPtr()    = *pBegin;
+				internalLayout().SetEndPtr(internalLayout().EndPtr() + n);
 			}
 		}
 
@@ -1557,7 +1668,7 @@ namespace eastl
 		// null character, or a negative value if an encoding error occurred.
 		// Thus, the null-terminated output has been completely written if and only
 		// if the returned value is nonnegative and less than n.
-		size_type nInitialSize = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		size_type nInitialSize = internalLayout().GetSize();
 		int       nReturnValue;
 
 		#if EASTL_VA_COPY_ENABLED
@@ -1565,12 +1676,12 @@ namespace eastl
 			va_copy(argumentsSaved, arguments);
 		#endif
 
-		if(internalLayout().mpBegin == GetEmptyString(value_type())) // We need to do this because non-standard vsnprintf implementations will otherwise overwrite gEmptyString with a non-zero char.
-			nReturnValue = eastl::Vsnprintf(internalLayout().mpEnd, 0, pFormat, arguments);
+		if(internalLayout().BeginPtr() == GetEmptyString(value_type())) // We need to do this because non-standard vsnprintf implementations will otherwise overwrite gEmptyString with a non-zero char.
+			nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), 0, pFormat, arguments);
 		else
-			nReturnValue = eastl::Vsnprintf(internalLayout().mpEnd, (size_t)(internalLayout().mpCapacity - internalLayout().mpEnd), pFormat, arguments);
+			nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)internalLayout().GetRemainingCapacity(), pFormat, arguments);
 
-		if(nReturnValue >= (int)(internalLayout().mpCapacity - internalLayout().mpEnd))  // If there wasn't enough capacity...
+		if(nReturnValue >= (int)internalLayout().GetRemainingCapacity())  // If there wasn't enough capacity...
 		{
 			// In this case we definitely have C99 Vsnprintf behaviour.
 			#if EASTL_VA_COPY_ENABLED
@@ -1578,7 +1689,7 @@ namespace eastl
 				va_copy(arguments, argumentsSaved);
 			#endif
 			resize(nInitialSize + nReturnValue);
-			nReturnValue = eastl::Vsnprintf(internalLayout().mpBegin + nInitialSize, (size_t)(nReturnValue + 1), pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
+			nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1), pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
 		}
 		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard (e.g. it is VC++ _vsnprintf)...
 		{
@@ -1594,18 +1705,18 @@ namespace eastl
 				resize(n);
 
 				const size_t nCapacity = (size_t)((n + 1) - nInitialSize);
-				nReturnValue = eastl::Vsnprintf(internalLayout().mpBegin + nInitialSize, nCapacity, pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
+				nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity, pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
 
 				if(nReturnValue == (int)(unsigned)nCapacity)
 				{
 					resize(++n);
-					nReturnValue = eastl::Vsnprintf(internalLayout().mpBegin + nInitialSize, nCapacity + 1, pFormat, arguments);
+					nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 1, pFormat, arguments);
 				}
 			}
 		}
 	 
 		if(nReturnValue >= 0)
-			internalLayout().mpEnd = internalLayout().mpBegin + nInitialSize + nReturnValue; // We are guaranteed from the above logic that mpEnd <= mpCapacity.
+			internalLayout().SetEndPtr(internalLayout().BeginPtr() + nInitialSize + nReturnValue); // We are guaranteed from the above logic that mpEnd <= mpCapacity.
 
 		#if EASTL_VA_COPY_ENABLED
 			// va_end for arguments will be called by the caller.
@@ -1630,10 +1741,18 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::push_back(value_type c)
 	{
-		if((internalLayout().mpEnd + 1) == internalLayout().mpCapacity) // If we are out of space... (note that we test for + 1 because we have a trailing 0)
-			reserve(eastl::max_alt(GetNewCapacity((size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1)), (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) + 1));
-		*internalLayout().mpEnd++ = c;
-		*internalLayout().mpEnd   = 0;
+		auto& il = internalLayout();
+		auto pEndPtr = il.EndPtr() + 1;
+		auto pCapacityPtr = il.CapacityPtr();
+
+		if ((pEndPtr >= pCapacityPtr) || (size_type)(pCapacityPtr - pEndPtr) < sizeof(value_type)) // If we are out of space... (note that we test for + 1 because we have a trailing 0)
+			reserve(eastl::max_alt(GetNewCapacity((size_type)((il.CapacityPtr() - il.BeginPtr()) - 1)),
+								   (size_type)(il.EndPtr() - il.BeginPtr()) + 1));
+
+		pEndPtr = il.EndPtr();  // re-fetch endptr b/c we could have reallocated in the above reserve
+		*pEndPtr++ = c;
+		*pEndPtr = 0;
+		il.SetEndPtr(pEndPtr);
 	}
 
 
@@ -1641,12 +1760,12 @@ namespace eastl
 	inline void basic_string<T, Allocator>::pop_back()
 	{
 		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(internalLayout().mpEnd <= internalLayout().mpBegin))
+			if(EASTL_UNLIKELY(internalLayout().EndPtr() <= internalLayout().BeginPtr()))
 				EASTL_FAIL_MSG("basic_string::pop_back -- empty string");
 		#endif
 
-		internalLayout().mpEnd[-1] = value_type(0);
-		--internalLayout().mpEnd;
+		internalLayout().EndPtr()[-1] = value_type(0);
+		internalLayout().SetEndPtr(internalLayout().EndPtr() - 1);
 	}
 
 
@@ -1654,7 +1773,7 @@ namespace eastl
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const this_type& x)
 	{
 		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator. 
-		return assign(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -1662,15 +1781,15 @@ namespace eastl
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const this_type& x, size_type position, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator.
 		    return assign(
-		        x.internalLayout().mpBegin + position,
-		        x.internalLayout().mpBegin + position +
-		            eastl::min_alt(n, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - position));
+		        x.internalLayout().BeginPtr() + position,
+		        x.internalLayout().BeginPtr() + position +
+		            eastl::min_alt(n, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - position));
 	}
 
 
@@ -1691,15 +1810,15 @@ namespace eastl
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(size_type n, value_type c)
 	{
-		if(n <= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))
+		if(n <= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))
 		{
-			CharTypeAssignN(internalLayout().mpBegin, n, c);
-			erase(internalLayout().mpBegin + n, internalLayout().mpEnd);
+			CharTypeAssignN(internalLayout().BeginPtr(), n, c);
+			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else
 		{
-			CharTypeAssignN(internalLayout().mpBegin, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin), c);
-			append(n - (size_type)(internalLayout().mpEnd - internalLayout().mpBegin), c);
+			CharTypeAssignN(internalLayout().BeginPtr(), (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()), c);
+			append(n - (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()), c);
 		}
 		return *this;
 	}
@@ -1709,15 +1828,15 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const value_type* pBegin, const value_type* pEnd)
 	{
 		const ptrdiff_t n = pEnd - pBegin;
-		if(static_cast<size_type>(n) <= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))
+		if(static_cast<size_type>(n) <= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))
 		{
-			memmove(internalLayout().mpBegin, pBegin, (size_t)n * sizeof(value_type));
-			erase(internalLayout().mpBegin + n, internalLayout().mpEnd);
+			memmove(internalLayout().BeginPtr(), pBegin, (size_t)n * sizeof(value_type));
+			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else
 		{
-			memmove(internalLayout().mpBegin, pBegin, (size_t)(internalLayout().mpEnd - internalLayout().mpBegin) * sizeof(value_type));
-			append(pBegin + (size_type)(internalLayout().mpEnd - internalLayout().mpBegin), pEnd);
+			memmove(internalLayout().BeginPtr(), pBegin, (size_t)(internalLayout().EndPtr() - internalLayout().BeginPtr()) * sizeof(value_type));
+			append(pBegin + (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()), pEnd);
 		}
 		return *this;
 	}
@@ -1734,14 +1853,12 @@ namespace eastl
 		template <typename T, typename Allocator>
 		inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(this_type&& x)
 		{
-			if(internalAllocator() == x.internalAllocator())
+			if(get_allocator() == x.get_allocator())
 			{
-				eastl::swap(internalLayout().mpBegin,    x.internalLayout().mpBegin);
-				eastl::swap(internalLayout().mpEnd,      x.internalLayout().mpEnd);
-				eastl::swap(internalLayout().mpCapacity, x.internalLayout().mpCapacity);
+				eastl::swap(internalLayout(), x.internalLayout());
 			}
 			else
-				assign(x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+				assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 
 			return *this;
 		}
@@ -1782,16 +1899,16 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const this_type& x)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) > (kMaxSize - (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) > (kMaxSize - (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().mpBegin + position, x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		insert(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 		return *this;
 	}
 
@@ -1800,18 +1917,18 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const this_type& x, size_type beg, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY((position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)) || (beg > (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY((position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())) || (beg > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
 				ThrowRangeException();
 		#endif
 
-		size_type nLength = eastl::min_alt(n, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - beg);
+		size_type nLength = eastl::min_alt(n, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - beg);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) > (kMaxSize - nLength)))
+			if(EASTL_UNLIKELY((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) > (kMaxSize - nLength)))
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().mpBegin + position, x.internalLayout().mpBegin + beg, x.internalLayout().mpBegin + beg + nLength);
+		insert(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr() + beg, x.internalLayout().BeginPtr() + beg + nLength);
 		return *this;
 	}
 
@@ -1820,16 +1937,16 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const value_type* p, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) > (kMaxSize - n)))
+			if(EASTL_UNLIKELY((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) > (kMaxSize - n)))
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().mpBegin + position, p, p + n);
+		insert(internalLayout().BeginPtr() + position, p, p + n);
 		return *this;
 	}
 
@@ -1838,18 +1955,18 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const value_type* p)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		size_type nLength = (size_type)CharStrlen(p);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) > (kMaxSize - nLength)))
+			if(EASTL_UNLIKELY((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) > (kMaxSize - nLength)))
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().mpBegin + position, p, p + nLength);
+		insert(internalLayout().BeginPtr() + position, p, p + nLength);
 		return *this;
 	}
 
@@ -1858,16 +1975,16 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, size_type n, value_type c)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) > (kMaxSize - n)))
+			if(EASTL_UNLIKELY((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) > (kMaxSize - n)))
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().mpBegin + position, n, c);
+		insert(internalLayout().BeginPtr() + position, n, c);
 		return *this;
 	}
 
@@ -1876,10 +1993,10 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::insert(const_iterator p, value_type c)
 	{
-		if(p == internalLayout().mpEnd)
+		if(p == internalLayout().EndPtr())
 		{
 			push_back(c);
-			return internalLayout().mpEnd - 1;
+			return internalLayout().EndPtr() - 1;
 		}
 		return InsertInternal(p, c);
 	}
@@ -1889,43 +2006,43 @@ namespace eastl
 	typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::insert(const_iterator p, size_type n, value_type c)
 	{
-		const ptrdiff_t nPosition = (p - internalLayout().mpBegin); // Save this because we might reallocate.
+		const ptrdiff_t nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
 		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((p < internalLayout().mpBegin) || (p > internalLayout().mpEnd)))
+			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p > internalLayout().EndPtr())))
 				EASTL_FAIL_MSG("basic_string::insert -- invalid position");
 		#endif
 
 		if(n) // If there is anything to insert...
 		{
-			if(size_type(internalLayout().mpCapacity - internalLayout().mpEnd) >= (n + 1)) // If we have enough capacity...
+			if(size_type(internalLayout().CapacityPtr() - internalLayout().EndPtr()) >= (n + 1)) // If we have enough capacity...
 			{
-				const size_type nElementsAfter = (size_type)(internalLayout().mpEnd - p);
-				iterator pOldEnd = internalLayout().mpEnd;
+				const size_type nElementsAfter = (size_type)(internalLayout().EndPtr() - p);
+				iterator pOldEnd = internalLayout().EndPtr();
 
 				if(nElementsAfter >= n) // If there's enough space for the new chars between the insert position and the end...
 				{
-					CharStringUninitializedCopy((internalLayout().mpEnd - n) + 1, internalLayout().mpEnd + 1, internalLayout().mpEnd + 1);
-					internalLayout().mpEnd += n;
+					CharStringUninitializedCopy((internalLayout().EndPtr() - n) + 1, internalLayout().EndPtr() + 1, internalLayout().EndPtr() + 1);
+					internalLayout().SetEndPtr(internalLayout().EndPtr() + n);
 					memmove(const_cast<value_type*>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
 					CharTypeAssignN(const_cast<value_type*>(p), n, c);
 				}
 				else
 				{
-					CharStringUninitializedFillN(internalLayout().mpEnd + 1, n - nElementsAfter - 1, c);
-					internalLayout().mpEnd += n - nElementsAfter;
+					CharStringUninitializedFillN(internalLayout().EndPtr() + 1, n - nElementsAfter - 1, c);
+					internalLayout().SetEndPtr(internalLayout().EndPtr() + (n - nElementsAfter));
 
 					#if EASTL_EXCEPTIONS_ENABLED
 						try
 						{
 					#endif
-							CharStringUninitializedCopy(p, pOldEnd + 1, internalLayout().mpEnd);
-							internalLayout().mpEnd += nElementsAfter;
+							CharStringUninitializedCopy(p, pOldEnd + 1, internalLayout().EndPtr());
+						    internalLayout().SetEndPtr(internalLayout().EndPtr() + nElementsAfter);
 					#if EASTL_EXCEPTIONS_ENABLED
 						}
 						catch(...)
 						{
-							internalLayout().mpEnd = pOldEnd;
+							internalLayout().EndPtr() = pOldEnd;
 							throw;
 						}
 					#endif
@@ -1935,26 +2052,26 @@ namespace eastl
 			}
 			else
 			{
-				const size_type nOldSize = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
-				const size_type nOldCap  = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+				const size_type nOldSize = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
+				const size_type nOldCap  = (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1);
 				const size_type nLength  = eastl::max_alt((size_type)GetNewCapacity(nOldCap), (size_type)(nOldSize + n)) + 1; // + 1 to accomodate the trailing 0.
 
 				iterator pNewBegin = DoAllocate(nLength);
 				iterator pNewEnd   = pNewBegin;
 
-				pNewEnd = CharStringUninitializedCopy(internalLayout().mpBegin, p, pNewBegin);
+				pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin);
 				pNewEnd = CharStringUninitializedFillN(pNewEnd, n, c);
-				pNewEnd = CharStringUninitializedCopy(p, internalLayout().mpEnd, pNewEnd);
+				pNewEnd = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 			   *pNewEnd = 0;
 
 				DeallocateSelf();
-				internalLayout().mpBegin    = pNewBegin;
-				internalLayout().mpEnd      = pNewEnd;
-				internalLayout().mpCapacity = pNewBegin + nLength;     
+				internalLayout().SetBeginPtr(pNewBegin);
+				internalLayout().SetEndPtr(pNewEnd);
+				internalLayout().SetCapacityPtr(pNewBegin + nLength);
 			}
 		}
 
-		return internalLayout().mpBegin + nPosition;
+		return internalLayout().BeginPtr() + nPosition;
 	}
 
 
@@ -1962,10 +2079,10 @@ namespace eastl
 	typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::insert(const_iterator p, const value_type* pBegin, const value_type* pEnd)
 	{
-		const ptrdiff_t nPosition = (p - internalLayout().mpBegin); // Save this because we might reallocate.
+		const ptrdiff_t nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
 		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((p < internalLayout().mpBegin) || (p > internalLayout().mpEnd)))
+			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p > internalLayout().EndPtr())))
 				EASTL_FAIL_MSG("basic_string::insert -- invalid position");
 		#endif
 
@@ -1973,8 +2090,8 @@ namespace eastl
 
 		if(n)
 		{
-			const bool bCapacityIsSufficient = ((internalLayout().mpCapacity - internalLayout().mpEnd) >= (difference_type)(n + 1));
-			const bool bSourceIsFromSelf     = ((pEnd >= internalLayout().mpBegin) && (pBegin <= internalLayout().mpEnd));
+			const bool bCapacityIsSufficient = ((internalLayout().CapacityPtr() - internalLayout().EndPtr()) >= (difference_type)(n + 1));
+			const bool bSourceIsFromSelf     = ((pEnd >= internalLayout().BeginPtr()) && (pBegin <= internalLayout().EndPtr()));
 
 			// If bSourceIsFromSelf is true, then we reallocate. This is because we are 
 			// inserting ourself into ourself and thus both the source and destination 
@@ -1983,13 +2100,13 @@ namespace eastl
 			// whereby we don't need to reallocate or can often avoid reallocating.
 			if(bCapacityIsSufficient && !bSourceIsFromSelf)
 			{
-				const ptrdiff_t nElementsAfter = (internalLayout().mpEnd - p);
-				iterator        pOldEnd        = internalLayout().mpEnd;
+				const ptrdiff_t nElementsAfter = (internalLayout().EndPtr() - p);
+				iterator        pOldEnd        = internalLayout().EndPtr();
 
 				if(nElementsAfter >= (ptrdiff_t)n) // If the newly inserted characters entirely fit within the size of the original string...
 				{
-					memmove(internalLayout().mpEnd + 1, internalLayout().mpEnd - n + 1, (size_t)n * sizeof(value_type));
-					internalLayout().mpEnd += n;
+					memmove(internalLayout().EndPtr() + 1, internalLayout().EndPtr() - n + 1, (size_t)n * sizeof(value_type));
+					internalLayout().SetEndPtr(internalLayout().EndPtr() + n);
 					memmove(const_cast<value_type*>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
 					memmove(const_cast<value_type*>(p), pBegin, (size_t)(pEnd - pBegin) * sizeof(value_type));
 				}
@@ -1997,20 +2114,20 @@ namespace eastl
 				{
 					const value_type* const pMid = pBegin + (nElementsAfter + 1);
 
-					memmove(internalLayout().mpEnd + 1, pMid, (size_t)(pEnd - pMid) * sizeof(value_type));
-					internalLayout().mpEnd += n - nElementsAfter;
+					memmove(internalLayout().EndPtr() + 1, pMid, (size_t)(pEnd - pMid) * sizeof(value_type));
+					internalLayout().SetEndPtr(internalLayout().EndPtr() + (n - nElementsAfter));
 
 					#if EASTL_EXCEPTIONS_ENABLED
 						try
 						{
 					#endif
-							memmove(internalLayout().mpEnd, p, (size_t)(pOldEnd - p + 1) * sizeof(value_type));
-							internalLayout().mpEnd += nElementsAfter;
+							memmove(internalLayout().EndPtr(), p, (size_t)(pOldEnd - p + 1) * sizeof(value_type));
+							internalLayout().SetEndPtr(internalLayout().EndPtr() + nElementsAfter);
 					#if EASTL_EXCEPTIONS_ENABLED
 						}
 						catch(...)
 						{
-							internalLayout().mpEnd = pOldEnd;
+							internalLayout().EndPtr() = pOldEnd;
 							throw;
 						}
 					#endif
@@ -2020,8 +2137,8 @@ namespace eastl
 			}
 			else // Else we need to reallocate to implement this.
 			{
-				const size_type nOldSize = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
-				const size_type nOldCap  = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+				const size_type nOldSize = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
+				const size_type nOldCap  = (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1);
 				size_type nLength;
 
 				if(bCapacityIsSufficient) // If bCapacityIsSufficient is true, then bSourceIsFromSelf must be false.
@@ -2032,19 +2149,19 @@ namespace eastl
 				pointer pNewBegin = DoAllocate(nLength);
 				pointer pNewEnd   = pNewBegin;
 
-				pNewEnd = CharStringUninitializedCopy(internalLayout().mpBegin, p,     pNewBegin);
+				pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p,     pNewBegin);
 				pNewEnd = CharStringUninitializedCopy(pBegin,  pEnd,  pNewEnd);
-				pNewEnd = CharStringUninitializedCopy(p,       internalLayout().mpEnd, pNewEnd);
+				pNewEnd = CharStringUninitializedCopy(p,       internalLayout().EndPtr(), pNewEnd);
 			   *pNewEnd = 0;
 
 				DeallocateSelf();
-				internalLayout().mpBegin    = pNewBegin;
-				internalLayout().mpEnd      = pNewEnd;
-				internalLayout().mpCapacity = pNewBegin + nLength; 
+				internalLayout().SetBeginPtr(pNewBegin);
+				internalLayout().SetEndPtr(pNewEnd);
+				internalLayout().SetCapacityPtr(pNewBegin + nLength);
 			}
 		}
 
-		return internalLayout().mpBegin + nPosition;
+		return internalLayout().BeginPtr() + nPosition;
 	}
 
 
@@ -2060,18 +2177,18 @@ namespace eastl
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::erase(size_type position, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
-		erase(internalLayout().mpBegin + position,
-			  internalLayout().mpBegin + position +
-				  eastl::min_alt(n, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position));
+		erase(internalLayout().BeginPtr() + position,
+			  internalLayout().BeginPtr() + position +
+				  eastl::min_alt(n, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position));
 
 		return *this;
 	}  
@@ -2082,12 +2199,12 @@ namespace eastl
 	basic_string<T, Allocator>::erase(const_iterator p)
 	{
 		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((p < internalLayout().mpBegin) || (p >= internalLayout().mpEnd)))
+			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p >= internalLayout().EndPtr())))
 				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
-		memmove(const_cast<value_type*>(p), p + 1, (size_t)(internalLayout().mpEnd - p) * sizeof(value_type));
-		--internalLayout().mpEnd;
+		memmove(const_cast<value_type*>(p), p + 1, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
+		internalLayout().SetEndPtr(internalLayout().EndPtr() - 1);
 		return const_cast<value_type*>(p);
 	}
 
@@ -2097,16 +2214,16 @@ namespace eastl
 	basic_string<T, Allocator>::erase(const_iterator pBegin, const_iterator pEnd)
 	{
 		#if EASTL_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((pBegin < internalLayout().mpBegin) || (pBegin > internalLayout().mpEnd) ||
-							   (pEnd < internalLayout().mpBegin) || (pEnd > internalLayout().mpEnd) || (pEnd < pBegin)))
+			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
+							   (pEnd < internalLayout().BeginPtr()) || (pEnd > internalLayout().EndPtr()) || (pEnd < pBegin)))
 			    EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
 		if(pBegin != pEnd)
 		{
-			memmove(const_cast<value_type*>(pBegin), pEnd, (size_t)((internalLayout().mpEnd - pEnd) + 1) * sizeof(value_type));
-			const iterator pNewEnd = (internalLayout().mpEnd - (pEnd - pBegin));
-			internalLayout().mpEnd = pNewEnd;
+			memmove(const_cast<value_type*>(pBegin), pEnd, (size_t)((internalLayout().EndPtr() - pEnd) + 1) * sizeof(value_type));
+			const iterator pNewEnd = (internalLayout().EndPtr() - (pEnd - pBegin));
+			internalLayout().SetEndPtr(pNewEnd);
 		}
 		return const_cast<value_type*>(pBegin);
 	}
@@ -2132,18 +2249,18 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n, const this_type& x)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		const size_type nLength = eastl::min_alt(n, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position);
+		const size_type nLength = eastl::min_alt(n, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - nLength) >= (kMaxSize - (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY(((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - nLength) >= (kMaxSize - (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().mpBegin + position, internalLayout().mpBegin + position + nLength, x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2151,19 +2268,19 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY((pos1 > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)) || (pos2 > (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin))))
+			if(EASTL_UNLIKELY((pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())) || (pos2 > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
 				ThrowRangeException();
 		#endif
 
-		const size_type nLength1 = eastl::min_alt(n1, (size_type)(  internalLayout().mpEnd -   internalLayout().mpBegin) - pos1);
-		const size_type nLength2 = eastl::min_alt(n2, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - pos2);
+		const size_type nLength1 = eastl::min_alt(n1, (size_type)(  internalLayout().EndPtr() -   internalLayout().BeginPtr()) - pos1);
+		const size_type nLength2 = eastl::min_alt(n2, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - pos2);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - nLength1) >= (kMaxSize - nLength2)))
+			if(EASTL_UNLIKELY(((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - nLength1) >= (kMaxSize - nLength2)))
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().mpBegin + pos1, internalLayout().mpBegin + pos1 + nLength1, x.internalLayout().mpBegin + pos2, x.internalLayout().mpBegin + pos2 + nLength2);
+		return replace(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
 	}
 
 
@@ -2171,18 +2288,18 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const value_type* p, size_type n2)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position);
+		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((n2 > kMaxSize) || (((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - nLength) >= (kMaxSize - n2))))
+			if(EASTL_UNLIKELY((n2 > kMaxSize) || (((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - nLength) >= (kMaxSize - n2))))
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().mpBegin + position, internalLayout().mpBegin + position + nLength, p, p + n2);
+		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + n2);
 	}
 
 
@@ -2190,19 +2307,19 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const value_type* p)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position);
+		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			const size_type n2 = (size_type)CharStrlen(p);
-			if(EASTL_UNLIKELY((n2 > kMaxSize) || (((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - nLength) >= (kMaxSize - n2))))
+			if(EASTL_UNLIKELY((n2 > kMaxSize) || (((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - nLength) >= (kMaxSize - n2))))
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().mpBegin + position, internalLayout().mpBegin + position + nLength, p, p + CharStrlen(p));
+		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
 	}
 
 
@@ -2210,25 +2327,25 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, size_type n2, value_type c)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position);
+		const size_type nLength = eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((n2 > kMaxSize) || ((size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - nLength) >= (kMaxSize - n2)))
+			if(EASTL_UNLIKELY((n2 > kMaxSize) || ((size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - nLength) >= (kMaxSize - n2)))
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().mpBegin + position, internalLayout().mpBegin + position + nLength, n2, c);
+		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, n2, c);
 	}
 
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const this_type& x)
 	{
-		return replace(pBegin, pEnd, x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return replace(pBegin, pEnd, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2250,8 +2367,8 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
 	{
 		#if EASTL_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((pBegin < internalLayout().mpBegin) || (pBegin > internalLayout().mpEnd) ||
-							   (pEnd < internalLayout().mpBegin) || (pEnd > internalLayout().mpEnd) || (pEnd < pBegin)))
+			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
+							   (pEnd < internalLayout().BeginPtr()) || (pEnd > internalLayout().EndPtr()) || (pEnd < pBegin)))
 			    EASTL_FAIL_MSG("basic_string::replace -- invalid position");
 		#endif
 
@@ -2275,8 +2392,8 @@ namespace eastl
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin1, const_iterator pEnd1, const value_type* pBegin2, const value_type* pEnd2)
 	{
 		#if EASTL_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((pBegin1 < internalLayout().mpBegin) || (pBegin1 > internalLayout().mpEnd) ||
-							   (pEnd1 < internalLayout().mpBegin) || (pEnd1 > internalLayout().mpEnd) || (pEnd1 < pBegin1)))
+			if (EASTL_UNLIKELY((pBegin1 < internalLayout().BeginPtr()) || (pBegin1 > internalLayout().EndPtr()) ||
+							   (pEnd1 < internalLayout().BeginPtr()) || (pEnd1 > internalLayout().EndPtr()) || (pEnd1 < pBegin1)))
 			    EASTL_FAIL_MSG("basic_string::replace -- invalid position");
 		#endif
 
@@ -2306,22 +2423,22 @@ namespace eastl
 			else // else we have an overlapping operation.
 			{
 				// I can't think of any easy way of doing this without allocating temporary memory.
-				const size_type nOldSize     = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
-				const size_type nOldCap      = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+				const size_type nOldSize     = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
+				const size_type nOldCap      = (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1);
 				const size_type nNewCapacity = eastl::max_alt((size_type)GetNewCapacity(nOldCap), (size_type)(nOldSize + (nLength2 - nLength1))) + 1; // + 1 to accomodate the trailing 0.
 
 				pointer pNewBegin = DoAllocate(nNewCapacity);
 				pointer pNewEnd   = pNewBegin;
 
-				pNewEnd = CharStringUninitializedCopy(internalLayout().mpBegin, pBegin1, pNewBegin);
+				pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), pBegin1, pNewBegin);
 				pNewEnd = CharStringUninitializedCopy(pBegin2, pEnd2,   pNewEnd);
-				pNewEnd = CharStringUninitializedCopy(pEnd1,   internalLayout().mpEnd,   pNewEnd);
+				pNewEnd = CharStringUninitializedCopy(pEnd1,   internalLayout().EndPtr(),   pNewEnd);
 			   *pNewEnd = 0;
 
 				DeallocateSelf();
-				internalLayout().mpBegin    = pNewBegin;
-				internalLayout().mpEnd      = pNewEnd;
-				internalLayout().mpCapacity = pNewBegin + nNewCapacity; 
+				internalLayout().SetBeginPtr(pNewBegin);
+				internalLayout().SetEndPtr(pNewEnd);
+				internalLayout().SetCapacityPtr(pNewBegin + nNewCapacity);
 			}
 		}
 		return *this;
@@ -2333,15 +2450,15 @@ namespace eastl
 	basic_string<T, Allocator>::copy(value_type* p, size_type n, size_type position) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		// It is not clear from the C++ standard if 'p' destination pointer is allowed to 
 		// refer to memory from within the string itself. We assume so and use memmove 
 		// instead of memcpy until we find otherwise.
-		const size_type nLength = eastl::min_alt(n, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position);
-		memmove(p, internalLayout().mpBegin + position, (size_t)nLength * sizeof(value_type));
+		const size_type nLength = eastl::min_alt(n, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position);
+		memmove(p, internalLayout().BeginPtr() + position, (size_t)nLength * sizeof(value_type));
 		return nLength;
 	}
 
@@ -2349,12 +2466,10 @@ namespace eastl
 	template <typename T, typename Allocator>
 	void basic_string<T, Allocator>::swap(this_type& x)
 	{
-		if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
+		if(get_allocator() == x.get_allocator()) // If allocators are equivalent...
 		{
 			// We leave mAllocator as-is.
-			eastl::swap(internalLayout().mpBegin,     x.internalLayout().mpBegin);
-			eastl::swap(internalLayout().mpEnd,       x.internalLayout().mpEnd);
-			eastl::swap(internalLayout().mpCapacity,  x.internalLayout().mpCapacity);
+			eastl::swap(internalLayout(), x.internalLayout());
 		}
 		else // else swap the contents.
 		{
@@ -2369,7 +2484,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return find(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2392,12 +2507,12 @@ namespace eastl
 		//        EASTL_FAIL_MSG("basic_string::find -- invalid position");
 		//#endif
 
-		if(EASTL_LIKELY(((npos - n) >= position) && (position + n) <= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))) // If the range is valid...
+		if(EASTL_LIKELY(((npos - n) >= position) && (position + n) <= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))) // If the range is valid...
 		{
-			const value_type* const pTemp = eastl::search(internalLayout().mpBegin + position, internalLayout().mpEnd, p, p + n);
+			const value_type* const pTemp = eastl::search(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
 
-			if((pTemp != internalLayout().mpEnd) || (n == 0))
-				return (size_type)(pTemp - internalLayout().mpBegin);
+			if((pTemp != internalLayout().EndPtr()) || (n == 0))
+				return (size_type)(pTemp - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2414,12 +2529,12 @@ namespace eastl
 		//        EASTL_FAIL_MSG("basic_string::find -- invalid position");
 		//#endif
 
-		if(EASTL_LIKELY(position < (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))) // If the position is valid...
+		if(EASTL_LIKELY(position < (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))) // If the position is valid...
 		{
-			const const_iterator pResult = eastl::find(internalLayout().mpBegin + position, internalLayout().mpEnd, c);
+			const const_iterator pResult = eastl::find(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), c);
 
-			if(pResult != internalLayout().mpEnd)
-				return (size_type)(pResult - internalLayout().mpBegin);
+			if(pResult != internalLayout().EndPtr())
+				return (size_type)(pResult - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2429,7 +2544,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::rfind(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return rfind(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return rfind(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2458,17 +2573,17 @@ namespace eastl
 		// The standard seems to suggest that rfind doesn't act exactly the same as find in that input position 
 		// can be > size and the return value can still be other than npos. Thus, if n == 0 then you can 
 		// never return npos, unlike the case with find.
-		const size_type nLength = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type nLength = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(EASTL_LIKELY(n <= nLength))
 		{
 			if(EASTL_LIKELY(n))
 			{
-				const const_iterator pEnd    = internalLayout().mpBegin + eastl::min_alt(nLength - n, position) + n;
-				const const_iterator pResult = CharTypeStringRSearch(internalLayout().mpBegin, pEnd, p, p + n);
+				const const_iterator pEnd    = internalLayout().BeginPtr() + eastl::min_alt(nLength - n, position) + n;
+				const const_iterator pResult = CharTypeStringRSearch(internalLayout().BeginPtr(), pEnd, p, p + n);
 
 				if(pResult != pEnd)
-					return (size_type)(pResult - internalLayout().mpBegin);
+					return (size_type)(pResult - internalLayout().BeginPtr());
 			}
 			else
 				return eastl::min_alt(nLength, position);
@@ -2482,15 +2597,15 @@ namespace eastl
 	basic_string<T, Allocator>::rfind(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		// If n is zero or position is >= size, we return npos.
-		const size_type nLength = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type nLength = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().mpBegin + eastl::min_alt(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFind(pEnd, internalLayout().mpBegin, c);
+			const value_type* const pEnd    = internalLayout().BeginPtr() + eastl::min_alt(nLength - 1, position) + 1;
+			const value_type* const pResult = CharTypeStringRFind(pEnd, internalLayout().BeginPtr(), c);
 
-			if(pResult != internalLayout().mpBegin)
-				return (size_type)((pResult - 1) - internalLayout().mpBegin);
+			if(pResult != internalLayout().BeginPtr())
+				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2500,7 +2615,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_first_of(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return find_first_of(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2517,13 +2632,13 @@ namespace eastl
 	basic_string<T, Allocator>::find_first_of(const value_type* p, size_type position, size_type n) const
 	{
 		// If position is >= size, we return npos.
-		if(EASTL_LIKELY((position < (size_type)(internalLayout().mpEnd - internalLayout().mpBegin))))
+		if(EASTL_LIKELY((position < (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()))))
 		{
-			const value_type* const pBegin = internalLayout().mpBegin + position;
-			const const_iterator pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().mpEnd, p, p + n);
+			const value_type* const pBegin = internalLayout().BeginPtr() + position;
+			const const_iterator pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().EndPtr(), p, p + n);
 
-			if(pResult != internalLayout().mpEnd)
-				return (size_type)(pResult - internalLayout().mpBegin);
+			if(pResult != internalLayout().EndPtr())
+				return (size_type)(pResult - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2541,7 +2656,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_last_of(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return find_last_of(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2558,15 +2673,15 @@ namespace eastl
 	basic_string<T, Allocator>::find_last_of(const value_type* p, size_type position, size_type n) const
 	{
 		// If n is zero or position is >= size, we return npos.
-		const size_type nLength = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type nLength = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().mpBegin + eastl::min_alt(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstOf(pEnd, internalLayout().mpBegin, p, p + n);
+			const value_type* const pEnd    = internalLayout().BeginPtr() + eastl::min_alt(nLength - 1, position) + 1;
+			const value_type* const pResult = CharTypeStringRFindFirstOf(pEnd, internalLayout().BeginPtr(), p, p + n);
 
-			if(pResult != internalLayout().mpBegin)
-				return (size_type)((pResult - 1) - internalLayout().mpBegin);
+			if(pResult != internalLayout().BeginPtr())
+				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2584,7 +2699,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_first_not_of(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return find_first_not_of(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2600,13 +2715,13 @@ namespace eastl
 	typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_not_of(const value_type* p, size_type position, size_type n) const
 	{
-		if(EASTL_LIKELY(position <= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+		if(EASTL_LIKELY(position <= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 		{
 			const const_iterator pResult =
-			    CharTypeStringFindFirstNotOf(internalLayout().mpBegin + position, internalLayout().mpEnd, p, p + n);
+			    CharTypeStringFindFirstNotOf(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
 
-			if(pResult != internalLayout().mpEnd)
-				return (size_type)(pResult - internalLayout().mpBegin);
+			if(pResult != internalLayout().EndPtr())
+				return (size_type)(pResult - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2616,14 +2731,14 @@ namespace eastl
 	typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_not_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
-		if(EASTL_LIKELY(position <= (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+		if(EASTL_LIKELY(position <= (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringFindFirstNotOf(pBegin, pEnd, c).
 			const const_iterator pResult =
-			    CharTypeStringFindFirstNotOf(internalLayout().mpBegin + position, internalLayout().mpEnd, &c, &c + 1);
+			    CharTypeStringFindFirstNotOf(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), &c, &c + 1);
 
-			if(pResult != internalLayout().mpEnd)
-				return (size_type)(pResult - internalLayout().mpBegin);
+			if(pResult != internalLayout().EndPtr())
+				return (size_type)(pResult - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2633,7 +2748,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_last_not_of(x.internalLayout().mpBegin, position, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin));
+		return find_last_not_of(x.internalLayout().BeginPtr(), position, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()));
 	}
 
 
@@ -2649,15 +2764,15 @@ namespace eastl
 	typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_not_of(const value_type* p, size_type position, size_type n) const
 	{
-		const size_type nLength = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type nLength = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().mpBegin + eastl::min_alt(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().mpBegin, p, p + n);
+			const value_type* const pEnd    = internalLayout().BeginPtr() + eastl::min_alt(nLength - 1, position) + 1;
+			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), p, p + n);
 
-			if(pResult != internalLayout().mpBegin)
-				return (size_type)((pResult - 1) - internalLayout().mpBegin);
+			if(pResult != internalLayout().BeginPtr())
+				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2667,16 +2782,16 @@ namespace eastl
 	typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_not_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
-		const size_type nLength = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
+		const size_type nLength = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
 
 		if(EASTL_LIKELY(nLength))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringRFindFirstNotOf(pBegin, pEnd, c).
-			const value_type* const pEnd    = internalLayout().mpBegin + eastl::min_alt(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().mpBegin, &c, &c + 1);
+			const value_type* const pEnd    = internalLayout().BeginPtr() + eastl::min_alt(nLength - 1, position) + 1;
+			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), &c, &c + 1);
 
-			if(pResult != internalLayout().mpBegin)
-				return (size_type)((pResult - 1) - internalLayout().mpBegin);
+			if(pResult != internalLayout().BeginPtr())
+				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
 		}
 		return npos;
 	}
@@ -2686,24 +2801,24 @@ namespace eastl
 	inline basic_string<T, Allocator> basic_string<T, Allocator>::substr(size_type position, size_type n) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(position > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				EASTL_FAIL_MSG("basic_string::substr -- invalid position");
 		#endif
 
 		    return basic_string(
-		        internalLayout().mpBegin + position,
-		        internalLayout().mpBegin + position +
-		            eastl::min_alt(n, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - position), internalAllocator());
+		        internalLayout().BeginPtr() + position,
+		        internalLayout().BeginPtr() + position +
+		            eastl::min_alt(n, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - position), get_allocator());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(const this_type& x) const EA_NOEXCEPT
 	{
-		return compare(internalLayout().mpBegin, internalLayout().mpEnd, x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2711,14 +2826,14 @@ namespace eastl
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const this_type& x) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
 		return compare(
-			internalLayout().mpBegin + pos1,
-			internalLayout().mpBegin + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - pos1),
-			x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+			internalLayout().BeginPtr() + pos1,
+			internalLayout().BeginPtr() + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - pos1),
+			x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2730,17 +2845,17 @@ namespace eastl
 				ThrowRangeException();
 		#endif
 
-		return compare(internalLayout().mpBegin + pos1, 
-					   internalLayout().mpBegin + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - pos1),
-					   x.internalLayout().mpBegin + pos2, 
-					   x.internalLayout().mpBegin + pos2 + eastl::min_alt(n2, (size_type)(x.internalLayout().mpEnd - x.internalLayout().mpBegin) - pos2));
+		return compare(internalLayout().BeginPtr() + pos1, 
+					   internalLayout().BeginPtr() + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - pos1),
+					   x.internalLayout().BeginPtr() + pos2, 
+					   x.internalLayout().BeginPtr() + pos2 + eastl::min_alt(n2, (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()) - pos2));
 	}
 
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(const value_type* p) const
 	{
-		return compare(internalLayout().mpBegin, internalLayout().mpEnd, p, p + CharStrlen(p));
+		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
 
@@ -2748,12 +2863,12 @@ namespace eastl
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const value_type* p) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		return compare(internalLayout().mpBegin + pos1, 
-					   internalLayout().mpBegin + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - pos1),
+		return compare(internalLayout().BeginPtr() + pos1, 
+					   internalLayout().BeginPtr() + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - pos1),
 					   p,
 					   p + CharStrlen(p));
 	}
@@ -2763,12 +2878,12 @@ namespace eastl
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const value_type* p, size_type n2) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().mpEnd - internalLayout().mpBegin)))
+			if(EASTL_UNLIKELY(pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())))
 				ThrowRangeException();
 		#endif
 
-		return compare(internalLayout().mpBegin + pos1, 
-					   internalLayout().mpBegin + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().mpEnd - internalLayout().mpBegin) - pos1),
+		return compare(internalLayout().BeginPtr() + pos1, 
+					   internalLayout().BeginPtr() + pos1 + eastl::min_alt(n1, (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr()) - pos1),
 					   p,
 					   p + n2);
 	}
@@ -2780,7 +2895,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::make_lower()
 	{
-		for(pointer p = internalLayout().mpBegin; p < internalLayout().mpEnd; ++p)
+		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
 			*p = (value_type)CharToLower(*p);
 	}
 
@@ -2791,7 +2906,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::make_upper()
 	{
-		for(pointer p = internalLayout().mpBegin; p < internalLayout().mpEnd; ++p)
+		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
 			*p = (value_type)CharToUpper(*p);
 	}
 
@@ -2845,7 +2960,7 @@ namespace eastl
 	{
 		va_list arguments;
 		va_start(arguments, pFormat);
-		internalLayout().mpEnd = internalLayout().mpBegin; // Fast truncate to zero length.
+		internalLayout().SetEndPtr(internalLayout().BeginPtr()); // Fast truncate to zero length.
 		append_sprintf_va_list(pFormat, arguments);
 		va_end(arguments);
 
@@ -2856,7 +2971,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf_va_list(const value_type* pFormat, va_list arguments)
 	{
-		internalLayout().mpEnd = internalLayout().mpBegin; // Fast truncate to zero length.
+		internalLayout().SetEndPtr(internalLayout().BeginPtr()); // Fast truncate to zero length.
 
 		return append_sprintf_va_list(pFormat, arguments);
 	}
@@ -2891,14 +3006,14 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::comparei(const this_type& x) const EA_NOEXCEPT
 	{
-		return comparei(internalLayout().mpBegin, internalLayout().mpEnd, x.internalLayout().mpBegin, x.internalLayout().mpEnd);
+		return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::comparei(const value_type* p) const
 	{
-		return comparei(internalLayout().mpBegin, internalLayout().mpEnd, p, p + CharStrlen(p));
+		return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
 
@@ -2908,33 +3023,33 @@ namespace eastl
 	{
 		iterator pNewPosition = const_cast<value_type*>(p);
 
-		if((internalLayout().mpEnd + 1) < internalLayout().mpCapacity)
+		if((internalLayout().EndPtr() + 1) < internalLayout().CapacityPtr())
 		{
-			*(internalLayout().mpEnd + 1) = 0;
-			memmove(const_cast<value_type*>(p) + 1, p, (size_t)(internalLayout().mpEnd - p) * sizeof(value_type));
+			*(internalLayout().EndPtr() + 1) = 0;
+			memmove(const_cast<value_type*>(p) + 1, p, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
 			*pNewPosition = c;
-			++internalLayout().mpEnd;
+			internalLayout().SetEndPtr(internalLayout().EndPtr() + 1);
 		}
 		else
 		{
-			const size_type nOldSize = (size_type)(internalLayout().mpEnd - internalLayout().mpBegin);
-			const size_type nOldCap  = (size_type)((internalLayout().mpCapacity - internalLayout().mpBegin) - 1);
+			const size_type nOldSize = (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr());
+			const size_type nOldCap  = (size_type)((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) - 1);
 			const size_type nLength  = eastl::max_alt((size_type)GetNewCapacity(nOldCap), (size_type)(nOldSize + 1)) + 1; // The second + 1 is to accomodate the trailing 0.
 
 			iterator pNewBegin = DoAllocate(nLength);
 			iterator pNewEnd   = pNewBegin;
 
-			pNewPosition = CharStringUninitializedCopy(internalLayout().mpBegin, p, pNewBegin);
+			pNewPosition = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin);
 		   *pNewPosition = c;
 
 			pNewEnd = pNewPosition + 1;
-			pNewEnd = CharStringUninitializedCopy(p, internalLayout().mpEnd, pNewEnd);
+			pNewEnd = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 		   *pNewEnd = 0;
 
 			DeallocateSelf();
-			internalLayout().mpBegin    = pNewBegin;
-			internalLayout().mpEnd      = pNewEnd;
-			internalLayout().mpCapacity = pNewBegin + nLength;
+			internalLayout().SetBeginPtr(pNewBegin);
+			internalLayout().SetEndPtr(pNewEnd);
+			internalLayout().SetCapacityPtr(pNewBegin + nLength);
 		}
 		return pNewPosition;
 	}
@@ -2945,8 +3060,8 @@ namespace eastl
 	{
 		AllocateSelf((size_type)(n + 1)); // '+1' so that we have room for the terminating 0.
 
-		internalLayout().mpEnd = CharStringUninitializedFillN(internalLayout().mpBegin, n, c);
-	   *internalLayout().mpEnd = 0;
+		internalLayout().SetEndPtr(CharStringUninitializedFillN(internalLayout().BeginPtr(), n, c));
+	   *internalLayout().EndPtr() = 0;
 	}
 
 
@@ -2962,8 +3077,8 @@ namespace eastl
 
 		AllocateSelf((size_type)(n + 1)); // '+1' so that we have room for the terminating 0.
 
-		internalLayout().mpEnd = CharStringUninitializedCopy(pBegin, pEnd, internalLayout().mpBegin);
-	   *internalLayout().mpEnd = 0;
+		internalLayout().SetEndPtr(CharStringUninitializedCopy(pBegin, pEnd, internalLayout().BeginPtr()));
+	   *internalLayout().EndPtr() = 0;
 	}
 
 
@@ -2984,7 +3099,7 @@ namespace eastl
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
 		EASTL_ASSERT(n > 1); // We want n > 1 because n == 1 is reserved for empty capacity and usage of gEmptyString.
-		return (value_type*)EASTLAlloc(internalAllocator(), n * sizeof(value_type));
+		return (value_type*)EASTLAlloc(get_allocator(), n * sizeof(value_type));
 	}
 
 
@@ -2992,7 +3107,7 @@ namespace eastl
 	inline void basic_string<T, Allocator>::DoFree(value_type* p, size_type n)
 	{
 		if(p)
-			EASTLFree(internalAllocator(), p, n * sizeof(value_type));
+			EASTLFree(get_allocator(), p, n * sizeof(value_type));
 	}
 
 
@@ -3008,9 +3123,12 @@ namespace eastl
 	inline void basic_string<T, Allocator>::AllocateSelf()
 	{
 		EASTL_ASSERT(gEmptyString.mUint32 == 0);
-		internalLayout().mpBegin     = const_cast<value_type*>(GetEmptyString(value_type()));  // In const_cast-int this, we promise not to modify it.
-		internalLayout().mpEnd       = internalLayout().mpBegin;
-		internalLayout().mpCapacity  = internalLayout().mpBegin + 1; // When we are using gEmptyString, mpCapacity is always mpEnd + 1. This is an important distinguising characteristic.
+
+		const auto pSSOBegin = internalLayout().SSOBufferPtr();
+		internalLayout().SetBeginPtr(pSSOBegin); 
+		internalLayout().SetEndPtr(pSSOBegin);
+		internalLayout().SetCapacityPtr(pSSOBegin + 1); // mpCapacity is always mpEnd + 1. This is an important distinguising characteristic.
+		internalLayout().ClearSSOBuffer();
 	}
 
 
@@ -3029,9 +3147,22 @@ namespace eastl
 
 		if(n > 1)
 		{
-			internalLayout().mpBegin    = DoAllocate(n);
-			internalLayout().mpEnd      = internalLayout().mpBegin;
-			internalLayout().mpCapacity = internalLayout().mpBegin + n;
+			const auto nRequestedSizeInBytes = n * sizeof(value_type);
+			if(nRequestedSizeInBytes > SSOLayout::SSO_SIZE_IN_BYTES)
+			{
+				auto pBegin = DoAllocate(n);
+				internalLayout().SetBeginPtr(pBegin);
+				internalLayout().SetEndPtr(pBegin);
+				internalLayout().SetCapacityPtr(pBegin + n);
+			}
+			else
+			{
+				const auto pSSOBegin = internalLayout().SSOBufferPtr();
+				internalLayout().SetBeginPtr(pSSOBegin);
+				internalLayout().SetEndPtr(pSSOBegin); 
+			 // internalLayout().SetCapacityPtr(pBegin + SSOLayout::SSO_SIZE_IN_BYTES); // not necessary as capacity never changes in SSO mode.
+				internalLayout().ClearSSOBuffer();
+			}
 		}
 		else
 			AllocateSelf();
@@ -3041,12 +3172,15 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::DeallocateSelf()
 	{
-		// Note that we compare mpCapacity to mpEnd instead of comparing 
-		// mpBegin to &gEmptyString. This is important because we may have
-		// a case whereby one library passes a string to another library to 
-		// deallocate and the two libraries have idependent versions of gEmptyString.
-		if ((internalLayout().mpCapacity - internalLayout().mpBegin) > 1) // If we are not using gEmptyString as our memory...
-			DoFree(internalLayout().mpBegin, (size_type)(internalLayout().mpCapacity - internalLayout().mpBegin));
+		if (!internalLayout().IsSSO())
+		{
+			// Note that we compare mpCapacity to mpEnd instead of comparing 
+			// mpBegin to &gEmptyString. This is important because we may have
+			// a case whereby one library passes a string to another library to 
+			// deallocate and the two libraries have idependent versions of gEmptyString.
+			if ((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) > 1) // If we are not using gEmptyString as our memory...
+				DoFree(internalLayout().BeginPtr(), (size_type)(internalLayout().CapacityPtr() - internalLayout().BeginPtr()));
+		}
 	}
 
 
@@ -3423,11 +3557,11 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline bool basic_string<T, Allocator>::validate() const EA_NOEXCEPT
 	{
-		if((internalLayout().mpBegin == NULL) || (internalLayout().mpEnd == NULL))
+		if((internalLayout().BeginPtr() == NULL) || (internalLayout().EndPtr() == NULL))
 			return false;
-		if(internalLayout().mpEnd < internalLayout().mpBegin)
+		if(internalLayout().EndPtr() < internalLayout().BeginPtr())
 			return false;
-		if(internalLayout().mpCapacity < internalLayout().mpEnd)
+		if(internalLayout().CapacityPtr() < internalLayout().EndPtr())
 			return false;
 		return true;
 	}
@@ -3436,12 +3570,12 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::validate_iterator(const_iterator i) const EA_NOEXCEPT
 	{
-		if(i >= internalLayout().mpBegin)
+		if(i >= internalLayout().BeginPtr())
 		{
-			if(i < internalLayout().mpEnd)
+			if(i < internalLayout().EndPtr())
 				return (isf_valid | isf_current | isf_can_dereference);
 
-			if(i <= internalLayout().mpEnd)
+			if(i <= internalLayout().EndPtr())
 				return (isf_valid | isf_current);
 		}
 

@@ -145,13 +145,15 @@ public:
 };
 
 #if EASTL_MOVE_SEMANTICS_ENABLED
-struct TestMoveAssignToSelf
-{
-	TestMoveAssignToSelf() : mMovedToSelf(false) { }
-	TestMoveAssignToSelf(const TestMoveAssignToSelf & other) { mMovedToSelf = other.mMovedToSelf; }
-	TestMoveAssignToSelf & operator= (TestMoveAssignToSelf && other) { mMovedToSelf = true; return *this; }
-	bool mMovedToSelf;
-};
+	struct TestMoveAssignToSelf
+	{
+		TestMoveAssignToSelf() : mMovedToSelf(false) {}
+		TestMoveAssignToSelf(const TestMoveAssignToSelf& other)       { mMovedToSelf = other.mMovedToSelf; }
+		TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&& other) { mMovedToSelf = true; return *this; }
+		TestMoveAssignToSelf& operator=(const TestMoveAssignToSelf&) = delete;
+
+		bool mMovedToSelf;
+	};
 #endif
 
 #if EASTL_VARIABLE_TEMPLATES_ENABLED

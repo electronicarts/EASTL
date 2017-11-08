@@ -1391,7 +1391,6 @@
 		#endif
 	#endif
 
-
 	// ------------------------------------------------------------------------
 	// We define separate defines for SSE support beyond SSE1.  These defines
 	// are particularly useful for detecting SSE4.x features since there isn't
@@ -1496,6 +1495,17 @@
 			#define EA_ABM 1
 		#else
 			#define EA_ABM 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_NEON
+	// EA_NEON may be used to determine if NEON is supported.
+	#ifndef EA_NEON
+		#if defined(__ARM_NEON__) || defined(__ARM_NEON)
+			#define EA_NEON 1
+		#else
+			#define EA_NEON 0
 		#endif
 	#endif
 

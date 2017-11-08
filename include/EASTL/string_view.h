@@ -99,7 +99,10 @@ namespace eastl
 		// 21.4.2.3, capacity
 		EA_CONSTEXPR size_type size() const EA_NOEXCEPT { return mnCount; }
 		EA_CONSTEXPR size_type length() const EA_NOEXCEPT { return mnCount; }
-		EA_CONSTEXPR size_type max_size() const EA_NOEXCEPT { return numeric_limits<size_type>::max(); }
+
+		// avoid macro expansion of max(...) from windows headers (potentially included before this file)
+		// by wrapping function name in brackets
+		EA_CONSTEXPR size_type max_size() const EA_NOEXCEPT { return (numeric_limits<size_type>::max)(); }
 		EA_CONSTEXPR bool empty() const EA_NOEXCEPT { return mnCount == 0; }
 
 

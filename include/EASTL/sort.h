@@ -871,6 +871,7 @@ namespace eastl
 
 	namespace Internal
 	{
+		EA_DISABLE_VC_WARNING(4702) // unreachable code
 		template <typename RandomAccessIterator, typename Size, typename PivotValueType>
 		inline void quick_sort_impl_helper(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount)
 		{
@@ -889,28 +890,6 @@ namespace eastl
 				eastl::partial_sort<RandomAccessIterator>(first, last, last);
 		}
 
-		template <typename RandomAccessIterator, typename Size>
-		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount,
-			typename eastl::enable_if<eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
-		{
-			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
-
-			// copy constructors require const value_type
-			quick_sort_impl_helper<RandomAccessIterator, Size, const value_type>(first, last, kRecursionCount);
-		}
-
-
-		template <typename RandomAccessIterator, typename Size>
-		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount,
-			typename eastl::enable_if<eastl::is_move_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value
-			&& !eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
-		{
-			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
-
-			// move constructors require non-const value_type
-			quick_sort_impl_helper<RandomAccessIterator, Size, value_type>(first, last, kRecursionCount);
-		}
-
 		template <typename RandomAccessIterator, typename Size, typename Compare, typename PivotValueType>
 		inline void quick_sort_impl_helper(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount, Compare compare)
 		{
@@ -927,6 +906,28 @@ namespace eastl
 
 			if(kRecursionCount == 0)
 				eastl::partial_sort<RandomAccessIterator, Compare>(first, last, last, compare);
+		}
+		EA_RESTORE_VC_WARNING()
+
+		template <typename RandomAccessIterator, typename Size>
+		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount,
+			typename eastl::enable_if<eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
+		{
+			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+
+			// copy constructors require const value_type
+			quick_sort_impl_helper<RandomAccessIterator, Size, const value_type>(first, last, kRecursionCount);
+		}
+
+		template <typename RandomAccessIterator, typename Size>
+		inline void quick_sort_impl(RandomAccessIterator first, RandomAccessIterator last, Size kRecursionCount,
+			typename eastl::enable_if<eastl::is_move_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value
+			&& !eastl::is_copy_constructible<typename iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
+		{
+			typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+
+			// move constructors require non-const value_type
+			quick_sort_impl_helper<RandomAccessIterator, Size, value_type>(first, last, kRecursionCount);
 		}
 
 		template <typename RandomAccessIterator, typename Size, typename Compare>

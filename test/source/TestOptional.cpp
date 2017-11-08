@@ -35,11 +35,17 @@ bool destructor_test::destructor_ran = false;
 /////////////////////////////////////////////////////////////////////////////
 struct move_test
 {
-    move_test() {}
-    move_test(move_test const &other) { was_moved = false; }
-    move_test(move_test &&other) { was_moved = true; }
+    move_test() = default;
+	move_test(move_test&& other)      { was_moved = true; }
+	move_test& operator=(move_test&&) { was_moved = true; return *this;}
+
+	// issue a compiler error is container tries to copy
+    move_test(move_test const &other)  = delete;
+	move_test& operator=(const move_test&) = delete;  
+
     static bool was_moved;
 };
+
 bool move_test::was_moved = false;
 
 
@@ -353,6 +359,18 @@ int TestOptional()
 		} 
 		// destructor shouldn't be called as object wasn't constructed.
 		VERIFY(!destructor_test::destructor_ran);
+	}
+
+	// optional rvalue tests
+	{
+		VERIFY(*optional<int>(1)                          == 1);
+		VERIFY( optional<int>(1).value()                  == 1);
+		VERIFY( optional<int>(1).value_or(0xdeadf00d)     == 1);
+		VERIFY( optional<int>().value_or(0xdeadf00d)      == 0xdeadf00d);
+		VERIFY( optional<int>(1).has_value()              == true);
+		VERIFY( optional<int>().has_value()               == false);
+		VERIFY( optional<IntStruct>(in_place, 10)->data   == 10);
+
 	}
 
     #endif // EASTL_OPTIONAL_ENABLED
