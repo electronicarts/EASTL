@@ -229,7 +229,7 @@ namespace eastl
 		size_type          mSize;
 
 	public:
-		// There currently isn't a ring_buffer constructor that specifies and initial size, unlike other containers.
+		// There currently isn't a ring_buffer constructor that specifies an initial size, unlike other containers.
 		explicit ring_buffer(size_type cap = 0);                                // Construct with an initial capacity (but size of 0).
 		explicit ring_buffer(size_type cap, const allocator_type& allocator); 
 		explicit ring_buffer(const Container& x);
@@ -254,29 +254,30 @@ namespace eastl
 
 		void swap(this_type& x);
 
-		iterator       begin() EA_NOEXCEPT;
-		const_iterator begin() const EA_NOEXCEPT;
-		const_iterator cbegin() const EA_NOEXCEPT;
+		iterator               begin()          EA_NOEXCEPT;
+		const_iterator         begin()    const EA_NOEXCEPT;
+		const_iterator         cbegin()   const EA_NOEXCEPT;
 
-		iterator       end() EA_NOEXCEPT;
-		const_iterator end() const EA_NOEXCEPT;
-		const_iterator cend() const EA_NOEXCEPT;
+		iterator               end()            EA_NOEXCEPT;
+		const_iterator         end()      const EA_NOEXCEPT;
+		const_iterator         cend()     const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin() const EA_NOEXCEPT;
+		reverse_iterator       rbegin()         EA_NOEXCEPT;
+		const_reverse_iterator rbegin()   const EA_NOEXCEPT;
+		const_reverse_iterator crbegin()  const EA_NOEXCEPT;
 
-		reverse_iterator       rend() EA_NOEXCEPT;
-		const_reverse_iterator rend() const EA_NOEXCEPT;
-		const_reverse_iterator crend() const EA_NOEXCEPT;
+		reverse_iterator       rend()           EA_NOEXCEPT;
+		const_reverse_iterator rend()     const EA_NOEXCEPT;
+		const_reverse_iterator crend()    const EA_NOEXCEPT;
 
-		bool        empty() const EA_NOEXCEPT;
-		bool        full() const EA_NOEXCEPT;
-		size_type   size() const EA_NOEXCEPT;
-		void        resize(size_type n);
-		size_type   capacity() const EA_NOEXCEPT;
-		void        set_capacity(size_type n);    // Sets the capacity to the given value, including values less than the current capacity. Adjusts the size downward if n < size, by throwing out the oldest elements in the buffer.
-		void        reserve(size_type n);         // Reserve a given capacity. Doesn't decrease the capacity; it only increases it (for compatibility with other containers' behavior).
+		bool                   empty()    const EA_NOEXCEPT;
+		bool                   full()     const EA_NOEXCEPT;
+		size_type              size()     const EA_NOEXCEPT;
+		size_type              capacity() const EA_NOEXCEPT;
+
+		void                   resize(size_type n);
+		void                   set_capacity(size_type n); // Sets the capacity to the given value, including values less than the current capacity. Adjusts the size downward if n < size, by throwing out the oldest elements in the buffer.
+		void                   reserve(size_type n);      // Reserve a given capacity. Doesn't decrease the capacity; it only increases it (for compatibility with other containers' behavior).
 
 		reference       front();
 		const_reference front() const;
