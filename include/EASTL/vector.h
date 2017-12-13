@@ -22,7 +22,6 @@
 //      which is safe to call even if the block is empty. This avoids the 
 //      common &v[0], &v.front(), and &*v.begin() constructs that trigger false 
 //      asserts in STL debugging modes.
-//    - vector data is guaranteed to be contiguous.
 //    - vector has a set_capacity() function which frees excess capacity. 
 //      The only way to do this with std::vector is via the cryptic non-obvious 
 //      trick of using: vector<SomeClass>(x).swap(x);
@@ -302,14 +301,14 @@ namespace eastl
 		#endif
 
 		iterator insert(const_iterator position, const value_type& value);
-		void     insert(const_iterator position, size_type n, const value_type& value);
+		iterator insert(const_iterator position, size_type n, const value_type& value);
 		#if EASTL_MOVE_SEMANTICS_ENABLED
 			iterator insert(const_iterator position, value_type&& value);
 		#endif
 		iterator insert(const_iterator position, std::initializer_list<value_type> ilist);
 
 		template <typename InputIterator>
-		void insert(const_iterator position, InputIterator first, InputIterator last);
+		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
 		iterator erase(const_iterator position);
 		iterator erase(const_iterator first, const_iterator last);
@@ -1230,17 +1229,23 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::insert(const_iterator position, size_type n, const value_type& value)
+	inline typename vector<T, Allocator>::iterator
+	vector<T, Allocator>::insert(const_iterator position, size_type n, const value_type& value)
 	{
+		const ptrdiff_t p = position - mpBegin; // Save this because we might reallocate.
 		DoInsertValues(position, n, value);
+		return mpBegin + p;
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
+	inline typename vector<T, Allocator>::iterator
+	vector<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
 	{
+		const ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 		DoInsert(position, first, last, is_integral<InputIterator>());
+		return mpBegin + n;
 	}
 
 
