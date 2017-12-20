@@ -1007,6 +1007,17 @@ int TestDeque()
 		const eastl::deque<int> constIntDeque5 = constIntDeque4;
 	}
 
+	{ // Regression to verify that shrink_to_fit works
+		eastl::deque<int> intDeque;
+		VERIFY(intDeque.size() == 0);
+
+		intDeque.push_back(42);
+		VERIFY(intDeque.size() == 1);
+
+		intDeque.shrink_to_fit();
+		VERIFY(intDeque.size() == 1);
+	}
+
 	return nErrorCount;
 }
 
