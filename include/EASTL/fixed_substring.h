@@ -88,7 +88,7 @@ namespace eastl
 
 		using base_type::npos;
 		using base_type::mPair;
-		using base_type::reset_lose_memory;
+		using base_type::AllocateSelf;
 		using base_type::internalLayout;
 		using base_type::get_allocator;
 
@@ -143,7 +143,7 @@ namespace eastl
 		{
 			// We need to reset, as otherwise the parent destructor will
 			// attempt to free our memory.
-			reset_lose_memory();
+			AllocateSelf();
 		}
 
 		this_type& operator=(const base_type& x)

@@ -27,23 +27,23 @@ EA_ONCE()
 // 	auto size4 = EA_GIBIBYTE(8);
 
 // define byte for completeness
-#define EA_BYTE(x) x
+#define EA_BYTE(x) (x)
 
 // Decimal SI units
-#define EA_KILOBYTE(x) size_t(x) * 1000
-#define EA_MEGABYTE(x) size_t(x) * 1000 * 1000
-#define EA_GIGABYTE(x) size_t(x) * 1000 * 1000 * 1000
-#define EA_TERABYTE(x) size_t(x) * 1000 * 1000 * 1000 * 1000
-#define EA_PETABYTE(x) size_t(x) * 1000 * 1000 * 1000 * 1000 * 1000
-#define EA_EXABYTE(x) size_t(x) * 1000 * 1000 * 1000 * 1000 * 1000 * 1000
+#define EA_KILOBYTE(x) (size_t(x) * 1000)
+#define EA_MEGABYTE(x) (size_t(x) * 1000 * 1000)
+#define EA_GIGABYTE(x) (size_t(x) * 1000 * 1000 * 1000)
+#define EA_TERABYTE(x) (size_t(x) * 1000 * 1000 * 1000 * 1000)
+#define EA_PETABYTE(x) (size_t(x) * 1000 * 1000 * 1000 * 1000 * 1000)
+#define EA_EXABYTE(x)  (size_t(x) * 1000 * 1000 * 1000 * 1000 * 1000 * 1000)
 
 // Binary SI units
-#define EA_KIBIBYTE(x) size_t(x) * 1024 
-#define EA_MEBIBYTE(x) size_t(x) * 1024 * 1024
-#define EA_GIBIBYTE(x) size_t(x) * 1024 * 1024 * 1024
-#define EA_TEBIBYTE(x) size_t(x) * 1024 * 1024 * 1024 * 1024
-#define EA_PEBIBYTE(x) size_t(x) * 1024 * 1024 * 1024 * 1024 * 1024
-#define EA_EXBIBYTE(x) size_t(x) * 1024 * 1024 * 1024 * 1024 * 1024 * 1024
+#define EA_KIBIBYTE(x) (size_t(x) * 1024)
+#define EA_MEBIBYTE(x) (size_t(x) * 1024 * 1024)
+#define EA_GIBIBYTE(x) (size_t(x) * 1024 * 1024 * 1024)
+#define EA_TEBIBYTE(x) (size_t(x) * 1024 * 1024 * 1024 * 1024)
+#define EA_PEBIBYTE(x) (size_t(x) * 1024 * 1024 * 1024 * 1024 * 1024)
+#define EA_EXBIBYTE(x) (size_t(x) * 1024 * 1024 * 1024 * 1024 * 1024 * 1024)
 
 #endif // INCLUDED_earesult_H
 

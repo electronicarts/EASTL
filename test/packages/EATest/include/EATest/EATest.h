@@ -720,6 +720,7 @@ namespace EA
             size_t          mnErrorCount;
             EA::EAMain::ReportFunction  mpReportFunction;
             bool            mbForceReport;
+			uint64_t        mnElapsedTestTimeInMicroseconds;
         };
 
 

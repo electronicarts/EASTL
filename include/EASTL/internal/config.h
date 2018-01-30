@@ -66,22 +66,6 @@
 	#pragma once
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// VC++ bug fix.
-///////////////////////////////////////////////////////////////////////////////
-
-#if defined(_MSC_VER) && (_MSC_VER < 1500)
-	// VC8 (VS2005) has a bug whereby it generates a warning when malloc.h is 
-	// #included by its headers instead of by yours. There is no practical 
-	// solution but to pre-empt the #include of malloc.h with our own inclusion 
-	// of it. The only other alternative is to disable the warning globally, 
-	// which is something we try to avoid as much as possible.
-	#pragma warning(push, 0)
-	#include <malloc.h>
-	#pragma warning(pop)
-#endif
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_VERSION
@@ -105,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.06.00"
-	#define EASTL_VERSION_N  30600
+	#define EASTL_VERSION   "3.07.00"
+	#define EASTL_VERSION_N  30700
 #endif
 
 
@@ -809,19 +793,6 @@ namespace eastl
 	// in all their arguments and do no-ops if so. This is very debatable.
 	// C++ standard strings are not required to check for such argument errors.
 	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
-#endif
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_ABSTRACT_STRING_ENABLED
-//
-// Defined as 0 or 1. Default is 0 until abstract string is fully tested.
-// Defines whether the proposed replacement for the string module is enabled.
-// See bonus/abstract_string.h for more information.
-//
-#ifndef EASTL_ABSTRACT_STRING_ENABLED
-	#define EASTL_ABSTRACT_STRING_ENABLED 0
 #endif
 
 

@@ -12,18 +12,13 @@
 #ifndef EASTL_FIXED_STRING_H
 #define EASTL_FIXED_STRING_H
 
-
 #include <EASTL/internal/config.h>
-#if EASTL_ABSTRACT_STRING_ENABLED
-	#include <EASTL/bonus/fixed_string_abstract.h>
-#else // 'else' encompasses the entire rest of this file.
 #include <EASTL/string.h>
 #include <EASTL/internal/fixed_pool.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
-
 
 
 namespace eastl
@@ -802,9 +797,6 @@ namespace eastl
 
 
 } // namespace eastl
-
-
-#endif // EASTL_ABSTRACT_STRING_ENABLED
 
 #endif // Header include guard
 
