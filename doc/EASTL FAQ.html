@@ -666,7 +666,6 @@ Why is there EASTL when there is the STL?</p>
   <li>Useful STL extensions (e.g. slist, hash_map, shared_ptr) found in existing STL implementations such as STLPort are not portable because they don't exist in other versions of STL or aren't consistent between STL versions.<br>
   </li>
   <li>The STL lacks useful extensions that game programmers find useful (e.g. intrusive_list) but which could be best optimized in a portable STL environment.</li>
-  <li>The STL has specifications that limit our ability to use it efficiently. For example, STL vectors are not guaranteed to use contiguous memory and so cannot be safely used as an array.</li>
   <li>The STL puts an emphasis on correctness before performance, whereas sometimes you can get significant performance gains by making things less academcially pure.</li>
   <li>STL containers have private implementations that don't allow you to work with their data in a portable way, yet sometimes this is an important thing to be able to do (e.g. node pools).</li>
   <li>All existing versions of STL allocate memory in empty versions of at least some of their containers. This is not ideal and prevents optimizations such as container memory resets that can greatly increase performance in some situations.</li>
