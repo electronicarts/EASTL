@@ -865,7 +865,7 @@ void Test::WriteReport()
     {
         char buffer[384];
         EA::EAMain::ReportFunction pReportFunction = GetReportFunction();
-        EA::StdC::Sprintf(buffer, "%-24s - %s \t%2.4f secs\n", msTestName.c_str(), mnErrorCount ? "FAILED" : "PASSED", mnElapsedTestTimeInMicroseconds / 1'000'000.f);
+        EA::StdC::Sprintf(buffer, "%-24s - %s \t%2.4f secs\n", msTestName.c_str(), mnErrorCount ? "FAILED" : "PASSED", mnElapsedTestTimeInMicroseconds / 1000000.f);
         pReportFunction(buffer);
     }
 }
