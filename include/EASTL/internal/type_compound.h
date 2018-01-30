@@ -23,6 +23,39 @@ namespace eastl
 {
 
 	///////////////////////////////////////////////////////////////////////
+	// extent
+	//
+	// extent<T, I>::value is an integral type representing the number of 
+	// elements in the Ith dimension of array type T.
+	// 
+	// For a given array type T[N], extent<T[N]>::value == N.
+	// For a given multi-dimensional array type T[M][N], extent<T[M][N], 0>::value == N.
+	// For a given multi-dimensional array type T[M][N], extent<T[M][N], 1>::value == M.
+	// For a given array type T and a given dimension I where I >= rank<T>::value, extent<T, I>::value == 0.
+	// For a given array type of unknown extent T[], extent<T[], 0>::value == 0.
+	// For a given non-array type T and an arbitrary dimension I, extent<T, I>::value == 0.
+	// 
+	///////////////////////////////////////////////////////////////////////
+
+	#define EASTL_TYPE_TRAIT_extent_CONFORMANCE 1    // extent is conforming.
+
+	template<typename T, unsigned N> 
+	struct extent_help : public eastl::integral_constant<size_t, 0> {};
+
+	template<typename T, unsigned I>
+	struct extent_help<T[I], 0> : public eastl::integral_constant<size_t, I> {};
+
+	template<typename T, unsigned N, unsigned I>
+	struct extent_help<T[I], N> : public eastl::extent_help<T, N - 1> { };
+
+	template<typename T, unsigned N>
+	struct extent_help<T[], N> : public eastl::extent_help<T, N - 1> {};
+
+	template<typename T, unsigned N = 0> // extent uses unsigned instead of size_t.
+	struct extent : public eastl::extent_help<T, N> { };
+
+
+	///////////////////////////////////////////////////////////////////////
 	// is_array
 	//
 	// is_array<T>::value == true if and only if T is an array type, 
@@ -200,6 +233,11 @@ namespace eastl
 
 	template <typename T> 
 	struct is_pointer : public integral_constant<bool, is_pointer_value<T>::value>{};
+
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template<typename T>
+		EA_CONSTEXPR bool is_pointer_v = is_pointer<T>::value;
+	#endif
 
 
 
@@ -534,7 +572,10 @@ namespace eastl
 	#define EASTL_TYPE_TRAIT_is_scalar_CONFORMANCE 1    // is_scalar is conforming.
 
 	template <typename T>
-	struct is_scalar : public integral_constant<bool, is_arithmetic<T>::value || is_enum<T>::value || is_member_pointer<T>::value || is_null_pointer<T>::value>{};
+	struct is_scalar : public integral_constant<bool,
+	                                            is_arithmetic<T>::value || is_enum<T>::value || is_pointer<T>::value ||
+	                                                is_member_pointer<T>::value ||
+	                                                is_null_pointer<T>::value> {};
 
 	template <typename T> struct is_scalar<T*>                : public true_type {};
 	template <typename T> struct is_scalar<T* const>          : public true_type {};
@@ -603,6 +644,95 @@ namespace eastl
 		#define EASTL_DECAY_T(T) decay_t<T>
 	#endif
 
+	///////////////////////////////////////////////////////////////////////
+	// common_type
+	// 
+	// Determines the common type among all types T..., that is the type all T... 
+	// can be implicitly converted to.
+	//
+	// It is intended that this be specialized by the user for cases where it
+	// is useful to do so. Example specialization:
+	//     template <typename Class1, typename Class2>
+	//     struct common_type<MyClass1, MyClass2>{ typedef MyBaseClassB type; };
+	//
+	// The member typedef type shall be defined as set out in 20.9.7.6,p3. All types in
+	// the parameter pack T shall be complete or (possibly cv) void. A program may 
+	// specialize this trait if at least one template parameter in the specialization 
+	// is a user-defined type. Note: Such specializations are needed when only  
+	// explicit conversions are desired among the template arguments.
+	///////////////////////////////////////////////////////////////////////
+
+	#if defined(EA_COMPILER_NO_DECLTYPE)
+		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 0
+
+		// Perhaps we can do better. On the other hand, compilers that don't support variadic 
+		// templates and decltype probably won't need the common_type trait anyway.
+		template <typename T, typename U = void, typename V = void>
+		struct common_type
+			{ typedef void type; };
+
+		template <typename T, typename U>
+		struct common_type<T, U, void>
+			{ typedef void type; };
+
+		template <typename T>
+		struct common_type<T, T, void>
+			{ typedef decay_t<T> type; };
+
+		template <typename T>
+		struct common_type<T, void, void>
+			{ typedef decay_t<T> type; };
+
+	#elif defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 0
+
+		template <typename T, typename U = void, typename V = void>
+		struct common_type
+			{ typedef typename eastl::common_type<typename eastl::common_type<T, U>::type, V>::type type; };
+
+		template <typename T>
+		struct common_type<T, void, void>
+			{ typedef decay_t<T> type; };
+
+		template <typename T, typename U>
+		class common_type<T, U, void>
+		{
+		public:
+			typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type;
+		};
+
+	#else
+		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 1    // common_type is conforming.
+
+		template<typename... T>
+		struct common_type;
+
+		template<typename T>
+		struct common_type<T>
+			{ typedef decay_t<T> type; }; // Question: Should we use T or decay_t<T> here? The C++11 Standard specifically (20.9.7.6,p3) specifies that it be without decay, but libc++ uses decay.
+
+		template<typename T, typename U>
+		struct common_type<T, U>
+		{
+			typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type; // The type of a tertiary expression is set by the compiler to be the common type of the two result types.
+		};
+
+		template<typename T, typename U, typename... V>
+		struct common_type<T, U, V...>
+			{ typedef typename common_type<typename common_type<T, U>::type, V...>::type type; };
+
+
+		// common_type_t is the C++14 using typedef for typename common_type<T...>::type.
+		// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
+		#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+			#define EASTL_COMMON_TYPE_T(...) typename common_type<__VA_ARGS__>::type
+		#else
+			template <typename... T>
+			using common_type_t = typename common_type<T...>::type;
+			#define EASTL_COMMON_TYPE_T(...) common_type_t<__VA_ARGS__>
+		#endif
+
+	#endif
 
 } // namespace eastl
 

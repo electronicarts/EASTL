@@ -7,13 +7,12 @@
 #include <EAStdC/EASprintf.h>
 #include <EASTL/internal/config.h>
 
-#if defined(_MSC_VER)
-	#pragma warning(push, 0)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 #include "EAMain/EAEntryPointMain.inl"
@@ -93,6 +92,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Chrono",					TestChrono);
 	testSuite.AddTest("Deque",					TestDeque);
 	testSuite.AddTest("Extra",					TestExtra);
+	testSuite.AddTest("FixedFunction",			TestFixedFunction);
 	testSuite.AddTest("FixedHash",				TestFixedHash);
 	testSuite.AddTest("FixedHash",				TestStringHashMap);
 	testSuite.AddTest("FixedList",				TestFixedList);
@@ -113,6 +113,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("ListMap",				TestListMap);
 	testSuite.AddTest("Map",					TestMap);
 	testSuite.AddTest("Memory",					TestMemory);
+	testSuite.AddTest("Meta",				    TestMeta);
 	testSuite.AddTest("NumericLimits",			TestNumericLimits);
 	testSuite.AddTest("Optional",				TestOptional);
 	testSuite.AddTest("Random",					TestRandom);
@@ -131,6 +132,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Tuple",					TestTuple);
 	testSuite.AddTest("TypeTraits",				TestTypeTraits);
 	testSuite.AddTest("Utility",				TestUtility);
+	testSuite.AddTest("Variant",				TestVariant);
 	testSuite.AddTest("Vector",					TestVector);
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);

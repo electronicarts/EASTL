@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.07.00"
-	#define EASTL_VERSION_N  30700
+	#define EASTL_VERSION   "3.07.02"
+	#define EASTL_VERSION_N  30702
 #endif
 
 
@@ -143,10 +143,14 @@
 // http://en.wikipedia.org/wiki/C%2B%2B14#Relaxed_constexpr_restrictions
 //
 #if !defined(EA_CPP14_CONSTEXPR)
-	// To do: Detect compilers that support C++14 constexpr.
-	// We do not define this as EA_CONSTEXPR for the case of pre-C++14 compilers,
-	// but rather we must define this as nothing. 
-	#define EA_CPP14_CONSTEXPR
+
+	#if defined(EA_COMPILER_MSVC_2015)
+		#define EA_CPP14_CONSTEXPR  // not supported
+	#elif defined(EA_COMPILER_CPP14_ENABLED) 
+		#define EA_CPP14_CONSTEXPR constexpr
+	#else
+		#define EA_CPP14_CONSTEXPR  // not supported
+	#endif
 #endif
 
 
@@ -620,33 +624,33 @@ namespace eastl
             #define EASTL_DEBUG_BREAK() kill( getpid(), SIGINT )
 		#elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
 			#define EASTL_DEBUG_BREAK() asm("brk 10")
-        #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
-            #define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
-        #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
-            #define EASTL_DEBUG_BREAK() __breakpoint(10)
-        #elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
-            #define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
-        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
-            #define EASTL_DEBUG_BREAK() { __asm int 3 }
-        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
-            #define EASTL_DEBUG_BREAK() asm("int3") 
-        #else
-            void EASTL_DEBUG_BREAK(); // User must define this externally.
-        #endif
-    #else
-        void EASTL_DEBUG_BREAK(); // User must define this externally.
-    #endif
+		#elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
+			#define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
+		#elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
+			#define EASTL_DEBUG_BREAK() __breakpoint(10)
+		#elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
+			#define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
+		#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
+			#define EASTL_DEBUG_BREAK() { __asm int 3 }
+		#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
+			#define EASTL_DEBUG_BREAK() asm("int3") 
+		#else
+			void EASTL_DEBUG_BREAK(); // User must define this externally.
+		#endif
+	#else
+		void EASTL_DEBUG_BREAK(); // User must define this externally.
+	#endif
 #else
-    #ifndef EASTL_DEBUG_BREAK
+	#ifndef EASTL_DEBUG_BREAK
 		#if EASTL_DEBUG_BREAK_OVERRIDE == 1 
 			// define an empty callable to satisfy the call site. 
 			#define EASTL_DEBUG_BREAK ([]{}) 
 		#else
 			#define EASTL_DEBUG_BREAK EASTL_DEBUG_BREAK_OVERRIDE
 		#endif
-    #else
-        #error EASTL_DEBUG_BREAK is already defined yet you would like to override it. Please ensure no other headers are already defining EASTL_DEBUG_BREAK before this header (config.h) is included
-    #endif
+	#else
+		#error EASTL_DEBUG_BREAK is already defined yet you would like to override it. Please ensure no other headers are already defining EASTL_DEBUG_BREAK before this header (config.h) is included
+	#endif
 #endif
 
 

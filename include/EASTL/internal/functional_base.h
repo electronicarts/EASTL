@@ -11,6 +11,7 @@
 #endif
 
 #include <EASTL/internal/config.h>
+#include <EASTL/type_traits.h>
 
 namespace eastl
 {
@@ -18,6 +19,113 @@ namespace eastl
 	template <typename T> 
 	inline void swap(T& a, T& b) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value &&
 	eastl::is_nothrow_move_assignable<T>::value);
+
+	// forward declaration for addressof
+	template<typename T>
+	T* addressof(T& value) EA_NOEXCEPT;
+
+	/// invoke
+	///
+	/// invoke is a generalized function-call operator which works on function pointers, member function
+	/// pointers, callable objects and member pointers.
+	///
+	/// For (member/non-member) function pointers and callable objects, it returns the result of calling
+	/// the function/object with the specified arguments. For member data pointers, it simply returns
+	/// the member.
+	///
+	/// Note that there are also reference_wrapper specializations of invoke, which need to be defined
+	/// later since reference_wrapper uses invoke in its implementation. Those are defined immediately
+	/// after the definition of reference_wrapper.
+	///
+	/// http://en.cppreference.com/w/cpp/utility/functional/invoke
+	///
+	template <typename R, typename C, typename T, typename... Args>
+	auto invoke_impl(R C::*func, T&& obj, Args&&... args) ->
+	typename enable_if<
+		is_base_of<C, decay_t<decltype(obj)>>::value,
+		decltype((forward<T>(obj).*func)(forward<Args>(args)...))
+	>::type
+	{
+		return (forward<T>(obj).*func)(forward<Args>(args)...);
+	}
+
+	template <typename F, typename... Args>
+	auto invoke_impl(F&& func, Args&&... args) -> decltype(forward<F>(func)(forward<Args>(args)...))
+	{
+		return forward<F>(func)(forward<Args>(args)...);
+	}
+
+
+	template <typename R, typename C, typename T, typename... Args>
+	auto invoke_impl(R C::*func, T&& obj, Args&&... args) -> decltype(((*forward<T>(obj)).*func)(forward<Args>(args)...))
+	{
+		return ((*forward<T>(obj)).*func)(forward<Args>(args)...);
+	}
+
+	template <typename M, typename C, typename T>
+	auto invoke_impl(M C::*member, T&& obj) ->
+	typename enable_if<
+		is_base_of<C, decay_t<decltype(obj)>>::value,
+		decltype(obj.*member)
+	>::type
+	{
+		return obj.*member;
+	}
+
+	template <typename M, typename C, typename T>
+	auto invoke_impl(M C::*member, T&& obj) -> decltype((*forward<T>(obj)).*member)
+	{
+		return (*forward<T>(obj)).*member;
+	}
+
+	template <typename F, typename... Args>
+	inline decltype(auto) invoke(F&& func, Args&&... args)
+	{
+		return invoke_impl(forward<F>(func), forward<Args>(args)...);
+	}
+
+	template <typename F, typename = void, typename... Args>
+	struct invoke_result_impl {};
+
+	template <typename F, typename... Args>
+	struct invoke_result_impl<F, void_t<decltype(invoke(declval<F>(), declval<Args>()...))>, Args...>
+	{
+		typedef decltype(invoke(declval<F>(), declval<Args>()...)) type;
+	};
+
+	template <typename F, typename... Args>
+	struct invoke_result : public invoke_result_impl<F, void, Args...> {};
+
+#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+	template <typename F, typename... Args>
+	using invoke_result_t = typename invoke_result<F, Args...>::type;
+#endif
+
+	template <typename F, typename = void, typename... Args>
+	struct is_invocable_impl : public eastl::false_type {};
+
+	template <typename F, typename... Args>
+	struct is_invocable_impl<F, void_t<typename invoke_result<F, Args...>::type>, Args...> : public eastl::true_type {};
+
+	template <typename F, typename... Args>
+	struct is_invocable : public is_invocable_impl<F, void, Args...> {};
+
+	template <typename R, typename F, typename... Args>
+	struct is_invocable_r
+	{
+		static const bool value = is_invocable<F, Args...>::value
+			&& is_convertible<typename invoke_result<F, Args...>::type, R>::value;
+	};
+
+#if EASTL_VARIABLE_TEMPLATES_ENABLED
+#if EASTL_INLINE_VARIABLE_ENABLED
+	template <typename F, typename... Args>
+	inline EA_CONSTEXPR bool is_invocable_v = is_invocable<F, Args...>::value;
+
+	template <typename R, typename F, typename... Args>
+	inline EA_CONSTEXPR bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
+#endif
+#endif
 
 	/// allocator_arg_t
 	///
@@ -79,10 +187,6 @@ namespace eastl
 
 
 	/// reference_wrapper
-	///
-	/// This is currently a placeholder and isn't complete yet.
-	/// reference_wrapper is a class that emulates a C++ reference while adding some flexibility.
-	///
 	template <typename T>
 	class reference_wrapper
 	{
@@ -104,8 +208,46 @@ namespace eastl
 			template <typename... ArgTypes>
 			typename eastl::result_of<T&(ArgTypes&&...)>::type operator() (ArgTypes&&...) const;
 		#endif
+
+	private:
+		T* val;
 	};
 
+	template <typename T>
+	reference_wrapper<T>::reference_wrapper(T &v) EA_NOEXCEPT
+		: val(addressof(v))
+	{}
+
+	template <typename T>
+	reference_wrapper<T>::reference_wrapper(const reference_wrapper<T>& other) EA_NOEXCEPT
+		: val(other.val)
+	{}
+
+	template <typename T>
+	reference_wrapper<T>& reference_wrapper<T>::operator=(const reference_wrapper<T>& other) EA_NOEXCEPT
+	{
+		val = other.val;
+		return *this;
+	}
+
+	template <typename T>
+	reference_wrapper<T>::operator T&() const EA_NOEXCEPT
+	{
+		return *val;
+	}
+
+	template <typename T>
+	T& reference_wrapper<T>::get() const EA_NOEXCEPT
+	{
+		return *val;
+	}
+
+	template <typename T>
+	template <typename... ArgTypes>
+	typename eastl::result_of<T&(ArgTypes&&...)>::type reference_wrapper<T>::operator() (ArgTypes&&... args) const
+	{
+		return invoke(*val, forward<ArgTypes>(args)...);
+	}
 
 	// reference_wrapper-specific utilties
 	template <typename T>
@@ -157,6 +299,29 @@ namespace eastl
 	template <typename T>
 	struct remove_reference_wrapper< const eastl::reference_wrapper<T> >
 		{ typedef T& type; };
+
+	// reference_wrapper specializations of invoke
+	// These have to come after reference_wrapper is defined, but reference_wrapper needs to have a
+	// definition of invoke, so these specializations need to come after everything else has been defined.
+	template <typename R, typename C, typename T, typename... Args>
+	auto invoke_impl(R (C::*func)(Args...), T&& obj, Args&&... args) ->
+	typename enable_if<
+		is_reference_wrapper<typename remove_reference<T>::type>::value,
+		decltype((obj.get().*func)(forward<Args>(args)...))
+	>::type
+	{
+		return (obj.get().*func)(forward<Args>(args)...);
+	}
+
+	template <typename M, typename C, typename T>
+	auto invoke_impl(M (C::*member), T&& obj) ->
+	typename enable_if<
+		is_reference_wrapper<typename remove_reference<T>::type>::value,
+		decltype(obj.get().*member)
+	>::type
+	{
+		return obj.get().*member;
+	}
 
 
 	///////////////////////////////////////////////////////////////////////

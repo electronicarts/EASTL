@@ -26,6 +26,38 @@ public:
 };
 typedef eastl::vector<AssetHandler> AssetHandlerArray;
 
+// Regression test for a default memory fill optimization that defers to memset instead of explicitly
+// value-initialization each element in a vector individually.  This test ensures that the value of the memset is
+// consistent with an explicitly value-initialized element (namely when the container holds a scalar value that is
+// memset to zero).
+template <typename T>
+int TestValueInitOptimization()
+{
+	int nErrorCount = 0;
+	const int ELEM_COUNT = 100;
+
+	{
+		eastl::vector<T> v1;
+		eastl::vector<ValueInitOf<T>> v2;
+
+		v1.resize(ELEM_COUNT);
+		v2.resize(ELEM_COUNT);
+
+		for (int i = 0; i < ELEM_COUNT; i++)
+			{ EATEST_VERIFY(v1[i] == v2[i].get()); }
+	}
+
+	{
+		eastl::vector<T> v1(ELEM_COUNT);
+		eastl::vector<ValueInitOf<T>> v2(ELEM_COUNT);
+
+		for (int i = 0; i < ELEM_COUNT; i++)
+			{ EATEST_VERIFY(v1[i] == v2[i].get()); }
+	}
+
+	EATEST_VERIFY(nErrorCount == 0);
+	return nErrorCount;
+}
 
 
 // LCTestObject
@@ -314,22 +346,106 @@ int TestMemory()
 
 	eastl::uninitialized_copy_copy<int*, int*, int*>((int*)NULL, (int*)NULL, (int*)NULL, (int*)NULL, (int*)NULL);
 
+	// uninitialized_default_construct
+	{
+		TestObject::Reset();
+		char testCharArray[sizeof(TestObject) * 10];
+		TestObject* pTestMemory = (TestObject*)(testCharArray);
+
+		eastl::uninitialized_default_construct(pTestMemory, pTestMemory + 10);
+		EATEST_VERIFY(TestObject::sTODefaultCtorCount == 10);
+	}
+
+	// uninitialized_default_construct_n
+	{
+		TestObject::Reset();
+		char testCharArray[sizeof(TestObject) * 10];
+		TestObject* pTestMemory = (TestObject*)(testCharArray);
+
+		auto endIter = eastl::uninitialized_default_construct_n(pTestMemory, 5);
+		EATEST_VERIFY(TestObject::sTODefaultCtorCount == 5);
+		EATEST_VERIFY(endIter == (pTestMemory + 5));
+	}
+
+	// uninitialized_value_construct
+	{
+		TestObject::Reset();
+		char testCharArray[sizeof(TestObject) * 10];
+		TestObject* pTestMemory = (TestObject*)(testCharArray);
+
+		eastl::uninitialized_value_construct(pTestMemory, pTestMemory + 10);
+		EATEST_VERIFY(TestObject::sTODefaultCtorCount == 10);
+	}
+
+	// uninitialized_value_construct_n
+	{
+		TestObject::Reset();
+		char testCharArray[sizeof(TestObject) * 10];
+		TestObject* pTestMemory = (TestObject*)(testCharArray);
+
+		auto endIter = eastl::uninitialized_value_construct_n(pTestMemory, 5);
+		EATEST_VERIFY(TestObject::sTODefaultCtorCount == 5);
+		EATEST_VERIFY(endIter == (pTestMemory + 5));
+	}
 
 
 	// template <typename T>
 	// void destruct(T* p)
+	{
+		TestObject::Reset();
+		uint64_t testObjectMemory[((sizeof(TestObject) / sizeof(uint64_t)) + 1) * 2];
 
-	uint64_t testObjectMemory[((sizeof(TestObject) / sizeof(uint64_t)) + 1) * 2];
-	TestObject* pTestObject = new(testObjectMemory) TestObject;
-	destruct(pTestObject);
+		TestObject* pTestObject = new(testObjectMemory) TestObject;
+		destruct(pTestObject);
+		EATEST_VERIFY(TestObject::IsClear());
+	}
 
+	// template <typename T>
+	// void destroy_at(T* p)
+	{
+		TestObject::Reset();
+		uint64_t testObjectMemory[((sizeof(TestObject) / sizeof(uint64_t)) + 1) * 2];
+		TestObject* pTestObject = new(testObjectMemory) TestObject;
+		destroy_at(pTestObject);
+
+		EATEST_VERIFY(TestObject::IsClear());
+	}
 
 
 	// template <typename ForwardIterator>
 	// void destruct(ForwardIterator first, ForwardIterator last)
+	{
+		TestObject::Reset();
+		char testObjectMemory[sizeof(TestObject) * 3];
+		TestObject* pTestObject = new(testObjectMemory) TestObject[2];
+		destruct(pTestObject, pTestObject + 2);
 
-	pTestObject = new(testObjectMemory) TestObject[2];
-	destruct(pTestObject, pTestObject + 1);
+		EATEST_VERIFY(TestObject::IsClear());
+	}
+
+	// template <typename ForwardIterator>
+	// void destroy(ForwardIterator first, ForwardIterator last)
+	{
+		TestObject::Reset();
+		char testObjectMemory[sizeof(TestObject) * 3];
+		TestObject* pTestObject = new(testObjectMemory) TestObject[2];
+		destroy(pTestObject, pTestObject + 2);
+
+		EATEST_VERIFY(TestObject::IsClear());
+	}
+
+	// template <typename ForwardIterator, typename Size>
+	// void destroy_n(ForwardIterator first, Size n)
+	{
+		TestObject::Reset();
+		char testObjectMemory[sizeof(TestObject) * 3];
+		TestObject* pTestObject = new (testObjectMemory) TestObject[2];
+
+		destroy_n(pTestObject, 1);     // destroy TestObject[0]
+		destroy_n(pTestObject + 1, 1); // destroy TestObject[1]
+
+		EATEST_VERIFY(TestObject::IsClear());
+	}
 
 
 	{
@@ -428,8 +544,16 @@ int TestMemory()
 		EATEST_VERIFY((pResult == NULL) && (ptr == ptrSaved));
 	}
 
-	EATEST_VERIFY(nErrorCount == 0);
+	{
+		nErrorCount += TestValueInitOptimization<int>();
+		nErrorCount += TestValueInitOptimization<char>();
+		nErrorCount += TestValueInitOptimization<short>();
+		nErrorCount += TestValueInitOptimization<float>();
+		nErrorCount += TestValueInitOptimization<double>();
+		nErrorCount += TestValueInitOptimization<void*>();
+	}
 
+	EATEST_VERIFY(nErrorCount == 0);
 	return nErrorCount;
 }
 

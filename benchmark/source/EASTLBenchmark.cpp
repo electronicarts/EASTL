@@ -131,7 +131,7 @@ namespace Benchmark
 		WriteTime(result.mTime1NS, sClockTime1);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
 		WriteTime(result.mTime2NS, sClockTime2);
 
-		EA::UnitTest::Report("%-42s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
+		EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
 
 		if(result.msNotes.length()) // If there are any notes...
 			EA::UnitTest::Report("   %s", result.msNotes.c_str());
@@ -216,7 +216,7 @@ namespace Benchmark
 		EA::UnitTest::Report("\n");
 		EA::UnitTest::Report("Values are ticks and time to complete tests; smaller values are better.\n");
 		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("%-42s%26s%26s%13s%13s\n", "Test", gEnvironment.msSTLName1.c_str(), gEnvironment.msSTLName2.c_str(), "Ratio", "Difference?");
+		EA::UnitTest::Report("%-43s%26s%26s%13s%13s\n", "Test", gEnvironment.msSTLName1.c_str(), gEnvironment.msSTLName2.c_str(), "Ratio", "Difference?");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
 		eastl::string sTestTypeLast;

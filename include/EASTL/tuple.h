@@ -59,6 +59,11 @@ class tuple_size<tuple<Ts...>> : public integral_constant<size_t, sizeof...(Ts)>
 {
 };
 
+#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	template <class T>
+	EA_CONSTEXPR size_t tuple_size_v = tuple_size<T>::value;
+#endif
+
 namespace Internal
 {
 template <typename TupleIndices, typename... Ts>
@@ -898,6 +903,30 @@ inline typename Internal::TupleCat<Tuples...>::ResultType tuple_cat(Tuples&&... 
 {
 	return Internal::TupleCat<Tuples...>::DoCat(forward<Tuples>(ts)...);
 }
+
+
+// apply
+//
+// Invoke a callable object using a tuple to supply the arguments. 
+//
+// http://en.cppreference.com/w/cpp/utility/apply
+//
+namespace detail
+{
+	template <class F, class Tuple, size_t... I>
+	EA_CONSTEXPR decltype(auto) apply_impl(F&& f, Tuple&& t, index_sequence<I...>)
+	{
+		return invoke(forward<F>(f), get<I>(forward<Tuple>(t))...);
+	}
+} // namespace detail
+
+template <class F, class Tuple>
+EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
+{
+	return detail::apply_impl(forward<F>(f), forward<Tuple>(t),
+		                      make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>{});
+}
+
 
 }  // namespace eastl
 
