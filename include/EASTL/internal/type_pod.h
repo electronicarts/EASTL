@@ -118,6 +118,10 @@ namespace eastl
 	// Old style macro, for bacwards compatibility:
 	#define EASTL_DECLARE_POD(T) namespace eastl{ template <> struct is_pod<T> : public true_type{}; template <> struct is_pod<const T> : public true_type{}; }
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_pod_v = is_pod<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -357,6 +361,10 @@ namespace eastl
 	// Old style macro, for bacwards compatibility:
 	#define EASTL_DECLARE_TRIVIAL_DESTRUCTOR(T) namespace eastl{ template <> struct has_trivial_destructor<T> : public true_type{}; template <> struct has_trivial_destructor<const T> : public true_type{}; }
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool has_trivial_destructor_v = has_trivial_destructor<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -800,6 +808,10 @@ namespace eastl
 			template <> struct is_constructible<T, U>  : public eastl::integral_constant<bool, isConstructible>  { }; \
 		}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_constructible_v = is_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -962,6 +974,11 @@ namespace eastl
 			template <> struct is_trivially_constructible<const volatile T> : public eastl::integral_constant<bool, isTriviallyConstructible>  { }; \
 		}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivially_constructible_v = is_trivially_constructible<T>::value;
+    #endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_trivially_default_constructible
@@ -976,6 +993,10 @@ namespace eastl
 	struct is_trivially_default_constructible 
 		: public eastl::is_trivially_constructible<T> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivially_default_constructible_v = is_trivially_default_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1007,6 +1028,13 @@ namespace eastl
 		struct is_trivial 
 			: public eastl::integral_constant<bool, eastl::is_trivially_copyable<T>::value && eastl::is_trivially_default_constructible<T>::value> {};
 	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivial_v = is_trivial<T>::value;
+    #endif
+
+	
 
 	///////////////////////////////////////////////////////////////////////
 	// is_nothrow_constructible
@@ -1135,6 +1163,10 @@ namespace eastl
 			template <> struct is_nothrow_constructible<T> : public eastl::integral_constant<bool, isNothrowConstructible>  { }; \
 		}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T, typename... Args>
+		EA_CONSTEXPR bool is_nothrow_constructible_v = is_nothrow_constructible<T, Args...>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1148,6 +1180,11 @@ namespace eastl
 	template <typename T>
 	struct is_default_constructible
 		: public eastl::is_constructible<T> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_default_constructible_v = is_default_constructible<T>::value;
+    #endif
 
 
 
@@ -1163,7 +1200,10 @@ namespace eastl
 	struct is_copy_constructible
 		: public eastl::is_constructible<T, typename eastl::add_lvalue_reference<typename eastl::add_const<T>::type>::type> {};
 
-
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_copy_constructible_v = is_copy_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1177,6 +1217,10 @@ namespace eastl
 	template <typename T> struct is_trivially_copy_constructible
 		: public eastl::is_trivially_constructible<T, typename eastl::add_lvalue_reference<typename eastl::add_const<T>::type>::type> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivially_copy_constructible_v = is_trivially_copy_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1191,6 +1235,10 @@ namespace eastl
 	struct is_nothrow_copy_constructible
 		: public is_nothrow_constructible<T, typename eastl::add_lvalue_reference<typename eastl::add_const<T>::type>::type> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_nothrow_copy_constructible_v = is_nothrow_copy_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1213,6 +1261,10 @@ namespace eastl
 			: public eastl::is_constructible<T, typename eastl::add_rvalue_reference<T>::type> {};
 	#endif
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_move_constructible_v = is_nothrow_copy_constructible<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1241,6 +1293,11 @@ namespace eastl
 		namespace eastl{                                                                                                                       \
 			template <> struct is_trivially_move_constructible<T>  : public eastl::integral_constant<bool, isTriviallyMoveConstructible>  { }; \
 		}
+	
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivially_move_constructible_v = is_trivially_move_constructible<T>::value;
+    #endif
 
 
 
@@ -1349,6 +1406,11 @@ namespace eastl
 		namespace eastl {                                                                                      \
 			template <> struct is_assignable<T, U> : public eastl::integral_constant<bool, isAssignable>  { }; \
 		}
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T, class U>
+		EA_CONSTEXPR bool is_assignable_v = is_assignable<T, U>::value;
+    #endif
 
 
 
@@ -1534,6 +1596,12 @@ namespace eastl
 		}
 
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T, class U>
+		EA_CONSTEXPR bool is_nothrow_assignable_v = is_nothrow_assignable<T, U>::value;
+    #endif
+
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_copy_assignable
@@ -1555,6 +1623,10 @@ namespace eastl
 		: public eastl::is_assignable<typename eastl::add_lvalue_reference<T>::type,
 									  typename eastl::add_lvalue_reference<typename eastl::add_const<T>::type>::type> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_copy_assignable_v = is_copy_assignable<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1585,6 +1657,11 @@ namespace eastl
 			template <> struct is_trivially_copy_assignable<T> : public eastl::integral_constant<bool, isTriviallyCopyAssignable>  { }; \
 		}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_trivially_copy_assignable_v = is_trivially_copy_assignable<T>::value;
+    #endif
+
 	///////////////////////////////////////////////////////////////////////
 	// is_nothrow_copy_assignable
 	//
@@ -1597,6 +1674,10 @@ namespace eastl
 		: public eastl::is_nothrow_assignable<typename eastl::add_lvalue_reference<T>::type,
 											  typename eastl::add_lvalue_reference<typename eastl::add_const<T>::type>::type> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_nothrow_copy_assignable_v = is_nothrow_copy_assignable<T>::value;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1627,6 +1708,11 @@ namespace eastl
 			template <> struct is_move_assignable<volatile T>       : public eastl::integral_constant<bool, isMoveAssignable>  { }; \
 			template <> struct is_move_assignable<const volatile T> : public eastl::integral_constant<bool, isMoveAssignable>  { }; \
 		}
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_move_assignable_v = is_move_assignable<T>::value;
+    #endif
 
 
  
@@ -1659,7 +1745,10 @@ namespace eastl
 		: public eastl::is_nothrow_assignable<typename eastl::add_lvalue_reference<T>::type,
 											  typename eastl::add_rvalue_reference<T>::type> {};
 
-
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_nothrow_move_assignable_v = is_nothrow_move_assignable<T>::value;
+	#endif
 
 	///////////////////////////////////////////////////////////////////////
 	// is_destructible

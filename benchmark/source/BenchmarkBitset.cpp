@@ -13,14 +13,10 @@
 #include <EAStdC/EAStopwatch.h>
 #include <EASTL/bitset.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4350) // behavior change: X called instead of Y
-#endif
+
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <bitset>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 using namespace EA;

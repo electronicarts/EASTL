@@ -1313,11 +1313,8 @@ int TestTypeTraits()
 	// common_type
 	static_assert((is_same<common_type<NonPod2*>::type, NonPod2*>::value), "common_type failure");
 	static_assert((is_same<common_type<int>::type, int>::value), "common_type failure");
-	#if EASTL_TYPE_TRAIT_common_type_CONFORMANCE
-		// The C++11 standard results in common_type<int, int> => int&&, but that's being revised for C++14 to be => int.
-		// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3687.html#2141
-		//static_assert((is_same<common_type<int, int>::type, int&&>::value), "common_type failure");
-	#endif
+	static_assert((is_same<common_type<void, void>::type, void>::value), "common_type failure");
+	static_assert((is_same<common_type<int, int>::type, int>::value), "common_type failure");
 
 
 	// rank

@@ -400,7 +400,7 @@
 	void EASTLTest_SetGeneralAllocator() { /* intentionally blank */ }
 	bool EASTLTest_ValidateHeap() { return true; }
 
-#endif // ....
+#endif // !EASTL_OPENSOURCE
 
 #endif // Header include guard
 

@@ -160,9 +160,17 @@ int TEST_STRING_NAME()
 	// basic_string(CtorSprintf, const value_type* pFormat, ...);
 	{
 	#if EASTL_SNPRINTF_TESTS_ENABLED
-		StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %d"), 42);
-		VERIFY(str == LITERAL("Hello, 42"));
-		VERIFY(str.validate());
+		{
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %d"), 42);
+			VERIFY(str == LITERAL("Hello, 42"));
+			VERIFY(str.validate());
+		}
+
+		{
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %d %d %d %d %d %d %d %d %d"), 42, 42, 42, 42, 42, 42, 42, 42, 42);
+			VERIFY(str == LITERAL("Hello, 42 42 42 42 42 42 42 42 42"));
+			VERIFY(str.validate());
+		}
 	#endif
 	}
 
@@ -1535,7 +1543,7 @@ int TEST_STRING_NAME()
 	// test basic_string implicit conversion to basic_string_view
 	// 		eastl::string implicitly converts to eastl::string_view.
 	{
-		StringType str("abcdefghijklmnopqrstuvwxyz");
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		[&](basic_string_view<typename StringType::value_type> sv)  // simulate api that requires eastl::string_view.
 		{
 			VERIFY(sv.compare(LITERAL("abcdefghijklmnopqrstuvwxyz")) == 0);

@@ -56,6 +56,14 @@ public:
 	const int value;
 };
 
+
+struct NotDefaultConstructible
+{
+	NotDefaultConstructible() = delete;
+};
+static_assert(!eastl::is_default_constructible<NotDefaultConstructible>::value, "eastl::is_default_constructible<NotDefaultConstructible>::value");
+
+
 class CopyConstructible
 {
 public:

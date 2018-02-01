@@ -30,11 +30,7 @@
 #endif
 
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4555) // expression has no effect; expected expression with side-effect
-	#pragma warning(disable: 4350) // behavior change: X called instead of Y
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #if STD_HASH_SUPPORTED
 	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && (defined(_CXXCONFIG) || defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_MINGW))
 		#include <ext/hash_map>
@@ -45,9 +41,7 @@
 #include <string>
 #include <algorithm>
 #include <stdio.h>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 
