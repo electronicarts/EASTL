@@ -865,7 +865,7 @@ void Test::WriteReport()
     {
         char buffer[384];
         EA::EAMain::ReportFunction pReportFunction = GetReportFunction();
-        EA::StdC::Sprintf(buffer, "%-24s - %s\n", msTestName.c_str(), mnErrorCount ? "FAILED" : "PASSED");
+        EA::StdC::Sprintf(buffer, "%-24s - %s \t%2.4f secs\n", msTestName.c_str(), mnErrorCount ? "FAILED" : "PASSED", mnElapsedTestTimeInMicroseconds / 1000000.f);
         pReportFunction(buffer);
     }
 }
@@ -888,6 +888,8 @@ int TestFunction::Run()
 
     if(mpFunction)
     {
+		uint64_t startTimeInMicroseconds = GetSystemTimeMicroseconds();
+
         #ifdef _MSC_VER
             __try {
                 nTestResult = (*mpFunction)();
@@ -904,6 +906,8 @@ int TestFunction::Run()
             mnErrorCount++;
         else
             mnSuccessCount++;
+
+		mnElapsedTestTimeInMicroseconds = (GetSystemTimeMicroseconds() - startTimeInMicroseconds);
     }
 
     WriteReport();

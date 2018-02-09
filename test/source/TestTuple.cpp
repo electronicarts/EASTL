@@ -335,6 +335,129 @@ int TestTuple()
 		swap(anotherEmptyTuple, emptyTuple);
 	}
 
+	// test piecewise_construct
+	{
+		{
+			struct local
+			{
+				local() = default;
+				local(int a, int b) : mA(a), mB(b) {}
+
+				int mA = 0;
+				int mB = 0;
+			};
+
+			auto t = make_tuple(42, 43);
+
+			eastl::pair<local, local> p(eastl::piecewise_construct, t, t);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 42);
+			EATEST_VERIFY(p.first.mB  == 43);
+			EATEST_VERIFY(p.second.mB == 43);
+		}
+
+		{
+			struct local
+			{
+				local() = default;
+				local(int a, int b, int c, int d) : mA(a), mB(b), mC(c), mD(d) {}
+
+				int mA = 0;
+				int mB = 0;
+				int mC = 0;
+				int mD = 0;
+			};
+
+			auto t = make_tuple(42, 43, 44, 45);
+
+			eastl::pair<local, local> p(eastl::piecewise_construct, t, t);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 42);
+
+			EATEST_VERIFY(p.first.mB  == 43);
+			EATEST_VERIFY(p.second.mB == 43);
+
+			EATEST_VERIFY(p.first.mC  == 44);
+			EATEST_VERIFY(p.second.mC == 44);
+
+			EATEST_VERIFY(p.first.mD  == 45);
+			EATEST_VERIFY(p.second.mD == 45);
+		}
+
+		{
+			struct local1
+			{
+				local1() = default;
+				local1(int a) : mA(a) {}
+				int mA = 0;
+			};
+
+			struct local2
+			{
+				local2() = default;
+				local2(char a) : mA(a) {}
+				char mA = 0;
+			};
+
+			auto t1 = make_tuple(42);
+			auto t2 = make_tuple('a');
+
+			eastl::pair<local1, local2> p(eastl::piecewise_construct, t1, t2);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 'a');
+		}
+	}
+
+	// apply
+	{
+		// test with tuples
+		{
+			{
+				auto result = eastl::apply([](int i) { return i; }, make_tuple(1));
+				EATEST_VERIFY(result == 1);
+			}
+
+			{
+				auto result = eastl::apply([](int i, int j) { return i + j; }, make_tuple(1, 2));
+				EATEST_VERIFY(result == 3);
+			}
+
+
+			{
+				auto result = eastl::apply([](int i, int j, int k, int m) { return i + j + k + m; }, make_tuple(1, 2, 3, 4));
+				EATEST_VERIFY(result == 10);
+			}
+		}
+
+		// test with pair
+		{
+			auto result = eastl::apply([](int i, int j) { return i + j; }, make_pair(1, 2));
+			EATEST_VERIFY(result == 3);
+		}
+
+		// test with array
+		{
+			// TODO(rparolin):   
+			// eastl::array requires eastl::get support before we can support unpacking eastl::arrays with eastl::apply.
+			//
+			// {
+			//     auto result = eastl::apply([](int i) { return i; }, eastl::array<int, 1>{1});
+			//     EATEST_VERIFY(result == 1);
+			// }
+			// {
+			//     auto result = eastl::apply([](int i, int j) { return i + j; }, eastl::array<int, 2>{1,2});
+			//     EATEST_VERIFY(result == 3);
+			// }
+			// {
+			//     auto result = eastl::apply([](int i, int j, int k, int m) { return i + j + k + m; }, eastl::array<int, 4>{1, 2, 3, 4});
+			//     EATEST_VERIFY(result == 10);
+			// }
+		}
+	}
+
 	return nErrorCount;
 }
 

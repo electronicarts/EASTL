@@ -22,6 +22,7 @@
 //      which is safe to call even if the block is empty. This avoids the 
 //      common &v[0], &v.front(), and &*v.begin() constructs that trigger false 
 //      asserts in STL debugging modes.
+//    - vector data is guaranteed to be contiguous.
 //    - vector has a set_capacity() function which frees excess capacity. 
 //      The only way to do this with std::vector is via the cryptic non-obvious 
 //      trick of using: vector<SomeClass>(x).swap(x);
@@ -1840,18 +1841,18 @@ namespace eastl
 			const size_type nNewSize = eastl::max(nGrowSize, nPrevSize + n);
 			pointer const pNewData = DoAllocate(nNewSize);
 
-#if EASTL_EXCEPTIONS_ENABLED
-			pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
-			try { pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
-			catch (...)
-			{
-				eastl::destruct(pNewData, pNewEnd);
-				DoFree(pNewData, nNewSize);
-				throw;
-			}
-#else
-			pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
-#endif
+			#if EASTL_EXCEPTIONS_ENABLED
+				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
+				try { pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
+				catch (...)
+				{
+					eastl::destruct(pNewData, pNewEnd);
+					DoFree(pNewData, nNewSize);
+					throw;
+				}
+			#else
+				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+			#endif
 
 			eastl::uninitialized_default_fill_n(pNewEnd, n);
 			pNewEnd += n;

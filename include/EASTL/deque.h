@@ -1528,6 +1528,7 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline void deque<T, Allocator, kDequeSubarraySize>::shrink_to_fit()
 	{
+		return set_capacity(0);
 	}
 
 

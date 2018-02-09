@@ -88,11 +88,7 @@
 #ifndef EASTL_STRING_H
 #define EASTL_STRING_H
 
-
 #include <EASTL/internal/config.h>
-#if EASTL_ABSTRACT_STRING_ENABLED
-	#include <EASTL/bonus/string_abstract.h>
-#else // 'else' encompasses the entire rest of this file.
 #include <EASTL/allocator.h>
 #include <EASTL/iterator.h>
 #include <EASTL/algorithm.h>
@@ -252,34 +248,6 @@ namespace eastl
 		#define EASTL_BASIC_STRING_DEFAULT_ALLOCATOR allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME)
 	#endif
 
-
-
-	/// gEmptyString
-	///
-	/// Declares a shared terminating 0 representation for scalar strings that are empty.
-	///
-	union EmptyString
-	{
-		uint32_t       mUint32;
-		char           mEmpty8[1];
-		unsigned char  mEmptyU8[1];
-		signed char    mEmptyS8[1];
-		char16_t       mEmpty16[1];
-		char32_t       mEmpty32[1];
-	  #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		wchar_t        mEmptyWchar[1];
-	  #endif
-	};
-	extern EASTL_API EmptyString gEmptyString;
-
-	inline const signed char*   GetEmptyString(signed char)   { return gEmptyString.mEmptyS8;  }
-	inline const unsigned char* GetEmptyString(unsigned char) { return gEmptyString.mEmptyU8;  }
-	inline const char*          GetEmptyString(char)          { return gEmptyString.mEmpty8;  }
-	inline const char16_t*      GetEmptyString(char16_t)      { return gEmptyString.mEmpty16; }
-	inline const char32_t*      GetEmptyString(char32_t)      { return gEmptyString.mEmpty32; }
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline const wchar_t*   GetEmptyString(wchar_t)       { return gEmptyString.mEmptyWchar; }
-	#endif
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -634,7 +602,12 @@ namespace eastl
 		reverse_iterator erase(reverse_iterator position);
 		reverse_iterator erase(reverse_iterator first, reverse_iterator last);
 		void             clear() EA_NOEXCEPT;
-		void             reset_lose_memory() EA_NOEXCEPT;                       // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
+		#if EASTL_RESET_ENABLED
+			void             reset_lose_memory() EA_NOEXCEPT; // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
+		#endif
+
+		// Detach memory
+		pointer detach() EA_NOEXCEPT;
 
 		//Replacement operations
 		this_type&  replace(size_type position, size_type n, const this_type& x);
@@ -716,9 +689,6 @@ namespace eastl
 		bool validate() const EA_NOEXCEPT;
 		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
 
-		#if EASTL_RESET_ENABLED
-			void reset() EA_NOEXCEPT; // This function name is deprecated; use reset_lose_memory instead.
-		#endif
 
 	protected:
 		// Helper functions for initialization/insertion operations.
@@ -1369,23 +1339,45 @@ namespace eastl
 
 
 	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
 		template <typename T, typename Allocator>
-		inline void basic_string<T, Allocator>::reset() EA_NOEXCEPT
+		inline void basic_string<T, Allocator>::reset_lose_memory() EA_NOEXCEPT
 		{
-			reset_lose_memory();
+			// The reset function is a special extension function which unilaterally 
+			// resets the container to an empty state without freeing the memory of 
+			// the contained objects. This is useful for very quickly tearing down a 
+			// container built into scratch memory.
+			AllocateSelf();
 		}
 	#endif
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::reset_lose_memory() EA_NOEXCEPT
+	inline typename basic_string<T, Allocator>::pointer 
+	basic_string<T, Allocator>::detach() EA_NOEXCEPT
 	{
-		// The reset function is a special extension function which unilaterally 
-		// resets the container to an empty state without freeing the memory of 
-		// the contained objects. This is useful for very quickly tearing down a 
-		// container built into scratch memory.
-		AllocateSelf();
+		// The detach function is an extension function which simply forgets the
+		// owned pointer. It doesn't free it but rather assumes that the user
+		// does. If the string is utilizing the short-string-optimization when a
+		// detach is requested, a copy of the string into a seperate memory
+		// allocation occurs and the owning pointer is given to the user who is
+		// responsible for freeing the memory.
+
+		pointer pDetached = nullptr;
+
+		if (internalLayout().IsSSO())
+		{
+			size_type n = (size_type)CharStrlen(internalLayout().BeginPtr()) + 1; // We'll need at least this much. '+1' so that we have room for the terminating 0.
+			pDetached = DoAllocate(n);
+			auto* pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pDetached);
+			*pNewEnd = 0;
+		}
+		else
+		{
+			pDetached = internalLayout().BeginPtr();
+		}
+
+		AllocateSelf(); // reset to string to empty
+		return pDetached;
 	}
 
 
@@ -1676,10 +1668,7 @@ namespace eastl
 			va_copy(argumentsSaved, arguments);
 		#endif
 
-		if(internalLayout().BeginPtr() == GetEmptyString(value_type())) // We need to do this because non-standard vsnprintf implementations will otherwise overwrite gEmptyString with a non-zero char.
-			nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), 0, pFormat, arguments);
-		else
-			nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)internalLayout().GetRemainingCapacity(), pFormat, arguments);
+		nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)internalLayout().GetRemainingCapacity(), pFormat, arguments);
 
 		if(nReturnValue >= (int)internalLayout().GetRemainingCapacity())  // If there wasn't enough capacity...
 		{
@@ -3098,7 +3087,6 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::value_type*
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
-		EASTL_ASSERT(n > 1); // We want n > 1 because n == 1 is reserved for empty capacity and usage of gEmptyString.
 		return (value_type*)EASTLAlloc(get_allocator(), n * sizeof(value_type));
 	}
 
@@ -3122,8 +3110,6 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::AllocateSelf()
 	{
-		EASTL_ASSERT(gEmptyString.mUint32 == 0);
-
 		const auto pSSOBegin = internalLayout().SSOBufferPtr();
 		internalLayout().SetBeginPtr(pSSOBegin); 
 		internalLayout().SetEndPtr(pSSOBegin);
@@ -3174,11 +3160,7 @@ namespace eastl
 	{
 		if (!internalLayout().IsSSO())
 		{
-			// Note that we compare mpCapacity to mpEnd instead of comparing 
-			// mpBegin to &gEmptyString. This is important because we may have
-			// a case whereby one library passes a string to another library to 
-			// deallocate and the two libraries have idependent versions of gEmptyString.
-			if ((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) > 1) // If we are not using gEmptyString as our memory...
+			if ((internalLayout().CapacityPtr() - internalLayout().BeginPtr()) > 1) 
 				DoFree(internalLayout().BeginPtr(), (size_type)(internalLayout().CapacityPtr() - internalLayout().BeginPtr()));
 		}
 	}
@@ -3895,8 +3877,6 @@ namespace eastl
 #ifdef _MSC_VER
 	#pragma warning(pop)
 #endif
-
-#endif // EASTL_ABSTRACT_STRING_ENABLED
 
 #endif // Header include guard
 

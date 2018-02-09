@@ -1147,61 +1147,14 @@ int TestTypeTraits()
 		static_assert(is_trivially_copy_assignable<const char*>::value == true, "is_trivially_copy_assignable failure");
 		static_assert(is_trivially_copy_assignable<NoTrivialCopy1>::value == false, "is_trivially_copy_assignable failure");
 
-#ifdef INTENTIONALLY_DISABLED
+	#ifdef INTENTIONALLY_DISABLED
 		// These tests currently fail on clang, but they would pass using the std::is_trivially_copy_assignable trait.  We should
 		// determine if our implementation is correct, or if clang is actually incorrect.
 		static_assert(is_trivially_copy_assignable<const int>::value == true, "is_trivially_copy_assignable failure");
 		static_assert(is_trivially_copy_assignable<const PodA>::value == true, "is_trivially_copy_assignable failure");
 		static_assert(is_trivially_copy_assignable<PodA>::value == true, "is_trivially_copy_assignable failure");
-#endif
-
-
-		// This relatively complex test is to prevent a regression on VS2013.  The data types have what may appear to be
-		// strange names (for test code) because the code is based on a test case extracted from the Frostbite codebase.
-		// This test is actually invalid and should be removed as const data memebers are problematic for STL container
-		// implementations. (ie.  they prevent constructors from being generated).
-		{
-			EA_DISABLE_VC_WARNING(4512) // disable warning : "assignment operator could not be generated"
-#if (defined(_MSC_VER) && (_MSC_VER >= 1900))  // VS2015-preview and later.
-			EA_DISABLE_VC_WARNING(5025) // disable warning : "move assignment operator could not be generated"
-			EA_DISABLE_VC_WARNING(4626) // disable warning : "assignment operator was implicitly defined as deleted"
-			EA_DISABLE_VC_WARNING(5027) // disable warning : "move assignment operator was implicitly defined as deleted"
-#endif
-
-			struct ScenarioRefEntry
-			{
-				ScenarioRefEntry(const eastl::string& contextDatabase) : ContextDatabase(contextDatabase) {}
-				struct RowEntry
-				{
-					RowEntry()
-						:Controller(gEmptyStringInstance)
-					{
-					}
-					const eastl::string& Controller;
-				};
-				const eastl::string& ContextDatabase;
-				eastl::vector<RowEntry> Rows;
-			};
-			typedef eastl::vector<ScenarioRefEntry> ScenarRefData;
-			struct AntMetaDataRecord
-			{
-				ScenarRefData ScenarioRefs;
-			};
-
-			typedef eastl::iterator_traits<eastl::generic_iterator<AntMetaDataRecord*, void> >::value_type value_type;
-			static_assert((eastl::is_trivially_copy_assignable<value_type>::value == false), "is_trivially_copy_assignable failure");
-
-			#if (defined(_MSC_VER) && (_MSC_VER >= 1900))  // VS2015-preview and later.
-				EA_RESTORE_VC_WARNING() // disable warning 5025:  "move assignment operator could not be generated"
-				EA_RESTORE_VC_WARNING() // disable warning 4626:  "assignment operator was implicitly defined as deleted"
-				EA_RESTORE_VC_WARNING() // disable warning 5027:  "move assignment operator was implicitly defined as deleted"
-			#endif
-			EA_RESTORE_VC_WARNING()
-		}
+	#endif
 	}
-
-
-
 	// is_trivially_default_constructible
 	// To do.
 
@@ -1360,11 +1313,8 @@ int TestTypeTraits()
 	// common_type
 	static_assert((is_same<common_type<NonPod2*>::type, NonPod2*>::value), "common_type failure");
 	static_assert((is_same<common_type<int>::type, int>::value), "common_type failure");
-	#if EASTL_TYPE_TRAIT_common_type_CONFORMANCE
-		// The C++11 standard results in common_type<int, int> => int&&, but that's being revised for C++14 to be => int.
-		// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3687.html#2141
-		//static_assert((is_same<common_type<int, int>::type, int&&>::value), "common_type failure");
-	#endif
+	static_assert((is_same<common_type<void, void>::type, void>::value), "common_type failure");
+	static_assert((is_same<common_type<int, int>::type, int>::value), "common_type failure");
 
 
 	// rank

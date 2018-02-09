@@ -13,7 +13,6 @@
 #include <EASTL/list.h>
 #include <EAStdC/EAString.h>
 
-
 namespace
 {
 	// Used for str_less tests below.
@@ -119,10 +118,6 @@ int TestHashHelper(T val)
 
 	return nErrorCount;
 }
-
-int ReturnVal(int param) { return param; }
-int ReturnZero() { return 0; }
-int ReturnOne() { return 1; }
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestFunctional
@@ -418,14 +413,149 @@ int TestFunctional()
 		{
 			TestStruct(int inValue) : value(inValue) {}
 			void Add(int addAmount) { value += addAmount; }
-			// void Add(int addAmount1, int addAmount2) { value += (addAmount1 + addAmount2); }	// error
-			// void Add() { value += 10; } 													   	// error
+			int GetValue() { return value; }
+			int& GetValueReference() { return value; }
 			int value;
 		};
-		TestStruct a(42);
-		eastl::invoke(&TestStruct::Add, a, 6);
-		// eastl::invoke(&TestStruct::Add, a);  		// error:  design does not support overloading.  member function must be known at construction time.
-		// eastl::invoke(&TestStruct::Add, a, 6,10);    // error:  design does not support overloading.  member function must be known at construction time.
+
+		struct TestFunctor
+		{
+			void operator()() { called = true; }
+			bool called = false;
+		};
+
+		struct TestFunctorArguments
+		{
+			void operator()(int i) { value = i; }
+			int value = 0;
+		};
+
+		{
+			TestStruct a(42);
+			eastl::invoke(&TestStruct::Add, a, 10);
+			EATEST_VERIFY(a.value == 52);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::Add), TestStruct, int>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::Add), TestStruct, int>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::invoke(&TestStruct::Add, &a, 10);
+			EATEST_VERIFY(a.value == 52);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::Add), TestStruct *, int>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::Add), TestStruct *, int>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::reference_wrapper<TestStruct> r(a);
+			eastl::invoke(&TestStruct::Add, r, 10);
+			EATEST_VERIFY(a.value == 52);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::Add), eastl::reference_wrapper<TestStruct>, int>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::Add), eastl::reference_wrapper<TestStruct>, int>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::invoke(&TestStruct::GetValueReference, a) = 43;
+			EATEST_VERIFY(a.value == 43);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::GetValueReference), TestStruct &>::type, int &>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::GetValueReference), TestStruct &>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			EATEST_VERIFY(eastl::invoke(&TestStruct::value, a) == 42);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::value), TestStruct &>::type, int &>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::value), TestStruct &>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::invoke(&TestStruct::value, a) = 43;
+			EATEST_VERIFY(a.value == 43);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::value), TestStruct &>::type, int &>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::value), TestStruct &>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::invoke(&TestStruct::value, &a) = 43;
+			EATEST_VERIFY(a.value == 43);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::value), TestStruct *>::type, int &>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::value), TestStruct *>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestStruct a(42);
+			eastl::reference_wrapper<TestStruct> r(a);
+			eastl::invoke(&TestStruct::value, r) = 43;
+			EATEST_VERIFY(a.value == 43);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::value), eastl::reference_wrapper<TestStruct>>::type, int &>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(&TestStruct::GetValue), eastl::reference_wrapper<TestStruct>>::value, "incorrect value for is_invocable");
+		}
+        
+        #ifndef EA_COMPILER_GNUC
+		{
+			TestStruct a(42);
+			EATEST_VERIFY(eastl::invoke(&TestStruct::GetValue, a) == 42);
+
+			static_assert(
+			    eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::GetValue), TestStruct*>::type, int>::value,
+			    "incorrect type for invoke_result");
+
+			static_assert(eastl::is_invocable<decltype(&TestStruct::GetValue), TestStruct*>::value, "incorrect value for is_invocable");
+		}
+        #endif
+		{
+			TestFunctor f;
+			eastl::invoke(f);
+			EATEST_VERIFY(f.called);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(f)>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(f)>::value, "incorrect value for is_invocable");
+		}
+		{
+			TestFunctorArguments f;
+			eastl::invoke(f, 42);
+			EATEST_VERIFY(f.value == 42);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(f), int>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(f), int>::value, "incorrect value for is_invocable");
+		}
+		{
+			static bool called = false;
+			auto f = [] {called = true;};
+			eastl::invoke(f);
+			EATEST_VERIFY(called);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(f)>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(f)>::value, "incorrect value for is_invocable");
+		}
+		{
+			static int value = 0;
+			auto f = [](int i) {value = i;};
+			eastl::invoke(f, 42);
+			EATEST_VERIFY(value == 42);
+
+			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(f), int>::type, void>::value, "incorrect type for invoke_result");
+			static_assert(eastl::is_invocable<decltype(f), int>::value, "incorrect value for is_invocable");
+		}
+		{
+			struct A {};
+			struct B : public A {};
+
+			struct TestStruct
+			{
+				A a() { return A(); };
+				B b() { return B(); };
+			};
+
+			static_assert(!eastl::is_invocable_r<B, decltype(&TestStruct::a), TestStruct>::value, "incorrect value for is_invocable_r");
+			static_assert(eastl::is_invocable_r<A, decltype(&TestStruct::b), TestStruct>::value, "incorrect value for is_invocable_r");
+			static_assert(eastl::is_invocable_r<B, decltype(&TestStruct::b), TestStruct>::value, "incorrect value for is_invocable_r");
+		}
 	}
 
 	// eastl::mem_fn
@@ -435,6 +565,14 @@ int TestFunctional()
 			AddingStruct(int inValue) : value(inValue) {}
 			void Add(int addAmount) { value += addAmount; }
 			void Add2(int add1, int add2) { value += (add1 + add2); }
+			int value;
+		};
+
+		struct OverloadedStruct
+		{
+			OverloadedStruct(int inValue) : value(inValue) {}
+			int &Value() { return value; }
+			const int &Value() const { return value; }
 			int value;
 		};
 
@@ -453,6 +591,11 @@ int TestFunctional()
 			auto fStructAdd = eastl::mem_fn(&AddingStruct::Add);
 			fStructAdd(a,6);
 			EATEST_VERIFY(a.value == 48);
+		}
+		{
+			OverloadedStruct a(42);
+			EATEST_VERIFY(eastl::mem_fn<int &()>(&OverloadedStruct::Value)(a) == 42);
+			EATEST_VERIFY(eastl::mem_fn<const int &() const>(&OverloadedStruct::Value)(a) == 42);
 		}
 	}
 #endif
@@ -977,7 +1120,78 @@ int TestFunctional()
 		}
 	}
 
+	// reference_wrapper
+	{
+		// operator T&
+		{
+			int i = 0;
+			eastl::reference_wrapper<int> r(i);
+			int &j = r;
+			j = 42;
+
+			EATEST_VERIFY(i == 42);
+		}
+
+		// get
+		{
+			int i = 0;
+			eastl::reference_wrapper<int> r(i);
+			r.get() = 42;
+
+			EATEST_VERIFY(i == 42);
+		}
+
+		// copy constructor
+		{
+			int i = 0;
+			eastl::reference_wrapper<int> r(i);
+			eastl::reference_wrapper<int> copy(r);
+			copy.get() = 42;
+
+			EATEST_VERIFY(i == 42);
+		}
+
+		// assignment
+		{
+			int i = 0;
+			int j = 0;
+
+			eastl::reference_wrapper<int> r1(i);
+			eastl::reference_wrapper<int> r2(j);
+
+			r2 = r1; // rebind r2 to refer to i
+			r2.get() = 42;
+
+			EATEST_VERIFY(i == 42);
+			EATEST_VERIFY(j == 0);
+		}
+
+		// invoke
+		{
+			struct Functor
+			{
+				bool called = false;
+				void operator()() {called = true;}
+			};
+
+			Functor f;
+			eastl::reference_wrapper<Functor> r(f);
+			r();
+
+			EATEST_VERIFY(f.called == true);
+		}
+	}
+
 	return nErrorCount;
 }
 
+// Test that we can instantiate invoke_result with incorrect argument types.
+// This should be instantiable, but should not have a `type` typedef.
+struct TestInvokeResult
+{
+	int f(int i) {return i;}
+};
 
+template struct eastl::invoke_result<decltype(&TestInvokeResult::f), TestInvokeResult, void>;
+static_assert(!eastl::is_invocable<decltype(&TestInvokeResult::f), TestInvokeResult, void>::value, "incorrect value for is_invocable");
+static_assert(eastl::is_invocable<decltype(&TestInvokeResult::f), TestInvokeResult, int>::value, "incorrect value for is_invocable");

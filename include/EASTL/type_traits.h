@@ -440,12 +440,22 @@ namespace eastl
 	template <typename T>
 	struct enable_if<true, T> { typedef T type; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <bool B, class T = void>
+		using enable_if_t = typename enable_if<B, T>::type;
+	#endif
+
 
 	template<bool B, typename T = void>
 	struct disable_if {};
  
 	template <typename T>
 	struct disable_if<false, T> { typedef T type; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <bool B, class T = void>
+		using disable_if_t = typename disable_if<B, T>::type;
+	#endif
 
 
 
@@ -995,51 +1005,30 @@ namespace eastl
 	//     Printf("%zu", static_max<3, 7, 1, 5>::value); // prints "7"
 	// 
 	///////////////////////////////////////////////////////////////////////
+	#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 1
+	#define EASTL_TYPE_TRAIT_static_max_CONFORMANCE 1
 
-	// VS2013 fails to compile the variadic code below due to what looks like a deficiency in their handling of integral variadic template parameters.
-	// Also mingw's clang and gcc fail to compile the code on windows.
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_MSVC) || (defined(EA_PLATFORM_MINGW) && (defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)))
-		// We support only two parameters.
+	template <size_t I0, size_t ...in>
+	struct static_min;
 
-		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 0
-		#define EASTL_TYPE_TRAIT_static_max_CONFORMANCE 0
+	template <size_t I0>
+	struct static_min<I0>
+		{ static const size_t value = I0; };
 
-		template <size_t I0, size_t I1>
-		struct static_min
-			{ static const size_t value = ((I0 <= I1) ? I0 : I1); };
+	template <size_t I0, size_t I1, size_t ...in>
+	struct static_min<I0, I1, in...>
+		{ static const size_t value = ((I0 <= I1) ? static_min<I0, in...>::value : static_min<I1, in...>::value); };
 
-		template <size_t I0, size_t I1>
-		struct static_max
-			{ static const size_t value = ((I0 >= I1) ? I0 : I1); };
+	template <size_t I0, size_t ...in>
+	struct static_max;
 
-	#else
-		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 1
-		#define EASTL_TYPE_TRAIT_static_max_CONFORMANCE 1
+	template <size_t I0>
+	struct static_max<I0>
+		{ static const size_t value = I0; };
 
-		template <size_t I0, size_t ...in>
-		struct static_min;
-
-		template <size_t I0>
-		struct static_min<I0>
-			{ static const size_t value = I0; };
-
-		template <size_t I0, size_t I1, size_t ...in>
-		struct static_min<I0, I1, in...>
-			{ static const size_t value = ((I0 <= I1) ? static_min<I0, in...>::value : static_min<I1, in...>::value); };
-
-		template <size_t I0, size_t ...in>
-		struct static_max;
-
-		template <size_t I0>
-		struct static_max<I0>
-			{ static const size_t value = I0; };
-
-		template <size_t I0, size_t I1, size_t ...in>
-		struct static_max<I0, I1, in...>
-			{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
-	#endif
-
-
+	template <size_t I0, size_t I1, size_t ...in>
+	struct static_max<I0, I1, in...>
+		{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
 
 } // namespace eastl
 

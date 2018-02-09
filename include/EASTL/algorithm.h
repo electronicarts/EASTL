@@ -2646,7 +2646,7 @@ namespace eastl
 		{
 			if(!(*first == value)) // Note that we always express value comparisons in terms of < or ==.
 			{
-				*result = *first;
+				*result = move(*first);
 				++result;
 			}
 		}
@@ -2674,7 +2674,7 @@ namespace eastl
 		{
 			if(!predicate(*first))
 			{
-				*result = *first;
+				*result = eastl::move(*first);
 				++result;
 			}
 		}

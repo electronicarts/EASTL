@@ -1271,6 +1271,13 @@ int TestHash()
 
 			// iterator insert(const_iterator hint, value_type&& value);
 		#endif
+
+		// Regression of user reported compiler error in hashtable sfinae mechanism 
+		{
+			TestObject::Reset();
+			eastl::hash_set<TestObject> toSet;
+			toSet.emplace(3, 4, 5);
+		}
 	}
 
 

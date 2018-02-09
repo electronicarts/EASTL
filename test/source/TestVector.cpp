@@ -875,7 +875,6 @@ int TestVector()
         EATEST_VERIFY(it == at);
         EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 13, 13, 13, 13, 42, 42, 42, 13, 13,
                                      49, 99, 999, -1));
-
 		// Insert iterator range
 		const int data[] = {2, 3, 4, 5};
 		it = v.insert(v.begin() + 1, data, data + 4);

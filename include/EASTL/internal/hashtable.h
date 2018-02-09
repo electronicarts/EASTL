@@ -1209,7 +1209,7 @@ namespace eastl
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             ENABLE_IF_TRUETYPE(BoolConstantT) = 0) const EA_NOEXCEPT
+		                             ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt.first;
 		}
@@ -1217,7 +1217,7 @@ namespace eastl
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             DISABLE_IF_TRUETYPE(BoolConstantT) = 0) const EA_NOEXCEPT
+		                             DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt;
 		}
@@ -1233,10 +1233,10 @@ namespace eastl
 		void        DoFreeBuckets(node_type** pBucketArray, size_type n);
 
 		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT) = 0>
+			template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 			eastl::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args);
 
-			template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = 0>
+			template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 			iterator DoInsertValue(BoolConstantT, Args&&... args);
 
 			template <class... Args>
@@ -1250,12 +1250,12 @@ namespace eastl
 		                                                   hash_code_t c,
 		                                                   node_type* pNodeNew,
 		                                                   value_type&& value,
-		                                                   ENABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		                                                   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		    template <typename BoolConstantT>
 		    eastl::pair<iterator, bool> DoInsertValue(BoolConstantT,
 		                                              value_type&& value,
-		                                              ENABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		                                              ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		    template <typename BoolConstantT>
 		    iterator DoInsertValueExtra(BoolConstantT,
@@ -1263,10 +1263,10 @@ namespace eastl
 		                                hash_code_t c,
 		                                node_type* pNodeNew,
 		                                value_type&& value,
-										DISABLE_IF_TRUETYPE(BoolConstantT) = 0);
+										DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		    template <typename BoolConstantT>
-		    iterator DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		    iterator DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		    node_type* DoAllocateNode(value_type&& value);
 		#endif
@@ -1277,12 +1277,12 @@ namespace eastl
 													   hash_code_t c,
 													   node_type* pNodeNew,
 													   const value_type& value,
-													   ENABLE_IF_TRUETYPE(BoolConstantT) = 0);
+													   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		eastl::pair<iterator, bool> DoInsertValue(BoolConstantT,
 		                                          const value_type& value,
-		                                          ENABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		                                          ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		iterator DoInsertValueExtra(BoolConstantT,
@@ -1290,10 +1290,10 @@ namespace eastl
 		                            hash_code_t c,
 		                            node_type* pNodeNew,
 		                            const value_type& value,
-		                            DISABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		                            DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
-		iterator DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT) = 0);
+		iterator DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 
 		node_type* DoAllocateNode(const value_type& value);
