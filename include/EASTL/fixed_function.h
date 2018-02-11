@@ -120,7 +120,7 @@ namespace ff_detail
 		static const int SIZE_IN_BYTES = SIZE_IN_BYTES_T;
 
 	    functor_storage_type_with_size functor;
-	    const function_table* function_table;
+	    const function_table* function_table_ptr;
     };
 
 
@@ -173,7 +173,7 @@ namespace ff_detail
 	template<typename T, typename TotalStorageType>
 	static void init_function_table(TotalStorageType& storage)
 	{
-		storage.function_table = &get_default_function_table<T, TotalStorageType>();
+		storage.function_table_ptr = &get_default_function_table<T, TotalStorageType>();
 	}
 
 
@@ -339,7 +339,7 @@ public:
 	fixed_function(const fixed_function& other) 
 		: call(other.call)
 	{
-		other.storage.function_table->call_copy(eastl::addressof(storage), eastl::addressof(other.storage));
+		other.storage.function_table_ptr->call_copy(eastl::addressof(storage), eastl::addressof(other.storage));
 	}
 
 	template <typename T>
@@ -360,7 +360,7 @@ public:
 	fixed_function& operator=(const fixed_function& other) EA_NOEXCEPT
 	{
 		call = other.call;
-		other.storage.function_table->call_copy(eastl::addressof(storage), eastl::addressof(other.storage));
+		other.storage.function_table_ptr->call_copy(eastl::addressof(storage), eastl::addressof(other.storage));
 		return *this;
 	}
 
@@ -387,7 +387,7 @@ public:
 
 	~fixed_function() EA_NOEXCEPT
 	{
-		storage.function_table->call_destroy(eastl::addressof(storage));
+		storage.function_table_ptr->call_destroy(eastl::addressof(storage));
 	}
 
 	Result operator()(Arguments... arguments) const
@@ -398,9 +398,9 @@ public:
 	void swap(fixed_function& other) EA_NOEXCEPT
 	{
 		total_storage_type_with_size temp_storage;
-		other.storage.function_table->call_move_and_destroy(eastl::addressof(temp_storage), eastl::addressof(other.storage));
-		storage.function_table->call_move_and_destroy(eastl::addressof(other.storage), eastl::addressof(storage));
-		temp_storage.function_table->call_move_and_destroy(eastl::addressof(storage), eastl::addressof(temp_storage));
+		other.storage.function_table_ptr->call_move_and_destroy(eastl::addressof(temp_storage), eastl::addressof(other.storage));
+		storage.function_table_ptr->call_move_and_destroy(eastl::addressof(other.storage), eastl::addressof(storage));
+		temp_storage.function_table_ptr->call_move_and_destroy(eastl::addressof(storage), eastl::addressof(temp_storage));
 
 		eastl::swap(call, other.call);
 	}
@@ -408,19 +408,19 @@ public:
 	#ifndef FUNC_NO_RTTI
 	    const std::type_info& target_type() const EA_NOEXCEPT
 		{
-			return storage.function_table->call_type_id();
+			return storage.function_table_ptr->call_type_id();
 		}
 
 		template<typename T>
 		T* target() EA_NOEXCEPT
 		{
-			return static_cast<T*>(storage.function_table->call_target(eastl::addressof(storage), typeid(T)));
+			return static_cast<T*>(storage.function_table_ptr->call_target(eastl::addressof(storage), typeid(T)));
 		}
 
 		template<typename T>
 		const T* target() const EA_NOEXCEPT
 		{
-			return static_cast<const T*>(storage.function_table->call_target(eastl::addressof(storage), typeid(T)));
+			return static_cast<const T*>(storage.function_table_ptr->call_target(eastl::addressof(storage), typeid(T)));
 		}
 	#endif
 

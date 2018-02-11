@@ -17,8 +17,8 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-4.8
-      - g++-4.8
+      - gcc-6
+      - g++-6
       - clang
       - libc++-dev
 
@@ -33,9 +33,6 @@ matrix:
         - compiler: clang "release build with clang3.9"
           env: EASTL_CONFIG=Release USE_CLANG_39=yes
           os: osx
-        - compiler: clang "build with Buck"
-          env: USE_BUCK=yes
-          os: osx
     exclude:
       - os: osx
         compiler: gcc
@@ -47,11 +44,11 @@ install:
 
 # Linux Setup
   # CMake
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && ! -n "$USE_BUCK" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz   ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && ! -n "$USE_BUCK" ]]; then tar -xzf cmake-3.1.3-Linux-x86_64.tar.gz                                                  ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz   ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then tar -xzf cmake-3.1.3-Linux-x86_64.tar.gz                                                  ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PWD/cmake-3.1.3-Linux-x86_64/bin:$PATH                                                           ;fi
   # GCC
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" = "g++" ]]; then export CXX="g++-4.8" CC="gcc-4.8"                                               ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" = "g++" ]]; then export CXX="g++-6" CC="gcc-6"                                               ;fi
   # Linuxbrew
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test -d $HOME/.linuxbrew/bin || git clone https://github.com/Linuxbrew/brew.git $HOME/.linuxbrew  ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PATH="$HOME/.linuxbrew/bin:$PATH"                                                                 ;fi
@@ -60,15 +57,15 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
   # Linuxbrew GCC
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then brew install gcc               ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then which gcc                      ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && -n "$USE_BUCK" ]]; then gcc --version                  ;fi
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc --version                  ;fi
 
 # OSX Setup
   # CMake
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && ! -n "$USE_BUCK" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Darwin-x86_64.tar.gz     ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && ! -n "$USE_BUCK" ]]; then tar -xzf cmake-3.1.3-Darwin-x86_64.tar.gz                                                    ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && ! -n "$USE_BUCK" ]]; then export PATH=$PWD/cmake-3.1.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                      ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget --no-check-certificate http://cmake.org/files/v3.1/cmake-3.1.3-Darwin-x86_64.tar.gz     ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar -xzf cmake-3.1.3-Darwin-x86_64.tar.gz                                                    ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=$PWD/cmake-3.1.3-Darwin-x86_64/CMake.app/Contents/bin:$PATH                      ;fi
   # Clang 3.9
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39" ]]; then export CLANG_URL=http://releases.llvm.org/3.9.0/clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz   ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" && -n "$USE_CLANG_39" ]]; then wget --no-check-certificate $CLANG_URL                                                        ;fi
@@ -83,12 +80,6 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --version                                                                                   ;fi
 
 # Universal Setup
-  # Buck
-  - if [[ -n "$USE_BUCK" ]]; then brew install ant       ;fi
-  - if [[ -n "$USE_BUCK" ]]; then brew tap facebook/fb   ;fi
-  - if [[ -n "$USE_BUCK" ]]; then brew install buck      ;fi
-  - if [[ -n "$USE_BUCK" ]]; then buck --version         ;fi
-
 before_script:
   - if [[ "$CXX" == "clang++" ]]; then export CXXFLAGS="$CXXFLAGS -I${LLVM_ROOT}/install/include -std=c++14 -stdlib=libc++"       ;fi
   - if [[ "$CXX" == "clang++" ]]; then export LDFLAGS="$LDFLAGS -L${LLVM_ROOT}/install/lib"                                       ;fi
@@ -97,21 +88,18 @@ before_script:
   - if [[ -n "$USE_CLANG_39" ]]; then export CXX="clang++"                                                                        ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export CXXFLAGS="$CXXFLAGS -I${CLANG_39_PATH}/include -std=c++14 -stdlib=libc++"            ;fi
   - if [[ -n "$USE_CLANG_39" ]]; then export LDFLAGS="$LDFLAGS -L${CLANG_39_PATH}/lib"                                            ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then mkdir build_$EASTL_CONFIG                                                                     ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then cd build_$EASTL_CONFIG                                                                        ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON                          ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then cmake --build . --config $EASTL_CONFIG                                                        ;fi
+  - mkdir build_$EASTL_CONFIG                                                                     
+  - cd build_$EASTL_CONFIG                                                                        
+  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON                          
+  - cmake --build . --config $EASTL_CONFIG                                                        
 
 script:
-  # Run the Buck build and tests
-  - if [[ -n "$USE_BUCK" ]]; then buck build :eastl                                        ;fi
-  - if [[ -n "$USE_BUCK" ]]; then buck run :test-runner                                    ;fi
   # Run Tests
-  - if [[ ! -n "$USE_BUCK" ]]; then cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test          ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then ctest -C $EASTL_CONFIG -V || exit 1                    ;fi
+  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test          
+  - ctest -C $EASTL_CONFIG -V || exit 1                    
   # Run Benchmarks
-  - if [[ ! -n "$USE_BUCK" ]]; then cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark     ;fi
-  - if [[ ! -n "$USE_BUCK" ]]; then ctest -C $EASTL_CONFIG -V || exit 1                    ;fi
+  - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark     
+  - ctest -C $EASTL_CONFIG -V || exit 1                    
 
 branches:
   except:
