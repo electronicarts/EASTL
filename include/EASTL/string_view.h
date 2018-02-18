@@ -458,11 +458,11 @@ namespace eastl
 	{
 		size_t operator()(const string_view& x) const
 		{
-			const unsigned char* p = (const unsigned char*)x.data(); // To consider: limit p to at most 256 chars.
-			unsigned int c, result = 2166136261U; // We implement an FNV-like string hash. 
-			while((c = *p++) != 0) // Using '!=' disables compiler warnings.
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			string_view::const_iterator p = x.cbegin();
+			size_t result = 2166136261U; // We implement an FNV-like string hash.
+			while (p != x.cend())
+				result = (result * 16777619) ^ (size_t)*p++;
+			return result;
 		}
 	};
 
@@ -470,11 +470,11 @@ namespace eastl
 	{
 		size_t operator()(const u16string_view& x) const
 		{
-			const char16_t* p = x.data();
-			unsigned int c, result = 2166136261U;
-			while((c = *p++) != 0)
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			u16string_view::const_iterator p = x.cbegin();
+			size_t result = 2166136261U;
+			while (p != x.cend())
+				result = (result * 16777619) ^ (size_t)*p++;
+			return result;
 		}
 	};
 
@@ -482,11 +482,11 @@ namespace eastl
 	{
 		size_t operator()(const u32string_view& x) const
 		{
-			const char32_t* p = x.data();
-			unsigned int c, result = 2166136261U;
-			while((c = (unsigned int)*p++) != 0)
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			u32string_view::const_iterator p = x.cbegin();
+			size_t result = 2166136261U;
+			while (p != x.cend())
+				result = (result * 16777619) ^ (size_t)*p++;
+			return result;
 		}
 	};
 
@@ -495,11 +495,11 @@ namespace eastl
 		{
 			size_t operator()(const wstring_view& x) const
 			{
-				const wchar_t* p = x.data();
-				unsigned int c, result = 2166136261U;
-				while((c = (unsigned int)*p++) != 0)
-					result = (result * 16777619) ^ c;
-				return (size_t)result;
+				wstring_view::const_iterator p = x.cbegin();
+				size_t result = 2166136261U;
+				while (p != x.cend())
+					result = (result * 16777619) ^ (size_t)*p++;
+				return result;
 			}
 		};
 	#endif
