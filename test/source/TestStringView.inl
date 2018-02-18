@@ -453,7 +453,12 @@ int TEST_STRING_NAME()
 		// template<> struct hash<std::u16string_view>;
 		// template<> struct hash<std::u32string_view>;
 		{
-			// todo
+			StringViewT sw1(LITERAL("Hello, World"));
+			StringViewT sw2(LITERAL("Hello, World"), 5);
+			StringViewT sw3(LITERAL("Hello"));
+
+			VERIFY(eastl::hash<StringViewT>{}(sw1) != eastl::hash<StringViewT>{}(sw2));
+			VERIFY(eastl::hash<StringViewT>{}(sw2) == eastl::hash<StringViewT>{}(sw3));
 		}
 	}
 	return nErrorCount;
