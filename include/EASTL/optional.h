@@ -35,11 +35,11 @@
 
 #if defined(EASTL_OPTIONAL_ENABLED) && EASTL_OPTIONAL_ENABLED
 
-EA_DISABLE_VC_WARNING(4583) // destructor is not implicitly called
+EA_DISABLE_VC_WARNING(4582 4583) // constructor/destructor is not implicitly called
 
 namespace eastl
 {
-	#ifdef EASTL_EXCEPTIONS_ENABLED
+	#if EASTL_EXCEPTIONS_ENABLED
 		#define EASTL_OPTIONAL_NOEXCEPT 
 	#else
 		#define EASTL_OPTIONAL_NOEXCEPT EA_NOEXCEPT
