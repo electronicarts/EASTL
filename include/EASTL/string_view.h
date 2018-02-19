@@ -459,8 +459,9 @@ namespace eastl
 		size_t operator()(const string_view& x) const
 		{
 			string_view::const_iterator p = x.cbegin();
+			string_view::const_iterator end = x.cend();
 			uint32_t result = 2166136261U; // We implement an FNV-like string hash.
-			while (p != x.cend())
+			while (p != end)
 				result = (result * 16777619) ^ (uint8_t)*p++;
 			return (size_t)result;
 		}
@@ -471,8 +472,9 @@ namespace eastl
 		size_t operator()(const u16string_view& x) const
 		{
 			u16string_view::const_iterator p = x.cbegin();
+			u16string_view::const_iterator end = x.cend();
 			uint32_t result = 2166136261U;
-			while (p != x.cend())
+			while (p != end)
 				result = (result * 16777619) ^ (uint16_t)*p++;
 			return (size_t)result;
 		}
@@ -483,8 +485,9 @@ namespace eastl
 		size_t operator()(const u32string_view& x) const
 		{
 			u32string_view::const_iterator p = x.cbegin();
+			u32string_view::const_iterator end = x.cend();
 			uint32_t result = 2166136261U;
-			while (p != x.cend())
+			while (p != end)
 				result = (result * 16777619) ^ (uint32_t)*p++;
 			return (size_t)result;
 		}
@@ -496,8 +499,9 @@ namespace eastl
 			size_t operator()(const wstring_view& x) const
 			{
 				wstring_view::const_iterator p = x.cbegin();
+				wstring_view::const_iterator end = x.cend();
 				uint32_t result = 2166136261U;
-				while (p != x.cend())
+				while (p != end)
 					result = (result * 16777619) ^ (uint32_t)*p++;
 				return (size_t)result;
 			}
