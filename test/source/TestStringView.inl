@@ -456,9 +456,11 @@ int TEST_STRING_NAME()
 			StringViewT sw1(LITERAL("Hello, World"));
 			StringViewT sw2(LITERAL("Hello, World"), 5);
 			StringViewT sw3(LITERAL("Hello"));
+			auto s = LITERAL("Hello");
 
 			VERIFY(eastl::hash<StringViewT>{}(sw1) != eastl::hash<StringViewT>{}(sw2));
 			VERIFY(eastl::hash<StringViewT>{}(sw2) == eastl::hash<StringViewT>{}(sw3));
+			VERIFY(eastl::hash<StringViewT>{}(sw3) == eastl::hash<decltype(s)>{}(s));
 		}
 	}
 	return nErrorCount;
