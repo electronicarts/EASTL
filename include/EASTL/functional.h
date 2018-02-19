@@ -1152,6 +1152,30 @@ namespace eastl
 		}
 	};
 
+#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+	template<> struct hash<wchar_t*>
+	{
+		size_t operator()(const wchar_t* p) const
+		{
+			uint32_t c, result = 2166136261U;    // Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while ((c = (uint32_t)*p++) != 0)    // cast to unsigned 32 bit.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+
+	template<> struct hash<const wchar_t*>
+	{
+		size_t operator()(const wchar_t* p) const
+		{
+			uint32_t c, result = 2166136261U;    // Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while ((c = (uint32_t)*p++) != 0)    // cast to unsigned 32 bit.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+#endif
+
 	/// string_hash
 	///
 	/// Defines a generic string hash for an arbitrary EASTL basic_string container.
