@@ -158,9 +158,19 @@ namespace eastl
 			return this_type(mpBegin + pos, count);
 		}
 
-		EA_CONSTEXPR int compare(basic_string_view sw) const EA_NOEXCEPT
+		static EA_CPP14_CONSTEXPR int compare(const T* pBegin1, const T* pEnd1, const T* pBegin2, const T* pEnd2)
 		{
-			return Compare(mpBegin, sw.data(), eastl::min_alt(size(), sw.size()));
+			const ptrdiff_t n1   = pEnd1 - pBegin1;
+			const ptrdiff_t n2   = pEnd2 - pBegin2;
+			const ptrdiff_t nMin = eastl::min_alt(n1, n2);
+			const int       cmp  = Compare(pBegin1, pBegin2, (size_t)nMin);
+
+			return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
+		}
+
+		EA_CPP14_CONSTEXPR int compare(basic_string_view sw) const EA_NOEXCEPT
+		{
+			return compare(mpBegin, mpBegin + mnCount, sw.mpBegin, sw.mpBegin + sw.mnCount);
 		}
 
 		EA_CONSTEXPR int compare(size_type pos1, size_type count1, basic_string_view sw) const
