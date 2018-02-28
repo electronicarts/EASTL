@@ -247,6 +247,11 @@ int TEST_STRING_NAME()
 			}
 
 			{
+				VERIFY(StringViewT(LITERAL("Aa")).compare(StringViewT(LITERAL("A"))) > 0);
+				VERIFY(StringViewT(LITERAL("A")).compare(StringViewT(LITERAL("Aa"))) < 0);
+			}
+
+			{
 				StringViewT sw1(LITERAL("Hello, World"));
 				StringViewT sw2(LITERAL("Hello, WWorld"));
 				StringViewT sw3(LITERAL("Hello, Wzorld"));
@@ -283,7 +288,7 @@ int TEST_STRING_NAME()
 		{
 			StringViewT sw(LITERAL("*** Hello"));
 			VERIFY(sw.compare(4, 5, LITERAL("Hello")) == 0);
-			VERIFY(sw.compare(4, 5, LITERAL("Hello 555")) == 0);
+			VERIFY(sw.compare(4, 5, LITERAL("Hello 555")) != 0);
 			VERIFY(sw.compare(4, 5, LITERAL("hello")) != 0);
 		}
 
@@ -292,7 +297,7 @@ int TEST_STRING_NAME()
 			StringViewT sw(LITERAL("*** Hello ***"));
 			VERIFY(sw.compare(4, 5, LITERAL("Hello"), 5) == 0);
 			VERIFY(sw.compare(0, 1, LITERAL("*"), 1) == 0);
-			VERIFY(sw.compare(0, 2, LITERAL("**"), 1) == 0);
+			VERIFY(sw.compare(0, 2, LITERAL("**"), 1) != 0);
 			VERIFY(sw.compare(0, 2, LITERAL("**"), 2) == 0);
 			VERIFY(sw.compare(0, 2, LITERAL("^^"), 2) != 0);
 		}
