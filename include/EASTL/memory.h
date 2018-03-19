@@ -998,7 +998,7 @@ namespace eastl
 	/// Constructs objects in the uninitialized storage range [first, last) by value-initialization.
 	///
 	/// Value-Initialization:
-	/// If T is a class, the object is default-initialized (after being zero-initialized if T’s default 
+	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default 
 	/// constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct
@@ -1031,7 +1031,7 @@ namespace eastl
 	/// Constructs n objects in the uninitialized storage starting at first by value-initialization.
 	///
 	/// Value-Initialization:
-	/// If T is a class, the object is default-initialized (after being zero-initialized if T’s default 
+	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default 
 	/// constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct_n

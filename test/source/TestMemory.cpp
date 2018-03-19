@@ -391,7 +391,7 @@ int TestMemory()
 	// Verify that uninitialized_value_construct does not do any additional initialization besides zero-initialization.
 	//
 	/// Value-Initialization:
-	//   If T is a class, the object is default-initialized (after being zero-initialized if T’s default 
+	//   If T is a class, the object is default-initialized (after being zero-initialized if T's default 
 	//   constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
 	{
 		struct foo
