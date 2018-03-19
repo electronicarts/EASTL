@@ -3,13 +3,13 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
+#include <EABase/eabase.h>
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
 #include <EASTL/fixed_hash_set.h>
 #include <EASTL/fixed_hash_map.h>
 #include <EASTL/fixed_vector.h>
-#include <EABase/eabase.h>
 
 
 
@@ -556,6 +556,12 @@ int TestFixedHash()
 
 		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject,  2, 7, true> >();
 		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject, 32, 7, true> >();
+	}
+
+	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject,  2, 7, true>>();
+		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject, 32, 7, true> >();
 	}
 
 	{

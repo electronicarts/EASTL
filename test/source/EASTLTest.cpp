@@ -99,6 +99,19 @@ void*  MallocAllocator::mpLastAllocation = NULL;
 //
 int InstanceAllocator::mMismatchCount = 0;
 
+
+///////////////////////////////////////////////////////////////////////////////
+// CountingAllocator
+//
+uint64_t CountingAllocator::activeAllocCount  = 0;
+uint64_t CountingAllocator::totalAllocCount   = 0;
+uint64_t CountingAllocator::totalDeallocCount = 0;
+uint64_t CountingAllocator::totalCtorCount    = 0;
+uint64_t CountingAllocator::defaultCtorCount  = 0;
+uint64_t CountingAllocator::copyCtorCount     = 0;
+uint64_t CountingAllocator::assignOpCount     = 0;
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // gEASTL_TestLevel
 //

@@ -443,4 +443,9 @@
   </Expand>
 </Type>
 
+<Type Name="eastl::basic_string_view&lt;*&gt;">
+	<DisplayString>{mpBegin,[mnCount]}</DisplayString>
+	<StringView>mpBegin,[mnCount]</StringView>
+</Type>
+
 </AutoVisualizer>

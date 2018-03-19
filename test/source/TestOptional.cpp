@@ -373,6 +373,13 @@ int TestOptional()
 
 	}
 
+	// alignment type tests
+	{
+		static_assert(alignof(optional<Align16>) == alignof(Align16), "optional alignment failure");
+		static_assert(alignof(optional<Align32>) == alignof(Align32), "optional alignment failure");
+		static_assert(alignof(optional<Align64>) == alignof(Align64), "optional alignment failure");
+	}
+
     #endif // EASTL_OPTIONAL_ENABLED
 	return nErrorCount;
 }

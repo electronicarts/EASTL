@@ -11,6 +11,7 @@
 #endif
 
 #include <EASTL/internal/config.h>
+#include <EASTL/internal/memory_base.h>
 #include <EASTL/type_traits.h>
 
 namespace eastl
@@ -20,9 +21,6 @@ namespace eastl
 	inline void swap(T& a, T& b) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value &&
 	eastl::is_nothrow_move_assignable<T>::value);
 
-	// forward declaration for addressof
-	template<typename T>
-	T* addressof(T& value) EA_NOEXCEPT;
 
 	/// invoke
 	///

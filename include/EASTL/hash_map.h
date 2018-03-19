@@ -330,6 +330,10 @@ namespace eastl
 
 		using base_type::insert;
 
+	private:
+		using base_type::try_emplace;
+		using base_type::insert_or_assign;
+
 	public:
 		/// hash_multimap
 		///

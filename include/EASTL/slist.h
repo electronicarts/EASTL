@@ -430,10 +430,6 @@ namespace eastl
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
 
-		#if EASTL_RESET_ENABLED
-			void reset() EA_NOEXCEPT; // This function name is deprecated; use reset_lose_memory instead.
-		#endif
-
 	protected:
 		node_type* DoCreateNode();
 
@@ -1156,16 +1152,6 @@ namespace eastl
 	{
 		DoEraseAfter((SListNodeBase*)&mNode, NULL);
 	}
-
-
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename T, typename Allocator>
-		inline void slist<T, Allocator>::reset() EA_NOEXCEPT
-		{
-			reset_lose_memory();
-		}
-	#endif
 
 
 	template <typename T, typename Allocator>

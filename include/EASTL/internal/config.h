@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.07.01"
-	#define EASTL_VERSION_N  30701
+	#define EASTL_VERSION   "3.08.00"
+	#define EASTL_VERSION_N  30800
 #endif
 
 
@@ -1521,10 +1521,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_ALIGN_OF
-	#if   defined(_MSC_VER) && (_MSC_VER < 1700)
-		// Workaround for this VS 2010 compiler bug: https://connect.microsoft.com/VisualStudio/feedback/details/682695
-		#define EASTL_ALIGN_OF(...) ( (sizeof(__VA_ARGS__)*0) + (__alignof(__VA_ARGS__)) )
-	#elif !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x doesn't do __alignof correctly all the time.
+	#if !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x doesn't do __alignof correctly all the time.
 		#define EASTL_ALIGN_OF __alignof
 	#else
 		#define EASTL_ALIGN_OF(type) ((size_t)offsetof(struct{ char c; type m; }, m))

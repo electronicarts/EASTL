@@ -80,11 +80,14 @@ int TestMap()
 
 	{
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<eastl::map<int, TestObject> >();
-
-		nErrorCount += TestMultimapCpp11<eastl::multimap<int, TestObject> >();
-
+		nErrorCount += TestMapCpp11<eastl::map<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<eastl::multimap<int, TestObject>>();
 		nErrorCount += TestMapCpp11NonCopyable<eastl::map<int, NonCopyable>>();
+	}
+
+	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::map<int, TestObject>>();
 	}
 
 

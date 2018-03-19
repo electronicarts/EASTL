@@ -92,6 +92,11 @@ int TestFixedMap()
 		nErrorCount += TestMapCpp11NonCopyable<eastl::fixed_map<int, NonCopyable, 32>>();
 	}
 
+	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::fixed_map<int, TestObject, 32>>();
+	}
+
 
 	{ // Test functionality specific to fixed size containers.
 

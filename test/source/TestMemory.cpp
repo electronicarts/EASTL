@@ -388,6 +388,58 @@ int TestMemory()
 		EATEST_VERIFY(endIter == (pTestMemory + 5));
 	}
 
+	// Verify that uninitialized_value_construct does not do any additional initialization besides zero-initialization.
+	//
+	/// Value-Initialization:
+	//   If T is a class, the object is default-initialized (after being zero-initialized if T’s default 
+	//   constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
+	{
+		struct foo
+		{
+			// foo() = default; // intentionally removed to force zero-initialization behavior 
+			char mV;
+		};
+
+		static const int ARRAY_SIZE_IN_BYTES = sizeof(foo) * 10;
+
+		char testCharArray[ARRAY_SIZE_IN_BYTES];
+		EA::StdC::Memfill8(testCharArray, 42, ARRAY_SIZE_IN_BYTES);
+		foo* pTestMemory = (foo*)testCharArray;
+
+		eastl::uninitialized_value_construct(pTestMemory, pTestMemory + 10);
+
+		for (int i = 0; i < 10; i++)
+		{
+			EATEST_VERIFY(pTestMemory[i].mV == 0); // verify that memory is zero-initialized
+		}
+	}
+
+	// Verify that uninitialized_default_construct does not do any additional initialization besides the calling of a empty
+	// constructor.
+	//
+	// Default-initialization:
+	//  If T is a class, the default constructor is called; otherwise, no initialization is done, resulting in
+	//  indeterminate values.
+	{
+		struct foo
+		{
+			foo() {}  // default ctor intentionally a no-op
+			char mV;
+		};
+
+		static const int ARRAY_SIZE_IN_BYTES = sizeof(foo) * 10;
+
+		char testCharArray[ARRAY_SIZE_IN_BYTES];
+		EA::StdC::Memfill8(testCharArray, 42, ARRAY_SIZE_IN_BYTES);
+		foo* pTestMemory = (foo*)testCharArray;
+
+		eastl::uninitialized_default_construct(pTestMemory, pTestMemory + 10);
+
+		for (int i = 0; i < 10; i++)
+		{
+			EATEST_VERIFY(pTestMemory[i].mV == 42); // verify original memset value is intact 
+		}
+	}
 
 	// template <typename T>
 	// void destruct(T* p)

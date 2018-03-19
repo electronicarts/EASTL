@@ -445,10 +445,6 @@ namespace eastl
 			void splice(const_iterator position, this_type&& x, const_iterator first, const_iterator last);
 		#endif
 
-		#if EASTL_RESET_ENABLED
-			void reset() EA_NOEXCEPT; // This function name is deprecated; use reset_lose_memory instead.
-		#endif
-
 	public:
 		// For merge, see notes for splice regarding the handling of unequal allocators.
 		void merge(this_type& x);
@@ -1228,16 +1224,6 @@ namespace eastl
 			mSize = 0;
 		#endif
 	}
-
-
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename T, typename Allocator>
-		inline void list<T, Allocator>::reset() EA_NOEXCEPT
-		{
-			reset_lose_memory();
-		}
-	#endif
 
 
 	template <typename T, typename Allocator>

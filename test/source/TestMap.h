@@ -688,26 +688,14 @@ int TestMapCpp11()
 {
 	int nErrorCount = 0;
 
-	//#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-	//    template <class... Args>
-	//    insert_return_type emplace(Args&&... args);
+	// template <class... Args>
+	// insert_return_type emplace(Args&&... args);
 	//
-	//    template <class... Args> 
-	//    iterator emplace_hint(const_iterator position, Args&&... args);
-	//#else
-	//    #if EASTL_MOVE_SEMANTICS_ENABLED
-	//        insert_return_type emplace(value_type&& value);
-	//        iterator emplace_hint(const_iterator position, value_type&& value);
-	//    #endif
+	// template <class... Args> 
+	// iterator emplace_hint(const_iterator position, Args&&... args);
 	//
-	//    insert_return_type emplace(const value_type& value);
-	//    iterator emplace_hint(const_iterator position, const value_type& value);
-	//#endif
-	//
-	//#if EASTL_MOVE_SEMANTICS_ENABLED
-	//    insert_return_type insert(value_type&& value);
-	//    iterator insert(const_iterator position, value_type&& value);
-	//#endif
+	// insert_return_type insert(value_type&& value);
+	// iterator insert(const_iterator position, value_type&& value);
 	TestObject::Reset();
 
 	typedef T1 TOMap;
@@ -861,26 +849,14 @@ int TestMultimapCpp11()
 {
 	int nErrorCount = 0;
 
-	//#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-	//    template <class... Args>
-	//    insert_return_type emplace(Args&&... args);
+	// template <class... Args>
+	// insert_return_type emplace(Args&&... args);
 	//
-	//    template <class... Args> 
-	//    iterator emplace_hint(const_iterator position, Args&&... args);
-	//#else
-	//    #if EASTL_MOVE_SEMANTICS_ENABLED
-	//        insert_return_type emplace(value_type&& value);
-	//        iterator emplace_hint(const_iterator position, value_type&& value);
-	//    #endif
+	// template <class... Args> 
+	// iterator emplace_hint(const_iterator position, Args&&... args);
 	//
-	//    insert_return_type emplace(const value_type& value);
-	//    iterator emplace_hint(const_iterator position, const value_type& value);
-	//#endif
-	//
-	//#if EASTL_MOVE_SEMANTICS_ENABLED
-	//    insert_return_type insert(value_type&& value);
-	//    iterator insert(const_iterator position, value_type&& value);
-	//#endif
+	// insert_return_type insert(value_type&& value);
+	// iterator insert(const_iterator position, value_type&& value);
 	TestObject::Reset();
 
 	typedef T1 TOMap;
@@ -993,6 +969,155 @@ int TestMultimapCpp11()
 
 	return nErrorCount;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TestMapCpp17
+//
+// This function is designed to work with map, fixed_map, hash_map, fixed_hash_map, unordered_map.
+//
+template <typename T1>
+int TestMapCpp17()
+{
+
+	int nErrorCount = 0;
+
+	TestObject::Reset();
+
+	typedef T1 TOMap;
+	typedef typename TOMap::mapped_type mapped_type;
+	typename TOMap::iterator toMapIterator;
+
+
+	{
+		// pair<iterator, bool> try_emplace (const key_type& k, Args&&... args);
+		// pair<iterator, bool> try_emplace (key_type&& k, Args&&... args);
+		// iterator             try_emplace (const_iterator hint, const key_type& k, Args&&... args);
+		// iterator             try_emplace (const_iterator hint, key_type&& k, Args&&... args);
+
+		TOMap toMap;
+
+		{ // do initial insert
+			auto result = toMap.try_emplace(7, 7); // test fwding to conversion-ctor
+			VERIFY(result.second);
+			VERIFY(result.first->second == mapped_type(7));
+			VERIFY(toMap.size() == 1);
+		}
+
+		{ // verify duplicate not inserted
+			auto result = toMap.try_emplace(7, mapped_type(7)); // test fwding to copy-ctor
+			VERIFY(!result.second);
+			VERIFY(result.first->second == mapped_type(7));
+			VERIFY(toMap.size() == 1);
+		}
+
+		{ // verify duplicate not inserted
+			auto hint = toMap.find(7);
+			auto result = toMap.try_emplace(hint, 7, 7); // test fwding to conversion-ctor
+			VERIFY(result->first == 7);
+			VERIFY(result->second == mapped_type(7));
+			VERIFY(toMap.size() == 1);
+		}
+
+		{ // verify duplicate not inserted
+			auto hint = toMap.find(7);
+			auto result = toMap.try_emplace(hint, 7, mapped_type(7)); // test fwding to copy-ctor
+			VERIFY(result->first == 7);
+			VERIFY(result->second == mapped_type(7));
+			VERIFY(toMap.size() == 1);
+		}
+
+		{
+			{
+				auto result = toMap.try_emplace(8, 8); 
+				VERIFY(result.second);
+				VERIFY(result.first->second == mapped_type(8));
+				VERIFY(toMap.size() == 2);
+			}
+			{
+				auto result = toMap.try_emplace(9, mapped_type(9)); 
+				VERIFY(result.second);
+				VERIFY(result.first->second == mapped_type(9));
+				VERIFY(toMap.size() == 3);
+			}
+		}
+	}
+
+	{
+		// eastl::pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
+		// eastl::pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj);
+		// iterator                    insert_or_assign(const_iterator hint, const key_type& k, M&& obj);
+		// iterator                    insert_or_assign(const_iterator hint, key_type&& k, M&& obj);
+
+		TOMap toMap;
+
+		{
+			// initial rvalue insert
+			auto result = toMap.insert_or_assign(3, mapped_type(3));
+			VERIFY(result.second);
+			VERIFY(toMap.size() == 1);
+			VERIFY(result.first->first == 3);
+			VERIFY(result.first->second == mapped_type(3));
+
+			// verify rvalue assign occurred
+			result = toMap.insert_or_assign(3, mapped_type(9));
+			VERIFY(!result.second);
+			VERIFY(toMap.size() == 1);
+			VERIFY(result.first->first == 3);
+			VERIFY(result.first->second == mapped_type(9));
+		}
+
+		{
+			mapped_type mt5(5);
+			mapped_type mt6(6);
+			mapped_type mt7(7);
+
+			{
+				// initial lvalue insert
+				auto result = toMap.insert_or_assign(5, mt5);
+				VERIFY(result.second);
+				VERIFY(toMap.size() == 2);
+				VERIFY(result.first->first == 5);
+				VERIFY(result.first->second == mt5);
+			}
+
+			{
+				// verify lvalue assign occurred
+				auto result = toMap.insert_or_assign(5, mt7);
+				VERIFY(!result.second);
+				VERIFY(toMap.size() == 2);
+				VERIFY(result.first->first == 5);
+				VERIFY(result.first->second == mt7);
+			}
+
+			{
+				// verify lvalue hints
+				auto hint = toMap.find(5);
+				auto result = toMap.insert_or_assign(hint, 6, mt6);
+				VERIFY(result != toMap.end());
+				VERIFY(toMap.size() == 3);
+				VERIFY(result->first == 6);
+				VERIFY(result->second == mt6);
+			}
+
+			{
+				// verify rvalue hints
+				auto hint = toMap.find(6);
+				auto result = toMap.insert_or_assign(hint, 7, mapped_type(7));
+				VERIFY(result != toMap.end());
+				VERIFY(toMap.size() == 4);
+				VERIFY(result->first == 7);
+				VERIFY(result->second == mapped_type(7));
+			}
+		}
+	}
+
+	EATEST_VERIFY(TestObject::IsClear());
+	TestObject::Reset();
+
+	return nErrorCount;
+}
+
 
 template<typename HashContainer>
 struct HashContainerReserveTest

@@ -390,7 +390,7 @@ namespace eastl
 				}
 			}
 
-			inline void SetEndPtr(value_type* pEnd)
+			inline void SetEndPtr(value_type* pEnd) noexcept
 			{
 				if(IsSSO())
 					sso.mnSize = char(pEnd - SSOBufferPtr());
@@ -398,7 +398,7 @@ namespace eastl
 					heap.mpEnd = pEnd;
 			}
 
-			inline void SetBeginPtr(value_type* pBegin)
+			inline void SetBeginPtr(value_type* pBegin) noexcept
 			{
 				// NOTE(rparolin): sso.mpBegin and heap.mpBegin occupy the same memory location so only one write is necessary.
 				//
@@ -406,7 +406,7 @@ namespace eastl
 				heap.mpBegin = pBegin;
 			}
 
-			inline void SetCapacityPtr(value_type* pCapacity)
+			inline void SetCapacityPtr(value_type* pCapacity) noexcept
 			{
 				if(!IsSSO())
 					heap.mpCapacity = pCapacity;
@@ -416,7 +416,7 @@ namespace eastl
 			 // }
 			}
 
-			inline void ClearSSOBuffer()
+			inline void ClearSSOBuffer() noexcept
 			{
 				if(IsSSO())
 				{
@@ -434,8 +434,8 @@ namespace eastl
 
 	public:
 		// Constructor, destructor
-		basic_string();
-		explicit basic_string(const allocator_type& allocator);
+		basic_string() noexcept(noexcept(allocator_type()));
+		explicit basic_string(const allocator_type& allocator) noexcept;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -447,10 +447,8 @@ namespace eastl
 		basic_string(CtorSprintf, const value_type* pFormat, ...);
 		basic_string(std::initializer_list<value_type> init, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		basic_string(this_type&& x);
+		basic_string(this_type&& x) noexcept;
 		basic_string(this_type&& x, const allocator_type& allocator);
-		#endif
 
 		template <typename OtherCharType>
 		basic_string(CtorConvert, const OtherCharType* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -476,10 +474,7 @@ namespace eastl
 		this_type& operator=(const value_type* p);
 		this_type& operator=(value_type c);
 		this_type& operator=(std::initializer_list<value_type> ilist);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		this_type& operator=(this_type&& x);
-		#endif
+		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 
 		#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
 			this_type& operator=(value_type* p) { return operator=((const value_type*)p); } // We need this because otherwise the const value_type* version can collide with the const OtherStringType& version below.
@@ -491,7 +486,7 @@ namespace eastl
 			this_type& operator=(const OtherStringType& x);
 		#endif
 
-		void swap(this_type& x);
+		void swap(this_type& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_swap::value || allocator_traits<Allocator>::is_always_equal::value);
 
 		// Assignment operations
 		this_type& assign(const this_type& x);
@@ -500,9 +495,7 @@ namespace eastl
 		this_type& assign(const value_type* p);
 		this_type& assign(size_type n, value_type c);
 		this_type& assign(const value_type* pBegin, const value_type* pEnd);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		this_type& assign(this_type&& x);
-		#endif
+		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value); 
 		this_type& assign(std::initializer_list<value_type>);
 
 		template <typename OtherCharType>
@@ -602,14 +595,11 @@ namespace eastl
 		reverse_iterator erase(reverse_iterator position);
 		reverse_iterator erase(reverse_iterator first, reverse_iterator last);
 		void             clear() EA_NOEXCEPT;
-		#if EASTL_RESET_ENABLED
-			void             reset_lose_memory() EA_NOEXCEPT; // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
-		#endif
 
 		// Detach memory
 		pointer detach() EA_NOEXCEPT;
 
-		//Replacement operations
+		// Replacement operations
 		this_type&  replace(size_type position, size_type n, const this_type& x);
 		this_type&  replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2);
 		this_type&  replace(size_type position, size_type n1, const value_type* p, size_type n2);
@@ -736,7 +726,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string()
+	inline basic_string<T, Allocator>::basic_string() noexcept(noexcept(allocator_type()))
 	    : mPair(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))
 	{
 		AllocateSelf();
@@ -744,7 +734,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const allocator_type& allocator)
+	inline basic_string<T, Allocator>::basic_string(const allocator_type& allocator) noexcept
 	    : mPair(allocator)
 	{
 		AllocateSelf();
@@ -881,32 +871,30 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator>::basic_string(this_type&& x)
-			: mPair(x.get_allocator())
-		{
-			internalLayout() = x.internalLayout();
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>::basic_string(this_type&& x) noexcept
+		: mPair(x.get_allocator())
+	{
+		internalLayout() = eastl::move(x.internalLayout());
 
+		x.AllocateSelf();
+	}
+
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>::basic_string(this_type&& x, const allocator_type& allocator)
+	: mPair(allocator)
+	{
+		if(get_allocator() == x.get_allocator()) // If we can borrow from x...
+		{
+			internalLayout() = eastl::move(x.internalLayout());
 			x.AllocateSelf();
 		}
-
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator>::basic_string(this_type&& x, const allocator_type& allocator)
-		: mPair(allocator)
+		else if(x.internalLayout().BeginPtr())
 		{
-			if(get_allocator() == x.get_allocator()) // If we can borrow from x...
-			{
-				internalLayout() = x.internalLayout();
-				x.AllocateSelf();
-			}
-			else if(x.internalLayout().BeginPtr())
-			{
-				RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
-				// Let x destruct its own items.
-			}
+			RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+			// Let x destruct its own items.
 		}
-	#endif
+	}
 
 
 	template <typename T, typename Allocator>
@@ -1205,13 +1193,11 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Allocator>
-		inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(this_type&& x)
-		{
-			return assign(eastl::move(x));
-		}
-	#endif
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(this_type&& x)
+	{
+		return assign(eastl::move(x));
+	}
 
 
 	template <typename T, typename Allocator>
@@ -1338,19 +1324,6 @@ namespace eastl
 	} 
 
 
-	#if EASTL_RESET_ENABLED
-		template <typename T, typename Allocator>
-		inline void basic_string<T, Allocator>::reset_lose_memory() EA_NOEXCEPT
-		{
-			// The reset function is a special extension function which unilaterally 
-			// resets the container to an empty state without freeing the memory of 
-			// the contained objects. This is useful for very quickly tearing down a 
-			// container built into scratch memory.
-			AllocateSelf();
-		}
-	#endif
-
-
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::pointer 
 	basic_string<T, Allocator>::detach() EA_NOEXCEPT
@@ -1366,7 +1339,7 @@ namespace eastl
 
 		if (internalLayout().IsSSO())
 		{
-			size_type n = (size_type)CharStrlen(internalLayout().BeginPtr()) + 1; // We'll need at least this much. '+1' so that we have room for the terminating 0.
+			const size_type n = internalLayout().GetSize() + 1; // We'll need at least this much. '+1' so that we have room for the terminating 0.
 			pDetached = DoAllocate(n);
 			auto* pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pDetached);
 			*pNewEnd = 0;
@@ -1838,20 +1811,18 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Allocator>
-		inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(this_type&& x)
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(this_type&& x)
+	{
+		if(get_allocator() == x.get_allocator())
 		{
-			if(get_allocator() == x.get_allocator())
-			{
-				eastl::swap(internalLayout(), x.internalLayout());
-			}
-			else
-				assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
-
-			return *this;
+			eastl::swap(internalLayout(), x.internalLayout());
 		}
-	#endif
+		else
+			assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+
+		return *this;
+	}
 
 
 	template <typename T, typename Allocator>
@@ -2453,7 +2424,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	void basic_string<T, Allocator>::swap(this_type& x)
+	void basic_string<T, Allocator>::swap(this_type& x) 
 	{
 		if(get_allocator() == x.get_allocator()) // If allocators are equivalent...
 		{
@@ -3498,42 +3469,40 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, basic_string<T, Allocator>&& b)
-		{
-			a.append(b); // Using an rvalue by name results in it becoming an lvalue.
-			return a;
-		}
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, basic_string<T, Allocator>&& b)
+	{
+		a.append(b); // Using an rvalue by name results in it becoming an lvalue.
+		return a;
+	}
 
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const basic_string<T, Allocator>& b)
-		{
-			a.append(b);
-			return a;
-		}
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const basic_string<T, Allocator>& b)
+	{
+		a.append(b);
+		return a;
+	}
 
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator> operator+(const typename basic_string<T, Allocator>::value_type* p, basic_string<T, Allocator>&& b)
-		{
-			b.insert(0, p);
-			return b;
-		}
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator> operator+(const typename basic_string<T, Allocator>::value_type* p, basic_string<T, Allocator>&& b)
+	{
+		b.insert(0, p);
+		return b;
+	}
 
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const typename basic_string<T, Allocator>::value_type* p)
-		{
-			a.append(p);
-			return a;
-		}
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const typename basic_string<T, Allocator>::value_type* p)
+	{
+		a.append(p);
+		return a;
+	}
 
-		template <typename T, typename Allocator>
-		basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::value_type c)
-		{
-			a.push_back(c);
-			return a;
-		}
-	#endif
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::value_type c)
+	{
+		a.push_back(c);
+		return a;
+	}
 
 
 	template <typename T, typename Allocator>
@@ -3544,6 +3513,8 @@ namespace eastl
 		if(internalLayout().EndPtr() < internalLayout().BeginPtr())
 			return false;
 		if(internalLayout().CapacityPtr() < internalLayout().EndPtr())
+			return false;
+		if(*internalLayout().EndPtr() != 0)
 			return false;
 		return true;
 	}

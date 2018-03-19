@@ -107,20 +107,17 @@ namespace eastl
 		set(const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 		set(const Compare& compare, const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 		set(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			set(this_type&& x);
-			set(this_type&& x, const allocator_type& allocator);
-		#endif
+		set(this_type&& x);
+		set(this_type&& x, const allocator_type& allocator);
 		set(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 
 		template <typename Iterator>
 		set(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To do: Make a second version of this function without a default arg.
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED // The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
-			this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
-			this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-			this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
-		#endif
+		// The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
+		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
+		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
 
 	public:
 		value_compare value_comp() const;
@@ -190,20 +187,17 @@ namespace eastl
 		multiset(const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 		multiset(const Compare& compare, const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 		multiset(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		multiset(this_type&& x);
 		multiset(this_type&& x, const allocator_type& allocator);
-		#endif
 		multiset(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 
 		template <typename Iterator>
 		multiset(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To do: Make a second version of this function without a default arg.
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED // The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
-			this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
-			this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-			this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
-		#endif
+		// The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
+		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
+		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
 
 	public:
 		value_compare value_comp() const;
@@ -257,19 +251,17 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename Key, typename Compare, typename Allocator>
-		inline set<Key, Compare, Allocator>::set(this_type&& x)
-			: base_type(eastl::move(x))
-		{
-		}
+	template <typename Key, typename Compare, typename Allocator>
+	inline set<Key, Compare, Allocator>::set(this_type&& x)
+		: base_type(eastl::move(x))
+	{
+	}
 
-		template <typename Key, typename Compare, typename Allocator>
-		inline set<Key, Compare, Allocator>::set(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator)
-		{
-		}
-	#endif
+	template <typename Key, typename Compare, typename Allocator>
+	inline set<Key, Compare, Allocator>::set(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator)
+	{
+	}
 
 
 	template <typename Key, typename Compare, typename Allocator>
@@ -425,19 +417,17 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename Key, typename Compare, typename Allocator>
-		inline multiset<Key, Compare, Allocator>::multiset(this_type&& x)
-			: base_type(eastl::move(x))
-		{
-		}
+	template <typename Key, typename Compare, typename Allocator>
+	inline multiset<Key, Compare, Allocator>::multiset(this_type&& x)
+		: base_type(eastl::move(x))
+	{
+	}
 
-		template <typename Key, typename Compare, typename Allocator>
-		inline multiset<Key, Compare, Allocator>::multiset(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator)
-		{
-		}
-	#endif
+	template <typename Key, typename Compare, typename Allocator>
+	inline multiset<Key, Compare, Allocator>::multiset(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator)
+	{
+	}
 
 
 	template <typename Key, typename Compare, typename Allocator>

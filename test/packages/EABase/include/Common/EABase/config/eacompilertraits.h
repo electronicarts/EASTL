@@ -451,7 +451,7 @@
 	//       { ... }
 	//
 	#ifndef EA_LIKELY
-		#if (defined(__GNUC__) && (__GNUC__ >= 3))
+		#if (defined(__GNUC__) && (__GNUC__ >= 3)) || defined(__clang__)
 			#if defined(__cplusplus)
 				#define EA_LIKELY(x)   __builtin_expect(!!(x), true)
 				#define EA_UNLIKELY(x) __builtin_expect(!!(x), false) 

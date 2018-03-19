@@ -491,8 +491,8 @@ namespace eastl
 		         eastl::tuple<Args1...> first_args,
 		         eastl::tuple<Args2...> second_args)
 		        : pair(pwc,
-		               first_args,
-		               second_args,
+		               eastl::move(first_args),
+		               eastl::move(second_args),
 		               eastl::make_index_sequence<sizeof...(Args1)>(),
 		               eastl::make_index_sequence<sizeof...(Args2)>())
 		    {

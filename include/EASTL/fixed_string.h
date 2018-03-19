@@ -155,11 +155,6 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
-
-		#if EASTL_RESET_ENABLED
-			void reset(); // This function name is deprecated; use reset_lose_memory instead.
-		#endif
-
 	}; // fixed_string
 
 
@@ -553,16 +548,6 @@ namespace eastl
 				resize(n);
 		}
 	}
-
-
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		inline void fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::reset()
-		{
-			reset_lose_memory();
-		}
-	#endif
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>

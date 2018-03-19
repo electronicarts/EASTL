@@ -867,15 +867,6 @@ int TestList()
 		VERIFY(a2 == rref);
 	}
 
-	// void reset()
-	{
-	#if EASTL_RESET_ENABLED
-		eastl::list<int> a = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-		a.reset();
-		VERIFY(a.empty());
-		VERIFY(a.size() == 0);
-	#endif
-	}
 
 	// void merge(this_type& x);
 	// void merge(this_type&& x);

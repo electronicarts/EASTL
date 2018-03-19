@@ -333,10 +333,6 @@ namespace eastl
 
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
-
-		#if EASTL_RESET_ENABLED
-			void reset(); // This function name is deprecated; use reset_lose_memory instead.
-		#endif
 	};
 
 
@@ -1325,16 +1321,6 @@ namespace eastl
 		mContainer.swap(rhs.mContainer);
 		eastl::swap(mFreeBitCount, rhs.mFreeBitCount);
 	}
-
-
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename Allocator, typename Element, typename Container>
-		void bitvector<Allocator, Element, Container>::reset()
-		{
-			reset_lose_memory();
-		}
-	#endif
 
 
 	template <typename Allocator, typename Element, typename Container>

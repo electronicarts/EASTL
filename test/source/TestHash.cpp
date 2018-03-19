@@ -10,6 +10,7 @@
 #include <EASTL/hash_map.h>
 #include <EASTL/unordered_set.h>
 #include <EASTL/unordered_map.h>
+#include <EASTL/map.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/vector.h>
@@ -151,6 +152,7 @@ struct colliding_hash
 	size_t operator()(const int& val) const 
 		{ return static_cast<size_t>(val % 3); }
 };
+
 
 
 int TestHash()
@@ -677,6 +679,12 @@ int TestHash()
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::hash_map<int, NonCopyable>>();
 		nErrorCount += TestMapCpp11NonCopyable<eastl::unordered_map<int, NonCopyable>>();
+	}
+
+	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<eastl::unordered_map<int, TestObject>>();
 	}
 
 
@@ -1352,6 +1360,51 @@ int TestHash()
 		EATEST_VERIFY(tester.test() == 12345);
 	}
 	#endif
+
+	{
+		using AllocatorType = CountingAllocator;
+		using String = eastl::basic_string<char8_t, AllocatorType>;
+		using StringStringMap = eastl::map<String, String, eastl::equal_to<String>, AllocatorType>;
+		using StringStringHashMap = eastl::hash_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
+		AllocatorType::resetCount();
+
+		{
+			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.emplace(eastl::move(key), eastl::move(value));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringMap myMap;
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringMap myMap;
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.emplace(eastl::move(key), eastl::move(value));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+	}
 
 	return nErrorCount;
 }

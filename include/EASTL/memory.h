@@ -68,6 +68,7 @@
 
 
 #include <EASTL/internal/config.h>
+#include <EASTL/internal/memory_base.h>
 #include <EASTL/internal/generic_iterator.h>
 #include <EASTL/internal/pair_fwd_decls.h>
 #include <EASTL/internal/functional_base.h>
@@ -79,14 +80,10 @@
 #include <EASTL/utility.h>
 #include <EASTL/numeric_limits.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 #include <new>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifdef _MSC_VER
 	#pragma warning(push)
@@ -94,8 +91,6 @@
 	#pragma warning(disable: 4146)  // unary minus operator applied to unsigned type, result still unsigned
 	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
 #endif
-
-EA_DISABLE_SN_WARNING(828); // The EDG SN compiler has a bug in its handling of variadic template arguments and mistakenly reports "parameter "args" was never referenced"
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -112,18 +107,6 @@ namespace eastl
 	#ifndef EASTL_TEMP_DEFAULT_NAME
 		#define EASTL_TEMP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " temp" // Unless the user overrides something, this is "EASTL temp".
 	#endif
-
-
-	/// addressof
-	///
-	/// From the C++11 Standard, section 20.6.12.1
-	/// Returns the actual address of the object or function referenced by r, even in the presence of an overloaded operator&.
-	///
-	template<typename T>
-	T* addressof(T& value) EA_NOEXCEPT
-	{
-		return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char&>(value)));
-	}
 
 
 	/// get_temporary_buffer
@@ -234,64 +217,12 @@ namespace eastl
 				(*mpValue).~value_type();
 		} 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <typename... Args>
-			void construct(Args&&... args)
-			{
-				if(!mpValue)
-					mpValue = new(&mStorage) value_type(eastl::forward<Args>(args)...);
-			} 
-		#else
-			void construct()
-			{
-				if(!mpValue)
-					mpValue = new(&mStorage) value_type;
-			}
-
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				template <typename A1>
-				void construct(A1&& a1)
-				{
-					if(!mpValue)
-						mpValue = new(&mStorage) value_type(eastl::forward<A1>(a1));
-				}
-
-				template <typename A1, typename A2>
-				void construct(A1&& a1, A2&& a2)
-				{
-					if(!mpValue)
-						mpValue = new(&mStorage) value_type(eastl::forward<A1>(a1), eastl::forward<A2>(a2));
-				}
-
-				template <typename A1, typename A2, typename A3>
-				void construct(A1&& a1, A2&& a2, A3&& a3)
-				{
-					if(!mpValue)
-						mpValue = new(&mStorage) value_type(eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3));
-				}
-			#endif
-
-			template <typename A1>
-			void construct(const A1& a1)
-			{
-				if(!mpValue)
-					mpValue = new(&mStorage) value_type(a1);
-			}
-
-			template <typename A1, typename A2>
-			void construct(const A1& a1, const A2& a2)
-			{
-				if(!mpValue)
-					mpValue = new(&mStorage) value_type(a1, a2);
-			}
-
-			template <typename A1, typename A2, typename A3>
-			void construct(const A1& a1, const A2& a2, const A3& a3)
-			{
-				if(!mpValue)
-					mpValue = new(&mStorage) value_type(a1, a2, a3);
-			}
-		#endif
+		template <typename... Args>
+		void construct(Args&&... args)
+		{
+			if(!mpValue)
+				mpValue = new(&mStorage) value_type(eastl::forward<Args>(args)...);
+		} 
 
 		bool is_constructed() const EA_NOEXCEPT
 			{ return mpValue != NULL; }
@@ -1736,7 +1667,6 @@ namespace eastl
 
 #include <EASTL/internal/allocator_traits.h>
 
-EA_RESTORE_SN_WARNING()
 
 #ifdef _MSC_VER
 	#pragma warning(pop)

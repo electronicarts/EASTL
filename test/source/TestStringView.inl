@@ -16,6 +16,31 @@ int TEST_STRING_NAME()
 			VERIFY(sw.size() == sw.length());
 		}
 
+		// User-reported regression:  constructing string_view from a nullptr, NULL, 0
+		{
+			{
+				StringViewT sw(nullptr);
+				VERIFY(sw.empty());
+				VERIFY(sw.data() == nullptr);
+				VERIFY(sw.size() == 0);
+				VERIFY(sw.size() == sw.length());
+			}
+			{
+				StringViewT sw(0);
+				VERIFY(sw.empty());
+				VERIFY(sw.data() == nullptr);
+				VERIFY(sw.size() == 0);
+				VERIFY(sw.size() == sw.length());
+			}
+			{
+				StringViewT sw(NULL);
+				VERIFY(sw.empty());
+				VERIFY(sw.data() == nullptr);
+				VERIFY(sw.size() == 0);
+				VERIFY(sw.size() == sw.length());
+			}
+		}
+
 		// EA_CONSTEXPR basic_string_view(const basic_string_view& other) = default;
 		{
 			auto* pLiteral = LITERAL("Hello, World");

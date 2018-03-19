@@ -184,19 +184,25 @@ namespace eastl
 
 					case storage_operation::DESTROY:
 					{
+						EASTL_ASSERT(pThis);
 						destroy(const_cast<any&>(*pThis));
 					}
 					break;
 
 					case storage_operation::COPY:
 					{
+						EASTL_ASSERT(pThis);
+						EASTL_ASSERT(pOther);
 						construct(pOther->m_storage, *(T*)(&pThis->m_storage.internal_storage));
 					}
 					break;
 
 					case storage_operation::MOVE:
 					{
+						EASTL_ASSERT(pThis);
+						EASTL_ASSERT(pOther);
 						construct(pOther->m_storage, eastl::move(*(T*)(&pThis->m_storage.internal_storage)));
+						destroy(const_cast<any&>(*pThis));
 					}
 					break;
 
@@ -271,13 +277,18 @@ namespace eastl
 
 					case storage_operation::COPY:
 					{
+						EASTL_ASSERT(pThis);
+						EASTL_ASSERT(pOther);
 						construct(pOther->m_storage, *static_cast<T*>(pThis->m_storage.external_storage));
 					}
 					break;
 
 					case storage_operation::MOVE:
 					{
+						EASTL_ASSERT(pThis);
+						EASTL_ASSERT(pOther);
 						construct(pOther->m_storage, eastl::move(*(T*)(pThis->m_storage.external_storage)));
+						destroy(const_cast<any&>(*pThis));
 					}
 					break;
 
@@ -357,8 +368,8 @@ namespace eastl
 				// storage because because the storage class has effectively
 				// type erased user type so we have to defer to the handler
 				// function to get the type back and pass on the move request.
-				other.m_handler(storage_operation::MOVE, &other, this);
 				m_handler = eastl::move(other.m_handler);
+				other.m_handler(storage_operation::MOVE, &other, this);
 			}
 		}
 
@@ -450,8 +461,31 @@ namespace eastl
 
 		void swap(any& other) EA_NOEXCEPT 
 		{
-			eastl::swap(m_storage, other.m_storage);
-			eastl::swap(m_handler, other.m_handler);
+			if(this == &other)
+				return;
+
+			if(m_handler && other.m_handler)
+			{
+				any tmp;
+				tmp.m_handler = other.m_handler;
+				other.m_handler(storage_operation::MOVE, &other, &tmp);
+
+				other.m_handler = m_handler;
+				m_handler(storage_operation::MOVE, this, &other);
+
+				m_handler = tmp.m_handler;
+				tmp.m_handler(storage_operation::MOVE, &tmp, this);
+			}
+			else if (m_handler == nullptr)
+			{
+				eastl::swap(m_handler, other.m_handler);
+				m_handler(storage_operation::MOVE, &other, this);
+			}
+			else if(other.m_handler == nullptr)
+			{
+				eastl::swap(m_handler, other.m_handler);
+				other.m_handler(storage_operation::MOVE, this, &other);
+			}
 		}
 
 	    // 20.7.3.4, observers

@@ -602,8 +602,6 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.1, in_place_t constructors
 		//
-		// TODO(rparolin):  Implementation required.
-
 		template <
 			class T,
 			class... Args,
@@ -983,8 +981,11 @@ namespace eastl
 	template <class Visitor, class... Variants>
 	EA_CONSTEXPR decltype(auto) visit(Visitor&& visitor, Variants&&... variants)
 	{
+		static_assert(sizeof...(Variants) > 0, "at least one variant instance must be passed as an argument to the visit function");
+
 		using variant_type = remove_reference_t<meta::get_type_at_t<0, Variants...>>;
-		static_assert(conjunction_v<is_same<variant_type, remove_reference_t<Variants>>...>, "all variants passed to eastl::visit() must have the same type");
+		static_assert(conjunction_v<is_same<variant_type, remove_reference_t<Variants>>...>,
+		              "all variants passed to eastl::visit() must have the same type");
 
 		return visitor_caller<Visitor, Variants...>::call(
 			forward<Visitor>(visitor),

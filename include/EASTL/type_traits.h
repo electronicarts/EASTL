@@ -830,6 +830,11 @@ namespace eastl
 	template <typename T>
 	struct remove_cv { typedef typename eastl::remove_volatile<typename eastl::remove_const<T>::type>::type type; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_cv_t = typename remove_cv<T>::type;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -880,6 +885,29 @@ namespace eastl
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		using remove_reference_t = typename remove_reference<T>::type;
+	#endif
+
+
+	///////////////////////////////////////////////////////////////////////
+	// remove_cvref
+	//
+	// Remove const and volatile from a reference type.
+	//
+	// The remove_cvref transformation trait removes top-level const and/or volatile 
+	// qualification (if any) from the reference type to which it is applied. For a given type T&, 
+	// remove_cvref<T& const volatile>::type is equivalent to T. For example, 
+	// remove_cv<int& volatile>::type is equivalent to int.
+	//
+	///////////////////////////////////////////////////////////////////////
+
+	#define EASTL_TYPE_TRAIT_remove_cvref_CONFORMANCE 1    // remove_cvref is conforming.
+
+	template <typename T>
+	struct remove_cvref { typedef typename eastl::remove_volatile<typename eastl::remove_const<typename eastl::remove_reference<T>::type>::type>::type type; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_cvref_t = typename remove_cvref<T>::type;
 	#endif
 
 

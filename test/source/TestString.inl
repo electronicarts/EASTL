@@ -190,23 +190,44 @@ int TEST_STRING_NAME()
 	// basic_string(this_type&& x, const allocator_type& allocator);
 	{
 	#if EASTL_MOVE_SEMANTICS_ENABLED
-		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		StringType str2(eastl::move(str1));
+		{  // test heap string
+			StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			StringType str2(eastl::move(str1));
 
-		VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		
-		VERIFY(str1.empty());
-		VERIFY(!str2.empty());
+			VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		VERIFY(str1.length() == 0);
-		VERIFY(str2.length() == 26);
+			VERIFY(str1.empty());
+			VERIFY(!str2.empty());
 
-		VERIFY(str1.size() == 0);
-		VERIFY(str2.size() == 26);
+			VERIFY(str1.length() == 0);
+			VERIFY(str2.length() == 26);
 
-		VERIFY(str1.validate());
-		VERIFY(str2.validate());
+			VERIFY(str1.size() == 0);
+			VERIFY(str2.size() == 26);
+
+			VERIFY(str1.validate());
+			VERIFY(str2.validate());
+		}
+		{  // test sso string
+			StringType str1(LITERAL("a"));
+			StringType str2(eastl::move(str1));
+
+			VERIFY(str1 != LITERAL("a"));
+			VERIFY(str2 == LITERAL("a"));
+
+			VERIFY(str1.empty());
+			VERIFY(!str2.empty());
+
+			VERIFY(str1.length() == 0);
+			VERIFY(str2.length() == 1);
+
+			VERIFY(str1.size() == 0);
+			VERIFY(str2.size() == 1);
+
+			VERIFY(str1.validate());
+			VERIFY(str2.validate());
+		}
 	#endif
 	}
 
@@ -371,23 +392,44 @@ int TEST_STRING_NAME()
 	// this_type& operator=(this_type&& x);
 	{
 	#if EASTL_MOVE_SEMANTICS_ENABLED
-		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		StringType str2 = eastl::move(str1);
+		{
+			StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			StringType str2 = eastl::move(str1);
 
-		VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		
-		VERIFY(str1.empty());
-		VERIFY(!str2.empty());
+			VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		VERIFY(str1.length() == 0);
-		VERIFY(str2.length() == 26);
+			VERIFY(str1.empty());
+			VERIFY(!str2.empty());
 
-		VERIFY(str1.size() == 0);
-		VERIFY(str2.size() == 26);
+			VERIFY(str1.length() == 0);
+			VERIFY(str2.length() == 26);
 
-		VERIFY(str1.validate());
-		VERIFY(str2.validate());
+			VERIFY(str1.size() == 0);
+			VERIFY(str2.size() == 26);
+
+			VERIFY(str1.validate());
+			VERIFY(str2.validate());
+		}
+		{
+			StringType str1(LITERAL("a"));
+			StringType str2 = eastl::move(str1);
+
+			VERIFY(str1 != LITERAL("a"));
+			VERIFY(str2 == LITERAL("a"));
+
+			VERIFY(str1.empty());
+			VERIFY(!str2.empty());
+
+			VERIFY(str1.length() == 0);
+			VERIFY(str2.length() == 1);
+
+			VERIFY(str1.size() == 0);
+			VERIFY(str2.size() == 1);
+
+			VERIFY(str1.validate());
+			VERIFY(str2.validate());
+		}
 	#endif
 	}
 
@@ -1224,6 +1266,21 @@ int TEST_STRING_NAME()
 
 			str.get_allocator().deallocate(pDetach, sz); 
 		}
+
+		{
+			// SSO, empty string via default ctor
+			StringType str;
+			const auto sz = str.size() + 1;  // +1 for null-terminator
+
+			auto* pDetach = str.detach();
+
+			VERIFY(pDetach != nullptr);
+			VERIFY(pDetach[0] == 0);
+			VERIFY(str.empty());
+			VERIFY(str.size() == 0);
+
+			str.get_allocator().deallocate(pDetach, sz); 
+		}
 	}
 
 	// this_type&  replace(size_type position, size_type n, const this_type& x);
@@ -1532,6 +1589,7 @@ int TEST_STRING_NAME()
 		p[0] = 'a';
 		p[1] = 'a';
 		p[2] = 'a';
+		p[3] = '\0';
 
 		str.force_size(3);
 
@@ -1549,8 +1607,6 @@ int TEST_STRING_NAME()
 			VERIFY(sv.compare(LITERAL("abcdefghijklmnopqrstuvwxyz")) == 0);
 		}(str);
 	}
-
-
 
 	return nErrorCount;
 }

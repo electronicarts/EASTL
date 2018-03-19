@@ -1471,6 +1471,42 @@ int TestTypeTraits()
 		//static_assert(is_same<std::remove_cv<int (int, ...)>::type , std::remove_cv<int (int, ...) const>::type>::value, "remove_cv failure");
 	}
 
+	// remove_cvref
+	{
+		static_assert(is_same_v<remove_cvref_t<int>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int&>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int&&>, int>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<const int>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const int&>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const int&&>, int>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<volatile int>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<volatile int&>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<volatile int&&>, int>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<const volatile int>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const volatile int&>, int>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const volatile int&&>, int>, "remove_cvref failure");
+
+		// test pointer types
+		static_assert(is_same_v<remove_cvref_t<int*>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int*&>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int*&&>, int*>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<const int*>, const int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const int*&>, const int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<const int*&&>, const int*>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<int* const>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int* const&>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int* const&&>, int*>, "remove_cvref failure");
+
+		static_assert(is_same_v<remove_cvref_t<int* const volatile>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int* const volatile&>, int*>, "remove_cvref failure");
+		static_assert(is_same_v<remove_cvref_t<int* const volatile&&>, int*>, "remove_cvref failure");
+	}
+
 
 	// add_const
 	// add_volatile

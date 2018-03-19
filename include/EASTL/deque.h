@@ -2391,9 +2391,6 @@ namespace eastl
 	//    // our definition of how reset_lose_memory works.
 	//    base_type::DoInit(0);
 	//
-	//    #if EASTL_RESET_ENABLED
-	//    #else
-	//    #endif
 	//}
 
 

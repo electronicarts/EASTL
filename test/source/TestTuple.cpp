@@ -22,13 +22,7 @@ struct DefaultConstructibleType
 
 struct MoveOnlyType
 {
-// tuple should work with non default constructible types but due to a bug in VS2103 is_default_constructible type trait
-// it doesn't work there
-#if !defined(_MSC_VER) || (_MSC_VER > 1800)
 	MoveOnlyType() = delete;
-#else
-	MoveOnlyType() : mVal() {}
-#endif
 	MoveOnlyType(int val) : mVal(val) {}
 	MoveOnlyType(const MoveOnlyType&) = delete;
 	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
@@ -111,18 +105,14 @@ int TestTuple()
 	static_assert(tuple_size<const tuple<int>>::value == 1, "tuple_size<const tuple<T>> test failed.");
 	static_assert(tuple_size<const tuple<const int>>::value == 1, "tuple_size<const tuple<const T>> test failed.");
 	static_assert(tuple_size<volatile tuple<int>>::value == 1, "tuple_size<volatile tuple<T>> test failed.");
-	static_assert(tuple_size<const volatile tuple<int>>::value == 1,
-				  "tuple_size<const volatile tuple<T>> test failed.");
+	static_assert(tuple_size<const volatile tuple<int>>::value == 1, "tuple_size<const volatile tuple<T>> test failed.");
 	static_assert(tuple_size<tuple<int, float, bool>>::value == 3, "tuple_size<tuple<T, T, T>> test failed.");
 
 	static_assert(is_same<tuple_element_t<0, tuple<int>>, int>::value, "tuple_element<I, T> test failed.");
 	static_assert(is_same<tuple_element_t<1, tuple<float, int>>, int>::value, "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, const int>>, const int>::value,
-				  "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, volatile int>>, volatile int>::value,
-				  "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, const volatile int>>, const volatile int>::value,
-				  "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, const int>>, const int>::value, "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, volatile int>>, volatile int>::value, "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, const volatile int>>, const volatile int>::value, "tuple_element<I, T> test failed.");
 	static_assert(is_same<tuple_element_t<1, tuple<float, int&>>, int&>::value, "tuple_element<I, T> test failed.");
 
 	{
@@ -267,13 +257,9 @@ int TestTuple()
 
 	{
 		// Test construction of tuple containing a move only type
-		static_assert(is_constructible<MoveOnlyType, MoveOnlyType>::value,
-					  "is_constructible type trait giving confusing answers.");
-		static_assert(is_constructible<MoveOnlyType, MoveOnlyType&&>::value,
-					  "is_constructible type trait giving wrong answers.");
-		// Static assert below fails on clang OSX
-		// static_assert(is_constructible<MoveOnlyType&&, MoveOnlyType&&>::value, "is_constructible type trait giving
-		// bizarre answers.");
+		static_assert(is_constructible<MoveOnlyType, MoveOnlyType>::value, "is_constructible type trait giving confusing answers.");
+		static_assert(is_constructible<MoveOnlyType, MoveOnlyType&&>::value, "is_constructible type trait giving wrong answers.");
+		static_assert(is_constructible<MoveOnlyType&&, MoveOnlyType&&>::value, "is_constructible type trait giving bizarre answers.");
 		tuple<MoveOnlyType> aTupleWithMoveOnlyMember(1);
 		EATEST_VERIFY(get<0>(aTupleWithMoveOnlyMember).mVal == 1);
 		get<0>(aTupleWithMoveOnlyMember) = MoveOnlyType(2);

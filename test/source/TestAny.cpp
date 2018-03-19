@@ -223,19 +223,36 @@ int TestAny()
 		VERIFY(a1.has_value());
 	}
 
+	// swap tests
 	{
-		any a1 = 42;
-		any a2 = 24;
-		VERIFY(any_cast<int>(a1) == 42);
-		VERIFY(any_cast<int>(a2) == 24);
+		{
+			any a1 = 42;
+			any a2 = 24;
+			VERIFY(any_cast<int>(a1) == 42);
+			VERIFY(any_cast<int>(a2) == 24);
 
-		a1.swap(a2);
-		VERIFY(any_cast<int>(a1) == 24);
-		VERIFY(any_cast<int>(a2) == 42);
+			a1.swap(a2);
+			VERIFY(any_cast<int>(a1) == 24);
+			VERIFY(any_cast<int>(a2) == 42);
 
-		eastl::swap(a1, a2);
-		VERIFY(any_cast<int>(a1) == 42);
-		VERIFY(any_cast<int>(a2) == 24);
+			eastl::swap(a1, a2);
+			VERIFY(any_cast<int>(a1) == 42);
+			VERIFY(any_cast<int>(a2) == 24);
+		}
+		{
+			any a1 = string("hello");
+			any a2 = string("world");
+			VERIFY(any_cast<string>(a1) == "hello");
+			VERIFY(any_cast<string>(a2) == "world");
+
+			a1.swap(a2);
+			VERIFY(any_cast<string>(a1) == "world");
+			VERIFY(any_cast<string>(a2) == "hello");
+
+			eastl::swap(a1, a2);
+			VERIFY(any_cast<string>(a1) == "hello");
+			VERIFY(any_cast<string>(a2) == "world");
+		}
 	}
 
 	#if EASTL_RTTI_ENABLED

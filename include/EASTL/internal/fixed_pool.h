@@ -1357,7 +1357,7 @@ namespace eastl
 		//    mOverflowAllocator.set_name(pName);
 		//}
 
-		fixed_vector_allocator(void* pNodeBuffer)
+		fixed_vector_allocator(void* pNodeBuffer = nullptr)
 			: mpPoolBegin(pNodeBuffer)
 		{
 		}

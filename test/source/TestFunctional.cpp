@@ -495,8 +495,8 @@ int TestFunctional()
 			static_assert(eastl::is_same<typename eastl::invoke_result<decltype(&TestStruct::value), eastl::reference_wrapper<TestStruct>>::type, int &>::value, "incorrect type for invoke_result");
 			static_assert(eastl::is_invocable<decltype(&TestStruct::GetValue), eastl::reference_wrapper<TestStruct>>::value, "incorrect value for is_invocable");
 		}
-        
-        #ifndef EA_COMPILER_GNUC
+
+		#ifndef EA_COMPILER_GNUC
 		{
 			TestStruct a(42);
 			EATEST_VERIFY(eastl::invoke(&TestStruct::GetValue, a) == 42);
@@ -507,7 +507,7 @@ int TestFunctional()
 
 			static_assert(eastl::is_invocable<decltype(&TestStruct::GetValue), TestStruct*>::value, "incorrect value for is_invocable");
 		}
-        #endif
+		#endif
 		{
 			TestFunctor f;
 			eastl::invoke(f);

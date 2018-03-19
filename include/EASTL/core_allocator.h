@@ -57,14 +57,9 @@ namespace EA
 			static EASTLCoreAllocatorImpl* GetDefaultAllocator();
 		};
 
-		EASTLCoreAllocatorImpl* EASTLCoreAllocatorImpl::GetDefaultAllocator()
+		inline EASTLCoreAllocatorImpl* EASTLCoreAllocatorImpl::GetDefaultAllocator()
 		{
-			EA_DISABLE_VC_WARNING(4640)  // disable warning : "warning C4640: 'allocator' : construction of local static object is not thread-safe"
-			// Given that EASTLCoreAllocatorImpl doesn't contain any member data, and doesn't need to execute any code during construction, construcion
-			// of this static variable should be thread-safe despite the warning MSVC normally generates.
 			static EASTLCoreAllocatorImpl allocator;
-			EA_RESTORE_VC_WARNING()
-
 			return &allocator;
 		}
 	}
