@@ -390,7 +390,7 @@ namespace eastl
 				}
 			}
 
-			inline void SetEndPtr(value_type* pEnd) noexcept
+			inline void SetEndPtr(value_type* pEnd) EA_NOEXCEPT
 			{
 				if(IsSSO())
 					sso.mnSize = char(pEnd - SSOBufferPtr());
@@ -398,7 +398,7 @@ namespace eastl
 					heap.mpEnd = pEnd;
 			}
 
-			inline void SetBeginPtr(value_type* pBegin) noexcept
+			inline void SetBeginPtr(value_type* pBegin) EA_NOEXCEPT
 			{
 				// NOTE(rparolin): sso.mpBegin and heap.mpBegin occupy the same memory location so only one write is necessary.
 				//
@@ -406,7 +406,7 @@ namespace eastl
 				heap.mpBegin = pBegin;
 			}
 
-			inline void SetCapacityPtr(value_type* pCapacity) noexcept
+			inline void SetCapacityPtr(value_type* pCapacity) EA_NOEXCEPT
 			{
 				if(!IsSSO())
 					heap.mpCapacity = pCapacity;
@@ -416,7 +416,7 @@ namespace eastl
 			 // }
 			}
 
-			inline void ClearSSOBuffer() noexcept
+			inline void ClearSSOBuffer() EA_NOEXCEPT
 			{
 				if(IsSSO())
 				{
@@ -434,8 +434,8 @@ namespace eastl
 
 	public:
 		// Constructor, destructor
-		basic_string() noexcept(noexcept(allocator_type()));
-		explicit basic_string(const allocator_type& allocator) noexcept;
+		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()));
+		explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -447,7 +447,7 @@ namespace eastl
 		basic_string(CtorSprintf, const value_type* pFormat, ...);
 		basic_string(std::initializer_list<value_type> init, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 
-		basic_string(this_type&& x) noexcept;
+		basic_string(this_type&& x) EA_NOEXCEPT;
 		basic_string(this_type&& x, const allocator_type& allocator);
 
 		template <typename OtherCharType>
@@ -726,7 +726,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string() noexcept(noexcept(allocator_type()))
+	inline basic_string<T, Allocator>::basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()))
 	    : mPair(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))
 	{
 		AllocateSelf();
@@ -734,7 +734,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const allocator_type& allocator) noexcept
+	inline basic_string<T, Allocator>::basic_string(const allocator_type& allocator) EA_NOEXCEPT
 	    : mPair(allocator)
 	{
 		AllocateSelf();
@@ -872,7 +872,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>::basic_string(this_type&& x) noexcept
+	basic_string<T, Allocator>::basic_string(this_type&& x) EA_NOEXCEPT
 		: mPair(x.get_allocator())
 	{
 		internalLayout() = eastl::move(x.internalLayout());
