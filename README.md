@@ -32,7 +32,9 @@ Significant EASTL contributions were made by (in alphabetical order):
 * Avery Lee
 * Colin Andrews
 * JP Flouret
+* Liam Mitchell
 * Matt Newport
+* Max Winkler
 * Paul Pedriana
 * Roberto Parolin
 * Simon Everett
