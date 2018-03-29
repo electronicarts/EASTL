@@ -277,36 +277,6 @@ namespace eastl
 		template <typename From, typename To>
 		struct is_convertible : public integral_constant<bool, __is_convertible_to(From, To)>{};
 
-	#elif defined(__GNUC__) && (__GNUC__ <= 2)
-		#define EASTL_TYPE_TRAIT_is_convertible_CONFORMANCE 0
-
-		template <typename From, typename To>
-		struct is_convertible : public false_type{};
-
-	#elif defined(EA_COMPILER_NO_DECLTYPE)
-		#define EASTL_TYPE_TRAIT_is_convertible_CONFORMANCE 0
-
-		// This causes compile failures for some cases and we need to revise it, though the C++11 pathways here are really the future anyway.
-		// Some variations of EDG generate a warning about the usage below: Test(...) - aggregate type passed through ellipsis (it's not portable to pass a non-POD as ellipsis).
-		template <typename From, typename To, bool is_from_void = false, bool is_to_void = false>
-		struct is_convertible_helper {
-			static yes_type Test(To);  // May need to use __cdecl under VC++.
-			static no_type  Test(...); // May need to use __cdecl under VC++.
-			static From from;
-			typedef integral_constant<bool, sizeof(Test(from)) == sizeof(yes_type)> result;
-		};
- 
-		// void is not convertible to non-void
-		template <typename From, typename To>
-		struct is_convertible_helper<From, To, true, false> { typedef false_type result; };
- 
-		// Anything is convertible to void
-		template <typename From, typename To, bool is_from_void>
-		struct is_convertible_helper<From, To, is_from_void, true> { typedef true_type result; };
- 
-		template <typename From, typename To>
-		struct is_convertible : public is_convertible_helper<From, To, is_void<From>::value, is_void<To>::value>::result {};
-
 	#else
 		#define EASTL_TYPE_TRAIT_is_convertible_CONFORMANCE 1
 
@@ -334,6 +304,12 @@ namespace eastl
 		struct is_convertible
 			: public integral_constant<bool, is_convertible_helper<From, To>::value> {};
 
+	#endif
+
+
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template<typename From, typename To>
+		EA_CONSTEXPR bool is_convertible_v = is_convertible<From, To>::value;
 	#endif
 
 

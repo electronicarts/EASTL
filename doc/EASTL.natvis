@@ -49,30 +49,32 @@
 <Type Name="eastl::basic_string&lt;char,*&gt;">
 	<DisplayString>{mPair.mFirst.heap.mpBegin,s}</DisplayString>
 	<Expand>
-		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpEnd - mPair.mFirst.heap.mpBegin</Item>
-		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpCapacity - mPair.mFirst.heap.mpBegin</Item>
-		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpBegin,sb</Item>
+		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
+		&amp; ~kHeapMask)</Item>
+		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
 
-		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mnSize</Item>
-		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">SSOLayout::SSO_SIZE_IN_BYTES-0</Item>
-		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mpBegin,sb</Item>
+		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
 
-		<Item Name="uses heap">mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer</Item>
+		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
 <Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
 	<DisplayString>{mPair.mFirst.heap.mpBegin,su}</DisplayString>
 	<Expand>
-		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpEnd - mPair.mFirst.heap.mpBegin</Item>
-		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpCapacity - mPair.mFirst.heap.mpBegin</Item>
-		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer">mPair.mFirst.heap.mpBegin,sub</Item>
+		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
+		&amp; ~kHeapMask)</Item>
+		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
 
-		<Item Name="length"   Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mnSize</Item>
-		<Item Name="capacity" Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">SSOLayout::SSO_SIZE_IN_BYTES-0</Item>
-		<Item Name="value"    Condition="mPair.mFirst.sso.mpBegin == mPair.mFirst.sso.mBuffer">mPair.mFirst.sso.mpBegin,sub</Item>
+		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
 
-		<Item Name="uses heap">mPair.mFirst.sso.mpBegin != mPair.mFirst.sso.mBuffer</Item>
+		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 

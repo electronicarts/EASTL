@@ -204,13 +204,13 @@ namespace eastl
 		using base_type::internalAllocator;
 
 	public:
-		vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()));
-		explicit vector(const allocator_type& allocator) EA_NOEXCEPT;
+		vector() noexcept(noexcept(allocator_type()));
+		explicit vector(const allocator_type& allocator) noexcept;
 		explicit vector(size_type n, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		vector(size_type n, const value_type& value, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		vector(const this_type& x);
 		vector(const this_type& x, const allocator_type& allocator);
-		vector(this_type&& x) EA_NOEXCEPT;
+		vector(this_type&& x) noexcept;
 		vector(this_type&& x, const allocator_type& allocator);
 		vector(std::initializer_list<value_type> ilist, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 
@@ -283,7 +283,7 @@ namespace eastl
 		iterator emplace(const_iterator position, Args&&... args);
 
 		template<class... Args>
-		void emplace_back(Args&&... args);
+		reference emplace_back(Args&&... args);
 
 		iterator insert(const_iterator position, const value_type& value);
 		iterator insert(const_iterator position, size_type n, const value_type& value);
@@ -493,7 +493,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()))
+	inline vector<T, Allocator>::vector() noexcept(noexcept(allocator_type()))
 		: base_type()
 	{
 		// Empty
@@ -501,7 +501,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(const allocator_type& allocator) EA_NOEXCEPT
+	inline vector<T, Allocator>::vector(const allocator_type& allocator) noexcept
 		: base_type(allocator)
 	{
 		// Empty
@@ -543,7 +543,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(this_type&& x) EA_NOEXCEPT
+	inline vector<T, Allocator>::vector(this_type&& x) noexcept
 		: base_type(eastl::move(x.internalAllocator()))  // vector requires move-construction of allocator in this case.
 	{
 		DoSwap(x);
@@ -1090,7 +1090,8 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template<class... Args>
-	inline void vector<T, Allocator>::emplace_back(Args&&... args)
+	inline typename vector<T, Allocator>::reference
+	vector<T, Allocator>::emplace_back(Args&&... args)
 	{
 		if(mpEnd < internalCapacityPtr())
 		{
@@ -1099,8 +1100,9 @@ namespace eastl
 		}
 		else
 			DoInsertValueEnd(eastl::forward<Args>(args)...);
-	}
 
+		return back();
+	}
 
 	template <typename T, typename Allocator>
 	inline typename vector<T, Allocator>::iterator
@@ -1954,7 +1956,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline void swap(vector<T, Allocator>& a, vector<T, Allocator>& b) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(a.swap(b)))
+	inline void swap(vector<T, Allocator>& a, vector<T, Allocator>& b) noexcept(noexcept(a.swap(b)))
 	{
 		a.swap(b);
 	}

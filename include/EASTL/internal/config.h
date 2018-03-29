@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.08.00"
-	#define EASTL_VERSION_N  30800
+	#define EASTL_VERSION   "3.09.00"
+	#define EASTL_VERSION_N  30900
 #endif
 
 

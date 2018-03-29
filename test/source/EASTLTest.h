@@ -418,26 +418,24 @@ struct TestObject
 		}
 	}
 
-	#if !defined(EA_COMPILER_NO_RVALUE_REFERENCES)
-		// Due to the nature of TestObject, there isn't much special for us to 
-		// do in our move constructor. A move constructor swaps its contents with 
-		// the other object, whhich is often a default-constructed object.
-		TestObject(TestObject&& testObject)
-			: mX(testObject.mX), mbThrowOnCopy(testObject.mbThrowOnCopy), mMagicValue(testObject.mMagicValue)
+	// Due to the nature of TestObject, there isn't much special for us to 
+	// do in our move constructor. A move constructor swaps its contents with 
+	// the other object, whhich is often a default-constructed object.
+	TestObject(TestObject&& testObject)
+		: mX(testObject.mX), mbThrowOnCopy(testObject.mbThrowOnCopy), mMagicValue(testObject.mMagicValue)
+	{
+		++sTOCount;
+		++sTOCtorCount;
+		++sTOMoveCtorCount;
+		mId = sTOCtorCount;  // testObject keeps its mId, and we assign ours anew.
+		testObject.mX = 0;   // We are swapping our contents with the TestObject, so give it our "previous" value.
+		if(mbThrowOnCopy)
 		{
-			++sTOCount;
-			++sTOCtorCount;
-			++sTOMoveCtorCount;
-			mId = sTOCtorCount;  // testObject keeps its mId, and we assign ours anew.
-			testObject.mX = 0;   // We are swapping our contents with the TestObject, so give it our "previous" value.
-			if(mbThrowOnCopy)
-			{
-				#if EASTL_EXCEPTIONS_ENABLED
-					throw "Disallowed TestObject copy";
-				#endif
-			}
+			#if EASTL_EXCEPTIONS_ENABLED
+				throw "Disallowed TestObject copy";
+			#endif
 		}
-	#endif
+	}
 
 	TestObject& operator=(const TestObject& testObject)
 	{
@@ -459,28 +457,26 @@ struct TestObject
 		return *this;
 	}
 
-	#if !defined(EA_COMPILER_NO_RVALUE_REFERENCES)
-		TestObject& operator=(TestObject&& testObject)
+	TestObject& operator=(TestObject&& testObject)
+	{
+		++sTOMoveAssignCount;
+
+		if(&testObject != this)
 		{
-			++sTOMoveAssignCount;
+			eastl::swap(mX, testObject.mX);
+			// Leave mId alone.
+			eastl::swap(mMagicValue, testObject.mMagicValue);
+			eastl::swap(mbThrowOnCopy, testObject.mbThrowOnCopy);
 
-			if(&testObject != this)
+			if(mbThrowOnCopy)
 			{
-				eastl::swap(mX, testObject.mX);
-				// Leave mId alone.
-				eastl::swap(mMagicValue, testObject.mMagicValue);
-				eastl::swap(mbThrowOnCopy, testObject.mbThrowOnCopy);
-
-				if(mbThrowOnCopy)
-				{
-					#if EASTL_EXCEPTIONS_ENABLED
-						throw "Disallowed TestObject copy";
-					#endif
-				}
+				#if EASTL_EXCEPTIONS_ENABLED
+					throw "Disallowed TestObject copy";
+				#endif
 			}
-			return *this;
 		}
-	#endif
+		return *this;
+	}
 
 	~TestObject()
 	{
@@ -1242,6 +1238,8 @@ public:
 	{
 		activeAllocCount++;
 		totalAllocCount++;
+		totalAllocatedMemory += n;
+		activeAllocatedMemory += n;
 		return mAllocator.allocate(n, flags);
 	}
 
@@ -1249,6 +1247,8 @@ public:
 	{
 		activeAllocCount++;
 		totalAllocCount++;
+		totalAllocatedMemory += n;
+		activeAllocatedMemory += n;
 		return mAllocator.allocate(n, alignment, offset, flags);
 	}
 
@@ -1256,26 +1256,28 @@ public:
 	{
 		activeAllocCount--;
 		totalDeallocCount--;
+		activeAllocatedMemory -= n;
 		return mAllocator.deallocate(p, n);
 	}
 
-	const char* get_name() const { return mAllocator.get_name(); }
-	void set_name(const char* pName) { mAllocator.set_name(pName); }
+	const char* get_name() const          { return mAllocator.get_name(); }
+	void set_name(const char* pName)      { mAllocator.set_name(pName); }
 
-	static auto getAllocationCount() 
-	{
-		return totalAllocCount;
-	}
+	static auto getAllocationCount()      { return totalAllocCount; }
+	static auto getTotalAllocationSize()  { return totalAllocatedMemory; }
+	static auto getActiveAllocationSize() { return activeAllocatedMemory; }
 
 	static void resetCount()
 	{
-		activeAllocCount  = 0;
-		totalAllocCount   = 0;
-		totalDeallocCount = 0;
-		totalCtorCount    = 0;
-		defaultCtorCount  = 0;
-		copyCtorCount     = 0;
-		assignOpCount     = 0;
+		activeAllocCount      = 0;
+		totalAllocCount       = 0;
+		totalDeallocCount     = 0;
+		totalCtorCount        = 0;
+		defaultCtorCount      = 0;
+		copyCtorCount         = 0;
+		assignOpCount         = 0;
+		totalAllocatedMemory  = 0;
+		activeAllocatedMemory = 0;
 	}
 
 	eastl::allocator mAllocator;
@@ -1287,6 +1289,8 @@ public:
 	static uint64_t defaultCtorCount;
 	static uint64_t copyCtorCount;
 	static uint64_t assignOpCount;
+	static uint64_t totalAllocatedMemory;  // the total amount of memory allocated
+	static uint64_t activeAllocatedMemory; // currently allocated memory by allocator
 };
 
 inline bool operator==(const CountingAllocator& rhs, const CountingAllocator& lhs) { return rhs.mAllocator == lhs.mAllocator; }

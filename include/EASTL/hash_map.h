@@ -154,18 +154,16 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			hash_map(this_type&& x)
-			  : base_type(eastl::move(x))
-			{
-			}
+		hash_map(this_type&& x)
+		  : base_type(eastl::move(x))
+		{
+		}
 
 
-			hash_map(this_type&& x, const allocator_type& allocator)
-			  : base_type(eastl::move(x), allocator)
-			{
-			}
-		#endif
+		hash_map(this_type&& x, const allocator_type& allocator)
+		  : base_type(eastl::move(x), allocator)
+		{
+		}
 
 
 		/// hash_map
@@ -209,12 +207,10 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			this_type& operator=(this_type&& x)
-			{
-				return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
-			}
-		#endif
+		this_type& operator=(this_type&& x)
+		{
+			return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
+		}
 
 
 		/// insert
@@ -266,12 +262,10 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			insert_return_type insert(key_type&& key)
-			{
-				return base_type::DoInsertKey(true_type(), eastl::move(key));
-			}
-		#endif
+		insert_return_type insert(key_type&& key)
+		{
+			return base_type::DoInsertKey(true_type(), eastl::move(key));
+		}
 
 
 		mapped_type& operator[](const key_type& key)
@@ -285,13 +279,11 @@ namespace eastl
 			//return (*base_type::insert(value_type(key, mapped_type())).first).second;
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			mapped_type& operator[](key_type&& key)
-			{
-				// The Standard states that this function "inserts the value value_type(std::move(key), mapped_type())"
-				return (*base_type::DoInsertKey(true_type(), eastl::move(key)).first).second;
-			}
-		#endif
+		mapped_type& operator[](key_type&& key)
+		{
+			// The Standard states that this function "inserts the value value_type(std::move(key), mapped_type())"
+			return (*base_type::DoInsertKey(true_type(), eastl::move(key)).first).second;
+		}
 
 
 	}; // hash_map
@@ -368,18 +360,16 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			hash_multimap(this_type&& x)
-			  : base_type(eastl::move(x))
-			{
-			}
+		hash_multimap(this_type&& x)
+		  : base_type(eastl::move(x))
+		{
+		}
 
 
-			hash_multimap(this_type&& x, const allocator_type& allocator)
-			  : base_type(eastl::move(x), allocator)
-			{
-			}
-		#endif
+		hash_multimap(this_type&& x, const allocator_type& allocator)
+		  : base_type(eastl::move(x), allocator)
+		{
+		}
 
 
 		/// hash_multimap
@@ -423,12 +413,10 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			this_type& operator=(this_type&& x)
-			{
-				return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
-			}
-		#endif
+		this_type& operator=(this_type&& x)
+		{
+			return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
+		}
 
 
 		/// insert
@@ -443,12 +431,10 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			insert_return_type insert(key_type&& key)
-			{
-				return base_type::DoInsertKey(false_type(), eastl::move(key));
-			}
-		#endif
+		insert_return_type insert(key_type&& key)
+		{
+			return base_type::DoInsertKey(false_type(), eastl::move(key));
+		}
 
 
 	}; // hash_multimap

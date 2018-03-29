@@ -237,7 +237,7 @@ namespace eastl
 
 		variant_storage& operator=(variant_storage&& other)
 		{
-			DoOp(StorageOp::MOVE, other); 
+			DoOp(StorageOp::MOVE, eastl::move(other)); 
 			return *this;
 		}
 
@@ -570,8 +570,11 @@ namespace eastl
 		template <typename = enable_if_t<conjunction_v<is_copy_constructible<Types>...>>>
 		variant(const variant& other)
 		{
-			mIndex = other.mIndex;
-			mStorage = other.mStorage;
+			if (this != &other)
+			{
+				mIndex = other.mIndex;
+				mStorage = other.mStorage;
+			}
 		}
 
 		// Only participates in overload resolution if is_move_constructible_v<T_i> is true for all T_i in Types...
@@ -579,8 +582,11 @@ namespace eastl
 		EA_CONSTEXPR variant(variant&& other) EA_NOEXCEPT(conjunction_v<is_move_constructible<Types>...>)
 			: mIndex(variant_npos), mStorage()
 		{
-			mIndex = other.mIndex;
-			mStorage = eastl::move(other.mStorage);
+			if(this != &other)
+			{
+				mIndex = other.mIndex;
+				mStorage = eastl::move(other.mStorage);
+			}
 		}
 
 		// Conversion constructor
@@ -605,41 +611,37 @@ namespace eastl
 		template <
 			class T,
 			class... Args,
-			class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>
-		>
+			class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>>
 		EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, Args&&... args)
 			: variant(in_place<meta::get_type_index_v<T, Types...>>, forward<Args>(args)...)
 		{}
 
 		template <
-			class T,
-			class U,
-			class... Args,
-			class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>
-		>
+		    class T,
+		    class U,
+		    class... Args,
+		    class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>>
 		EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-			: variant(in_place<meta::get_type_index_v<T, Types...>>, il, forward<Args>(args)...)
+		    : variant(in_place<meta::get_type_index_v<T, Types...>>, il, forward<Args>(args)...)
 		{}
 
-		template <
-			size_t I,
-			class... Args,
-			class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>, is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>
-		>
+		template <size_t I,
+		          class... Args,
+		          class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
+		                                            is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>>
 		EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, Args&&... args)
-			: mIndex(I)
+		    : mIndex(I)
 		{
 			mStorage.template set_as<meta::get_type_at_t<I, Types...>>(forward<Args>(args)...);
 		}
 
-		template <
-			size_t I,
-			class U,
-			class... Args,
-			class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>, is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>
-		>
+		template <size_t I,
+		          class U,
+		          class... Args,
+		          class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
+		                                            is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>>
 		EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-			: mIndex(I)
+		    : mIndex(I)
 		{
 			mStorage.template set_as<meta::get_type_at_t<I, Types...>>(il, forward<Args>(args)...);
 		}
@@ -690,7 +692,7 @@ namespace eastl
 		//
 		template <size_t I,
 		          class... Args,
-	              typename T = meta::get_type_at_t<I, Types...>,
+		          typename T = meta::get_type_at_t<I, Types...>,
 		          typename =
 		              enable_if_t<conjunction_v<is_constructible<T, Args...>, meta::duplicate_type_check<T, Types...>>>>
 		variant_alternative_t<I, variant>& emplace(Args&&... args)
@@ -728,19 +730,22 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.3, assignment
 		//
-		template <
-		    class T,
-		    typename T_j = meta::overload_resolution_t<T, meta::overload_set<Types...>>,
-		    ssize_t I = meta::get_type_index_v<decay_t<T_j>, Types...>,
-		    typename = enable_if_t<
-		        conjunction_v<!is_same_v<decay_t<T>, variant>, is_assignable_v<T_j&, T>, is_constructible_v<T_j, T>>>>
+		template <class T,
+		          typename T_j = meta::overload_resolution_t<T, meta::overload_set<Types...>>,
+		          ssize_t I = meta::get_type_index_v<decay_t<T_j>, Types...>,
+		          typename = enable_if_t<!eastl::is_same_v<decay_t<T>, variant> && eastl::is_assignable_v<T_j&, T> &&
+		                                 eastl::is_constructible_v<T_j, T>>>
 		EA_CPP14_CONSTEXPR variant& operator=(T&& t)
 		    EA_NOEXCEPT(conjunction_v<is_nothrow_assignable<T_j&, T>, is_nothrow_constructible<T_j, T>>)
 		{
 			static_assert(I >= 0, "T not found in type-list.");
-			static_assert((meta::type_count_v<T_j, Types...> == 1), "function overload is not unique - duplicate types in type list");
+			static_assert((meta::type_count_v<T_j, Types...> == 1),
+			              "function overload is not unique - duplicate types in type list");
 
-			mIndex = static_cast<variant_index_t>(index);
+			if (!valueless_by_exception())
+				mStorage.destroy();
+
+			mIndex = static_cast<variant_index_t>(I);
 			mStorage.template set_as<T_j>(eastl::forward<T_j>(t));
 			return *this;
 		}
@@ -753,8 +758,11 @@ namespace eastl
 		          typename = enable_if_t<enable>> // add a dependent type to enable sfinae
 		variant& operator=(const variant& other)
 		{
-			mIndex = other.mIndex;
-			mStorage = other.mStorage;
+			if (this != &other)
+			{
+				mIndex = other.mIndex;
+				mStorage = other.mStorage;
+			}
 			return *this;
 		}
 
@@ -766,8 +774,11 @@ namespace eastl
 		    EA_NOEXCEPT(conjunction_v<conjunction<is_nothrow_move_constructible<Types>...>,
 		                              conjunction<is_nothrow_move_assignable<Types>...>>)
 		{
-			mIndex = eastl::move(other.mIndex);
-			mStorage = eastl::move(other.mStorage);
+			if (this != &other)
+			{
+				mIndex = eastl::move(other.mIndex);
+				mStorage = eastl::move(other.mStorage);
+			}
 			return *this;
 		}
 
@@ -848,7 +859,12 @@ namespace eastl
 		// get<I>(variant) based on the array index, and so we can unpack the final of arguments by
 		// calling get<I>(args) for each index in args.
 		template <size_t I, typename ArgsTuple, size_t... ArgsIndices, size_t... ArrayIndices>
-		static decltype(auto) EA_CONSTEXPR call_next(Visitor&& visitor, index_sequence<ArgsIndices...>, index_sequence<ArrayIndices...>, ArgsTuple&& args, Variant&& variant, Variants&&... variants)
+		static decltype(auto) EA_CONSTEXPR call_next(Visitor&& visitor,
+		                                             index_sequence<ArgsIndices...>,
+		                                             index_sequence<ArrayIndices...>,
+		                                             ArgsTuple&& args,
+		                                             Variant&& variant,
+		                                             Variants&&... variants)
 		{
 			// Call the appropriate get() function on the variant, and pack the result into a new tuple along with
 			// all of the previous arguments. Then call the next visitor_caller with the new argument added,
@@ -864,7 +880,12 @@ namespace eastl
 
 		// Arguments are the same as for call_next (see above).
 		template <typename ArgsTuple, size_t... ArgsIndices, size_t... ArrayIndices>
-		static decltype(auto) EA_CPP14_CONSTEXPR call(Visitor&& visitor, index_sequence<ArgsIndices...>, index_sequence<ArrayIndices...>, ArgsTuple&& args, Variant&& variant, Variants&&... variants)
+		static decltype(auto) EA_CPP14_CONSTEXPR call(Visitor&& visitor,
+		                                              index_sequence<ArgsIndices...>,
+		                                              index_sequence<ArrayIndices...>,
+		                                              ArgsTuple&& args,
+		                                              Variant&& variant,
+		                                              Variants&&... variants)
 		{
 			// Deduce the type of the inner array of call_next functions
 			using return_type = decltype(call_next<0>(

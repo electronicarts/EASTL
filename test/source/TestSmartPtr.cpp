@@ -1812,6 +1812,41 @@ static int Test_intrusive_ptr()
 		EATEST_VERIFY(ip7);
 	}
 
+	{ 
+		// Test move-ctor
+		{
+			VERIFY(RefCountTest::mCount == 0);
+			intrusive_ptr<RefCountTest> ip1(new RefCountTest);
+			VERIFY(RefCountTest::mCount == 1);
+			VERIFY(ip1->mRefCount == 1);
+			{
+				intrusive_ptr<RefCountTest> ip2(eastl::move(ip1));
+				VERIFY(ip1.get() != ip2.get());
+				VERIFY(ip2->mRefCount == 1);
+				VERIFY(RefCountTest::mCount == 1);
+			}
+			VERIFY(ip1.get() == nullptr);
+			VERIFY(RefCountTest::mCount == 0);
+		}
+
+		// Test move-assignment
+		{
+			VERIFY(RefCountTest::mCount == 0);
+			intrusive_ptr<RefCountTest> ip1(new RefCountTest);
+			VERIFY(RefCountTest::mCount == 1);
+			VERIFY(ip1->mRefCount == 1);
+			{
+				intrusive_ptr<RefCountTest> ip2; 
+				ip2 = eastl::move(ip1);
+				VERIFY(ip1.get() != ip2.get());
+				VERIFY(ip2->mRefCount == 1);
+				VERIFY(RefCountTest::mCount == 1);
+			}
+			VERIFY(ip1.get() == nullptr);
+			VERIFY(RefCountTest::mCount == 0);
+		}
+	}
+
 	{   // Test modifiers (assign, attach, detach, reset, swap)
 		RefCountTest* const p1 = new RefCountTest;
 		RefCountTest* const p2 = new RefCountTest;

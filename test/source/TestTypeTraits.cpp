@@ -1140,6 +1140,21 @@ int TestTypeTraits()
 		static_assert(is_trivially_copyable<PodA>::value           == true,   "is_trivially_copyable failure");
 	#endif
 
+	{  // user reported regression
+		struct Foo
+		{
+			int a;
+			Foo(int i) : a(i) {}
+			Foo(Foo&& other) : a(other.a) { other.a = 0; }
+
+			Foo(const Foo&) = delete;
+			Foo& operator=(const Foo&) = delete;
+		};
+
+		static_assert(!eastl::is_trivially_copyable<Foo>::value, "is_trivially_copyable failure");
+	}
+
+
 	// is_trivially_copy_assignable
 	{
 		static_assert(is_trivially_copy_assignable<int>::value == true, "is_trivially_copy_assignable failure");

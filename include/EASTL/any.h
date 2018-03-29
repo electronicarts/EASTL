@@ -379,9 +379,10 @@ namespace eastl
 		any(ValueType&& value,
 		    typename eastl::enable_if<!eastl::is_same<typename eastl::decay<ValueType>::type, any>::value>::type* = 0)
 		{
-			static_assert(is_copy_constructible<decay_t<ValueType>>::value, "ValueType must be copy-constructible");
-			storage_handler<decay_t<ValueType>>::construct(m_storage, eastl::forward<ValueType>(value));
-			m_handler = &storage_handler<ValueType>::handler_func;
+			typedef decay_t<ValueType> DecayedValueType;
+			static_assert(is_copy_constructible<DecayedValueType>::value, "ValueType must be copy-constructible");
+			storage_handler<DecayedValueType>::construct(m_storage, eastl::forward<ValueType>(value));
+			m_handler = &storage_handler<DecayedValueType>::handler_func;
 		}
 
 		template <class T, class... Args>

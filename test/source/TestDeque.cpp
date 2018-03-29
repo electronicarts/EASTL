@@ -19,21 +19,13 @@
 #include <EASTL/algorithm.h>
 
 #if !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-		#pragma warning(disable:4350) // for whatever reason, the push,0 above does not turn this warning off with vs2012.
-									  // VC++ 2012 STL headers generate this. warning C4350: behavior change: 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc(const std::_Wrap_alloc<_Alloc> &) throw()' called instead of 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc<std::_Wrap_alloc<_Alloc>>(_Other &) throw()'
-	#endif
-
+	EA_DISABLE_ALL_VC_WARNINGS()
 	#include <deque>
 	#include <list>
 	#include <vector>
 	#include <algorithm>
 	#include <stdio.h>
-
-	#ifdef _MSC_VER
-		#pragma warning(pop)
-	#endif
+	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
 
@@ -718,15 +710,13 @@ int TestDeque()
 		}
 
 		{   // Test complex mutating functionality.
-			#if !defined(EASTLTEST_STD_STL_VER_APACHE) // Apache std::deque is non-conforming.
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque>();
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque1>();
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque32768>();
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque>();
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque1>();
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque32768>();
 
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque>();
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque1>();
-				nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque32768>();
-			#endif
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque>();
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque1>();
+			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque32768>();
 		}
 	#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
@@ -754,122 +744,70 @@ int TestDeque()
 
 
 	{   // C++11 functionality
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// deque(this_type&& x);
-			// deque(this_type&& x, const allocator_type& allocator);
-			// this_type& operator=(this_type&& x);
-			// void push_front(value_type&& value);
-			// void push_back(value_type&& value);
-			// iterator insert(const_iterator position, value_type&& value);
+		// deque(this_type&& x);
+		// deque(this_type&& x, const allocator_type& allocator);
+		// this_type& operator=(this_type&& x);
+		// void push_front(value_type&& value);
+		// void push_back(value_type&& value);
+		// iterator insert(const_iterator position, value_type&& value);
 
-			using namespace eastl;
+		using namespace eastl;
 
-			deque<TestObject> deque3TO33(3, TestObject(33));
-			deque<TestObject> toDequeA(eastl::move(deque3TO33));
-			EATEST_VERIFY((toDequeA.size() == 3) && (toDequeA.front().mX == 33) && (deque3TO33.size() == 0));
+		deque<TestObject> deque3TO33(3, TestObject(33));
+		deque<TestObject> toDequeA(eastl::move(deque3TO33));
+		EATEST_VERIFY((toDequeA.size() == 3) && (toDequeA.front().mX == 33) && (deque3TO33.size() == 0));
 
-			// The following is not as strong a test of this ctor as it could be. A stronger test would be to use IntanceAllocator with different instances.
-			deque<TestObject, MallocAllocator> deque4TO44(4, TestObject(44));
-			deque<TestObject, MallocAllocator> toDequeB(eastl::move(deque4TO44), MallocAllocator());
-			EATEST_VERIFY((toDequeB.size() == 4) && (toDequeB.front().mX == 44) && (deque4TO44.size() == 0));
+		// The following is not as strong a test of this ctor as it could be. A stronger test would be to use IntanceAllocator with different instances.
+		deque<TestObject, MallocAllocator> deque4TO44(4, TestObject(44));
+		deque<TestObject, MallocAllocator> toDequeB(eastl::move(deque4TO44), MallocAllocator());
+		EATEST_VERIFY((toDequeB.size() == 4) && (toDequeB.front().mX == 44) && (deque4TO44.size() == 0));
 
-			deque<TestObject, MallocAllocator> deque5TO55(5, TestObject(55));
-			toDequeB = eastl::move(deque5TO55);
-			EATEST_VERIFY((toDequeB.size() == 5) && (toDequeB.front().mX == 55) && (deque5TO55.size() == 0));
-		#endif
+		deque<TestObject, MallocAllocator> deque5TO55(5, TestObject(55));
+		toDequeB = eastl::move(deque5TO55);
+		EATEST_VERIFY((toDequeB.size() == 5) && (toDequeB.front().mX == 55) && (deque5TO55.size() == 0));
 	}
 
 
 	{   // C++11 functionality
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template<class... Args>
-			// iterator emplace(const_iterator position, Args&&... args);
+		// template<class... Args>
+		// iterator emplace(const_iterator position, Args&&... args);
 
-			// template<class... Args>
-			// void emplace_front(Args&&... args);
+		// template<class... Args>
+		// void emplace_front(Args&&... args);
 
-			// template<class... Args>
-			// void emplace_back(Args&&... args);
-			TestObject::Reset();
+		// template<class... Args>
+		// void emplace_back(Args&&... args);
+		TestObject::Reset();
 
-			deque<TestObject, eastl::allocator, 16> toDequeA;
+		deque<TestObject, eastl::allocator, 16> toDequeA;
 
-			toDequeA.emplace_back(2, 3, 4);
-			EATEST_VERIFY_F((toDequeA.size() == 1) && (toDequeA.back().mX == (2+3+4)) && (TestObject::sTOCtorCount == 1), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.back().mX, (int)TestObject::sTOCtorCount);
+		toDequeA.emplace_back(2, 3, 4);
+		EATEST_VERIFY_F((toDequeA.size() == 1) && (toDequeA.back().mX == (2+3+4)) && (TestObject::sTOCtorCount == 1), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.back().mX, (int)TestObject::sTOCtorCount);
 
-			toDequeA.emplace(toDequeA.begin(), 3, 4, 5);                                                              // This is 3 because of how subarray allocation works.
-			EATEST_VERIFY_F((toDequeA.size() == 2) && (toDequeA.front().mX == (3+4+5)) && (TestObject::sTOCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
+		toDequeA.emplace(toDequeA.begin(), 3, 4, 5);                                                              // This is 3 because of how subarray allocation works.
+		EATEST_VERIFY_F((toDequeA.size() == 2) && (toDequeA.front().mX == (3+4+5)) && (TestObject::sTOCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
 
-			toDequeA.emplace_front(6, 7, 8);
-			EATEST_VERIFY_F((toDequeA.size() == 3) && (toDequeA.front().mX == (6+7+8)) && (TestObject::sTOCtorCount == 4), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// iterator emplace(const_iterator position, value_type&& value);
-				// void     emplace_front(value_type&& value);
-				// void     emplace_back(value_type&& value);
-				TestObject::Reset();
-
-				// We have a potential problem here in that the compiler is not required to use move construction below.
-				// It is allowed to use standard copy construction if it wants. We could force it with eastl::move() usage.
-				deque<TestObject, eastl::allocator, 16> toDequeA;
-
-				toDequeA.emplace_back(TestObject(2, 3, 4));
-				EATEST_VERIFY_F((toDequeA.size() == 1) && (toDequeA.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 1), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.back().mX, (int)TestObject::sTOMoveCtorCount);
-
-				toDequeA.emplace(toDequeA.begin(), TestObject(3, 4, 5));
-				EATEST_VERIFY_F((toDequeA.size() == 2) && (toDequeA.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOMoveCtorCount);
-
-				toDequeA.emplace_front(TestObject(6, 7, 8));
-				EATEST_VERIFY_F((toDequeA.size() == 3) && (toDequeA.front().mX == (6+7+8)) && (TestObject::sTOMoveCtorCount == 4), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOMoveCtorCount);
-			#endif
-			
-			// iterator emplace(const_iterator position, const value_type& value);
-			// void     emplace_front(const value_type& value);
-			// void     emplace_back(const value_type& value);
-			TestObject::Reset();
-
-			deque<TestObject, eastl::allocator, 16> toDequeB;
-			TestObject to234(2, 3, 4);
-			TestObject to345(3, 4, 5);
-			TestObject to678(6, 7, 8);
-
-			toDequeB.emplace_back(to234); // This will be copied (not moved) by compilers that don't support rvalue move because it's not a temporary and we don't use eastl::move() on it.
-			EATEST_VERIFY_F((toDequeB.size() == 1) && (toDequeB.back().mX == (2+3+4)) && (TestObject::sTOArgCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeB.size(), (unsigned)toDequeB.back().mX, (int)TestObject::sTOArgCtorCount);
-			EATEST_VERIFY_F((TestObject::sTOCopyCtorCount + TestObject::sTOMoveCtorCount) == 1, "counts: %d %d", (int)TestObject::sTOCopyCtorCount, (int)TestObject::sTOMoveCtorCount); // A compiler that supports move may in fact take advantage of that internally.
-
-			toDequeB.emplace(toDequeB.begin(), to345); // This will be copied (not moved) by compilers that don't support rvalue move because it's not a temporary and we don't use eastl::move() on it.
-			EATEST_VERIFY_F((toDequeB.size() == 2) && (toDequeB.front().mX == (3+4+5)) && (TestObject::sTOArgCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeB.size(), (unsigned)toDequeB.front().mX, (int)TestObject::sTOArgCtorCount);
-			EATEST_VERIFY_F((TestObject::sTOCopyCtorCount + TestObject::sTOMoveCtorCount) == 3, "counts: %d %d", (int)TestObject::sTOCopyCtorCount, (int)TestObject::sTOMoveCtorCount); // A compiler that supports move may in fact take advantage of that internally.
-
-			toDequeB.emplace_front(to678); // This will be copied (not moved) by compilers that don't support rvalue move because it's not a temporary and we don't use eastl::move() on it.
-			EATEST_VERIFY_F((toDequeB.size() == 3) && (toDequeB.front().mX == (6+7+8)) && (TestObject::sTOArgCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeB.size(), (unsigned)toDequeB.front().mX, (int)TestObject::sTOArgCtorCount);
-			EATEST_VERIFY_F((TestObject::sTOCopyCtorCount + TestObject::sTOMoveCtorCount) == 4, "counts: %d %d", (int)TestObject::sTOCopyCtorCount, (int)TestObject::sTOMoveCtorCount); // A compiler that supports move may in fact take advantage of that internally.
-
-			EATEST_VERIFY_F(to234.mX == (2+3+4), "mX: %d", to234.mX); // Verify that the object was copied and not moved. If it was moved then mX would be 0 and not 2+3+4.
-			EATEST_VERIFY_F(to345.mX == (3+4+5), "mX: %d", to345.mX);
-			EATEST_VERIFY_F(to678.mX == (6+7+8), "mX: %d", to678.mX);
-		#endif
+		toDequeA.emplace_front(6, 7, 8);
+		EATEST_VERIFY_F((toDequeA.size() == 3) && (toDequeA.front().mX == (6+7+8)) && (TestObject::sTOCtorCount == 4), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// This test is similar to the emplace EASTL_MOVE_SEMANTICS_ENABLED pathway above. 
-			TestObject::Reset();
+		// This test is similar to the emplace EASTL_MOVE_SEMANTICS_ENABLED pathway above. 
+		TestObject::Reset();
 
-			//void push_front(T&& x);
-			//void push_back(T&& x);
-			//iterator insert(const_iterator position, T&& x);
+		//void push_front(T&& x);
+		//void push_back(T&& x);
+		//iterator insert(const_iterator position, T&& x);
 
-			deque<TestObject, eastl::allocator, 16> toDequeC; // Specify a non-small kSubarrayCount of 16 because the move count tests below assume there is no reallocation.
+		deque<TestObject, eastl::allocator, 16> toDequeC; // Specify a non-small kSubarrayCount of 16 because the move count tests below assume there is no reallocation.
 
-			toDequeC.push_back(TestObject(2, 3, 4));
-			EATEST_VERIFY((toDequeC.size() == 1) && (toDequeC.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 1));
+		toDequeC.push_back(TestObject(2, 3, 4));
+		EATEST_VERIFY((toDequeC.size() == 1) && (toDequeC.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 1));
 
-			toDequeC.insert(toDequeC.begin(), TestObject(3, 4, 5));
-			EATEST_VERIFY((toDequeC.size() == 2) && (toDequeC.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3));
+		toDequeC.insert(toDequeC.begin(), TestObject(3, 4, 5));
+		EATEST_VERIFY((toDequeC.size() == 2) && (toDequeC.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3));
 
-			toDequeC.push_front(TestObject(6, 7, 8));
-			EATEST_VERIFY((toDequeC.size() == 3) && (toDequeC.front().mX == (6+7+8)) && (TestObject::sTOMoveCtorCount == 4));
-		#endif
+		toDequeC.push_front(TestObject(6, 7, 8));
+		EATEST_VERIFY((toDequeC.size() == 3) && (toDequeC.front().mX == (6+7+8)) && (TestObject::sTOMoveCtorCount == 4));
 	}
 
 
@@ -1005,6 +943,16 @@ int TestDeque()
 
 		const eastl::deque<int> constIntDeque4;
 		const eastl::deque<int> constIntDeque5 = constIntDeque4;
+	}
+
+	{
+		// test shrink_to_fit 
+		eastl::deque<int, CountingAllocator> d(4096);
+		d.erase(d.begin(), d.end());
+
+		auto prev = d.get_allocator().getActiveAllocationSize();
+		d.shrink_to_fit();
+		VERIFY(d.get_allocator().getActiveAllocationSize() < prev);
 	}
 
 	return nErrorCount;

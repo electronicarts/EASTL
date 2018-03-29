@@ -1458,6 +1458,10 @@ namespace eastl
 		//{
 		//}
 
+		fixed_vector_allocator()
+		{
+		}
+
 		fixed_vector_allocator(void* /*pNodeBuffer*/)
 		{
 		}

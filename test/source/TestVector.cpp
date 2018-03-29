@@ -318,8 +318,9 @@ int TestVector()
 
 		// Should be able to emplace_back an item with const members (non-copyable)
 		eastl::vector<ItemWithConst> myVec2;
-		myVec2.emplace_back(42);
+		ItemWithConst& ref = myVec2.emplace_back(42);
 		EATEST_VERIFY(myVec2.back().i == 42);
+		EATEST_VERIFY(ref.i == 42);
 #endif
 	}
 
@@ -549,9 +550,10 @@ int TestVector()
 
 		vector<TestObject> toVectorA;
 
-		toVectorA.emplace_back(2, 3, 4);
+		TestObject& ref = toVectorA.emplace_back(2, 3, 4);
 		EATEST_VERIFY((toVectorA.size() == 1) && (toVectorA.back().mX == (2 + 3 + 4)) &&
 					  (TestObject::sTOCtorCount == 1));
+		EATEST_VERIFY(ref.mX == (2 + 3 + 4));
 
 		toVectorA.emplace(toVectorA.begin(), 3, 4, 5);
 		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
@@ -565,9 +567,10 @@ int TestVector()
 		// It is allowed to use standard copy construction if it wants. We could force it with eastl::move() usage.
 		vector<TestObject> toVectorA;
 
-		toVectorA.emplace_back(TestObject(2, 3, 4));
+		TestObject& ref = toVectorA.emplace_back(TestObject(2, 3, 4));
 		EATEST_VERIFY((toVectorA.size() == 1) && (toVectorA.back().mX == (2 + 3 + 4)) &&
 					  (TestObject::sTOMoveCtorCount == 1));
+		EATEST_VERIFY(ref.mX == (2 + 3 + 4));
 
 		toVectorA.emplace(toVectorA.begin(), TestObject(3, 4, 5));
 		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&

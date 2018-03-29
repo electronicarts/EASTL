@@ -613,6 +613,25 @@ int TestVariantVisitor()
 }
 
 
+int TestVariantAssignment()
+{
+	using namespace eastl;
+	int nErrorCount = 0;
+
+	{
+		variant<int, TestObject> v = TestObject(1337);
+		VERIFY(get<TestObject>(v).mX == 1337);
+		TestObject::Reset();
+
+		v.operator=(42);                         // ensure assignment-operator is called
+		VERIFY(TestObject::sTODtorCount == 1);   // verify TestObject dtor is called.
+		VERIFY(get<int>(v) == 42);
+		TestObject::Reset();
+	}
+
+	return nErrorCount;
+}
+
 int TestVariant()
 {
 	int nErrorCount = 0;
@@ -629,6 +648,7 @@ int TestVariant()
 	nErrorCount += TestVariantRelOps();
 	nErrorCount += TestVariantInplaceCtors();
 	nErrorCount += TestVariantVisitor();
+	nErrorCount += TestVariantAssignment();
 	return nErrorCount;
 }
 #else

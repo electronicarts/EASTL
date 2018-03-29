@@ -408,6 +408,13 @@ int TestAny()
 		}
 	}
 
+	// user reported regression that eastl::any constructor was not decaying the deduced type correctly.
+	{
+		float f = 42.f;
+		eastl::any a(f);
+		VERIFY(any_cast<float>(a) == 42.f);
+	}
+
 	return nErrorCount;
 }
 

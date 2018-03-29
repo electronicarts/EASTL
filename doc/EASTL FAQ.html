@@ -470,7 +470,7 @@ What is EASTL?</p>
   <li>Smart pointers</li>
   <li>Type traits</li>
 </ul>
-<p class="faq-answer">Of these, the last two (smart pointers and type traits) do not have analogs in standard C++. With respect to the other items, EASTL provides extensions and optimizations over the equivalents in standard C++ STL.</p>
+<p class="faq-answer">EASTL provides extensions and optimizations over the equivalents in standard C++ STL.</p>
 <p class="faq-answer">EASTL is a professional-level implementation which outperforms commercial implementations (where functionality overlaps) and is significantly easier to read and debug.</p>
 <p class="faq-question">  <a name="Info.2"></a>Info.2
 What uses are EASTL suitable for?</p>
@@ -525,6 +525,10 @@ How does EASTL differ from standard C++ STL?</p>
   <li>utility</li>
   <li>functional</li>
   <li>iterator</li>
+  <li>string_view</li>
+  <li>variant</li>
+  <li>any</li>
+  <li>optional</li>
 </ul>
 <p>EASTL additions/amendments to std STL</p>
 <ul style="margin-top: 0in;" type="disc">
@@ -573,6 +577,7 @@ How does EASTL differ from standard C++ STL?</p>
   <li>fixed_hash_multiset</li>
   <li>fixed_hash_map</li>
   <li>fixed_hash_multimap</li>
+  <li>fixed_function</li>
   <li>vector_set</li>
   <li>vector_multiset</li>
   <li>vector_map</li>
@@ -616,39 +621,19 @@ What platforms/compilers does EASTL support?</p>
       <th scope="col">Notes</th>
     </tr>
     <tr>
-      <td>GCC 2.9x</td>
-      <td>Supported</td>
-      <td>However, GCC 2.9x has some issues that you may run into that cause you to use EASTL facilities differently than a fully compliant compiler would allow.</td>
-    </tr>
-    <tr>
       <td>GCC 3.x+</td>
+      <td>Not Supported</td>
+      <td>Not officially supported due to migration to Clang.</td>
+    </tr>
+    <tr>
+      <td>MSVC 12.0+</td>
       <td>Supported</td>
-      <td>This compiler is used by the Mac OSX, and Linux platforms.</td>
+      <td>This compiler is used by the Windows based platforms</td>
     </tr>
     <tr>
-      <td>MSVC 6.0</td>
-      <td>Not supported</td>
-      <td>This compiler is too weak in the area of template and namespace support.</td>
-    </tr>
-    <tr>
-      <td>MSVC 7.0+</td>
+      <td>Clang 4.0+</td>
       <td>Supported</td>
-      <td>This compiler is used by the PC and Win CE platforms</td>
-    </tr>
-    <tr>
-      <td>Borland 5.5+</td>
-      <td>Not supported</td>
-      <td>Borland can successfully compile many parts of EASTL, but not all parts.</td>
-    </tr>
-    <tr>
-      <td>EDG</td>
-      <td>Supported</td>
-      <td>This is the compiler front end to some other compilers, such as Intel, and Comeau C++.</td>
-    </tr>
-    <tr>
-      <td>IBM XL 5.0+</td>
-      <td>Supported</td>
-      <td>This compiler is sometimes used by PowerPC platforms such as Mac OSX and possibly future console platforms.</td>
+      <td>This compiler is used by the Linux based platforms</td>
     </tr>
   </table>
 </blockquote>
@@ -718,10 +703,12 @@ Where can I learn more about STL and EASTL?
   <li>The C++ standard, which is fairly readable. You can buy an electronic version for about $18 and in the meantime you can make do with draft revisions of it off the Internet by searching for &quot;c++ draft standard&quot;.</li>
   <li>STL performance tips, by Pete Isensee</li>
   <li>STL algorithms vs. hand-written loops, by Scott Meyers.</li>
+  <li>cppreference.com</li>
+  <li>isocpp.org<li>
 </ul>
 <p class="faq-question"><a name="Info.9"></a>Info.9
 What is the legal status of EASTL?</p>
-<p class="faq-answer">EASTL is usable for all uses within Electronic Arts, both for internal usage and for shipping products for all platforms. All source code was written by a single EA engineer. Any&nbsp;externally derived code would be explicitly stated as such and approved by the legal department if such code ever gets introduced. As of EASTL v1.0, the red_black_tree.cpp file contains two functions derived from the original HP STL and have received EA legal approval for usage in any product.</p>
+<p class="faq-answer">EASTL is usable for all uses within Electronic Arts, both for internal usage and for shipping products for all platforms. Any&nbsp;externally derived code would be explicitly stated as such and approved by the legal department if such code ever gets introduced. As of EASTL v1.0, the red_black_tree.cpp file contains two functions derived from the original HP STL and have received EA legal approval for usage in any product.</p>
 <p class="faq-question"><a name="Info.10"></a>Info.10
 Does EASTL deal with compiler exception handling settings?</p>
 <p class="faq-answer">EASTL has automatic knowledge of the compiler's enabling/disabling of exceptions. If your compiler is set to disable exceptions, EASTL automatically detects so and executes without them. Also, you can force-enable or force-disable that setting to override the automatic behavior by #defining EASTL_EXCEPTIONS_ENABLED to 0 or 1. See EASTL's config.h for more information.</p>

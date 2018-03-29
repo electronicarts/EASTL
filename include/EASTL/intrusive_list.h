@@ -54,7 +54,7 @@
 //   uses the name 'find' because:
 //      - So as not to confuse the member function with the well-defined free function from algorithm.h.
 //      - Because it is not API-compatible with eastl::find().
-//      - Because it simply locates an object within the list based on its node entry and doesn't p[erform before any value-based searches or comparisons.
+//      - Because it simply locates an object within the list based on its node entry and doesn't perform before any value-based searches or comparisons.
 //
 // Differences between intrusive_list and std::list:
 //

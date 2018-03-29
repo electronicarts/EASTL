@@ -21,18 +21,18 @@ class string_map : public eastl::map<const char*, T, Predicate, Allocator>
 {
 public:
 	typedef eastl::map<const char*, T, Predicate, Allocator> base;
-	typedef string_map<T, Predicate, Allocator> this_type;
-	typedef typename base::base_type::allocator_type allocator_type;
-	typedef typename base::base_type::insert_return_type insert_return_type;
-	typedef typename base::base_type::iterator iterator;
-	typedef typename base::base_type::reverse_iterator reverse_iterator;
-	typedef typename base::base_type::const_iterator const_iterator;
-	typedef typename base::base_type::size_type size_type;
-	typedef typename base::base_type::key_type key_type;
-	typedef typename base::base_type::value_type value_type;
-	typedef typename base::mapped_type mapped_type;
+	typedef string_map<T, Predicate, Allocator>              this_type;
+	typedef typename base::base_type::allocator_type         allocator_type;
+	typedef typename base::base_type::insert_return_type     insert_return_type;
+	typedef typename base::base_type::iterator               iterator;
+	typedef typename base::base_type::reverse_iterator       reverse_iterator;
+	typedef typename base::base_type::const_iterator         const_iterator;
+	typedef typename base::base_type::size_type              size_type;
+	typedef typename base::base_type::key_type               key_type;
+	typedef typename base::base_type::value_type             value_type;
+	typedef typename base::mapped_type                       mapped_type;
 
-						string_map(const allocator_type& allocator = allocator_type()) : base(allocator) {}
+		                string_map(const allocator_type& allocator = allocator_type()) : base(allocator) {}
 						string_map(const string_map& src, const allocator_type& allocator = allocator_type());
 						~string_map();
 	void				clear();

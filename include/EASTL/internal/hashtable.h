@@ -184,12 +184,10 @@ namespace eastl
 	template <typename Value, bool bCacheHashCode>
 	struct node_iterator_base
 	{
-	public:
 		typedef hash_node<Value, bCacheHashCode> node_type;
 
 		node_type* mpNode;
 
-	public:
 		node_iterator_base(node_type* pNode)
 			: mpNode(pNode) { }
 
@@ -890,7 +888,7 @@ namespace eastl
 		template <typename FowardIterator>
 		hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
 				  const H1&, const H2&, const H&, const Equal&, const ExtractKey&, 
-				  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR); // allocator arg removed because VC7.1 fails on the default arg. To do: Make a second version of this function without a default arg.
+				  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR); 
 		
 		hashtable(const hashtable& x);
 
@@ -1007,44 +1005,35 @@ namespace eastl
 		template <class... Args>
 		iterator emplace_hint(const_iterator position, Args&&... args);
 
-		template <class... Args>
-		// eastl::pair<iterator, bool> 
-		insert_return_type try_emplace(const key_type& k, Args&&... args);
-		template <class... Args>
-		// eastl::pair<iterator, bool> 
-		insert_return_type try_emplace(key_type&& k, Args&&... args);
+		template <class... Args> insert_return_type try_emplace(const key_type& k, Args&&... args);
+		template <class... Args> insert_return_type try_emplace(key_type&& k, Args&&... args);
+		template <class... Args> iterator           try_emplace(const_iterator position, const key_type& k, Args&&... args);
+		template <class... Args> iterator           try_emplace(const_iterator position, key_type&& k, Args&&... args);
 
-		template <class... Args>
-		iterator try_emplace(const_iterator position, const key_type& k, Args&&... args);
-		template <class... Args>
-		iterator try_emplace(const_iterator position, key_type&& k, Args&&... args);
+		insert_return_type                     insert(const value_type& value);
+		insert_return_type                     insert(value_type&& otherValue);
+		iterator                               insert(const_iterator hint, const value_type& value);
+		iterator                               insert(const_iterator hint, value_type&& value);
+		void                                   insert(std::initializer_list<value_type> ilist);
+		template <typename InputIterator> void insert(InputIterator first, InputIterator last);
+	  //insert_return_type                     insert(node_type&& nh);
+	  //iterator                               insert(const_iterator hint, node_type&& nh);
 
-		insert_return_type insert(value_type&& otherValue);
+		// This overload attempts to mitigate the overhead associated with mismatched cv-quality elements of
+		// the hashtable pair. It can avoid copy overhead because it will perfect forward the user provided pair types
+		// until it can constructed in-place in the allocated hashtable node.  
+		//
+		// Ideally we would remove this overload as it deprecated and removed in C++17 but it currently causes
+		// performance regressions for hashtables with complex keys (keys that allocate resources).
+		template <class P,
+		          class = typename eastl::enable_if<
+		              !eastl::is_same<eastl::decay_t<P>, key_type>::value && !eastl::is_literal_type<P>::value && // prevent the single element pair ctor
+		              eastl::is_constructible<value_type, P&&>::value>::type>
+		insert_return_type insert(P&& otherValue);
 
+		// Non-standard extension
 		template <class P> // See comments below for the const value_type& equivalent to this function.
 		insert_return_type insert(hash_code_t c, node_type* pNodeNew, P&& otherValue);
-
-		// Currently limited to value_type instead of P because it collides with insert(InputIterator, InputIterator).
-		// To allow this to work with templated P we need to implement a compile-time specialization for the
-		// case that P&& is const_iterator and have that specialization handle insert(InputIterator, InputIterator)
-		// instead of insert(InputIterator, InputIterator). Curiously, neither libstdc++ nor libc++
-		// implement this function either, which suggests they ran into the same problem I did here
-		// and haven't yet resolved it (at least as of March 2014, GCC 4.8.1).
-		iterator insert(const_iterator hint, value_type&& value);
-
-		insert_return_type insert(const value_type& value);
-		iterator           insert(const_iterator, const value_type& value);
-
-		void insert(std::initializer_list<value_type> ilist);
-
-		template <typename InputIterator>
-		void insert(InputIterator first, InputIterator last);
-
-		// This standard overload attempts to mitigate the overhead associated with mismatched cv-quality elements of
-		// the hashtable pair.  It can avoid copy overhead because it will perfect forward the user provided pair types
-		// until it can constructed in-place.
-		template <class P, class = typename eastl::enable_if<eastl::is_constructible<value_type, P&&>::value>::type> 
-		insert_return_type insert(P&& otherValue);
 
 		// We provide a version of insert which lets the caller directly specify the hash value and 
 		// a potential node to insert if needed. This allows for less thread contention in the case
@@ -1216,8 +1205,6 @@ namespace eastl
 		template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		iterator DoInsertValue(BoolConstantT, Args&&... args);
 
-		template <class... Args>
-		node_type* DoAllocateNode(Args&&... args);
 
 		template <typename BoolConstantT>
 		eastl::pair<iterator, bool> DoInsertValueExtra(BoolConstantT,
@@ -1243,7 +1230,6 @@ namespace eastl
 		template <typename BoolConstantT>
 		iterator DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
-		node_type* DoAllocateNode(value_type&& value);
 
 		template <typename BoolConstantT>
 		eastl::pair<iterator, bool> DoInsertValueExtra(BoolConstantT,
@@ -1269,7 +1255,9 @@ namespace eastl
 		template <typename BoolConstantT>
 		iterator DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
-
+		template <class... Args>
+		node_type* DoAllocateNode(Args&&... args);
+		node_type* DoAllocateNode(value_type&& value);
 		node_type* DoAllocateNode(const value_type& value);
 
 		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key);
@@ -2819,7 +2807,6 @@ namespace eastl
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), value);
 		return result.first; // Note by Paul Pedriana while perusing this code: This code will fail to compile when bU is false (i.e. for multiset, multimap).
 	}
-
 
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,

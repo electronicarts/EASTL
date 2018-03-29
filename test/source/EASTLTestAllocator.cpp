@@ -305,11 +305,7 @@
 			gEASTLTest_AllocationCount--;
 
 			// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
-			#if (PPMALLOC_VERSION_N >= 11602)
-				const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
-			#else
-				const bool bConstructed = (EA::Allocator::gGeneralAllocator.GetTraceFunction(NULL) != NULL); // Old hacky way to test this.
-			#endif
+			const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
 
 			if(bConstructed)
 			{
