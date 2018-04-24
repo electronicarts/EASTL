@@ -79,6 +79,22 @@ Right-click your project: Add -> Existing item and then add the following file:
 ${EASTL_ROOT_DIR}/doc/EASTL.natvis
 ```
 
+### Using Bazel
+
+Add to your `WORKSPACE`:
+```python
+http_archive(
+   name = "com_ea_eastl",
+   sha256 = "<sha256 summary of EASTL release source package>",
+   strip_prefix = "EASTL-3.09.00",  # replace the version number with the one you use
+   urls = [
+       "https://github.com/electronicarts/EASTL/archive/3.09.00.tar.gz",  # replace the version number with the one you use
+   ],
+)
+```
+
+Then `@com_ea_eastl//:eastl` as well as other targets will be available.
+
 ## Setting up your code
 
 ### Overloading operator new[]

@@ -91,3 +91,25 @@ To run the benchmarks:
 ```bash=
 buck run :benchmark
 ```
+
+### Building using Bazel
+
+EASTL can also be built using [Bazel Build](https://www.bazel.build).
+
+To build EASTL:
+
+```bash=
+bazel build //:eastl
+```
+
+To run the tests:
+
+```bash=
+bazel run //:test-runner
+```
+
+To run the benchmarks:
+
+```bash=
+bazel run //:benchmark
+```

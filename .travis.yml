@@ -21,6 +21,7 @@ addons:
       - g++-6
       - clang
       - libc++-dev
+      - pkg-config
 
 matrix:
     include:
@@ -60,6 +61,9 @@ install:
   # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc --version                  ;fi
+  # Bazel
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://github.com/bazelbuild/bazel/releases/download/0.12.0/bazel_0.12.0-linux-x86_64.deb ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo dpkg -i bazel_0.12.0-linux-x86_64.deb                                                      ;fi
 
 # OSX Setup
   # CMake
@@ -78,6 +82,8 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                             ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                          ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --version                                                                                   ;fi
+  # Bazel
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bazel ;fi
 
 # Universal Setup
 before_script:
@@ -97,9 +103,13 @@ script:
   # Run Tests
   - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/test          
   - ctest -C $EASTL_CONFIG -V || exit 1                    
+  - if [[ "$EASTL_CONFIG" == "Debug" ]]; then bazel run -c dbg //:test-runner   ;fi
+  - if [[ "$EASTL_CONFIG" == "Release" ]]; then bazel run -c opt //:test-runner ;fi
   # Run Benchmarks
   - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark     
   - ctest -C $EASTL_CONFIG -V || exit 1                    
+  - if [[ "$EASTL_CONFIG" == "Debug" ]]; then bazel run -c dbg //:benchmark   ;fi
+  - if [[ "$EASTL_CONFIG" == "Release" ]]; then bazel run -c opt //:benchmark ;fi
 
 branches:
   except:

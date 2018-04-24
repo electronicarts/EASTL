@@ -11,8 +11,8 @@ if not [x%PLATFORM:MinGW=%]==[x%PLATFORM%] (
 )
 
 :build-msvc
-mkdir build
-cd build
+mkdir msbuild
+cd msbuild
 
 rem Set the request Visual Studio Version 
 if not [x%PLATFORM:2015=%]==[x%PLATFORM%] (
