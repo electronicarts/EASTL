@@ -173,7 +173,7 @@ widgetList.push_back(someWidget);</p>
   <li>fixed_hash_multiset</li>
 </ul>
 <p class="faq-answer">To create a fixed_set, you can use the following code:</p>
-<p class="code-example">fixed_set&lt;int, 25&gt; intSet; // Create a set capable of holding 250 elements.<br>
+<p class="code-example">fixed_set&lt;int, 25&gt; intSet; // Create a set capable of holding 25 elements.<br>
 intSet.push_back(37);</p>
 <p></p>
 <p class="faq-question"><a name="Best.3"></a>3
@@ -216,7 +216,7 @@ Avoid redundant end() and size() in loops.</p>
 </span>
 <div class="code-example" style="margin-left: 40px; font-family: Courier New;"><small>for(deque&lt;int&gt;::iterator it = d.begin(), itEnd = d.end(); <span style="color: rgb(51, 204, 0);">it != itEnd</span>; ++it)<br>
 &nbsp;&nbsp;&nbsp; ...</small></div>
-<span class="faq-answer">The latter avoids a function call and return of an object (which in deque's case happens to be more than just a pointer). The above only works when the container is unchanged or for containers that have a constant end value. But "constant end value" we mean containers which can be modified but end always remains the same.</span><br>
+<span class="faq-answer">The latter avoids a function call and return of an object (which in deque's case happens to be more than just a pointer). The above only works when the container is unchanged or for containers that have a constant end value. By "constant end value" we mean containers which can be modified but end always remains the same.</span><br>
 <table style="text-align: left; width: 600px; margin-left: 40px;" border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
@@ -849,7 +849,7 @@ Here is an example of using type traits to tell if a value is a floating point v
 <p class="faq-question">  <a name="Best.24"></a>24
 Name containers to track memory usage.
 </p>
-<p class="faq-answer">All EASTL containers which allocate memory have a built-in function called set_name and have a constructor argument that lets you specify the container name. This name is used in memory tracking and allows for the categorization and measurement of memory usage. You merely need to supply a name for your containers to use and it does the rest.</p>
+<p class="faq-answer">All EASTL containers which allocate memory have a built-in function called set_name and have a constructor argument that lets you specify the container name. This name is used in memory tracking and allows for the categorization and measurement of memory usage. You merely need to supply a name for your container to use and it does the rest.</p>
 <p class="faq-answer">Here is an example of creating a list and naming it &quot;collision list&quot;:</p>
 <p class="faq-answer"><span class="code-example">list&lt;CollisionData&gt; collisionList(allocator(&quot;collision list&quot;));</span>or<br>
   <span class="code-example">list&lt;CollisionData&gt; collisionList;<br>
