@@ -14,21 +14,11 @@
 #include <EASTL/fixed_vector.h>
 #include <EASTL/utility.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4702) // VC++ STL headers generate this. warning C4702: unreachable code
-	#pragma warning(disable:4350) // for whatever reason, the push,0 above does not turn this warning off with vs2012.
-								  // VC++ 2012 STL headers generate this. warning C4350: behavior change: 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc(const std::_Wrap_alloc<_Alloc> &) throw()' called instead of 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc<std::_Wrap_alloc<_Alloc>>(_Other &) throw()'
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	#include <map>
 #endif
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 using namespace eastl;
 
@@ -68,8 +58,6 @@ typedef eastl::vector_multimap<TestObject, TestObject, eastl::less<TestObject>, 
 
 int TestVectorMap()
 {
-	EASTLTest_Printf("TestVectorMap\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -132,8 +120,17 @@ int TestVectorMap()
 
 		const VM2::key_compare& kc = vmc.key_comp();
 		vm.key_comp() = kc;
+
+		// ensure count can be called from a const object
+		vmc.count(0);
 	}
 
+	{
+		const VMM1 vmm;
+
+		// ensure count can be called from a const object
+		vmm.count(0);
+	}
 
 	{
 		// Misc testing
@@ -185,6 +182,34 @@ int TestVectorMap()
 		tvm["RamCacheInfo"]    = NULL;
 		tvm["SSLCert"]         = NULL;
 		tvm["AllowedDomain"]   = NULL;
+	}
+
+	{     // find_as predicate
+		{ // vector_map
+			eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+												  {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		{ // const vector_map
+			const eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+														{"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		// vector_multimap
+		{
+			eastl::vector_multimap<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+													   {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		// const vector_multimap
+		{
+			const eastl::vector_multimap<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
+															 {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
 	}
 
 	return nErrorCount;

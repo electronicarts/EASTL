@@ -5,6 +5,7 @@
 
 #include "EASTLTest.h"
 #include <EASTL/fixed_vector.h>
+#include <EASTL/unique_ptr.h>
 #include <EAStdC/EAMemory.h>
 #include <new>
 
@@ -48,8 +49,6 @@ namespace
 
 int TestFixedVector()
 {
-	EASTLTest_Printf("TestFixedVector\n");
-
 	int nErrorCount = 0;
 
 	TestObject::Reset();
@@ -497,6 +496,34 @@ int TestFixedVector()
 		EATEST_VERIFY(test.validate());
 
 	}   // "Crash here."
+
+	#if EASTL_MOVE_SEMANTICS_ENABLED
+	{
+		const int FV_SIZE = 100;
+		fixed_vector<unique_ptr<unsigned int>, FV_SIZE> fvmv1; // to move via move assignment operator
+		fixed_vector<unique_ptr<unsigned int>, FV_SIZE> fvmv2; // to move via move copy constructor
+
+		for (unsigned int i = 0; i < FV_SIZE; ++i) // populate fvmv1
+			fvmv1.push_back(make_unique<unsigned int>(i));
+
+		fvmv2 = eastl::move(fvmv1); // Test move assignment operator
+
+		for (unsigned int i = 0; i < FV_SIZE; ++i)
+		{
+			EATEST_VERIFY(!fvmv1[i]);
+			EATEST_VERIFY(*fvmv2[i] == i);
+		}
+		EATEST_VERIFY(fvmv2.validate());
+		
+		fixed_vector<unique_ptr<unsigned int>, FV_SIZE> fv = eastl::move(fvmv2); // Test move copy constructor
+		for (unsigned int i = 0; i < FV_SIZE; ++i)
+		{
+			EATEST_VERIFY(!fvmv2[i]);
+			EATEST_VERIFY(*fv[i] == i);
+		}
+		EATEST_VERIFY(fv.validate());
+	}
+	#endif
 
 	return nErrorCount;     
 }

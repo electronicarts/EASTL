@@ -202,7 +202,6 @@ int TestClocks()
 int TestChrono()
 {
 	int nErrorCount = 0;
-	EASTLTest_Printf("TestChrono\n");
 	nErrorCount += TestDuration();
 	nErrorCount += TestTimePoint();
 	nErrorCount += TestClocks();

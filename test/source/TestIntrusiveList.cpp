@@ -7,10 +7,7 @@
 #include <EASTL/intrusive_list.h>
 #include <EABase/eabase.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -18,14 +15,9 @@
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	#include <string>
 #endif
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 using namespace eastl;
-
 
 
 namespace
@@ -92,8 +84,6 @@ template class eastl::intrusive_list<IntNode>;
 
 int TestIntrusiveList()
 {
-	EASTLTest_Printf("TestIntrusiveList\n");
-
 	int nErrorCount = 0;
 	int i;
 

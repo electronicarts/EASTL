@@ -20,12 +20,8 @@ include_directories(source "../include")
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../scripts/CMake")
 include(CommonCppFlags)
 
-# TODO: Tests fail to pass on mingw-w64 gcc 6 without strict aliasing disabled.
-# The problem is likely a bug in the compiler that causes it to ignore EASTL_MAY_ALIAS
-# on derived classes that are marked with EASTL_MAY_ALIAS.
-# Needs investigating.
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND MINGW)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+if (MSVC)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")

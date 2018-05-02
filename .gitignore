@@ -10,6 +10,7 @@ eastl_build_out
 build_bench
 bench.bat
 build.bat
+.p4config
 
 ## CMake generated files
 CMakeCache.txt
@@ -24,6 +25,8 @@ cmake_install.cmake
 **/*.vcxproj.filters
 *.VC.opendb
 *.sdf
+**/*.suo
+**/*.user
 .vs/*
 **/Debug/*
 CMakeFiles/*
@@ -33,6 +36,13 @@ Release/*
 Win32/*
 x64/*
 MinSizeRel/*
-build/*
+build*/*
 Testing/*
 %ALLUSERSPROFILE%/*
+
+# Buck
+/buck-out/
+/.buckd/
+/buckaroo/
+.buckconfig.local
+BUCKAROO_DEPS

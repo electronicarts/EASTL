@@ -47,20 +47,34 @@
 </Type>
 
 <Type Name="eastl::basic_string&lt;char,*&gt;">
-	<DisplayString>{mpBegin,s}</DisplayString>
+	<DisplayString>{mPair.mFirst.heap.mpBegin,s}</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sb</Item>
+		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
+		&amp; ~kHeapMask)</Item>
+		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
+
+		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
+
+		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
 <Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
-	<DisplayString>{mpBegin,su}</DisplayString>
+	<DisplayString>{mPair.mFirst.heap.mpBegin,su}</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sub</Item>
+		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
+		&amp; ~kHeapMask)</Item>
+		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
+
+		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
+		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
+
+		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
@@ -83,7 +97,7 @@
 	<DisplayString Condition="mpEnd - mpBegin &gt; 6">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)}, {*(mpBegin+5)}, ... }}</DisplayString>
     <Expand>
         <Item Name="[size]">mpEnd - mpBegin</Item>
-        <Item Name="[capacity]">mpCapacity - mpBegin</Item>
+        <Item Name="[capacity]">mCapacityAllocator.mFirst - mpBegin</Item>
         <ArrayItems>
             <Size>mpEnd - mpBegin</Size>
             <ValuePointer>mpBegin</ValuePointer>
@@ -314,13 +328,13 @@
 	<DisplayString Condition="mnSize == 1">
 		[1] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
 		}}
 	</DisplayString>
 	<DisplayString Condition="mnSize &gt; 1">
 		[{mnSize}] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
 			...
 		}}
 	</DisplayString>
@@ -343,9 +357,9 @@
 		<Synthetic Name="NOTE!">
 		  <DisplayString>It is possible to expand parents that do not exist.</DisplayString> 
 		</Synthetic>
-		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
-		<Item Name="Left">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeLeft</Item>
-		<Item Name="Right">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeRight</Item>
+		<Item Name="Parent">*(eastl::rbtree_node&lt;$T2&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
+		<Item Name="Left">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeLeft</Item>
+		<Item Name="Right">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeRight</Item>
 	</Expand>
 </Type>
 
@@ -388,5 +402,52 @@
 	</Expand>
 </Type>
 
+<Type Name="eastl::reverse_iterator&lt;*&gt;">
+	<DisplayString>{*(mIterator-1)}</DisplayString>
+	<Expand>
+		<ExpandedItem>mIterator-1</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::bitset&lt;*&gt;">
+  <DisplayString>{{count = {kSize}}}</DisplayString>
+  <Expand>
+    <Item Name="[count]">kSize</Item>
+    <CustomListItems>
+      <Variable Name="iWord" InitialValue="0" />
+      <Variable Name="iBitInWord" InitialValue="0" />
+      <Variable Name="bBitValue" InitialValue="false" />
+
+      <Size>kSize</Size>
+
+      <Loop>
+        <If Condition="iBitInWord == 0">
+          <Exec>bBitValue = (mWord[iWord] % 2 != 0) ? true : false</Exec>
+        </If>
+        <Else>
+          <Exec>bBitValue = (mWord[iWord] >> iBitInWord) != 0 ? true : false</Exec>
+        </Else>
+        <Item>bBitValue</Item>
+        <Exec>iBitInWord++</Exec>
+        <If Condition="iBitInWord == kBitsPerWord">
+          <Exec>iWord++</Exec>
+          <Exec>iBitInWord = 0</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
+</Type>
+
+<Type Name="eastl::ring_buffer&lt;*,*,*&gt;">
+  <DisplayString>{c}</DisplayString>
+  <Expand>
+    <ExpandedItem>c</ExpandedItem>
+  </Expand>
+</Type>
+
+<Type Name="eastl::basic_string_view&lt;*&gt;">
+	<DisplayString>{mpBegin,[mnCount]}</DisplayString>
+	<StringView>mpBegin,[mnCount]</StringView>
+</Type>
 
 </AutoVisualizer>

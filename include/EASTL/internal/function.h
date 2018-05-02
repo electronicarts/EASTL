@@ -23,7 +23,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org/>
- */
+*/
 // despite that it would be nice if you give credit to Malte Skarupke
 
 
@@ -57,6 +57,7 @@ For more information, please refer to <http://unlicense.org/>
 #include <EASTL/allocator.h>
 #include <EASTL/internal/move_help.h>
 #include <EASTL/internal/mem_fn.h>
+#include <EASTL/internal/function_help.h>
 #include <EASTL/internal/allocator_traits_fwd_decls.h>
 
 // RTTI currently disabled.  User can re-enable via the define below but note this code path isn't tested.
@@ -64,17 +65,12 @@ For more information, please refer to <http://unlicense.org/>
 
 #define FUNC_TEMPLATE_NOEXCEPT(FUNCTOR, ALLOCATOR) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR((detail::is_inplace_allocated<FUNCTOR, ALLOCATOR>::value)))
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#endif
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This workaround exists because on MSVC the "is_nothrow_move_constructible" type trait does not function as
 // expected.  It incorrectly flags the coping/moving of a pointer to the callable as being able to throw an exception.
 // We can remove this workaround when the "is_nothrow_move_constructible" type trait functions for all Microsoft
-// platforms and we being testing it again in EASTLs unit tests.
+// platforms and we begin testing it again in EASTLs unit tests.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if defined(EA_PLATFORM_MICROSOFT)
 	#define EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL 0
@@ -88,15 +84,31 @@ namespace eastl
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_NAME
+	#ifndef EASTL_FUNCTION_DEFAULT_NAME
 		#define EASTL_FUNCTION_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " function" // Unless the user overrides something, this is "EASTL function".
 	#endif
 
-
-	/// EASTL_VECTOR_DEFAULT_ALLOCATOR
+	/// EASTL_FUNCTION_DEFAULT_ALLOCATOR
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_ALLOCATOR
+	#ifndef EASTL_FUNCTION_DEFAULT_ALLOCATOR
 		#define EASTL_FUNCTION_DEFAULT_ALLOCATOR allocator_type(EASTL_FUNCTION_DEFAULT_NAME)
+	#endif
+
+
+	/// EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE
+	///
+	/// Defines the size of the SSO buffer which is used to hold the specified capture state of the callable.
+	///
+	#ifndef EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE
+		#define EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE (2 * sizeof(void*))
+	#endif
+
+	/// EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE
+	///
+	/// Defines the size of the SSO buffer which is used to hold the specified allocator type.
+	///
+	#ifndef EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE
+		#define EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE (2 * sizeof(void*))
 	#endif
 
 
@@ -114,18 +126,24 @@ namespace detail
 
 	struct functor_storage_type
 	{
-	protected:
-		size_t padding_first;
-		size_t padding_second;
+		union
+		{
+			void* first;
+			char padding[EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE];
+		};
 	};
+	static_assert(sizeof(functor_storage_type) >= EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE, "capture storage size mismatch");
 
 	struct allocator_storage_type
 	{
-		void* first;
-		void* second;
+		union
+		{
+			void* first;
+			char padding[EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE];
+		};
 	};
+	static_assert(sizeof(allocator_storage_type) >= EASTL_FUNCTION_DEFAULT_ALLOCATOR_SSO_SIZE, "allocator storage size mismatch");
 
-	struct empty_struct { };
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,203 +159,15 @@ namespace detail
 			&& sizeof(Allocator) <= sizeof(allocator_storage_type)
 			// so that it will be aligned
 			&& eastl::alignment_of<functor_storage_type>::value % eastl::alignment_of<Callable>::value == 0
-#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL			
+		#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL			
 			// so that we can offer noexcept move
 			&& eastl::is_nothrow_move_constructible<Callable>::value
-#endif
+		#endif
 			// so that the user can override it
 			&& !force_function_heap_allocation<Callable>::value;
 	};
 
 	// todo:  provide a manual override macro that allows users to set the value of this trait for this specific type.
-
-	template<typename T>
-	T to_functor(T && func)
-	{
-		return EASTL_FORWARD(T, func);
-	}
-
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
-	template<typename Result, typename Class, typename... Arguments>
-	auto to_functor(Result (Class::*func)(Arguments...)) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-	template<typename Result, typename Class, typename... Arguments>
-	auto to_functor(Result (Class::*func)(Arguments...) const) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-#else
-	// no argument case
-	template<typename Result, typename Class>
-	auto to_functor(Result (Class::*func)()) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-	template<typename Result, typename Class>
-	auto to_functor(Result (Class::*func)() const) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-
-	// single argument case
-	template<typename Result, typename Class, typename Argument0>
-	auto to_functor(Result (Class::*func)(Argument0)) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-	template<typename Result, typename Class, typename Argument0>
-	auto to_functor(Result (Class::*func)(Argument0) const) -> decltype(eastl::mem_fn(func))
-	{
-		return eastl::mem_fn(func);
-	}
-#endif
-
-	template<typename T>
-	struct functor_type
-	{
-		typedef decltype(to_functor(eastl::declval<T>())) type;
-	};
-
-	template<typename T>
-	bool is_null(const T&)
-	{
-		return false;
-	}
-
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
-	template<typename Result, typename... Arguments>
-	bool is_null(Result (* const & function_pointer)(Arguments...))
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class, typename... Arguments>
-	bool is_null(Result (Class::* const & function_pointer)(Arguments...))
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class, typename... Arguments>
-	bool is_null(Result (Class::* const & function_pointer)(Arguments...) const)
-	{
-		return function_pointer == nullptr;
-	}
-#else
-	// no argument case
-	template<typename Result>
-	bool is_null(Result (* const & function_pointer)())
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class>
-	bool is_null(Result (Class::* const & function_pointer)())
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class>
-	bool is_null(Result (Class::* const & function_pointer)() const)
-	{
-		return function_pointer == nullptr;
-	}
-
-	// single argument case
-	template<typename Result, typename Argument0>
-	bool is_null(Result (* const & function_pointer)(Argument0))
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class, typename Argument0>
-	bool is_null(Result (Class::* const & function_pointer)(Argument0))
-	{
-		return function_pointer == nullptr;
-	}
-	template<typename Result, typename Class, typename Argument0>
-	bool is_null(Result (Class::* const & function_pointer)(Argument0) const)
-	{
-		return function_pointer == nullptr;
-	}
-#endif
-
-	template<typename, typename>
-	struct is_valid_function_argument
-	{
-		static const bool value = false;
-	};
-
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
-	template<typename Result, typename... Arguments>
-	struct is_valid_function_argument<function<Result (Arguments...)>, Result (Arguments...)>
-	{
-		static const bool value = false;
-	};
-#else
-	// no argument case
-	template<typename Result>
-	struct is_valid_function_argument<function<Result()>, Result()>
-	{
-		static const bool value = false;
-	};
-	
-	// single argument case
-	template<typename Result, typename Argument0>
-	struct is_valid_function_argument<function<Result (Argument0)>, Result (Argument0)>
-	{
-		static const bool value = false;
-	};
-#endif
-
-
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
-	template<typename T, typename Result, typename... Arguments>
-	struct is_valid_function_argument<T, Result (Arguments...)>
-	{
-	#if defined(_MSC_VER) || defined(EA_PLATFORM_OSX)
-			// as of january 2013 visual studio doesn't support the SFINAE below
-			static const bool value = true;
-	#else
-			template <typename U>
-			static decltype(to_functor(eastl::declval<U>())(eastl::declval<Arguments>()...)) check(U*);
-			template <typename>
-			static empty_struct check(...);
-
-			static const bool value = eastl::is_convertible<decltype(check<T>(nullptr)), Result>::value;
-	#endif
-    };
-#else
-	// no argument case
-	template<typename T, typename Result>
-	struct is_valid_function_argument<T, Result()>
-	{
-	#if defined(_MSC_VER) || defined(EA_PLATFORM_OSX)
-			// as of january 2013 visual studio doesn't support the SFINAE below
-			static const bool value = true;
-	#else
-			template <typename U>
-			static decltype(to_functor(eastl::declval<U>())()) check(U*);
-			template <typename>
-			static empty_struct check(...);
-
-			static const bool value = eastl::is_convertible<decltype(check<T>(nullptr)), Result>::value;
-	#endif
-    };
-
-	// single argument case
-	template<typename T, typename Result, typename Argument0>
-	struct is_valid_function_argument<T, Result (Argument0)>
-	{
-	#if defined(_MSC_VER) || defined(EA_PLATFORM_OSX)
-			// as of january 2013 visual studio doesn't support the SFINAE below
-			static const bool value = true;
-	#else
-			template <typename U>
-			static decltype(to_functor(eastl::declval<U>())(eastl::declval<Argument0>())) check(U*);
-			template <typename>
-			static empty_struct check(...);
-
-			static const bool value = eastl::is_convertible<decltype(check<T>(nullptr)), Result>::value;
-	#endif
-    };
-#endif
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,32 +188,12 @@ namespace detail
 	template<typename T, typename Allocator, typename Enable = void>
 	struct function_table_inplace_specialization
 	{
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
 		template<typename Result, typename... Arguments>
 		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Arguments... arguments)
 		{
 			// do not call get_functor_ref because I want this function to be fast in debug when nothing gets inlined
 			return const_cast<T &>(reinterpret_cast<const T &>(storage))(EASTL_FORWARD(Arguments, arguments)...);
 		}
-#else
-		// no argument case
-		template<typename Result>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage)
-		{
-			// do not call get_functor_ref because I want this function to be fast
-			// in debug when nothing gets inlined
-			return const_cast<T &>(reinterpret_cast<const T &>(storage))();
-		}
-
-		// single argument case
-		template<typename Result, typename Argument0>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Argument0 argument0)
-		{
-			// do not call get_functor_ref because I want this function to be fast
-			// in debug when nothing gets inlined
-			return const_cast<T &>(reinterpret_cast<const T &>(storage))(EASTL_FORWARD(Argument0, argument0));
-		}
-#endif
 
 		// functor accessors
 		static void store_functor(total_storage_type & storage, T to_store)
@@ -436,30 +246,12 @@ namespace detail
 		typedef T* FunctorPointer;
 
 
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
 		template<typename Result, typename... Arguments>
 		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Arguments... arguments)
 		{
 			// do not call get_functor_ptr_ref because I want this function to be fast in debug when nothing gets inlined
 			return (*reinterpret_cast<const FunctorPointer&>(storage))(EASTL_FORWARD(Arguments, arguments)...);
 		}
-#else
-		// no argument case
-		template<typename Result>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage)
-		{
-			// do not call get_functor_ptr_ref because I want this function to be fast in debug when nothing gets inlined
-			return (*reinterpret_cast<const FunctorPointer&>(storage))();
-		}
-
-		// single argument case
-		template<typename Result, typename Argument0>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Argument0 argument0)
-		{
-			// do not call get_functor_ptr_ref because I want this function to be fast in debug when nothing gets inlined
-			return (*reinterpret_cast<const FunctorPointer&>(storage))(EASTL_FORWARD(Argument0, argument0));
-		}
-#endif
 
 		// functor accessors
 		//
@@ -474,9 +266,9 @@ namespace detail
 
 		static void move_functor(total_storage_type & lhs, total_storage_type && rhs) EA_NOEXCEPT
 		{
-#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL
+		#if EASTL_INTERNAL_FUNCTION_ARE_TYPETRAITS_FUNCTIONAL
 			static_assert(eastl::is_nothrow_move_constructible<FunctorPointer>::value, "we can't offer a noexcept swap if the pointer type is not nothrow move constructible");
-#endif
+		#endif
 			new (&get_functor_ptr_ref(lhs)) FunctorPointer(EASTL_MOVE(get_functor_ptr_ref(rhs)));
 			// this next assignment makes the destroy function easier
 			get_functor_ptr_ref(rhs) = nullptr;
@@ -561,20 +353,20 @@ namespace detail
 	    typedef void (*call_copy_t)(total_storage_type& lhs, const total_storage_type& rhs);
 	    typedef void (*call_copy_functor_only_t)(total_storage_type& lhs, const total_storage_type& rhs);
 	    typedef void (*call_destroy_t)(total_storage_type& function_table);
-#ifndef FUNC_NO_RTTI
+	#ifndef FUNC_NO_RTTI
 	    typedef const std::type_info& (*call_type_id_t)();
 	    typedef void* (*call_target_t)(const total_storage_type& function_table, const std::type_info& type);
-#endif
+	#endif
 
 		// call move/copy callbacks
 	    call_move_and_destroy_t call_move_and_destroy;
 	    call_copy_t call_copy;
 	    call_copy_functor_only_t call_copy_functor_only;
 	    call_destroy_t call_destroy;
-#ifndef FUNC_NO_RTTI
+	#ifndef FUNC_NO_RTTI
 	    call_type_id_t call_type_id;
 	    call_target_t call_target;
-#endif
+	#endif
 
 	    template<typename T, typename Allocator>
 		inline static EA_CONSTEXPR function_table create_default_function_table()
@@ -595,19 +387,19 @@ namespace detail
 	                                  call_copy_t cc,
 	                                  call_copy_functor_only_t ccfo,
 	                                  call_destroy_t cd
-#ifndef FUNC_NO_RTTI
+									#ifndef FUNC_NO_RTTI
 	                                  call_type_id_t cti,
 	                                  call_target_t ct
-#endif
+									#endif
 	                                  )
 	        : call_move_and_destroy(cmad)
 	        , call_copy(cc)
 	        , call_copy_functor_only(ccfo)
 	        , call_destroy(cd)
-#ifndef FUNC_NO_RTTI
+		#ifndef FUNC_NO_RTTI
 	        , call_type_id(cti)
 	        , call_target(ct)
-#endif
+		#endif
 	    {
 	    }
 
@@ -645,7 +437,7 @@ namespace detail
 			specialization::store_functor(lhs, specialization::get_functor_ref(rhs));
 		}
 
-#ifndef FUNC_NO_RTTI
+		#ifndef FUNC_NO_RTTI
 	        template<typename T, typename>
 			static const std::type_info & templated_call_type_id()
 			{
@@ -660,7 +452,7 @@ namespace detail
 				else
 					return nullptr;
 			}
-#endif
+		#endif
     };
 	template<typename T, typename Allocator>
 	inline static const function_table& get_default_function_table()
@@ -668,21 +460,6 @@ namespace detail
 		static const function_table default_function_table = function_table::create_default_function_table<T, Allocator>();
 		return default_function_table;
 	}
-
-#if EASTL_VARIADIC_TEMPLATES_ENABLED
-	template<typename Result, typename...>
-	struct typedeffer
-	{
-		typedef Result result_type;
-	};
-#else
-	template<typename Result, typename Argument0 = void>
-	struct typedeffer
-	{
-		typedef Result result_type;
-	};
-#endif
-
 }
 
 
@@ -690,12 +467,12 @@ namespace detail
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // eastl::function 
 //
-#if EASTL_VARIADIC_TEMPLATES_ENABLED
 template<typename Result, typename... Arguments>
 class function<Result (Arguments...)>
-	: public detail::typedeffer<Result, Arguments...>
 {
 public:
+	typedef Result result_type;
+
 	function() EA_NOEXCEPT
 	{
 		initialize_empty();
@@ -715,17 +492,17 @@ public:
 		other.storage.function_table->call_copy(storage, other.storage);
 	}
 
-	template<typename T>
+	template <typename T>
 	function(T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result (Arguments...)>::value, detail::empty_struct>::type = detail::empty_struct()) FUNC_TEMPLATE_NOEXCEPT(T, EASTLAllocatorType) 
+		     typename eastl::enable_if<internal::is_valid_function_argument<T, Result(Arguments...)>::value, int>::type = 0) FUNC_TEMPLATE_NOEXCEPT(T, EASTLAllocatorType)
 	{
-		if (detail::is_null(functor))
+		if (internal::is_null(functor))
 		{
 			initialize_empty();
 		}
 		else
 		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), EASTLAllocatorType());
+			initialize(internal::to_functor(EASTL_FORWARD(T, functor)), EASTLAllocatorType());
 		}
 	}
 
@@ -745,16 +522,16 @@ public:
 
 	template<typename Allocator, typename T>
 	function(eastl::allocator_arg_t, const Allocator & allocator, T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result (Arguments...)>::value, detail::empty_struct>::type = detail::empty_struct())
+			typename eastl::enable_if<internal::is_valid_function_argument<T, Result (Arguments...)>::value, int>::type = 0)
 			FUNC_TEMPLATE_NOEXCEPT(T, Allocator)
 	{
-		if (detail::is_null(functor))
+		if (internal::is_null(functor))
 		{
 			initialize_empty();
 		}
 		else
 		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), Allocator(allocator));
+			initialize(internal::to_functor(EASTL_FORWARD(T, functor)), Allocator(allocator));
 		}
 	}
 
@@ -832,7 +609,7 @@ public:
 	}
 
 
-#ifndef FUNC_NO_RTTI
+	#ifndef FUNC_NO_RTTI
 	    const std::type_info & target_type() const EA_NOEXCEPT
 		{
 			return storage.function_table->call_type_id();
@@ -847,12 +624,9 @@ public:
 		{
 			return static_cast<const T *>(storage.function_table->call_target(storage, typeid(T)));
 		}
-#endif
+	#endif
 
-	operator bool() const EA_NOEXCEPT
-	{
-		return call != nullptr;
-	}
+	operator bool() const EA_NOEXCEPT { return call != nullptr; }
 
 private:
 	detail::total_storage_type storage;
@@ -867,216 +641,10 @@ private:
 		detail::function_table_inplace_specialization<T, Allocator>::store_functor(storage, EASTL_FORWARD(T, functor));		
 	}
 
-	typedef Result(*Empty_Function_Type)(Arguments...);
-
 	void initialize_empty() EA_NOEXCEPT
 	{
-		typedef EASTLAllocatorType Allocator;
-		static_assert(detail::is_inplace_allocated<Empty_Function_Type, Allocator>::value, "The empty function should benefit from small functor optimization");
-
-		detail::init_function_table<Empty_Function_Type, Allocator>(storage);
-		detail::function_table_inplace_specialization<Empty_Function_Type, Allocator>::store_allocator(storage, Allocator());
-		detail::function_table_inplace_specialization<Empty_Function_Type, Allocator>::store_functor(storage, nullptr);
-		call = nullptr;
-	}
-};
-
-#else  // EASTL_VARIADIC_TEMPLATES_ENABLED
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Manually defined overloads for platforms without variadic template support
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// eastl::function 
-// no argument case
-//
-template<typename Result>
-class function<Result ()>
-	: public detail::typedeffer<Result>
-{
-public:
-	function() EA_NOEXCEPT
-	{
-		initialize_empty();
-	}
-
-	function(std::nullptr_t) EA_NOEXCEPT
-	{
-		initialize_empty();
-	}
-
-	function(function && other) EA_NOEXCEPT
-	{
-		initialize_empty();
-		swap(other);
-	}
-
-	function(const function & other)
-		: call(other.call)
-	{
-		other.storage.function_table->call_copy(storage, other.storage);
-	}
-
-	template<typename T>
-	function(T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result()>::value, detail::empty_struct>::type = detail::empty_struct()) FUNC_TEMPLATE_NOEXCEPT(T, EASTLAllocatorType) 
-	{
-		if (detail::is_null(functor))
-		{
-			initialize_empty();
-		}
-		else
-		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), EASTLAllocatorType());
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &)
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &, std::nullptr_t)
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-	}
-
-
-	template<typename Allocator, typename T>
-	function(eastl::allocator_arg_t, const Allocator & allocator, T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result()>::value, detail::empty_struct>::type = detail::empty_struct())
-			FUNC_TEMPLATE_NOEXCEPT(T, Allocator)
-	{
-		if (detail::is_null(functor))
-		{
-			initialize_empty();
-		}
-		else
-		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), Allocator(allocator));
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator & allocator, const function & other)
-		: call(other.call)
-	{
-		typedef typename eastl::allocator_traits<Allocator>::template rebind_alloc<function> MyAllocator;
-
-		// first try to see if the allocator matches the target type
-		detail::function_table_storage_type function_table_for_allocator = &detail::get_default_function_table<typename eastl::allocator_traits<Allocator>::value_type, Allocator>();
-		if (other.storage.function_table == function_table_for_allocator)
-		{
-			detail::init_function_table<typename eastl::allocator_traits<Allocator>::value_type, Allocator>(storage);
-			detail::function_table_inplace_specialization<T, Allocator>::store_allocator(storage, Allocator(allocator));
-			function_table_for_allocator->call_copy_functor_only(storage, other.storage);
-		}
-		// if it does not, try to see if the target contains my type. this
-		// breaks the recursion of the last case. otherwise repeated copies
-		// would allocate more and more memory
-		else
-		{
-			detail::function_table_storage_type function_table_for_function = &detail::get_default_function_table<function, MyAllocator>();
-			if (other.storage.function_table == function_table_for_function)
-			{
-				detail::init_function_table<function, MyAllocator>(storage);
-				detail::function_table_inplace_specialization<T, MyAllocator>::store_allocator(storage, MyAllocator(allocator));
-				function_table_for_function->call_copy_functor_only(storage, other.storage);
-			}
-			else
-			{
-				// else store the other function as my target
-				initialize(other, MyAllocator(allocator));
-			}
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &, function && other) EA_NOEXCEPT
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-		swap(other);
-	}
-
-	function & operator=(function other) EA_NOEXCEPT
-	{
-		swap(other);
-		return *this;
-	}
-
-	~function() EA_NOEXCEPT
-	{
-		storage.function_table->call_destroy(storage);
-	}
-
-	Result operator()() const
-	{
-		return call(storage.functor);
-	}
-
-	template<typename T, typename Allocator>
-	void assign(T && functor, const Allocator & allocator) FUNC_TEMPLATE_NOEXCEPT(T, Allocator)
-	{
-		function(eastl::allocator_arg, allocator, functor).swap(*this);
-	}
-	
-	void swap(function & other) EA_NOEXCEPT
-	{
-		detail::total_storage_type temp_storage;
-		other.storage.function_table->call_move_and_destroy(temp_storage, EASTL_MOVE(other.storage));
-		storage.function_table->call_move_and_destroy(other.storage, EASTL_MOVE(storage));
-		temp_storage.function_table->call_move_and_destroy(storage, EASTL_MOVE(temp_storage));
-
-		eastl::swap(call, other.call);
-	}
-
-#ifndef FUNC_NO_RTTI
-	    const std::type_info & target_type() const EA_NOEXCEPT
-		{
-			return storage.function_table->call_type_id();
-		}
-		template<typename T>
-		T * target() EA_NOEXCEPT
-		{
-			return static_cast<T *>(storage.function_table->call_target(storage, typeid(T)));
-		}
-		template<typename T>
-		const T * target() const EA_NOEXCEPT
-		{
-			return static_cast<const T *>(storage.function_table->call_target(storage, typeid(T)));
-		}
-#endif
-
-	operator bool() const EA_NOEXCEPT
-	{
-		return call != nullptr;
-	}
-
-private:
-	detail::total_storage_type storage;
-	Result (*call)(const detail::functor_storage_type&);
-
-	template<typename T, typename Allocator>
-	void initialize(T functor, Allocator && allocator)
-	{
-		call = &detail::function_table_inplace_specialization<T, Allocator>::template call<Result>;
-		detail::init_function_table<T, Allocator>(storage);
-		detail::function_table_inplace_specialization<T, Allocator>::store_allocator(storage, EASTL_FORWARD(Allocator, allocator));
-		detail::function_table_inplace_specialization<T, Allocator>::store_functor(storage, EASTL_FORWARD(T, functor));
-	}
-
-	typedef Result(*Empty_Function_Type)();
-
-	void initialize_empty() EA_NOEXCEPT
-	{
+		typedef Result(*Empty_Function_Type)(Arguments...);
+		
 		typedef EASTLAllocatorType Allocator;
 		static_assert(detail::is_inplace_allocated<Empty_Function_Type, Allocator>::value, "The empty function should benefit from small functor optimization");
 
@@ -1088,264 +656,31 @@ private:
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// eastl::function 
-// single argument case
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// comparison operators
 //
-template<typename Result, typename Argument0>
-class function<Result(Argument0)>
-	: public detail::typedeffer<Result, Argument0>
-{
-public:
-	function() EA_NOEXCEPT
-	{
-		initialize_empty();
-	}
+template <typename T>
+bool operator==(std::nullptr_t, const function<T>& rhs) EA_NOEXCEPT { return !rhs; }
 
-	function(std::nullptr_t) EA_NOEXCEPT
-	{
-		initialize_empty();
-	}
+template <typename T>
+bool operator==(const function<T>& lhs, std::nullptr_t) EA_NOEXCEPT { return !lhs; }
 
-	function(function && other) EA_NOEXCEPT
-	{
-		initialize_empty();
-		swap(other);
-	}
+template <typename T>
+bool operator!=(std::nullptr_t, const function<T>& rhs) EA_NOEXCEPT { return rhs; }
 
-	function(const function & other)
-		: call(other.call)
-	{
-		other.storage.function_table->call_copy(storage, other.storage);
-	}
-
-	template<typename T>
-	function(T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result (Argument0)>::value, detail::empty_struct>::type = detail::empty_struct()) FUNC_TEMPLATE_NOEXCEPT(T, EASTLAllocatorType) 
-	{
-		if (detail::is_null(functor))
-		{
-			initialize_empty();
-		}
-		else
-		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), EASTLAllocatorType());
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &)
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &, std::nullptr_t)
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-	}
+template <typename T>
+bool operator!=(const function<T>& lhs, std::nullptr_t) EA_NOEXCEPT { return lhs; }
 
 
-	template<typename Allocator, typename T>
-	function(eastl::allocator_arg_t, const Allocator & allocator, T functor,
-			typename eastl::enable_if<detail::is_valid_function_argument<T, Result (Argument0)>::value, detail::empty_struct>::type = detail::empty_struct())
-			FUNC_TEMPLATE_NOEXCEPT(T, Allocator)
-	{
-		if (detail::is_null(functor))
-		{
-			initialize_empty();
-		}
-		else
-		{
-			initialize(detail::to_functor(EASTL_FORWARD(T, functor)), Allocator(allocator));
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator & allocator, const function & other)
-		: call(other.call)
-	{
-		typedef typename eastl::allocator_traits<Allocator>::template rebind_alloc<function> MyAllocator;
-
-		// first try to see if the allocator matches the target type
-		detail::function_table_storage_type function_table_for_allocator = &detail::get_default_function_table<typename eastl::allocator_traits<Allocator>::value_type, Allocator>();
-		if (other.storage.function_table == function_table_for_allocator)
-		{
-			detail::init_function_table<typename eastl::allocator_traits<Allocator>::value_type, Allocator>(storage);
-			detail::function_table_inplace_specialization<T, Allocator>::store_allocator(storage, Allocator(allocator));
-			function_table_for_allocator->call_copy_functor_only(storage, other.storage);
-		}
-		// if it does not, try to see if the target contains my type. this
-		// breaks the recursion of the last case. otherwise repeated copies
-		// would allocate more and more memory
-		else
-		{
-			detail::function_table_storage_type function_table_for_function = &detail::get_default_function_table<function, MyAllocator>();
-			if (other.storage.function_table == function_table_for_function)
-			{
-				detail::init_function_table<function, MyAllocator>(storage);
-				detail::function_table_inplace_specialization<T, Allocator>::store_allocator(storage, MyAllocator(allocator));
-				function_table_for_function->call_copy_functor_only(storage, other.storage);
-			}
-			else
-			{
-				// else store the other function as my target
-				initialize(other, MyAllocator(allocator));
-			}
-		}
-	}
-
-	template<typename Allocator>
-	function(eastl::allocator_arg_t, const Allocator &, function && other) EA_NOEXCEPT
-	{
-		// ignore the allocator because I don't allocate
-		initialize_empty();
-		swap(other);
-	}
-
-	function & operator=(function other) EA_NOEXCEPT
-	{
-		swap(other);
-		return *this;
-	}
-
-	~function() EA_NOEXCEPT
-	{
-		storage.function_table->call_destroy(storage);
-	}
-
-	Result operator()(Argument0 argument0) const
-	{
-		return call(storage.functor, EASTL_FORWARD(Argument0, argument0));
-	}
-
-	template<typename T, typename Allocator>
-	void assign(T && functor, const Allocator & allocator) FUNC_TEMPLATE_NOEXCEPT(T, Allocator)
-	{
-		function(eastl::allocator_arg, allocator, functor).swap(*this);
-	}
-	
-	void swap(function & other) EA_NOEXCEPT
-	{
-		detail::total_storage_type temp_storage;
-		other.storage.function_table->call_move_and_destroy(temp_storage, EASTL_MOVE(other.storage));
-		storage.function_table->call_move_and_destroy(other.storage, EASTL_MOVE(storage));
-		temp_storage.function_table->call_move_and_destroy(storage, EASTL_MOVE(temp_storage));
-
-		eastl::swap(call, other.call);
-	}
-
-#ifndef FUNC_NO_RTTI
-	    const std::type_info & target_type() const EA_NOEXCEPT
-		{
-			return storage.function_table->call_type_id();
-		}
-		template<typename T>
-		T * target() EA_NOEXCEPT
-		{
-			return static_cast<T *>(storage.function_table->call_target(storage, typeid(T)));
-		}
-		template<typename T>
-		const T * target() const EA_NOEXCEPT
-		{
-			return static_cast<const T *>(storage.function_table->call_target(storage, typeid(T)));
-		}
-#endif
-
-	operator bool() const EA_NOEXCEPT
-	{
-		return call != nullptr;
-	}
-
-private:
-	detail::total_storage_type storage;
-	Result (*call)(const detail::functor_storage_type &, Argument0);
-
-	template<typename T, typename Allocator>
-	void initialize(T functor, Allocator && allocator)
-	{
-		call = &detail::function_table_inplace_specialization<T, Allocator>::template call<Result, Argument0>;
-		detail::init_function_table<T, Allocator>(storage);
-		detail::function_table_inplace_specialization<T, Allocator>::store_allocator(storage, EASTL_FORWARD(Allocator, allocator));
-		detail::function_table_inplace_specialization<T, Allocator>::store_functor(storage, EASTL_FORWARD(T, functor));
-	}
-
-	typedef Result(*Empty_Function_Type)(Argument0);
-
-	void initialize_empty() EA_NOEXCEPT
-	{
-		typedef EASTLAllocatorType Allocator;
-		static_assert(detail::is_inplace_allocated<Empty_Function_Type, Allocator>::value, "The empty function should benefit from small functor optimization");
-
-		detail::init_function_table<Empty_Function_Type, Allocator>(storage);
-		detail::function_table_inplace_specialization<Empty_Function_Type, Allocator>::store_allocator(storage, Allocator());
-		detail::function_table_inplace_specialization<Empty_Function_Type, Allocator>::store_functor(storage, nullptr);
-		call = nullptr;
-	}
-};
-
-#endif // EASTL_VARIADIC_TEMPLATES_ENABLED 
-
-template<typename T>
-bool operator==(std::nullptr_t, const function<T> & rhs) EA_NOEXCEPT
-{
-	return !rhs;
-}
-template<typename T>
-bool operator==(const function<T> & lhs, std::nullptr_t) EA_NOEXCEPT
-{
-	return !lhs;
-}
-template<typename T>
-bool operator!=(std::nullptr_t, const function<T> & rhs) EA_NOEXCEPT
-{
-	return rhs;
-}
-template<typename T>
-bool operator!=(const function<T> & lhs, std::nullptr_t) EA_NOEXCEPT
-{
-	return lhs;
-}
-
-template<typename T>
-void swap(function<T> & lhs, function<T> & rhs)
-{
-	lhs.swap(rhs);
-}
-
-} // end namespace func
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// swap 
 //
-// This type trait is used by std::scoped_allocator_adaptor and may be used by custom allocators to determine whether the
-// object being constructed is itself capable of using an allocator (e.g. is a container), in which case an allocator
-// should be passed to its constructor.
-// reference:  http://en.cppreference.com/w/cpp/memory/uses_allocator
-// namespace eastl 
-// {
-// uncomment if we ever implemented scoped_allocator_adaptor.
-//
-// #if EASTL_VARIADIC_TEMPLATES_ENABLED
-// template<typename Result, typename... Arguments, typename Allocator>
-// struct uses_allocator<eastl::function<Result (Arguments...)>, Allocator>
-	// : public eastl::true_type
-// {
-// };
-// #else
-// // single argument case
-// template<typename Result, typename Argument0, typename Allocator>
-// struct uses_allocator<eastl::function<Result (Argument0)>, Allocator>
-	// : public eastl::true_type
-// {
-// };
-// #endif
-// }
+template<typename T>
+void swap(function<T> & lhs, function<T> & rhs) { lhs.swap(rhs); }
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+} // namespace eastl 
+
+
 #undef FUNC_TEMPLATE_NOEXCEPT
 #undef FUNC_NO_RTTI
 

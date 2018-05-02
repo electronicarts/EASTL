@@ -109,6 +109,8 @@
 
             #if defined(EA_COMPILER_MSVC) && (_MSC_VER >= 1300)
                 #define EATEST_DEBUG_BREAK() __debugbreak() // This is a compiler intrinsic which will map to appropriate inlined asm for the platform.
+            #elif defined(EA_PLATFORM_SONY) && defined(EA_PROCESSOR_X86_64)
+                #define EATEST_DEBUG_BREAK() do { { __asm volatile ("int $0x41"); } } while(0)
             #elif defined(EA_PROCESSOR_ARM) && (defined(__APPLE__) || defined(CS_UNDEFINED_STRING))
                 #include <signal.h>
                 #include <unistd.h>
@@ -120,6 +122,8 @@
                 #define EATEST_DEBUG_BREAK() {__asm__("int $3\n" : : ); }
             #elif defined(EA_PROCESSOR_ARM) && defined(__APPLE__)
                 #define EATEST_DEBUG_BREAK() asm("trap") // Apparently __builtin_trap() doesn't let you continue execution, so we don't use it.
+			#elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
+				#define EATEST_DEBUG_BREAK() asm("brk 10")
             #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
                 #define EATEST_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
             #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
@@ -341,8 +345,69 @@ namespace EA
             #define EATEST_VERIFY_F(bExpression, pFormat, ...) EA::UnitTest::TestInternal::EATEST_VERIFY_F_IMP((bExpression), nErrorCount, __FILE__, __LINE__, pFormat, __VA_ARGS__)
         #endif
 
+		/// EATEST_VERIFY_THROW
+		/// EATEST_VERIFY_NOTHROW
+		/// 
+		/// This macro confirms whether or not an expression throws or doesn't throw. 
+		/// 
+		/// See EATEST_VERIFY for details about error reporting and the _MSG variants
+		#if !defined(EA_COMPILER_NO_EXCEPTIONS)
 
-        ///////////////////////////////////////////////////////////////////////
+			#define EATEST_VERIFY_IMPL(expression)                    \
+				bool EA_PREPROCESSOR_JOIN(isThrow, __LINE__) = false; \
+				try                                                   \
+				{                                                     \
+					(expression);                                     \
+				}                                                     \
+				catch (...)                                           \
+				{                                                     \
+					EA_PREPROCESSOR_JOIN(isThrow, __LINE__) = true;   \
+				}
+
+			#define EATEST_VERIFY_THROW(expression)                             \
+				do                                                              \
+				{                                                               \
+					{                                                           \
+						EATEST_VERIFY_IMPL(expression)                          \
+						EATEST_VERIFY(EA_PREPROCESSOR_JOIN(isThrow, __LINE__)); \
+					}                                                           \
+				} while (false)
+
+			#define EATEST_VERIFY_NOTHROW(expression)                            \
+				do                                                               \
+				{                                                                \
+					{                                                            \
+						EATEST_VERIFY_IMPL(expression)                           \
+						EATEST_VERIFY(!EA_PREPROCESSOR_JOIN(isThrow, __LINE__)); \
+					}                                                            \
+				} while (false)
+
+			#define EATEST_VERIFY_THROW_MSG(expression, msg)                             \
+				do                                                                       \
+				{                                                                        \
+					{                                                                    \
+						EATEST_VERIFY_IMPL(expression)                                   \
+						EATEST_VERIFY_MSG(EA_PREPROCESSOR_JOIN(isThrow, __LINE__), msg); \
+					}                                                                    \
+				} while (false)
+
+			#define EATEST_VERIFY_NOTHROW_MSG(expression, msg)                            \
+				do                                                                        \
+				{                                                                         \
+					{                                                                     \
+						EATEST_VERIFY_IMPL(expression)                                    \
+						EATEST_VERIFY_MSG(!EA_PREPROCESSOR_JOIN(isThrow, __LINE__), msg); \
+					}                                                                     \
+				} while (false)
+		#else
+			#define EATEST_VERIFY_THROW(expression)
+			#define EATEST_VERIFY_NOTHROW(expression)
+			#define EATEST_VERIFY_THROW_MSG(expression, msg)
+			#define EATEST_VERIFY_NOTHROW_MSG(expression, msg)
+		#endif
+
+
+		///////////////////////////////////////////////////////////////////////
         /// GetSystemTimeMicroseconds
         ///
         /// While this function could be used for basic benchmarking, the 
@@ -655,6 +720,7 @@ namespace EA
             size_t          mnErrorCount;
             EA::EAMain::ReportFunction  mpReportFunction;
             bool            mbForceReport;
+			uint64_t        mnElapsedTestTimeInMicroseconds;
         };
 
 

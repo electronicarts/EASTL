@@ -10,16 +10,10 @@
 #include <EASTL/vector.h>
 #include <EASTL/algorithm.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4702) // VC++ STL headers generate this. warning C4702: unreachable code
-	#pragma warning(disable: 4350)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <set>
 #include <algorithm>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 using namespace EA;

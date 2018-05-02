@@ -148,8 +148,6 @@ template class eastl::intrusive_sdlist<TestSDListLocal::IntNode>;
 
 int TestIntrusiveSDList()
 {
-	EASTLTest_Printf("TestIntrusiveSDList\n");
-
 	using namespace TestSDListLocal;
 
 	int nErrorCount = 0;

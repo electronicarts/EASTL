@@ -8,23 +8,20 @@
 #include "TestSet.h"
 #include <EASTL/hash_set.h>
 #include <EASTL/hash_map.h>
+#include <EASTL/unordered_set.h>
+#include <EASTL/unordered_map.h>
+#include <EASTL/map.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/vector.h>
+#include <EASTL/unique_ptr.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 using namespace eastl;
-
 
 namespace eastl
 {
@@ -84,8 +81,52 @@ struct HashtableValueHash
 
 
 
-// Template instantations.
+// Explicit Template instantiations.
 // These tell the compiler to compile all the functions for the given class.
+template class eastl::hashtable<int,
+                                eastl::pair<const int, int>,
+                                eastl::allocator,
+                                eastl::use_first<eastl::pair<const int, int>>,
+                                eastl::equal_to<int>,
+                                eastl::hash<int>,
+                                mod_range_hashing,
+                                default_ranged_hash,
+                                prime_rehash_policy,
+                                true, // bCacheHashCode
+                                true, // bMutableIterators
+                                true  // bUniqueKeys
+                                >;
+template class eastl::hashtable<int,
+								eastl::pair<const int, int>,
+								eastl::allocator,
+								eastl::use_first<eastl::pair<const int, int>>,
+								eastl::equal_to<int>,
+								eastl::hash<int>,
+								mod_range_hashing,
+								default_ranged_hash,
+								prime_rehash_policy,
+								false, // bCacheHashCode
+								true,  // bMutableIterators
+								true   // bUniqueKeys
+								>;
+// TODO(rparolin): known compiler error, we should fix this.
+// template class eastl::hashtable<int,
+//                                 eastl::pair<const int, int>,
+//                                 eastl::allocator,
+//                                 eastl::use_first<eastl::pair<const int, int>>,
+//                                 eastl::equal_to<int>,
+//                                 eastl::hash<int>,
+//                                 mod_range_hashing,
+//                                 default_ranged_hash,
+//                                 prime_rehash_policy,
+//                                 false, // bCacheHashCode
+//                                 true,  // bMutableIterators
+//                                 false  // bUniqueKeys
+//                                 >;
+
+// Note these will only compile non-inherited functions.  We provide explicit
+// template instantiations for the hashtable base class above to get compiler
+// coverage of those inherited hashtable functions.
 template class eastl::hash_set<int>;
 template class eastl::hash_multiset<int>;
 template class eastl::hash_map<int, int>;
@@ -95,6 +136,16 @@ template class eastl::hash_multiset<Align32>;
 template class eastl::hash_map<Align32, Align32>;
 template class eastl::hash_multimap<Align32, Align32>;
 
+// validate static assumptions about hashtable core types
+typedef eastl::hash_node<int, false> HashNode1;
+typedef eastl::hash_node<int, true> HashNode2;
+static_assert(eastl::is_default_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_default_constructible<HashNode2>::value, "hash_node static error");
+static_assert(eastl::is_copy_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_copy_constructible<HashNode2>::value, "hash_node static error");
+static_assert(eastl::is_move_constructible<HashNode1>::value, "hash_node static error");
+static_assert(eastl::is_move_constructible<HashNode2>::value, "hash_node static error");
+
 // A custom hash function that has a high number of collisions is used to ensure many keys share the same hash value.
 struct colliding_hash
 {
@@ -103,10 +154,9 @@ struct colliding_hash
 };
 
 
+
 int TestHash()
 {   
-	EASTLTest_Printf("TestHash\n");
-
 	int nErrorCount = 0;
 
 	{  // Test declarations
@@ -374,6 +424,49 @@ int TestHash()
 		}
 	}
 
+	{
+		// ENABLE_IF_HASHCODE_U32(HashCodeT, iterator)       find_by_hash(HashCodeT c)
+		// ENABLE_IF_HASHCODE_U32(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
+		{
+			// NOTE(rparolin):
+			// these overloads of find_by_hash contains a static assert that forces a compiler error in the event it is
+			// used with a hashtable configured to not cache the hash value in the node.
+		}
+
+		// iterator                                          find_by_hash(const key_type& k, hash_code_t c)
+		// const_iterator                                    find_by_hash(const key_type& k, hash_code_t c) const
+		#ifdef EA_COMPILER_CPP14_ENABLED 
+		{
+			auto FindByHashTest = [&nErrorCount](auto& hashSet)
+			{
+				const int kCount = 10000;
+				for(int i = 0; i < kCount; i++)
+					hashSet.insert(i);
+
+				for(int i = 0; i < kCount * 2; i++)
+				{
+					auto it = hashSet.find_by_hash(i, i);
+
+					if(i < kCount)
+						EATEST_VERIFY(it != hashSet.end());
+					else
+						EATEST_VERIFY(it == hashSet.end());
+				}
+			};
+
+			{
+				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, true> HashSetIntC;
+				HashSetIntC hashSetC;
+				FindByHashTest(hashSetC);
+
+				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, false> HashSetInt;
+				HashSetInt hashSet;
+				FindByHashTest(hashSet);
+			}
+		}
+		#endif
+	}
+
 
 	{
 		// hash_set(const allocator_type& allocator);
@@ -402,53 +495,78 @@ int TestHash()
 		// hashtable& operator=(const this_type& x);
 		// void swap(this_type& x);
 		// bool validate() const;
-
-		hash_set<int> hashSet3(0);
-		hash_set<int> hashSet4(1);
-		hash_set<int> hashSet5(2);
-		hash_set<int> hashSet6(3);
-		hash_set<int> hashSet7(4);
-
-		hashSet4 = hashSet3;
-		hashSet6 = hashSet5;
-		hashSet3 = hashSet7;
-
-		for(int i = 0; i < 10; i++)
 		{
-			hashSet3.insert(i);
-			hashSet4.insert(i);
-			hashSet5.insert(i);
-			hashSet6.insert(i);
-			hashSet7.insert(i);
+			hash_set<int> hashSet3(0);
+			hash_set<int> hashSet4(1);
+			hash_set<int> hashSet5(2);
+			hash_set<int> hashSet6(3);
+			hash_set<int> hashSet7(4);
+
+			hashSet4 = hashSet3;
+			hashSet6 = hashSet5;
+			hashSet3 = hashSet7;
+
+			for(int i = 0; i < 10; i++)
+			{
+				hashSet3.insert(i);
+				hashSet4.insert(i);
+				hashSet5.insert(i);
+				hashSet6.insert(i);
+				hashSet7.insert(i);
+			}
+
+			hashSet4 = hashSet3;
+			hashSet6 = hashSet5;
+			hashSet3 = hashSet7;
+
+			EATEST_VERIFY(hashSet3.validate());
+			EATEST_VERIFY(hashSet4.validate());
+			EATEST_VERIFY(hashSet5.validate());
+			EATEST_VERIFY(hashSet6.validate());
+			EATEST_VERIFY(hashSet7.validate());
+
+			swap(hashSet4, hashSet3);
+			swap(hashSet6, hashSet5);
+			swap(hashSet3, hashSet7);
+
+			EATEST_VERIFY(hashSet3.validate());
+			EATEST_VERIFY(hashSet4.validate());
+			EATEST_VERIFY(hashSet5.validate());
+			EATEST_VERIFY(hashSet6.validate());
+			EATEST_VERIFY(hashSet7.validate());
+
+			hash_set<int> hashSet8(hashSet6);
+			hash_set<int> hashSet9(hashSet7);
+			hash_set<int> hashSet10(hashSet8);
+
+			EATEST_VERIFY(hashSet8.validate());
+			EATEST_VERIFY(hashSet9.validate());
+			EATEST_VERIFY(hashSet10.validate());
 		}
+		
+		// test hashtable::swap using different allocator instances
+		{
+			typedef hash_set<int, eastl::hash<int>, eastl::equal_to<int>, InstanceAllocator> HS;
+			HS hashSet1(InstanceAllocator("hash_set1 name", 111));
+			HS hashSet2(InstanceAllocator("hash_set2 name", 222));
 
-		hashSet4 = hashSet3;
-		hashSet6 = hashSet5;
-		hashSet3 = hashSet7;
+			for(int i = 0; i < 10; i++)
+			{
+				hashSet1.insert(i);
+				hashSet2.insert(i+10);
+			}
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
-		EATEST_VERIFY(hashSet5.validate());
-		EATEST_VERIFY(hashSet6.validate());
-		EATEST_VERIFY(hashSet7.validate());
+			hashSet2.swap(hashSet1);
 
-		swap(hashSet4, hashSet3);
-		swap(hashSet6, hashSet5);
-		swap(hashSet3, hashSet7);
+			EATEST_VERIFY(hashSet1.validate());
+			EATEST_VERIFY(hashSet2.validate());
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
-		EATEST_VERIFY(hashSet5.validate());
-		EATEST_VERIFY(hashSet6.validate());
-		EATEST_VERIFY(hashSet7.validate());
+			EATEST_VERIFY(hashSet1.get_allocator().mInstanceId == 222);
+			EATEST_VERIFY(hashSet2.get_allocator().mInstanceId == 111);
 
-		hash_set<int> hashSet8(hashSet6);
-		hash_set<int> hashSet9(hashSet7);
-		hash_set<int> hashSet10(hashSet8);
-
-		EATEST_VERIFY(hashSet8.validate());
-		EATEST_VERIFY(hashSet9.validate());
-		EATEST_VERIFY(hashSet10.validate());
+			EATEST_VERIFY(eastl::all_of(eastl::begin(hashSet2), eastl::end(hashSet2), [](int i) { return i < 10; }));
+			EATEST_VERIFY(eastl::all_of(eastl::begin(hashSet1), eastl::end(hashSet1), [](int i) { return i >= 10; }));
+		}
 	}
 
 
@@ -547,15 +665,26 @@ int TestHash()
 
 	{
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<eastl::hash_map<int, TestObject> >();
+		nErrorCount += TestMapCpp11<eastl::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<eastl::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<eastl::hash_set<TestObject> >();
+		nErrorCount += TestSetCpp11<eastl::hash_set<TestObject>>();
+		nErrorCount += TestSetCpp11<eastl::unordered_set<TestObject>>();
 
-		nErrorCount += TestMultimapCpp11<eastl::hash_multimap<int, TestObject> >();
+		nErrorCount += TestMultimapCpp11<eastl::hash_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<eastl::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<eastl::hash_multiset<TestObject> >();
+		nErrorCount += TestMultisetCpp11<eastl::hash_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<eastl::unordered_multiset<TestObject>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::hash_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::unordered_map<int, NonCopyable>>();
+	}
+
+	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<eastl::unordered_map<int, TestObject>>();
 	}
 
 
@@ -610,14 +739,27 @@ int TestHash()
 
 		for(int i = 0; i < kCount; i++)
 		{
-			HashMapIntInt::value_type vt(i, i << 4);
+			HashMapIntInt::value_type vt(i, i);
 			hashMap.insert(vt);
 		}
 
-		for(hash_map<int, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
+		const HashMapIntInt const_hashMap = hashMap; // creating a const version to test for const correctness
+
+		for(auto& e : hashMap)
 		{
-			int k = (*it).first;
-			int v = (*it).second;
+			int k = e.first;
+			int v = e.second;
+			EATEST_VERIFY(k < kCount);
+			EATEST_VERIFY(v == k);
+			EATEST_VERIFY(hashMap.at(k) == k);
+			EATEST_VERIFY(const_hashMap.at(k) == k);
+			hashMap.at(k) = k << 4;
+		}
+
+		for(auto& e : hashMap)
+		{
+			int k = e.first;
+			int v = e.second;
 			EATEST_VERIFY(k < kCount);
 			EATEST_VERIFY(v == (k << 4));
 		}
@@ -638,6 +780,26 @@ int TestHash()
 				EATEST_VERIFY(it == hashMap.end());
 		}
 
+		for(int i = 0; i < kCount; i++)
+		{
+			int v = hashMap.at(i);
+			EATEST_VERIFY(v == (i << 4));
+		}
+
+		#if EASTL_EXCEPTIONS_ENABLED
+			try
+			{
+				hashMap.at(kCount);
+				EASTL_ASSERT_MSG(false, "at accessor did not throw out_of_range exception");
+			}
+			catch(const std::out_of_range) { }
+			catch(const std::exception& e)
+			{
+				string e_msg(e.what());
+				string msg = "wrong exception with message \"" + e_msg + "\" thrown";
+				EASTL_ASSERT_MSG(false, msg.c_str());
+			}
+		#endif
 		HashMapIntInt::insert_return_type result = hashMap.insert(88888);
 		EATEST_VERIFY(result.second == true);
 		result = hashMap.insert(88888);
@@ -1064,6 +1226,30 @@ int TestHash()
 		}
 	}
 
+	// test hashtable holding move-only types
+	#if !defined(EA_COMPILER_MSVC_2013)
+	{
+		struct Movable
+		{
+			Movable() {}
+			Movable(Movable&&) = default;
+			Movable& operator=(Movable&&) = default;
+			Movable(const Movable&) = delete;
+			Movable& operator=(const Movable&) = delete;
+
+			bool operator==(Movable) const { return true; }
+
+			struct Hash
+			{
+				size_t operator()(Movable) const { return 0; }
+			};
+		};
+
+		eastl::unordered_set<Movable, Movable::Hash> a, b;
+		swap(a,b);
+	}
+	#endif
+
 	{
 		#if EASTL_MOVE_SEMANTICS_ENABLED
 			// hashtable(this_type&& x);
@@ -1093,6 +1279,13 @@ int TestHash()
 
 			// iterator insert(const_iterator hint, value_type&& value);
 		#endif
+
+		// Regression of user reported compiler error in hashtable sfinae mechanism 
+		{
+			TestObject::Reset();
+			eastl::hash_set<TestObject> toSet;
+			toSet.emplace(3, 4, 5);
+		}
 	}
 
 
@@ -1125,6 +1318,92 @@ int TestHash()
 			EATEST_VERIFY(intHashMap.find(43) != intHashMap.end());
 			EATEST_VERIFY(intHashMap.find(44) != intHashMap.end());
 		#endif
+	}
+
+	// Can't use move semantics with hash_map::operator[]
+	//
+	// GCC has a bug with overloading rvalue and lvalue function templates.
+	// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54425
+	// 
+	// error: 'eastl::pair<T1, T2>::pair(T1&&) [with T1 = const int&; T2 = const int&]' cannot be overloaded
+	// error: with 'eastl::pair<T1, T2>::pair(const T1&) [with T1 = const int&; T2 = const int&]'
+	#if EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_GNUC)
+	{
+		EA_DISABLE_VC_WARNING(4626)
+		struct Key
+		{
+				Key() {}
+				Key(Key && o) {}
+				Key(const Key && o) {}
+				bool operator==(const Key& other) const { return true; }
+			private:
+			    Key(const Key& o) {}
+		};
+		EA_RESTORE_VC_WARNING()
+
+		struct Hash
+		{
+			std::size_t operator()(const Key& k) const { return 0; }
+		};
+
+		struct Tester
+		{
+			int test()
+			{
+				Key key;
+				eastl::hash_map<Key, int, Hash> hm;
+				return hm[eastl::move(key)] = 12345;
+			}
+		};
+
+		Tester tester;
+		EATEST_VERIFY(tester.test() == 12345);
+	}
+	#endif
+
+	{
+		using AllocatorType = CountingAllocator;
+		using String = eastl::basic_string<char8_t, AllocatorType>;
+		using StringStringMap = eastl::map<String, String, eastl::equal_to<String>, AllocatorType>;
+		using StringStringHashMap = eastl::hash_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
+		AllocatorType::resetCount();
+
+		{
+			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.emplace(eastl::move(key), eastl::move(value));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringMap myMap;
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+		{
+			StringStringMap myMap;
+			String key("mykey01234567890000000000000000000000000000");
+			String value("myvalue01234567890000000000000000000000000000");
+			AllocatorType::resetCount();
+
+			myMap.emplace(eastl::move(key), eastl::move(value));
+			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
 	}
 
 	return nErrorCount;

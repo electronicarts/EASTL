@@ -42,24 +42,19 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#include <stddef.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
+#include <new>
+#include <stddef.h>
+EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 	#pragma warning(disable: 4345)  // Behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
 	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+	#pragma warning(disable: 4623)  // default constructor was implicitly defined as deleted
 #endif
 
-EA_DISABLE_SN_WARNING(828); // The EDG SN compiler has a bug in its handling of variadic template arguments and mistakenly reports "parameter "args" was never referenced"
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -424,7 +419,7 @@ namespace eastl
 		iterator erase(const_iterator first, const_iterator last);
 
 		reverse_iterator erase(const_reverse_iterator position);
-		reverse_iterator erase(const_reverse_iterator first, reverse_iterator last);
+		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
 		void clear() EA_NOEXCEPT;
 		void reset_lose_memory() EA_NOEXCEPT;    // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
@@ -448,10 +443,6 @@ namespace eastl
 			void splice(const_iterator position, this_type&& x);
 			void splice(const_iterator position, this_type&& x, const_iterator i);
 			void splice(const_iterator position, this_type&& x, const_iterator first, const_iterator last);
-		#endif
-
-		#if EASTL_RESET_ENABLED
-			void reset() EA_NOEXCEPT; // This function name is deprecated; use reset_lose_memory instead.
 		#endif
 
 	public:
@@ -1235,16 +1226,6 @@ namespace eastl
 	}
 
 
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename T, typename Allocator>
-		inline void list<T, Allocator>::reset() EA_NOEXCEPT
-		{
-			reset_lose_memory();
-		}
-	#endif
-
-
 	template <typename T, typename Allocator>
 	inline void list<T, Allocator>::reset_lose_memory() EA_NOEXCEPT
 	{
@@ -1556,7 +1537,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	typename list<T, Allocator>::reverse_iterator
-	list<T, Allocator>::erase(const_reverse_iterator first, reverse_iterator last)
+	list<T, Allocator>::erase(const_reverse_iterator first, const_reverse_iterator last)
 	{
 		// Version which erases in order from first to last.
 		// difference_type i(first.base() - last.base());

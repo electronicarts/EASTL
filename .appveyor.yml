@@ -1,12 +1,14 @@
 version: 1.0.{build}
 
+image:
+- Visual Studio 2017
 platform:
-    - MSVC_2013_x86
-    - MSVC_2013_x64
-    - MSVC_2015_x86
-    - MSVC_2015_x64
     - MinGW_x86
     - MinGW_x64
+    - MSVC_2015_x86
+    - MSVC_2015_x64
+    - MSVC_2017_x86
+    - MSVC_2017_x64
 
 install:
     - scripts\ci-pre.cmd

@@ -17,19 +17,14 @@
 #include <EASTL/string.h>
 #include <EASTL/random.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4350) // behavior change: X called instead of Y
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
 #include <list>
 #include <algorithm>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifdef _MSC_VER
 	#pragma warning(disable: 4996) // Function call with parameters that may be unsafe
@@ -646,11 +641,11 @@ void BenchmarkAlgorithm2(EASTLTest_Rand& rng, EA::StdC::Stopwatch& stopwatch1, E
 			// Test random_shuffle
 			///////////////////////////////
 
-			TestRandomShuffleStd(stopwatch1, stdVectorUint64, rng);
-			TestRandomShuffleEa (stopwatch2, eaVectorUint64,  rng);
+			// TestRandomShuffleStd(stopwatch1, stdVectorUint64, rng);
+			// TestRandomShuffleEa (stopwatch2, eaVectorUint64,  rng);
 
-			if(i == 1)
-				Benchmark::AddResult("algorithm/rand_shuffle/vector<uint64_t>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			//     Benchmark::AddResult("algorithm/rand_shuffle/vector<uint64_t>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 
@@ -856,10 +851,10 @@ void BenchmarkAlgorithm5(EASTLTest_Rand& /*rng*/, EA::StdC::Stopwatch& stopwatch
 			if(i == 1)
 				Benchmark::AddResult("algorithm/fill/vector<char>/'d'", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			TestFillStd(stopwatch1, stdVectorChar.begin(), stdVectorChar.end(), 0); 
-			TestFillEa (stopwatch2,  eaVectorChar.begin(),  eaVectorChar.end(), 0);
-			TestFillStd(stopwatch1, stdVectorChar.begin(), stdVectorChar.end(), 0); // Intentionally do this a second time, as we are finding 
-			TestFillEa (stopwatch2,  eaVectorChar.begin(),  eaVectorChar.end(), 0); // the results are inconsistent otherwise.
+			TestFillStd(stopwatch1, stdVectorChar.begin(), stdVectorChar.end(), (char)0); 
+			TestFillEa (stopwatch2,  eaVectorChar.begin(),  eaVectorChar.end(), (char)0);
+			TestFillStd(stopwatch1, stdVectorChar.begin(), stdVectorChar.end(), (char)0); // Intentionally do this a second time, as we are finding 
+			TestFillEa (stopwatch2,  eaVectorChar.begin(),  eaVectorChar.end(), (char)0); // the results are inconsistent otherwise.
 
 			if(i == 1)
 				Benchmark::AddResult("algorithm/fill/vector<char>/0", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());

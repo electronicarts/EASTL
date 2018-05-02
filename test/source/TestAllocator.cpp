@@ -9,6 +9,7 @@
 #include <EASTL/fixed_allocator.h>
 #include <EASTL/core_allocator_adapter.h>
 #include <EASTL/list.h>
+#include <EAStdC/EAString.h>
 
 
 
@@ -114,6 +115,40 @@ static int TestFixedAllocator()
 		intList2.get_allocator().init(buffer2, sizeof(buffer2), sizeof(IntListNode), kAlignOfIntListNode);
 		intList2 = intList1;
 		EATEST_VERIFY(intList2.size() == kBufferCount);
+	}
+
+	// fixed_allocator_with_overflow, ensure allocations are coming from fixed buffer. This is to
+	// prevent a reported user regression where all allocations were being routed to the overflow
+	// allocator.
+	{
+		const int DEFAULT_VALUE = 0xbaadf00d;
+		const int TEST_VALUE = 0x12345689;
+		const size_t kBufferCount = 10;
+
+		typedef eastl::list<int, fixed_allocator_with_overflow> IntList;
+		typedef IntList::node_type IntListNode;
+
+		IntList intList1;
+		const size_t kAlignOfIntListNode = EA_ALIGN_OF(IntListNode);
+
+		// ensure the fixed buffer contains the default value that will be replaced
+		IntListNode buffer1[kBufferCount];
+		for (int i = 0; i < kBufferCount; i++)
+		{
+			buffer1[i].mValue = DEFAULT_VALUE;
+			EATEST_VERIFY(buffer1[i].mValue == DEFAULT_VALUE);
+		}
+
+		// replace all the values in the local buffer with the test value
+		intList1.get_allocator().init(buffer1, sizeof(buffer1), sizeof(IntListNode), kAlignOfIntListNode);
+		for (size_t i = 0; i < kBufferCount; i++)
+			intList1.push_back(TEST_VALUE);
+
+		// ensure the local buffer has been altered with the contents of the list::push_back
+		for (int i = 0; i < kBufferCount; i++)
+		{
+			EATEST_VERIFY(buffer1[i].mValue == TEST_VALUE);
+		}
 	}
 
 	{  // fixed_allocator_with_overflow
@@ -282,10 +317,30 @@ static int TestCoreAllocatorAdapter()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// TestSwapAllocator
+//
+static int TestSwapAllocator()
+{
+	int nErrorCount = 0;
+
+	{
+		InstanceAllocator a(nullptr, (uint8_t)111), b(nullptr, (uint8_t)222);
+		eastl::swap(a, b);
+		
+		EATEST_VERIFY(a.mInstanceId == 222);
+		EATEST_VERIFY(b.mInstanceId == 111);
+
+		EATEST_VERIFY(EA::StdC::Strcmp(a.get_name(), "InstanceAllocator 222") == 0);
+		EATEST_VERIFY(EA::StdC::Strcmp(b.get_name(), "InstanceAllocator 111") == 0);
+	}
+
+	return nErrorCount;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// TestExtra
+// TestAllocator
 //
 int TestAllocator()
 {
@@ -294,6 +349,7 @@ int TestAllocator()
 	nErrorCount += TestFixedAllocator();
 	nErrorCount += TestAllocatorMalloc();
 	nErrorCount += TestCoreAllocatorAdapter();
+	nErrorCount += TestSwapAllocator();
 
 	return nErrorCount;
 }

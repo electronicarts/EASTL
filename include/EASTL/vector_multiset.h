@@ -223,7 +223,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -250,10 +250,12 @@ namespace eastl
 		}
 		eastl::pair<const_iterator, const_iterator> equal_range_small(const key_type& k) const;
 
-		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
-		//void      push_back(const value_type& value);
-		//reference push_back();
-		//void*     push_back_uninitialized();
+		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at
+		// compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
+		//
+		// void      push_back(const value_type& value);
+		// reference push_back();
+		// void*     push_back_uninitialized();
 
 	}; // vector_multiset
 
@@ -606,30 +608,27 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::find(const key_type& k)
 	{
 		const eastl::pair<iterator, iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multiset<K, C, A, RAC>::iterator
-	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/)
+	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate)
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<iterator, iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multiset<K, C, A, RAC>::const_iterator
-	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/) const
+	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate) const
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<const_iterator, const_iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
@@ -638,16 +637,13 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::find(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline typename vector_multiset<K, C, A, RAC>::size_type
-	vector_multiset<K, C, A, RAC>::count(const key_type& k)
+	vector_multiset<K, C, A, RAC>::count(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (size_type)eastl::distance(pairIts.first, pairIts.second);

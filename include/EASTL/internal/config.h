@@ -66,22 +66,6 @@
 	#pragma once
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// VC++ bug fix.
-///////////////////////////////////////////////////////////////////////////////
-
-#if defined(_MSC_VER) && (_MSC_VER < 1500)
-	// VC8 (VS2005) has a bug whereby it generates a warning when malloc.h is 
-	// #included by its headers instead of by yours. There is no practical 
-	// solution but to pre-empt the #include of malloc.h with our own inclusion 
-	// of it. The only other alternative is to disable the warning globally, 
-	// which is something we try to avoid as much as possible.
-	#pragma warning(push, 0)
-	#include <malloc.h>
-	#pragma warning(pop)
-#endif
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_VERSION
@@ -105,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.04.00"
-	#define EASTL_VERSION_N  30400
+	#define EASTL_VERSION   "3.09.00"
+	#define EASTL_VERSION_N  30900
 #endif
 
 
@@ -159,10 +143,14 @@
 // http://en.wikipedia.org/wiki/C%2B%2B14#Relaxed_constexpr_restrictions
 //
 #if !defined(EA_CPP14_CONSTEXPR)
-	// To do: Detect compilers that support C++14 constexpr.
-	// We do not define this as EA_CONSTEXPR for the case of pre-C++14 compilers,
-	// but rather we must define this as nothing. 
-	#define EA_CPP14_CONSTEXPR
+
+	#if defined(EA_COMPILER_MSVC_2015)
+		#define EA_CPP14_CONSTEXPR  // not supported
+	#elif defined(EA_COMPILER_CPP14_ENABLED) 
+		#define EA_CPP14_CONSTEXPR constexpr
+	#else
+		#define EA_CPP14_CONSTEXPR  // not supported
+	#endif
 #endif
 
 
@@ -634,33 +622,35 @@ namespace eastl
             #include <signal.h>
             #include <unistd.h>
             #define EASTL_DEBUG_BREAK() kill( getpid(), SIGINT )
-        #elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
-            #define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
-        #elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
-            #define EASTL_DEBUG_BREAK() __breakpoint(10)
-        #elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
-            #define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
-        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
-            #define EASTL_DEBUG_BREAK() { __asm int 3 }
-        #elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
-            #define EASTL_DEBUG_BREAK() asm("int3") 
-        #else
-            void EASTL_DEBUG_BREAK(); // User must define this externally.
-        #endif
-    #else
-        void EASTL_DEBUG_BREAK(); // User must define this externally.
-    #endif
+		#elif defined(EA_PROCESSOR_ARM64) && defined(__GNUC__)
+			#define EASTL_DEBUG_BREAK() asm("brk 10")
+		#elif defined(EA_PROCESSOR_ARM) && defined(__GNUC__)
+			#define EASTL_DEBUG_BREAK() asm("BKPT 10")     // The 10 is arbitrary. It's just a unique id.
+		#elif defined(EA_PROCESSOR_ARM) && defined(__ARMCC_VERSION)
+			#define EASTL_DEBUG_BREAK() __breakpoint(10)
+		#elif defined(EA_PROCESSOR_POWERPC)               // Generic PowerPC. 
+			#define EASTL_DEBUG_BREAK() asm(".long 0")    // This triggers an exception by executing opcode 0x00000000.
+		#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && defined(EA_ASM_STYLE_INTEL)
+			#define EASTL_DEBUG_BREAK() { __asm int 3 }
+		#elif (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)) && (defined(EA_ASM_STYLE_ATT) || defined(__GNUC__))
+			#define EASTL_DEBUG_BREAK() asm("int3") 
+		#else
+			void EASTL_DEBUG_BREAK(); // User must define this externally.
+		#endif
+	#else
+		void EASTL_DEBUG_BREAK(); // User must define this externally.
+	#endif
 #else
-    #ifndef EASTL_DEBUG_BREAK
+	#ifndef EASTL_DEBUG_BREAK
 		#if EASTL_DEBUG_BREAK_OVERRIDE == 1 
 			// define an empty callable to satisfy the call site. 
 			#define EASTL_DEBUG_BREAK ([]{}) 
 		#else
 			#define EASTL_DEBUG_BREAK EASTL_DEBUG_BREAK_OVERRIDE
 		#endif
-    #else
-        #error EASTL_DEBUG_BREAK is already defined yet you would like to override it. Please ensure no other headers are already defining EASTL_DEBUG_BREAK before this header (config.h) is included
-    #endif
+	#else
+		#error EASTL_DEBUG_BREAK is already defined yet you would like to override it. Please ensure no other headers are already defining EASTL_DEBUG_BREAK before this header (config.h) is included
+	#endif
 #endif
 
 
@@ -807,19 +797,6 @@ namespace eastl
 	// in all their arguments and do no-ops if so. This is very debatable.
 	// C++ standard strings are not required to check for such argument errors.
 	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
-#endif
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_ABSTRACT_STRING_ENABLED
-//
-// Defined as 0 or 1. Default is 0 until abstract string is fully tested.
-// Defines whether the proposed replacement for the string module is enabled.
-// See bonus/abstract_string.h for more information.
-//
-#ifndef EASTL_ABSTRACT_STRING_ENABLED
-	#define EASTL_ABSTRACT_STRING_ENABLED 0
 #endif
 
 
@@ -1464,6 +1441,20 @@ namespace eastl
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+// EASTL_INLINE_VARIABLE_ENABLED
+//
+// Defined as 0 or 1. 
+// If enabled then C++17-like functionality with inline variable is enabled.
+///////////////////////////////////////////////////////////////////////////////
+#if !defined(EASTL_INLINE_VARIABLE_ENABLED)
+	#if((EABASE_VERSION_N < 20707) || defined(EA_COMPILER_NO_INLINE_VARIABLES))
+		#define EASTL_INLINE_VARIABLE_ENABLED 0
+	#else
+		#define EASTL_INLINE_VARIABLE_ENABLED 1
+	#endif
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 // EASTL_HAVE_CPP11_TYPE_TRAITS
 //
 // Defined as 0 or 1. 
@@ -1530,10 +1521,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_ALIGN_OF
-	#if   defined(_MSC_VER) && (_MSC_VER < 1700)
-		// Workaround for this VS 2010 compiler bug: https://connect.microsoft.com/VisualStudio/feedback/details/682695
-		#define EASTL_ALIGN_OF(...) ( (sizeof(__VA_ARGS__)*0) + (__alignof(__VA_ARGS__)) )
-	#elif !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x doesn't do __alignof correctly all the time.
+	#if !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x doesn't do __alignof correctly all the time.
 		#define EASTL_ALIGN_OF __alignof
 	#else
 		#define EASTL_ALIGN_OF(type) ((size_t)offsetof(struct{ char c; type m; }, m))
@@ -1785,13 +1773,30 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 
 /// EASTL_USER_LITERALS_ENABLED
 #ifndef EASTL_USER_LITERALS_ENABLED
-	#define EASTL_USER_LITERALS_ENABLED 0
+	#if defined(EA_COMPILER_CPP14_ENABLED)
+		#define EASTL_USER_LITERALS_ENABLED 1
+
+		// Disabling the Clang/GCC/MSVC warning about using user defined literals without a leading '_' as they are
+		// reserved for standard libary usage.
+		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
+		EA_DISABLE_CLANG_WARNING(-Wreserved-user-defined-literal)
+		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
+		#ifdef _MSC_VER
+			#pragma warning(disable: 4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
+		#endif
+	#else
+		#define EASTL_USER_LITERALS_ENABLED 0
+	#endif
 #endif
 
 
 /// EASTL_INLINE_NAMESPACES_ENABLED
 #ifndef EASTL_INLINE_NAMESPACES_ENABLED
-	#define EASTL_INLINE_NAMESPACES_ENABLED 0
+	#if defined(EA_COMPILER_CPP14_ENABLED)
+		#define EASTL_INLINE_NAMESPACES_ENABLED 1
+	#else
+		#define EASTL_INLINE_NAMESPACES_ENABLED 0
+	#endif
 #endif
 
 

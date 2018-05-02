@@ -75,6 +75,12 @@ EASTDC_API inline int Memcmp(const void* p1, const void* p2, size_t n)
 }
 
 
+EASTDC_API inline void Memfill8(void* pDestination, uint8_t c, size_t byteCount)
+{
+	Memset8(pDestination, c, byteCount);
+}
+
+
 }} // namespace EA::StdC
 
 #endif  // EASTDC_EASPRINTF_H

@@ -84,6 +84,7 @@ namespace eastl
 	template <typename T> struct add_volatile
 		{ typedef typename eastl::add_volatile_helper<T>::type type; };
 
+	template <class T> using add_volatile_t = typename add_volatile<T>::type;
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -103,9 +104,10 @@ namespace eastl
 		typedef typename add_const<typename add_volatile<T>::type>::type type;
 	};
 
+	template <class T> using add_cv_t = typename add_cv<T>::type;
 
 
-	///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
 	// make_signed
 	//
 	// Used to convert an integral type to its signed equivalent, if not already.
@@ -276,6 +278,11 @@ namespace eastl
 
 	template<class T>
 	struct add_pointer { typedef typename eastl::remove_reference<T>::type* type; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		using add_pointer_t = typename add_pointer<T>::type;
+    #endif
 
 
 
@@ -475,9 +482,9 @@ namespace eastl
 		#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 			// To do: define macro.
 		#else
-			template <size_t minSize, typename Type0, typename ...TypeN>
-			using aligned_union_t = typename aligned_union<minSize, Type0, TypeN...>::type;
-		#endif
+			template <size_t minSize, typename... TypeN>
+			using aligned_union_t = typename aligned_union<minSize, TypeN...>::type;
+        #endif
 
 	#endif
 
@@ -531,9 +538,18 @@ namespace eastl
 	// Maps a sequence of any types to void.  This utility class is used in
 	// template meta programming to simplify compile time reflection mechanisms
 	// required by the standard library.
-    //
-    // http://en.cppreference.com/w/cpp/types/void_t
-    ///////////////////////////////////////////////////////////////////////
+	//
+	// http://en.cppreference.com/w/cpp/types/void_t
+	//
+	// Example:
+	//    template <typename T, typename = void>
+	//    struct is_iterable : false_type {};
+	//
+	//    template <typename T>
+	//    struct is_iterable<T, void_t<decltype(declval<T>().begin()), 
+	//                                 decltype(declval<T>().end())>> : true_type {};
+	//
+	///////////////////////////////////////////////////////////////////////
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <class...>
 		using void_t = void;

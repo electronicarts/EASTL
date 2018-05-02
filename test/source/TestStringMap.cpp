@@ -21,8 +21,6 @@ static const size_t kStringCount = 10; // This is intentionally half the length 
 
 int TestStringMap()
 {
-	EASTLTest_Printf("TestStringMap\n");
-
 	int nErrorCount = 0;
 
 	{  // Test declarations

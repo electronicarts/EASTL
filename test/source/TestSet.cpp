@@ -11,13 +11,7 @@
 #include <EASTL/internal/config.h>
 #include <EABase/eabase.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4702) // VC++ STL headers generate this. warning C4702: unreachable code
-	#pragma warning(disable:4350) // for whatever reason, the push,0 above does not turn this warning off with vs2012.
-								  // VC++ 2012 STL headers generate this. warning C4350: behavior change: 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc(const std::_Wrap_alloc<_Alloc> &) throw()' called instead of 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc<std::_Wrap_alloc<_Alloc>>(_Other &) throw()'
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -25,11 +19,7 @@
 	#include <map>
 	#include <algorithm>
 #endif
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 using namespace eastl;
 
@@ -63,8 +53,6 @@ typedef eastl::multiset<TestObject> VMS4;
 
 int TestSet()
 {
-	EASTLTest_Printf("TestSet\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY

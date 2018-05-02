@@ -32,6 +32,22 @@ struct destructor_test
 };
 bool destructor_test::destructor_ran = false;
 
+/////////////////////////////////////////////////////////////////////////////
+struct move_test
+{
+    move_test() = default;
+	move_test(move_test&& other)      { was_moved = true; }
+	move_test& operator=(move_test&&) { was_moved = true; return *this;}
+
+	// issue a compiler error is container tries to copy
+    move_test(move_test const &other)  = delete;
+	move_test& operator=(const move_test&) = delete;  
+
+    static bool was_moved;
+};
+
+bool move_test::was_moved = false;
+
 
 /////////////////////////////////////////////////////////////////////////////
 // TestOptional
@@ -79,6 +95,11 @@ int TestOptional()
 			VERIFY(static_cast<bool>(o));
 			VERIFY(o.value_or(0x8BADF00D) == 1024);
 			VERIFY(o.value() == 1024);
+			
+			// Test reset
+			o.reset();
+			VERIFY(!o);
+			VERIFY(o.value_or(0x8BADF00D) == (int)0x8BADF00D);
 		}
 
 		{
@@ -171,6 +192,12 @@ int TestOptional()
 			}
 		}
 	}
+
+    {
+        move_test t;
+        optional<move_test> o(eastl::move(t));
+        VERIFY(move_test::was_moved);
+    }
 
 	#if EASTL_VARIADIC_TEMPLATES_ENABLED 
 	{
@@ -332,6 +359,25 @@ int TestOptional()
 		} 
 		// destructor shouldn't be called as object wasn't constructed.
 		VERIFY(!destructor_test::destructor_ran);
+	}
+
+	// optional rvalue tests
+	{
+		VERIFY(*optional<int>(1)                          == 1);
+		VERIFY( optional<int>(1).value()                  == 1);
+		VERIFY( optional<int>(1).value_or(0xdeadf00d)     == 1);
+		VERIFY( optional<int>().value_or(0xdeadf00d)      == 0xdeadf00d);
+		VERIFY( optional<int>(1).has_value()              == true);
+		VERIFY( optional<int>().has_value()               == false);
+		VERIFY( optional<IntStruct>(in_place, 10)->data   == 10);
+
+	}
+
+	// alignment type tests
+	{
+		static_assert(alignof(optional<Align16>) == alignof(Align16), "optional alignment failure");
+		static_assert(alignof(optional<Align32>) == alignof(Align32), "optional alignment failure");
+		static_assert(alignof(optional<Align64>) == alignof(Align64), "optional alignment failure");
 	}
 
     #endif // EASTL_OPTIONAL_ENABLED

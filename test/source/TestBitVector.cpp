@@ -32,8 +32,6 @@ int TestBitVector()
 {
 	using namespace eastl;
 
-	EASTLTest_Printf("TestBitVector\n");
-
 	int nErrorCount = 0;
 
 	{
@@ -441,9 +439,6 @@ int TestBitVector()
 
 
 		// void reset_lose_memory(); // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
-		// #if EASTL_RESET_ENABLED
-		//     void reset(); // This function name is deprecated; use reset_lose_memory instead.
-		// #endif
 
 		bv0.resize(100, true);
 		void* pSaved = MallocAllocator::mpLastAllocation;
@@ -451,15 +446,6 @@ int TestBitVector()
 		EATEST_VERIFY(bv0.validate());
 		free(pSaved); // Call the C free function.
 		MallocAllocator::mpLastAllocation = NULL;
-
-		#if EASTL_RESET_ENABLED
-			bv0.resize(100, true);
-			pSaved = MallocAllocator::mpLastAllocation;
-			bv0.reset();  // This is a deprecated function.
-			EATEST_VERIFY(bv0.validate());
-			free(pSaved); // Call the C free function.
-			MallocAllocator::mpLastAllocation = NULL;
-		#endif
 	}
 
 	return nErrorCount;

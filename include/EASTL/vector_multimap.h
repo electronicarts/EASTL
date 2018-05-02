@@ -256,7 +256,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -661,26 +661,28 @@ namespace eastl
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multimap<K, T, C, A, RAC>::const_iterator
-	vector_multimap<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/) const
+	vector_multimap<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate) const
 	{
-		// To do: Implement this.
-		return find(u);
+		multimap_value_compare<U, value_type, BinaryPredicate> predicate_cmp(predicate);
+		const eastl::pair<const_iterator, const_iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate_cmp));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multimap<K, T, C, A, RAC>::iterator
-	vector_multimap<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/)
+	vector_multimap<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate)
 	{
-		// To do: Implement this.
-		return find(u);
+		multimap_value_compare<U, value_type, BinaryPredicate> predicate_cmp(predicate);
+		const eastl::pair<iterator, iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate_cmp));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline typename vector_multimap<K, T, C, A, RAC>::size_type
-	vector_multimap<K, T, C, A, RAC>::count(const key_type& k)
+	vector_multimap<K, T, C, A, RAC>::count(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (size_type)eastl::distance(pairIts.first, pairIts.second); 
@@ -736,7 +738,7 @@ namespace eastl
 
 
 	/*
-	// VC++ fails to compile this when defined here, saying the function isn't a memgber of vector_multimap.
+	// VC++ fails to compile this when defined here, saying the function isn't a member of vector_multimap.
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline eastl::pair<typename vector_multimap<K, T, C, A, RAC>::iterator, typename vector_multimap<K, T, C, A, RAC>::iterator>
 	vector_multimap<K, T, C, A, RAC>::equal_range_small(const key_type& k)

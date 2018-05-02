@@ -8,6 +8,7 @@
  *    
  *    EA_COMPILER_IS_ANSIC
  *    EA_COMPILER_IS_C99
+ *    EA_COMPILER_IS_C11
  *    EA_COMPILER_HAS_C99_TYPES
  *    EA_COMPILER_IS_CPLUSPLUS
  *    EA_COMPILER_MANAGED_CPP
@@ -112,6 +113,15 @@
 		//
 		#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 			#define EA_COMPILER_IS_C99 1
+		#endif
+
+ 		// Is the compiler a C11 compiler?
+ 		// From ISO/IEC 9899:2011:
+		//   Page 176, 6.10.8.1 (Predefined macro names) :
+ 		//   __STDC_VERSION__ The integer constant 201112L. (178)
+		//
+		#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+			#define EA_COMPILER_IS_C11 1
 		#endif
 	#endif
 
@@ -441,7 +451,7 @@
 	//       { ... }
 	//
 	#ifndef EA_LIKELY
-		#if (defined(__GNUC__) && (__GNUC__ >= 3))
+		#if (defined(__GNUC__) && (__GNUC__ >= 3)) || defined(__clang__)
 			#if defined(__cplusplus)
 				#define EA_LIKELY(x)   __builtin_expect(!!(x), true)
 				#define EA_UNLIKELY(x) __builtin_expect(!!(x), false) 
@@ -1136,15 +1146,20 @@
 	// EA_DEPRECATED            // Used as a prefix.
 	// EA_PREFIX_DEPRECATED     // You should need this only for unusual compilers.
 	// EA_POSTFIX_DEPRECATED    // You should need this only for unusual compilers.
+	// EA_DEPRECATED_MESSAGE    // Used as a prefix and provides a deprecation message.
 	// 
 	// Example usage:
 	//    EA_DEPRECATED void Function();
+	//    EA_DEPRECATED_MESSAGE("Use 1.0v API instead") void Function();
 	//
 	// or for maximum portability:
 	//    EA_PREFIX_DEPRECATED void Function() EA_POSTFIX_DEPRECATED;
 	//
+
 	#ifndef EA_DEPRECATED
-		#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_DEPRECATED [[deprecated]]
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
 			#define EA_DEPRECATED __declspec(deprecated)
 		#elif defined(EA_COMPILER_MSVC)
 			#define EA_DEPRECATED 
@@ -1154,7 +1169,10 @@
 	#endif
 
 	#ifndef EA_PREFIX_DEPRECATED
-		#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_PREFIX_DEPRECATED [[deprecated]]
+			#define EA_POSTFIX_DEPRECATED
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
 			#define EA_PREFIX_DEPRECATED __declspec(deprecated)
 			#define EA_POSTFIX_DEPRECATED
 		#elif defined(EA_COMPILER_MSVC)
@@ -1163,6 +1181,14 @@
 		#else
 			#define EA_PREFIX_DEPRECATED
 			#define EA_POSTFIX_DEPRECATED __attribute__((deprecated))
+		#endif
+	#endif
+
+	#ifndef EA_DEPRECATED_MESSAGE
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_DEPRECATED_MESSAGE(msg) [[deprecated(#msg)]]
+		#else
+			#define EA_DEPRECATED_MESSAGE(msg) 
 		#endif
 	#endif
 
@@ -1349,7 +1375,7 @@
 			#else
 				#define EA_SSE 0
 			#endif
-		#elif (defined(EA_SSE3) && EA_SSE3) || defined CS_UNDEFINED_STRING
+		#elif (defined(EA_SSE3) && EA_SSE3) || defined EA_PLATFORM_CAPILANO
 			#define EA_SSE 3
 		#elif defined(EA_SSE2) && EA_SSE2
 			#define EA_SSE 2
@@ -1364,7 +1390,6 @@
 			#define EA_SSE 0
 		#endif
 	#endif
-
 
 	// ------------------------------------------------------------------------
 	// We define separate defines for SSE support beyond SSE1.  These defines
@@ -1389,47 +1414,134 @@
 		#endif
 	#endif
 	#ifndef EA_SSSE3
-		#if defined __SSSE3__ || defined CS_UNDEFINED_STRING
+		#if defined __SSSE3__ || defined EA_PLATFORM_CAPILANO
 			#define EA_SSSE3 1
 		#else
 			#define EA_SSSE3 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_1
-		#if defined __SSE4_1__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4_1__ || defined EA_PLATFORM_CAPILANO
 			#define EA_SSE4_1 1
 		#else
 			#define EA_SSE4_1 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_2
-		#if defined __SSE4_2__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4_2__ || defined EA_PLATFORM_CAPILANO
 			#define EA_SSE4_2 1
 		#else
 			#define EA_SSE4_2 0
 		#endif
 	#endif
 	#ifndef EA_SSE4A
-		#if defined __SSE4A__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4A__ || defined EA_PLATFORM_CAPILANO
 			#define EA_SSE4A 1
 		#else
 			#define EA_SSE4A 0
 		#endif
 	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_AVX
+	// EA_AVX may be used to determine if Advanced Vector Extensions are available for the target architecture
+	//
+	// EA_AVX defines the level of AVX support:
+	//  0 indicates no AVX support
+	//  1 indicates AVX1 is supported
+	//  2 indicates AVX2 is supported
 	#ifndef EA_AVX
-		#if defined __AVX__ || defined CS_UNDEFINED_STRING
+		#if defined __AVX2__
+			#define EA_AVX 2
+		#elif defined __AVX__ || defined EA_PLATFORM_CAPILANO
 			#define EA_AVX 1
 		#else
 			#define EA_AVX 0
 		#endif
 	#endif
+	#ifndef EA_AVX2
+		#if EA_AVX >= 2
+			#define EA_AVX2 1
+		#else
+			#define EA_AVX2 0
+		#endif
+	#endif
+
 	// EA_FP16C may be used to determine the existence of float <-> half conversion operations on an x86 CPU.
 	// (For example to determine if _mm_cvtph_ps or _mm_cvtps_ph could be used.)
 	#ifndef EA_FP16C
-		#if defined __F16C__ || defined CS_UNDEFINED_STRING
+		#if defined __F16C__ || defined EA_PLATFORM_CAPILANO
 			#define EA_FP16C 1
 		#else
 			#define EA_FP16C 0
+		#endif
+	#endif
+
+	// EA_FP128 may be used to determine if __float128 is a supported type for use. This type is enabled by a GCC extension (_GLIBCXX_USE_FLOAT128)
+	// but has support by some implementations of clang (__FLOAT128__)
+	#ifndef EA_FP128
+		#if defined __FLOAT128__ || defined _GLIBCXX_USE_FLOAT128
+			#define EA_FP128 1
+		#else
+			#define EA_FP128 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_ABM
+	// EA_ABM may be used to determine if Advanced Bit Manipulation sets are available for the target architecture (POPCNT, LZCNT)
+	#ifndef EA_ABM
+		#if defined(__ABM__) || defined(EA_PLATFORM_CAPILANO)
+			#define EA_ABM 1
+		#else
+			#define EA_ABM 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_NEON
+	// EA_NEON may be used to determine if NEON is supported.
+	#ifndef EA_NEON
+		#if defined(__ARM_NEON__) || defined(__ARM_NEON)
+			#define EA_NEON 1
+		#else
+			#define EA_NEON 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_BMI
+	// EA_BMI may be used to determine if Bit Manipulation Instruction sets are available for the target architecture
+	//
+	// EA_BMI defines the level of BMI support:
+	//  0 indicates no BMI support
+	//  1 indicates BMI1 is supported
+	//  2 indicates BMI2 is supported
+	#ifndef EA_BMI
+		#if defined(__BMI2__)
+			#define EA_BMI 2
+		#elif defined(__BMI__) || defined(EA_PLATFORM_CAPILANO)
+			#define EA_BMI 1
+		#else
+			#define EA_BMI 0
+		#endif
+	#endif
+	#ifndef EA_BMI2
+		#if EA_BMI >= 2
+			#define EA_BMI2 1
+		#else
+			#define EA_BMI2 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_TBM
+	// EA_TBM may be used to determine if Trailing Bit Manipulation instructions are available for the target architecture
+	#ifndef EA_TBM
+		#if defined(__TBM__)
+			#define EA_TBM 1
+		#else
+			#define EA_TBM 0
 		#endif
 	#endif
 
@@ -1728,6 +1840,152 @@
 		#else
 			#define EA_CARRIES_DEPENDENCY [[carries_dependency]]
 		#endif
+	#endif
+
+	
+	// ------------------------------------------------------------------------
+	// EA_FALLTHROUGH
+	// 
+	// [[fallthrough] is a C++17 standard attribute that appears in switch
+	// statements to indicate that the fallthrough from the previous case in the
+	// switch statement is intentially and not a bug.
+	// 
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	// 		void f(int n)
+	// 		{
+	// 			switch(n)
+	// 			{
+	// 				case 1:
+	// 				DoCase1();
+	// 				// Compiler may generate a warning for fallthrough behaviour
+	// 		 
+	// 				case 2: 
+	// 				DoCase2();
+	//
+	// 				EA_FALLTHROUGH;
+	// 				case 3:
+	// 				DoCase3();
+	// 			}
+	// 		}
+	//
+	#if !defined(EA_FALLTHROUGH)
+		#if defined(EA_COMPILER_NO_FALLTHROUGH)
+			#define EA_FALLTHROUGH
+		#else
+			#define EA_FALLTHROUGH [[fallthrough]]
+		#endif
+	#endif
+
+
+
+	// ------------------------------------------------------------------------
+	// EA_NODISCARD
+	// 
+	// [[nodiscard]] is a C++17 standard attribute that can be applied to a
+	// function declaration, enum, or class declaration.  If a any of the list
+	// previously are returned from a function (without the user explicitly
+	// casting to void) the addition of the [[nodiscard]] attribute encourages
+	// the compiler to generate a warning about the user discarding the return
+	// value. This is a useful practice to encourage client code to check API
+	// error codes. 
+	//
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	// 
+	//     EA_NODISCARD int baz() { return 42; }
+	//     
+	//     void foo()
+	//     {
+	//         baz(); // warning: ignoring return value of function declared with 'nodiscard' attribute 
+	//     }
+	//
+	#if !defined(EA_NODISCARD)
+		#if defined(EA_COMPILER_NO_NODISCARD)
+			#define EA_NODISCARD
+		#else
+			#define EA_NODISCARD [[nodiscard]]
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_MAYBE_UNUSED
+	// 
+	// [[maybe_unused]] is a C++17 standard attribute that suppresses warnings
+	// on unused entities that are declared as maybe_unused.
+	//
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	//    void foo(EA_MAYBE_UNUSED int i)
+	//    {
+	//        assert(i == 42);  // warning suppressed when asserts disabled.
+	//    }
+	//
+	#if !defined(EA_MAYBE_UNUSED)
+		#if defined(EA_COMPILER_NO_MAYBE_UNUSED)
+			#define EA_MAYBE_UNUSED
+		#else
+			#define EA_MAYBE_UNUSED [[maybe_unused]]
+		#endif
+	#endif
+
+	
+	// ------------------------------------------------------------------------
+	// EA_NO_UBSAN
+	// 
+	// The LLVM/Clang undefined behaviour sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-undefined
+	//
+	// Example usage:
+	//     EA_NO_UBSAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_UBSAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_UBSAN __attribute__((no_sanitize("undefined")))
+		#else
+			#define EA_NO_UBSAN
+		#endif
+	#endif
+	
+
+	// ------------------------------------------------------------------------
+	// EA_NO_ASAN
+	// 
+	// The LLVM/Clang address sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/AddressSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-address
+	//
+	// Example usage:
+	//     EA_NO_ASAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_ASAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_ASAN __attribute__((no_sanitize("address")))
+		#else
+			#define EA_NO_ASAN
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_ASAN_ENABLED
+	//
+	// Defined as 0 or 1. It's value depends on the compile environment.
+	// Specifies whether the code is being built with Clang's Address Sanitizer.
+	//
+	#if defined(__has_feature)
+		#if __has_feature(address_sanitizer)
+			#define EA_ASAN_ENABLED 1
+		#else
+			#define EA_ASAN_ENABLED 0
+		#endif
+	#else
+		#define EA_ASAN_ENABLED 0
 	#endif
 
 

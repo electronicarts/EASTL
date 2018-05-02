@@ -177,8 +177,6 @@ namespace eastl
 
 int TestSort()
 {
-	EASTLTest_Printf("TestSort\n");
-
 	using namespace eastl;
 	using namespace Internal;
 

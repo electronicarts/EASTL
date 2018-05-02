@@ -1,0 +1,25 @@
+cxx_library(
+  name = 'eatest',
+  header_namespace = 'EATest',
+  exported_headers = subdir_glob([
+    ('include/EATest', '**/*.h'),
+    ('include/EATest', '**/*.inl'),
+  ]),
+  srcs = glob([
+    'source/**/*.cpp',
+  ]),
+  compiler_flags = [
+    '-DEASTL_OPENSOURCE=1',
+    '-DEASTL_THREAD_SUPPORT_AVAILABLE=0',
+  ],
+  visibility = [
+    'PUBLIC',
+  ],
+  deps = [
+    '//:eastl',
+    '//test/packages/EABase:eabase',
+    '//test/packages/EAMain:eamain',
+    '//test/packages/EAStdC:eastdc',
+    '//test/packages/EAThread:eathread',
+  ],
+)

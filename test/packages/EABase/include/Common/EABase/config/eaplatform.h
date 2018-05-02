@@ -5,43 +5,50 @@
  *-----------------------------------------------------------------------------
  * Currently supported platform indentification defines include:
  */
-/*
- *    EA_PLATFORM_ANDROID
- *    EA_PLATFORM_APPLE
- *    EA_PLATFORM_IPHONE
- *    EA_PLATFORM_IPHONE_SIMULATOR
- *    EA_PLATFORM_OSX
- *    EA_PLATFORM_LINUX
- *    EA_PLATFORM_SAMSUNG_TV
- *    EA_PLATFORM_WINDOWS
- *    EA_PLATFORM_WIN32
- *    EA_PLATFORM_WIN64
- *    EA_PLATFORM_WINDOWS_PHONE
- *    EA_PLATFORM_WINRT
- *    EA_PLATFORM_SUN
- *    EA_PLATFORM_LRB (Larrabee)
- *    EA_PLATFORM_POSIX     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX, EA_PLATFORM_UNIX, EA_PLATFORM_QNX)
- *    EA_PLATFORM_UNIX      (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
- *    EA_PLATFORM_CYGWIN    (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
- *    EA_PLATFORM_MINGW     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
- *    EA_PLATFORM_MICROSOFT (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
- *
- *    EA_ABI_ARM_LINUX      (a.k.a. "eabi". for all platforms that use the CodeSourcery GNU/Linux toolchain, like Android)
- *    EA_ABI_ARM_APPLE      (similar to eabi but not identical)
- *    EA_ABI_ARM64_APPLE    (similar to eabi but not identical) https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARM64FunctionCallingConventions.html
- *    EA_ABI_ARM_WINCE      (similar to eabi but not identical)
- *
- * Other definitions emanated from this file inclue:
- *    EA_PLATFORM_NAME = <string>
- *    EA_PLATFORM_DESCRIPTION = <string>
- *    EA_PROCESSOR_XXX
- *    EA_MISALIGNED_SUPPORT_LEVEL=0|1|2
- *    EA_SYSTEM_LITTLE_ENDIAN | EA_SYSTEM_BIG_ENDIAN
- *    EA_ASM_STYLE_ATT | EA_ASM_STYLE_INTEL | EA_ASM_STYLE_MOTOROLA
- *    EA_PLATFORM_PTR_SIZE = <integer size in bytes>
- *    EA_PLATFORM_WORD_SIZE = <integer size in bytes>
- *    EA_CACHE_LINE_SIZE = <integer size in bytes>
- *---------------------------------------------------------------------------*/
+#ifdef EA_PLATFORM_PS4 // ifdef for code stripping purposes 
+// EA_PLATFORM_PS4 (EA_PLATFORM_KETTLE)
+#endif
+#ifdef EA_PLATFORM_XBOXONE // ifdef for code stripping purposes 
+ // EA_PLATFORM_XBOXONE (EA_PLATFORM_CAPILANO)
+ // EA_PLATFORM_XBOXONE_XDK (EA_PLATFORM_CAPILANO_XDK), set by capilano_config package
+ // EA_PLATFORM_XBOXONE_ADK (EA_PLATFORM_CAPILANO_ADK), set by capilano_config package
+#endif
+//    EA_PLATFORM_ANDROID
+//    EA_PLATFORM_APPLE
+//    EA_PLATFORM_IPHONE
+//    EA_PLATFORM_IPHONE_SIMULATOR
+//    EA_PLATFORM_OSX
+//    EA_PLATFORM_LINUX
+//    EA_PLATFORM_SAMSUNG_TV
+//    EA_PLATFORM_WINDOWS
+//    EA_PLATFORM_WIN32
+//    EA_PLATFORM_WIN64
+//    EA_PLATFORM_WINDOWS_PHONE
+//    EA_PLATFORM_WINRT
+//    EA_PLATFORM_SUN
+//    EA_PLATFORM_LRB (Larrabee)
+//    EA_PLATFORM_POSIX     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX, EA_PLATFORM_UNIX, EA_PLATFORM_QNX)
+//    EA_PLATFORM_UNIX      (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
+//    EA_PLATFORM_CYGWIN    (pseudo-platform; may be defined along with another platform like EA_PLATFORM_LINUX)
+//    EA_PLATFORM_MINGW     (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
+//    EA_PLATFORM_MICROSOFT (pseudo-platform; may be defined along with another platform like EA_PLATFORM_WINDOWS)
+//
+//    EA_ABI_ARM_LINUX      (a.k.a. "eabi". for all platforms that use the CodeSourcery GNU/Linux toolchain, like Android)
+//    EA_ABI_ARM_APPLE      (similar to eabi but not identical)
+//    EA_ABI_ARM64_APPLE    (similar to eabi but not identical) https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARM64FunctionCallingConventions.html
+//    EA_ABI_ARM_WINCE      (similar to eabi but not identical)
+//
+// Other definitions emanated from this file inclue:
+//    EA_PLATFORM_NAME = <string>
+//    EA_PLATFORM_DESCRIPTION = <string>
+//    EA_PROCESSOR_XXX
+//    EA_MISALIGNED_SUPPORT_LEVEL=0|1|2
+//    EA_SYSTEM_LITTLE_ENDIAN | EA_SYSTEM_BIG_ENDIAN
+//    EA_ASM_STYLE_ATT | EA_ASM_STYLE_INTEL | EA_ASM_STYLE_MOTOROLA
+//    EA_PLATFORM_PTR_SIZE = <integer size in bytes>
+//    EA_PLATFORM_WORD_SIZE = <integer size in bytes>
+//    EA_CACHE_LINE_SIZE = <integer size in bytes>
+//---------------------------------------------------------------------------
 
 /*
 	EA_PLATFORM_MOBILE
@@ -51,20 +58,20 @@
 	tests for multiple mobile platforms on a line and needs to be updated every time we get a new one.
 	For example, mobile platforms tend to have weaker ARM processors, don't have full multiple processor support,
 	are hand-held, don't have mice (though may have touch screens or basic cursor controls), have writable solid
-	state permanent storage. Production user code shouldn't have too many expecations about the meaning of this define.
+	state permanent storage. Production user code shouldn't have too many expectations about the meaning of this define.
 
 	EA_PLATFORM_DESKTOP
 	This is similar to EA_PLATFORM_MOBILE in its qualitative nature and refers to platforms that are powerful.
-	For example, they nearly always have virtual memory, mapped memory, hundreds of GB of writable disk sto rage,
+	For example, they nearly always have virtual memory, mapped memory, hundreds of GB of writable disk storage,
 	TCP/IP network connections, mice, keyboards, 512+ MB of RAM, multiprocessing, multiple display support.
-	Production user code shouldn't have too many expecations about the meaning of this define.
+	Production user code shouldn't have too many expectations about the meaning of this define.
 
 	EA_PLATFORM_CONSOLE
 	This is similar to EA_PLATFORM_MOBILE in its qualitative nature and refers to platforms that are consoles.
 	This means platforms that are connected to TVs, are fairly powerful (especially graphics-wise), are tightly
 	controlled by vendors, tend not to have mapped memory, tend to have TCP/IP, don't have multiple process support
 	though they might have multiple CPUs, support TV output only. Production user code shouldn't have too many
-	expecations about the meaning of this define.
+	expectations about the meaning of this define.
 
 */
 
@@ -89,7 +96,116 @@
 	#define EA_PLATFORM_DESKTOP 1
 #endif
 
-#if   defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
+#if defined(EA_PLATFORM_PS4) || defined(__ORBIS__) || defined(EA_PLATFORM_KETTLE)
+	// PlayStation 4
+	// Orbis was Sony's code-name for the platform, which is now obsolete.
+	// Kettle was an EA-specific code-name for the platform, which is now obsolete.
+	#if defined(EA_PLATFORM_PS4)
+		#undef  EA_PLATFORM_PS4
+	#endif
+	#define EA_PLATFORM_PS4 1
+
+	// Backward compatibility:
+		#if defined(EA_PLATFORM_KETTLE)
+			#undef  EA_PLATFORM_KETTLE
+		#endif
+	// End backward compatbility
+
+	#define EA_PLATFORM_KETTLE 1
+	#define EA_PLATFORM_NAME "PS4"
+	#define EA_SYSTEM_LITTLE_ENDIAN 1
+	#define EA_PLATFORM_DESCRIPTION "PS4 on x64"
+	#define EA_PLATFORM_CONSOLE 1
+	#define EA_PLATFORM_SONY 1
+	#define EA_PLATFORM_POSIX 1
+	// #define EA_POSIX_THREADS_AVAILABLE 1  // POSIX threading API is available but discouraged.  Sony indicated use of the scePthreads* API is preferred. 
+	#define EA_PROCESSOR_X86_64 1
+	#if defined(__GNUC__) || defined(__clang__)
+		#define EA_ASM_STYLE_ATT 1
+	#endif
+
+
+#elif defined(EA_PLATFORM_XBOXONE) || defined(_DURANGO) || defined(EA_PLATFORM_CAPILANO)
+	// XBox One
+	// Durango was Microsoft's code-name for the platform, which is now obsolete.
+	// Microsoft uses _DURANGO instead of some variation of _XBOX, though it's not natively defined by the compiler.
+	// Capilano was an EA-specific code-name for the platform, which is now obsolete.
+	#if defined(EA_PLATFORM_XBOXONE)
+		#undef  EA_PLATFORM_XBOXONE
+	#endif
+	#define EA_PLATFORM_XBOXONE 1
+
+	// Backward compatibility:
+		#if defined(EA_PLATFORM_CAPILANO)
+			#undef  EA_PLATFORM_CAPILANO
+		#endif
+		#define EA_PLATFORM_CAPILANO 1
+		#if defined(EA_PLATFORM_CAPILANO_XDK) && !defined(EA_PLATFORM_XBOXONE_XDK)
+			#define EA_PLATFORM_XBOXONE_XDK 1
+		#endif
+		#if defined(EA_PLATFORM_CAPILANO_ADK) && !defined(EA_PLATFORM_XBOXONE_ADK)
+			#define EA_PLATFORM_XBOXONE_ADK 1
+		#endif
+	// End backward compatibility
+
+	#if !defined(_DURANGO)
+		#define _DURANGO
+	#endif
+	#define EA_PLATFORM_NAME "XBox One"
+  //#define EA_PROCESSOR_X86  Currently our policy is that we don't define this, even though x64 is something of a superset of x86.
+	#define EA_PROCESSOR_X86_64 1
+	#define EA_SYSTEM_LITTLE_ENDIAN 1
+	#define EA_PLATFORM_DESCRIPTION "XBox One on x64"
+	#define EA_ASM_STYLE_INTEL 1
+	#define EA_PLATFORM_CONSOLE 1
+	#define EA_PLATFORM_MICROSOFT 1
+
+	// WINAPI_FAMILY defines - mirrored from winapifamily.h
+	#define EA_WINAPI_FAMILY_APP         1000
+	#define EA_WINAPI_FAMILY_DESKTOP_APP 1001
+	#define EA_WINAPI_FAMILY_PHONE_APP   1002
+	#define EA_WINAPI_FAMILY_TV_APP      1003
+	#define EA_WINAPI_FAMILY_TV_TITLE    1004
+	
+	#if defined(WINAPI_FAMILY) 
+		#include <winapifamily.h>
+		#if WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
+			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_TV_TITLE
+		#elif WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_DESKTOP_APP
+		#else
+			#error Unsupported WINAPI_FAMILY
+		#endif
+	#else
+		#error WINAPI_FAMILY should always be defined on Capilano.
+	#endif
+
+	// Macro to determine if a partition is enabled.
+	#define EA_WINAPI_FAMILY_PARTITION(Partition)	(Partition)
+
+	#if EA_WINAPI_FAMILY == EA_WINAPI_FAMILY_DESKTOP_APP
+		#define EA_WINAPI_PARTITION_CORE     1
+		#define EA_WINAPI_PARTITION_DESKTOP  1
+		#define EA_WINAPI_PARTITION_APP      1
+		#define EA_WINAPI_PARTITION_PC_APP   0
+		#define EA_WIANPI_PARTITION_PHONE    0
+		#define EA_WINAPI_PARTITION_TV_APP   0
+		#define EA_WINAPI_PARTITION_TV_TITLE 0
+	#elif EA_WINAPI_FAMILY == EA_WINAPI_FAMILY_TV_TITLE
+		#define EA_WINAPI_PARTITION_CORE     1
+		#define EA_WINAPI_PARTITION_DESKTOP  0
+		#define EA_WINAPI_PARTITION_APP      0
+		#define EA_WINAPI_PARTITION_PC_APP   0
+		#define EA_WIANPI_PARTITION_PHONE    0
+		#define EA_WINAPI_PARTITION_TV_APP   0
+		#define EA_WINAPI_PARTITION_TV_TITLE 1
+	#else
+		#error Unsupported WINAPI_FAMILY
+	#endif
+	
+
+// Larrabee                                           // This part to be removed once __LRB__ is supported by the Larrabee compiler in 2009.
+#elif defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
 	#undef  EA_PLATFORM_LRB
 	#define EA_PLATFORM_LRB         1
 	#define EA_PLATFORM_NAME        "Larrabee"
@@ -119,9 +235,15 @@
 		#define EA_ABI_ARM_LINUX 1  // a.k.a. "ARM eabi"
 		#define EA_PROCESSOR_ARM32 1
 		#define EA_PLATFORM_DESCRIPTION "Android on ARM"
+	#elif defined(__aarch64__)
+		#define EA_PROCESSOR_ARM64 1
+		#define EA_PLATFORM_DESCRIPTION "Android on ARM64"
 	#elif defined(__i386__)
 		#define EA_PROCESSOR_X86 1
 		#define EA_PLATFORM_DESCRIPTION "Android on x86"
+	#elif defined(__x86_64)
+		#define EA_PROCESSOR_X86_64 1
+		#define EA_PLATFORM_DESCRIPTION "Android on x64"
 	#else
 		#error Unknown processor
 	#endif
@@ -519,6 +641,8 @@
 #ifndef EA_PLATFORM_MIN_MALLOC_ALIGNMENT
 	#if defined EA_PLATFORM_APPLE
 		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT 16
+	#elif defined EA_PLATFORM_ANDROID
+		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT 8
 	#else
 		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT (EA_PLATFORM_PTR_SIZE * 2)
 	#endif

@@ -41,8 +41,6 @@ struct StructWithContainerOfStructs
 
 int TestFixedSList()
 {
-	EASTLTest_Printf("TestFixedSList\n");
-
 	int nErrorCount = 0;
 
 	{

@@ -9,9 +9,6 @@ if [%PLATFORM%]==[MinGW_x64] set platform_string=x86_64
 rem Checks if the platform variable contains MinGW
 if not [x%PLATFORM:MinGW=%]==[x%PLATFORM%] (
 	set "PATH=C:\msys64\usr\bin;%PATH%"
-	C:\msys64\usr\bin\pacman --noconfirm --sync --refresh --refresh --sysupgrade --sysupgrade
-	C:\msys64\usr\bin\pacman --noconfirm -Syu
-
 	C:\msys64\usr\bin\pacman --noconfirm --needed -S mingw-w64-%platform_string%-clang mingw-w64-x86_64-ninja
 )
 

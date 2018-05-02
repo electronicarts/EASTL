@@ -100,4 +100,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
+==============================================================================
   
+*No express or implied license to use PlayStation®4 libraries included.
+PlayStation®4 development tools and libraries are subject to separate license
+with Sony Interactive Entertainment LLC.
+
+==============================================================================
+

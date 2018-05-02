@@ -136,8 +136,6 @@ template class eastl::intrusive_hash_multimap<int, IHWidget, 37, IHWHash>;
 
 int TestIntrusiveHash()
 {
-	EASTLTest_Printf("TestIntrusiveHash\n");
-
 	int nErrorCount = 0;
 
 	{

@@ -3,13 +3,13 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
+#include <EABase/eabase.h>
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
 #include <EASTL/fixed_hash_set.h>
 #include <EASTL/fixed_hash_map.h>
 #include <EASTL/fixed_vector.h>
-#include <EABase/eabase.h>
 
 
 
@@ -137,11 +137,45 @@ template class eastl::fixed_hash_multiset<A, 1, 2, true, eastl::hash<A>, eastl::
 template class eastl::fixed_hash_multimap<A, A, 1, 2, true, eastl::hash<A>, eastl::equal_to<A>, false, MallocAllocator>;
 
 
+
+template<typename FixedHashMap, int ELEMENT_MAX, int ITERATION_MAX>
+int TestFixedHashMapClearBuckets()
+{
+	int nErrorCount = 0;
+
+	FixedHashMap fixedHashMap;
+	const auto nPreClearBucketCount = fixedHashMap.bucket_count();
+
+	for (int j = 0; j < ITERATION_MAX; j++)
+	{
+		// add elements and ensure container is valid
+		for (int i = 0; i < int(nPreClearBucketCount); i++)
+			fixedHashMap.emplace(i, i);
+		VERIFY(fixedHashMap.validate());
+		
+		// ensure contents are expected values
+		for (int i = 0; i < int(nPreClearBucketCount); i++)
+		{
+			auto iter = fixedHashMap.find(i);
+
+			VERIFY(iter != fixedHashMap.end());
+			VERIFY(iter->second == i);
+		}
+
+		// validate container after its cleared its nodes and buckets
+		fixedHashMap.clear(true);
+		VERIFY(fixedHashMap.validate());
+		VERIFY(fixedHashMap.size() == 0);
+		VERIFY(fixedHashMap.bucket_count() == nPreClearBucketCount);
+	}
+
+	return nErrorCount;
+}
+
+
 EA_DISABLE_VC_WARNING(6262)
 int TestFixedHash()
 {
-	EASTLTest_Printf("TestFixedHash\n");
-
 	int nErrorCount = 0;
 
 	{ // fixed_hash_map
@@ -176,7 +210,7 @@ int TestFixedHash()
 			fixedHashMap.clear(true);
 			VERIFY(fixedHashMap.validate());
 			VERIFY(fixedHashMap.size() == 0);
-			VERIFY(fixedHashMap.bucket_count() == 1);
+			VERIFY(fixedHashMap.bucket_count() == fixedHashMap.rehash_policy().GetPrevBucketCount(100));
 		}
 
 		{
@@ -205,12 +239,25 @@ int TestFixedHash()
 			fixedHashMap.clear(true);
 			VERIFY(fixedHashMap.validate());
 			VERIFY(fixedHashMap.size() == 0);
-			VERIFY(fixedHashMap.bucket_count() == 1);
+			VERIFY(fixedHashMap.bucket_count() == fixedHashMap.rehash_policy().GetPrevBucketCount(100));
 
 			// get_overflow_allocator / set_overflow_allocator
 			// This is a weak test which should be improved.
 			EASTLAllocatorType a = fixedHashMap.get_allocator().get_overflow_allocator();
 			fixedHashMap.get_allocator().set_overflow_allocator(a);
+		}
+
+		// Test that fixed_hash_map (with and without overflow enabled) is usable after the node and bucket array has
+		// been cleared.
+		{
+			constexpr const int ITERATION_MAX = 5;
+			constexpr const int ELEMENT_MAX = 100;
+			constexpr const int ELEMENT_OVERFLOW_MAX = ELEMENT_MAX * 2;
+
+			TestFixedHashMapClearBuckets<eastl::fixed_hash_map<int, int, ELEMENT_MAX, ELEMENT_MAX, false>,      ELEMENT_MAX,          ITERATION_MAX>();
+			TestFixedHashMapClearBuckets<eastl::fixed_hash_map<int, int, ELEMENT_MAX, ELEMENT_MAX, true>,       ELEMENT_OVERFLOW_MAX, ITERATION_MAX>();
+			TestFixedHashMapClearBuckets<eastl::fixed_hash_multimap<int, int, ELEMENT_MAX, ELEMENT_MAX, false>, ELEMENT_MAX,          ITERATION_MAX>();
+			TestFixedHashMapClearBuckets<eastl::fixed_hash_multimap<int, int, ELEMENT_MAX, ELEMENT_MAX, true>,  ELEMENT_OVERFLOW_MAX, ITERATION_MAX>();
 		}
 		
 		{
@@ -561,6 +608,12 @@ int TestFixedHash()
 	}
 
 	{
+		// C++17 try_emplace and related functionality
+		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject,  2, 7, true>>();
+		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject, 32, 7, true> >();
+	}
+
+	{
 		// void reserve(size_type nElementCount);
 
 		// test with overflow enabled.
@@ -579,49 +632,102 @@ int TestFixedHash()
 
 	{
 		// initializer_list support.
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(_MSC_VER) //MSVC2013 cannot handle nested initializer lists properly. A bug report will be submitted for this.
-			// fixed_hash_set(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator = EASTL_FIXED_HASH_SET_DEFAULT_ALLOCATOR)
-			// this_type& operator=(std::initializer_list<value_type> ilist);
-			// void insert(std::initializer_list<value_type> ilist);
-			fixed_hash_set<int, 11> intHashSet = { 12, 13, 14 };
-			EATEST_VERIFY(intHashSet.size() == 3);
-			EATEST_VERIFY(intHashSet.find(12) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(13) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(14) != intHashSet.end());
+		// fixed_hash_set(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator = EASTL_FIXED_HASH_SET_DEFAULT_ALLOCATOR)
+		// this_type& operator=(std::initializer_list<value_type> ilist);
+		// void insert(std::initializer_list<value_type> ilist);
+		fixed_hash_set<int, 11> intHashSet = { 12, 13, 14 };
+		EATEST_VERIFY(intHashSet.size() == 3);
+		EATEST_VERIFY(intHashSet.find(12) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(13) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(14) != intHashSet.end());
 
-			intHashSet = { 22, 23, 24 };
-			EATEST_VERIFY(intHashSet.size() == 3);
-			EATEST_VERIFY(intHashSet.find(22) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(23) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(24) != intHashSet.end());
+		intHashSet = { 22, 23, 24 };
+		EATEST_VERIFY(intHashSet.size() == 3);
+		EATEST_VERIFY(intHashSet.find(22) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(23) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(24) != intHashSet.end());
 
-			intHashSet.insert({ 42, 43, 44 });
-			EATEST_VERIFY(intHashSet.size() == 6);
-			EATEST_VERIFY(intHashSet.find(42) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(43) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(44) != intHashSet.end());
+		intHashSet.insert({ 42, 43, 44 });
+		EATEST_VERIFY(intHashSet.size() == 6);
+		EATEST_VERIFY(intHashSet.find(42) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(43) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(44) != intHashSet.end());
 
-			// hash_map(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator = EASTL_FIXED_HASH_SET_DEFAULT_ALLOCATOR)
-			// this_type& operator=(std::initializer_list<value_type> ilist);
-			// void insert(std::initializer_list<value_type> ilist);
-			fixed_hash_map<int, double, 11> intHashMap = { {12,12.0}, {13,13.0}, {14,14.0} };
-			EATEST_VERIFY(intHashMap.size() == 3);
-			EATEST_VERIFY(intHashMap.find(12) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(13) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(14) != intHashMap.end());
+		// hash_map(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator = EASTL_FIXED_HASH_SET_DEFAULT_ALLOCATOR)
+		// this_type& operator=(std::initializer_list<value_type> ilist);
+		// void insert(std::initializer_list<value_type> ilist);
+		fixed_hash_map<int, double, 11> intHashMap = { {12,12.0}, {13,13.0}, {14,14.0} };
+		EATEST_VERIFY(intHashMap.size() == 3);
+		EATEST_VERIFY(intHashMap.find(12) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(13) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(14) != intHashMap.end());
 
-			intHashMap = { {22,22.0}, {23,23.0}, {24,24.0} };
-			EATEST_VERIFY(intHashMap.size() == 3);
-			EATEST_VERIFY(intHashMap.find(22) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(23) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(24) != intHashMap.end());
+		intHashMap = { {22,22.0}, {23,23.0}, {24,24.0} };
+		EATEST_VERIFY(intHashMap.size() == 3);
+		EATEST_VERIFY(intHashMap.find(22) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(23) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(24) != intHashMap.end());
 
-			intHashMap.insert({ {42,42.0}, {43,43.0}, {44,44.0} });
-			EATEST_VERIFY(intHashMap.size() == 6);
-			EATEST_VERIFY(intHashMap.find(42) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(43) != intHashMap.end());
-			EATEST_VERIFY(intHashMap.find(44) != intHashMap.end());
-		#endif
+		intHashMap.insert({ {42,42.0}, {43,43.0}, {44,44.0} });
+		EATEST_VERIFY(intHashMap.size() == 6);
+		EATEST_VERIFY(intHashMap.find(42) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(43) != intHashMap.end());
+		EATEST_VERIFY(intHashMap.find(44) != intHashMap.end());
+	}
+
+	{
+		constexpr int ELEM_MAX = 10;
+		typedef eastl::fixed_hash_map<int, int, ELEM_MAX, ELEM_MAX, false> FixedHashMapFalse;
+		FixedHashMapFalse fixedHashMap;
+		VERIFY(fixedHashMap.size() == 0);
+
+		for (int i = 0; i < ELEM_MAX; i++)
+			fixedHashMap.insert(FixedHashMapFalse::value_type(i, i));
+
+		VERIFY(fixedHashMap.validate());
+		VERIFY(fixedHashMap.size() == ELEM_MAX);
+
+		// Verify insert requests of nodes already in the container don't attempt to allocate memory.
+		// Because the fixed_hash_map is full any attempt to allocate memory will generate an OOM error.
+		{
+			auto result = fixedHashMap.insert(FixedHashMapFalse::value_type(0, 0));
+			VERIFY(result.second == false);
+		}
+
+		{
+			auto result = fixedHashMap.insert(fixedHashMap.begin(), FixedHashMapFalse::value_type(0, 0));
+			VERIFY(result->first == 0);
+			VERIFY(result->second == 0);
+		}
+
+		{
+			FixedHashMapFalse::value_type value(0, 0);
+			auto result = fixedHashMap.insert(eastl::move(value));
+			VERIFY(result.second == false);
+		}
+		{
+			FixedHashMapFalse::value_type value(0, 0);
+			auto result = fixedHashMap.insert(fixedHashMap.begin(), eastl::move(value));
+			VERIFY(result->first == 0);
+			VERIFY(result->second == 0);
+		}
+
+		{
+			FixedHashMapFalse::value_type value(0, 0);
+			auto result = fixedHashMap.insert(value);
+			VERIFY(result.second == false);
+		}
+
+		{
+			auto result = fixedHashMap.insert(eastl::make_pair(0, 0));
+			VERIFY(result.second == false);
+		}
+
+		{
+			// OOM, fixed allocator memory is exhausted so it can't create a node for insertation testing
+			// auto result = fixedHashMap.emplace(0, 0);  
+			// VERIFY(result.second == false);
+		}
 	}
 
 	return nErrorCount;

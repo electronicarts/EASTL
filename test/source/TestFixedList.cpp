@@ -40,8 +40,6 @@ namespace FixedListTest
 EA_DISABLE_VC_WARNING(6262)
 int TestFixedList()
 {
-	EASTLTest_Printf("TestFixedList\n");
-
 	int nErrorCount = 0;
 
 	{

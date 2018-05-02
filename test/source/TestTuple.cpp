@@ -22,13 +22,7 @@ struct DefaultConstructibleType
 
 struct MoveOnlyType
 {
-// tuple should work with non default constructible types but due to a bug in VS2103 is_default_constructible type trait
-// it doesn't work there
-#if !defined(_MSC_VER) || (_MSC_VER > 1800)
 	MoveOnlyType() = delete;
-#else
-	MoveOnlyType() : mVal() {}
-#endif
 	MoveOnlyType(int val) : mVal(val) {}
 	MoveOnlyType(const MoveOnlyType&) = delete;
 	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
@@ -111,18 +105,14 @@ int TestTuple()
 	static_assert(tuple_size<const tuple<int>>::value == 1, "tuple_size<const tuple<T>> test failed.");
 	static_assert(tuple_size<const tuple<const int>>::value == 1, "tuple_size<const tuple<const T>> test failed.");
 	static_assert(tuple_size<volatile tuple<int>>::value == 1, "tuple_size<volatile tuple<T>> test failed.");
-	static_assert(tuple_size<const volatile tuple<int>>::value == 1,
-				  "tuple_size<const volatile tuple<T>> test failed.");
+	static_assert(tuple_size<const volatile tuple<int>>::value == 1, "tuple_size<const volatile tuple<T>> test failed.");
 	static_assert(tuple_size<tuple<int, float, bool>>::value == 3, "tuple_size<tuple<T, T, T>> test failed.");
 
 	static_assert(is_same<tuple_element_t<0, tuple<int>>, int>::value, "tuple_element<I, T> test failed.");
 	static_assert(is_same<tuple_element_t<1, tuple<float, int>>, int>::value, "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, const int>>, const int>::value,
-				  "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, volatile int>>, volatile int>::value,
-				  "tuple_element<I, T> test failed.");
-	static_assert(is_same<tuple_element_t<1, tuple<float, const volatile int>>, const volatile int>::value,
-				  "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, const int>>, const int>::value, "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, volatile int>>, volatile int>::value, "tuple_element<I, T> test failed.");
+	static_assert(is_same<tuple_element_t<1, tuple<float, const volatile int>>, const volatile int>::value, "tuple_element<I, T> test failed.");
 	static_assert(is_same<tuple_element_t<1, tuple<float, int&>>, int&>::value, "tuple_element<I, T> test failed.");
 
 	{
@@ -130,9 +120,12 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(aSingleElementTuple) == 1);
 		get<0>(aSingleElementTuple) = 2;
 		EATEST_VERIFY(get<0>(aSingleElementTuple) == 2);
+		get<int>(aSingleElementTuple) = 3;
+		EATEST_VERIFY(get<int>(aSingleElementTuple) == 3);
 
 		const tuple<int> aConstSingleElementTuple(3);
 		EATEST_VERIFY(get<0>(aConstSingleElementTuple) == 3);
+		EATEST_VERIFY(get<int>(aConstSingleElementTuple) == 3);
 
 		tuple<DefaultConstructibleType> aDefaultConstructedTuple;
 		EATEST_VERIFY(get<0>(aDefaultConstructedTuple).mVal == DefaultConstructibleType::defaultVal);
@@ -167,6 +160,10 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(aTuple) == 1);
 		EATEST_VERIFY(get<1>(aTuple) == 1.0f);
 		EATEST_VERIFY(get<2>(aTuple) == true);
+		EATEST_VERIFY(get<int>(aTuple) == 1);
+		EATEST_VERIFY(get<float>(aTuple) == 1.0f);
+		EATEST_VERIFY(get<bool>(aTuple) == true);
+
 		get<1>(aTuple) = 2.0f;
 		EATEST_VERIFY(get<1>(aTuple) == 2.0f);
 
@@ -199,6 +196,31 @@ int TestTuple()
 		tuple<int, float, bool> aDefaultInitializedTuple;
 		EATEST_VERIFY(get<0>(aDefaultInitializedTuple) == 0 && get<1>(aDefaultInitializedTuple) == 0.0f &&
 					  get<2>(aDefaultInitializedTuple) == false);
+	}
+
+	{
+		// Test some other cases with typed-getter
+		tuple<double, double, bool> aTupleWithRepeatedType(1.0f, 2.0f, true);
+		EATEST_VERIFY(get<bool>(aTupleWithRepeatedType) == true);
+
+		tuple<double, bool, double> anotherTupleWithRepeatedType(1.0f, true, 2.0f);
+		EATEST_VERIFY(get<bool>(anotherTupleWithRepeatedType) == true);
+
+		tuple<bool, double, double> yetAnotherTupleWithRepeatedType(true, 1.0f, 2.0f);
+		EATEST_VERIFY(get<bool>(anotherTupleWithRepeatedType) == true);
+
+		struct floatOne { float val; };
+		struct floatTwo { float val; };
+		tuple<floatOne, floatTwo> aTupleOfStructs({ 1.0f }, { 2.0f } );
+		EATEST_VERIFY(get<floatOne>(aTupleOfStructs).val == 1.0f);
+		EATEST_VERIFY(get<floatTwo>(aTupleOfStructs).val == 2.0f);
+		
+		const tuple<double, double, bool> aConstTuple(aTupleWithRepeatedType);
+		const bool& constRef = get<bool>(aConstTuple);
+		EATEST_VERIFY(constRef == true);
+
+		const bool&& constRval = get<bool>(eastl::move(aTupleWithRepeatedType));
+		EATEST_VERIFY(constRval == true);
 	}
 
 	{
@@ -235,13 +257,9 @@ int TestTuple()
 
 	{
 		// Test construction of tuple containing a move only type
-		static_assert(is_constructible<MoveOnlyType, MoveOnlyType>::value,
-					  "is_constructible type trait giving confusing answers.");
-		static_assert(is_constructible<MoveOnlyType, MoveOnlyType&&>::value,
-					  "is_constructible type trait giving wrong answers.");
-		// Static assert below fails on clang OSX
-		// static_assert(is_constructible<MoveOnlyType&&, MoveOnlyType&&>::value, "is_constructible type trait giving
-		// bizarre answers.");
+		static_assert(is_constructible<MoveOnlyType, MoveOnlyType>::value, "is_constructible type trait giving confusing answers.");
+		static_assert(is_constructible<MoveOnlyType, MoveOnlyType&&>::value, "is_constructible type trait giving wrong answers.");
+		static_assert(is_constructible<MoveOnlyType&&, MoveOnlyType&&>::value, "is_constructible type trait giving bizarre answers.");
 		tuple<MoveOnlyType> aTupleWithMoveOnlyMember(1);
 		EATEST_VERIFY(get<0>(aTupleWithMoveOnlyMember).mVal == 1);
 		get<0>(aTupleWithMoveOnlyMember) = MoveOnlyType(2);
@@ -301,6 +319,129 @@ int TestTuple()
 		emptyTuple = make_tuple();
 		auto anotherEmptyTuple = make_tuple();
 		swap(anotherEmptyTuple, emptyTuple);
+	}
+
+	// test piecewise_construct
+	{
+		{
+			struct local
+			{
+				local() = default;
+				local(int a, int b) : mA(a), mB(b) {}
+
+				int mA = 0;
+				int mB = 0;
+			};
+
+			auto t = make_tuple(42, 43);
+
+			eastl::pair<local, local> p(eastl::piecewise_construct, t, t);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 42);
+			EATEST_VERIFY(p.first.mB  == 43);
+			EATEST_VERIFY(p.second.mB == 43);
+		}
+
+		{
+			struct local
+			{
+				local() = default;
+				local(int a, int b, int c, int d) : mA(a), mB(b), mC(c), mD(d) {}
+
+				int mA = 0;
+				int mB = 0;
+				int mC = 0;
+				int mD = 0;
+			};
+
+			auto t = make_tuple(42, 43, 44, 45);
+
+			eastl::pair<local, local> p(eastl::piecewise_construct, t, t);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 42);
+
+			EATEST_VERIFY(p.first.mB  == 43);
+			EATEST_VERIFY(p.second.mB == 43);
+
+			EATEST_VERIFY(p.first.mC  == 44);
+			EATEST_VERIFY(p.second.mC == 44);
+
+			EATEST_VERIFY(p.first.mD  == 45);
+			EATEST_VERIFY(p.second.mD == 45);
+		}
+
+		{
+			struct local1
+			{
+				local1() = default;
+				local1(int a) : mA(a) {}
+				int mA = 0;
+			};
+
+			struct local2
+			{
+				local2() = default;
+				local2(char a) : mA(a) {}
+				char mA = 0;
+			};
+
+			auto t1 = make_tuple(42);
+			auto t2 = make_tuple('a');
+
+			eastl::pair<local1, local2> p(eastl::piecewise_construct, t1, t2);
+
+			EATEST_VERIFY(p.first.mA  == 42);
+			EATEST_VERIFY(p.second.mA == 'a');
+		}
+	}
+
+	// apply
+	{
+		// test with tuples
+		{
+			{
+				auto result = eastl::apply([](int i) { return i; }, make_tuple(1));
+				EATEST_VERIFY(result == 1);
+			}
+
+			{
+				auto result = eastl::apply([](int i, int j) { return i + j; }, make_tuple(1, 2));
+				EATEST_VERIFY(result == 3);
+			}
+
+
+			{
+				auto result = eastl::apply([](int i, int j, int k, int m) { return i + j + k + m; }, make_tuple(1, 2, 3, 4));
+				EATEST_VERIFY(result == 10);
+			}
+		}
+
+		// test with pair
+		{
+			auto result = eastl::apply([](int i, int j) { return i + j; }, make_pair(1, 2));
+			EATEST_VERIFY(result == 3);
+		}
+
+		// test with array
+		{
+			// TODO(rparolin):   
+			// eastl::array requires eastl::get support before we can support unpacking eastl::arrays with eastl::apply.
+			//
+			// {
+			//     auto result = eastl::apply([](int i) { return i; }, eastl::array<int, 1>{1});
+			//     EATEST_VERIFY(result == 1);
+			// }
+			// {
+			//     auto result = eastl::apply([](int i, int j) { return i + j; }, eastl::array<int, 2>{1,2});
+			//     EATEST_VERIFY(result == 3);
+			// }
+			// {
+			//     auto result = eastl::apply([](int i, int j, int k, int m) { return i + j + k + m; }, eastl::array<int, 4>{1, 2, 3, 4});
+			//     EATEST_VERIFY(result == 10);
+			// }
+		}
 	}
 
 	return nErrorCount;

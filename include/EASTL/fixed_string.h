@@ -3,7 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// This file implements a string which uses a fixed size memory pool. 
+// This file implements a string which uses a fixed size memory pool.
 // The bEnableOverflow template parameter allows the container to resort to
 // heap allocations if the memory pool is exhausted.
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,11 +12,7 @@
 #ifndef EASTL_FIXED_STRING_H
 #define EASTL_FIXED_STRING_H
 
-
 #include <EASTL/internal/config.h>
-#if EASTL_ABSTRACT_STRING_ENABLED
-	#include <EASTL/bonus/fixed_string_abstract.h>
-#else // 'else' encompasses the entire rest of this file.
 #include <EASTL/string.h>
 #include <EASTL/internal/fixed_pool.h>
 
@@ -25,14 +21,13 @@
 #endif
 
 
-
 namespace eastl
 {
 	/// EASTL_FIXED_STRING_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	/// In the case of fixed-size containers, the allocator name always refers
-	/// to overflow allocations. 
+	/// to overflow allocations.
 	///
 	#ifndef EASTL_FIXED_STRING_DEFAULT_NAME
 		#define EASTL_FIXED_STRING_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " fixed_string" // Unless the user overrides something, this is "EASTL fixed_string".
@@ -42,15 +37,15 @@ namespace eastl
 
 	/// fixed_string
 	///
-	/// A fixed_string with bEnableOverflow == true is identical to a regular 
+	/// A fixed_string with bEnableOverflow == true is identical to a regular
 	/// string in terms of its behavior. All the expectations of regular string
 	/// apply to it and no additional expectations come from it. When bEnableOverflow
-	/// is false, fixed_string behaves like regular string with the exception that 
+	/// is false, fixed_string behaves like regular string with the exception that
 	/// its capacity can never increase. All operations you do on such a fixed_string
-	/// which require a capacity increase will result in undefined behavior or an 
+	/// which require a capacity increase will result in undefined behavior or an
 	/// C++ allocation exception, depending on the configuration of EASTL.
 	///
-	/// Note: The nodeCount value is the amount of characters to allocate, which needs to 
+	/// Note: The nodeCount value is the amount of characters to allocate, which needs to
 	/// take into account a terminating zero. Thus if you want to store strings with a strlen
 	/// of 30, the nodeCount value must be at least 31.
 	///
@@ -60,12 +55,12 @@ namespace eastl
 	///     bEnableOverflow        Whether or not we should use the overflow heap if our object pool is exhausted.
 	///     OverflowAllocator              Overflow allocator, which is only used if bEnableOverflow == true. Defaults to the global heap.
 	///
-	/// Notes: 
+	/// Notes:
 	///     The nodeCount value must be at least 2, one for a character and one for a terminating 0.
 	///
-	///     As of this writing, the string class necessarily reallocates when an insert of 
+	///     As of this writing, the string class necessarily reallocates when an insert of
 	///     self is done into self. As a result, the fixed_string class doesn't support
-	///     inserting self into self unless the bEnableOverflow template parameter is true. 
+	///     inserting self into self unless the bEnableOverflow template parameter is true.
 	///
 	/// Example usage:
 	///    fixed_string<char, 128 + 1, true> fixedString("hello world"); // Can hold up to a strlen of 128.
@@ -79,7 +74,7 @@ namespace eastl
 	class fixed_string : public basic_string<T, fixed_vector_allocator<sizeof(T), nodeCount, EASTL_ALIGN_OF(T), 0, bEnableOverflow, OverflowAllocator> >
 	{
 	public:
-		typedef fixed_vector_allocator<sizeof(T), nodeCount, EASTL_ALIGN_OF(T), 
+		typedef fixed_vector_allocator<sizeof(T), nodeCount, EASTL_ALIGN_OF(T),
 							0, bEnableOverflow, OverflowAllocator>              fixed_allocator_type;
 		typedef typename fixed_allocator_type::overflow_allocator_type          overflow_allocator_type;
 		typedef basic_string<T, fixed_allocator_type>                           base_type;
@@ -92,18 +87,18 @@ namespace eastl
 
 		enum { kMaxSize = nodeCount - 1 }; // -1 because we need to save one element for the silent terminating null.
 
-		using base_type::mAllocator;
 		using base_type::npos;
-		using base_type::mpBegin;
-		using base_type::mpEnd;
-		using base_type::mpCapacity;
+		using base_type::mPair;
 		using base_type::append;
 		using base_type::resize;
 		using base_type::clear;
+		using base_type::capacity;
 		using base_type::size;
 		using base_type::sprintf_va_list;
 		using base_type::DoAllocate;
 		using base_type::DoFree;
+		using base_type::internalLayout;
+		using base_type::get_allocator;
 
 	protected:
 		union // We define a union in order to avoid strict pointer aliasing issues with compilers like GCC.
@@ -120,7 +115,7 @@ namespace eastl
 		fixed_string(const value_type* p);
 		fixed_string(size_type n, const value_type& value);
 		fixed_string(const this_type& x);
-		fixed_string(const this_type& x, const overflow_allocator_type& overflowAllocator);		
+		fixed_string(const this_type& x, const overflow_allocator_type& overflowAllocator);
 		fixed_string(const base_type& x);
 		fixed_string(const value_type* pBegin, const value_type* pEnd);
 		fixed_string(CtorDoNotInitialize, size_type n);
@@ -147,7 +142,7 @@ namespace eastl
 		void      set_capacity(size_type n);
 		void      reset_lose_memory();          // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 		size_type max_size() const;
-		bool      full() const;                 // Returns true if the fixed space has been fully allocated. Note that if overflow is enabled, the container size can be greater than nodeCount but full() could return true because the fixed space may have a recently freed slot. 
+		bool      full() const;                 // Returns true if the fixed space has been fully allocated. Note that if overflow is enabled, the container size can be greater than nodeCount but full() could return true because the fixed space may have a recently freed slot.
 		bool      has_overflowed() const;       // Returns true if the allocations spilled over into the overflow allocator. Meaningful only if overflow is enabled.
 		bool      can_overflow() const;         // Returns the value of the bEnableOverflow template parameter.
 
@@ -161,11 +156,6 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
-
-		#if EASTL_RESET_ENABLED
-			void reset(); // This function name is deprecated; use reset_lose_memory instead.
-		#endif
-
 	}; // fixed_string
 
 
@@ -181,12 +171,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 	}
 
 
@@ -195,12 +187,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+	   internalLayout().SetHeapBeginPtr(mArray);
+	   internalLayout().SetHeapCapacity(nodeCount - 1);
+	   internalLayout().SetHeapSize(0);
+
+	   *internalLayout().HeapBeginPtr() = 0;
 	}
 
 
@@ -208,15 +202,17 @@ namespace eastl
 	inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(const this_type& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
-		mAllocator.copy_overflow_allocator(x.mAllocator);
+		get_allocator().copy_overflow_allocator(x.get_allocator());
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+			get_allocator().set_name(x.get_allocator().get_name());
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(x);
 	}
@@ -226,15 +222,17 @@ namespace eastl
 	inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(const this_type& x, const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
 	{
-		mAllocator.copy_overflow_allocator(x.mAllocator);
+		get_allocator().copy_overflow_allocator(x.get_allocator());
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+			get_allocator().set_name(x.get_allocator().get_name());
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(x);
 	}
@@ -245,12 +243,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.get_allocator().get_name());
+			get_allocator().set_name(x.get_allocator().get_name());
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(x);
 	}
@@ -261,12 +261,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.get_allocator().get_name());
+			get_allocator().set_name(x.get_allocator().get_name());
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(x, position, n);
 	}
@@ -277,12 +279,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+	   internalLayout().SetHeapBeginPtr(mArray);
+	   internalLayout().SetHeapCapacity(nodeCount - 1);
+	   internalLayout().SetHeapSize(0);
+
+	   *internalLayout().HeapBeginPtr() = 0;
 
 		append(p, n);
 	}
@@ -292,13 +296,15 @@ namespace eastl
 	inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(const value_type* p)
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
-
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
+
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(p); // There better be enough space to hold the assigned string.
 	}
@@ -309,12 +315,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+	   internalLayout().SetHeapBeginPtr(mArray);
+	   internalLayout().SetHeapCapacity(nodeCount - 1);
+	   internalLayout().SetHeapSize(0);
+
+	   *internalLayout().HeapBeginPtr() = 0;
 
 		append(n, value); // There better be enough space to hold the assigned string.
 	}
@@ -325,12 +333,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(pBegin, pEnd);
 	}
@@ -341,21 +351,22 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mArray;
-		mpCapacity = mpBegin + nodeCount;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
 
-		if((mpBegin + n) < mpCapacity)
+		if(n < nodeCount)
 		{
-			mpEnd = mpBegin + n;
-		   *mpEnd = 0;
+			internalLayout().SetHeapSize(n);
+			*internalLayout().HeapEndPtr() = 0;
 		}
 		else
 		{
-			mpEnd = mArray;
-		   *mpEnd = 0;
+			internalLayout().SetHeapSize(0);
+			*internalLayout().HeapEndPtr() = 0;
+
 			resize(n);
 		}
 	}
@@ -366,12 +377,13 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+		*internalLayout().HeapBeginPtr() = 0;
 
 		va_list arguments;
 		va_start(arguments, pFormat);
@@ -385,12 +397,14 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
+			get_allocator().set_name(EASTL_FIXED_STRING_DEFAULT_NAME);
 		#endif
 
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
-	   *mpBegin = 0;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
+
+		*internalLayout().HeapBeginPtr() = 0;
 
 		append(ilist.begin(), ilist.end());
 	}
@@ -403,12 +417,14 @@ namespace eastl
 		{
 			// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
 			#if EASTL_NAME_ENABLED
-				mAllocator.set_name(x.get_allocator().get_name());
+				get_allocator().set_name(x.get_allocator().get_name());
 			#endif
 
-			mpBegin = mpEnd = mArray;
-			mpCapacity = mpBegin + nodeCount;
-		   *mpBegin = 0;
+			internalLayout().SetHeapBeginPtr(mArray);
+			internalLayout().SetHeapCapacity(nodeCount - 1);
+			internalLayout().SetHeapSize(0);
+
+			*internalLayout().HeapBeginPtr() = 0;
 
 			append(x); // Let x destruct its own items.
 		}
@@ -419,12 +435,14 @@ namespace eastl
 		{
 			// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
 			#if EASTL_NAME_ENABLED
-				mAllocator.set_name(x.get_allocator().get_name());
+				get_allocator().set_name(x.get_allocator().get_name());
 			#endif
 
-			mpBegin = mpEnd = mArray;
-			mpCapacity = mpBegin + nodeCount;
-		   *mpBegin = 0;
+			internalLayout().SetHeapBeginPtr(mArray);
+			internalLayout().SetHeapCapacity(nodeCount - 1);
+			internalLayout().SetHeapSize(0);
+
+			*internalLayout().HeapBeginPtr() = 0;
 
 			append(x); // Let x destruct its own items.
 		}
@@ -440,7 +458,7 @@ namespace eastl
 			clear();
 
 			#if EASTL_ALLOCATOR_COPY_ENABLED
-				mAllocator = x.mAllocator;
+				get_allocator() = x.get_allocator();
 			#endif
 
 			append(x);
@@ -448,7 +466,7 @@ namespace eastl
 		return *this;
 	}
 
- 
+
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
 	this_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::operator=(const base_type& x)
@@ -458,7 +476,7 @@ namespace eastl
 			clear();
 
 			#if EASTL_ALLOCATOR_COPY_ENABLED
-				mAllocator = x.get_allocator();
+				get_allocator() = x.get_allocator();
 			#endif
 
 			append(x);
@@ -471,7 +489,7 @@ namespace eastl
 	inline typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
 	this_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::operator=(const value_type* p)
 	{
-		if(mpBegin != p)
+		if(internalLayout().HeapBeginPtr() != p)
 		{
 			clear();
 			append(p);
@@ -512,7 +530,7 @@ namespace eastl
 				clear();
 
 				#if EASTL_ALLOCATOR_COPY_ENABLED
-					mAllocator = x.get_allocator();
+					get_allocator() = x.get_allocator();
 				#endif
 
 				append(x); // Let x destruct its own items.
@@ -533,8 +551,8 @@ namespace eastl
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline void fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::set_capacity(size_type n)
 	{
-		const size_type nPrevSize     = (size_type)(mpEnd - mpBegin);
-		const size_type nPrevCapacity = (size_type)((mpCapacity - mpBegin) - 1); // -1 because the terminating 0 isn't included in the calculated capacity value.
+		const size_type nPrevSize     = internalLayout().GetSize();
+		const size_type nPrevCapacity = capacity();
 
 		if(n == npos)       // If the user means to set the capacity so that it equals the size (i.e. free excess capacity)...
 			n = nPrevSize;
@@ -543,17 +561,17 @@ namespace eastl
 		{
 			const size_type allocSize = (n + 1); // +1 because the terminating 0 isn't included in the supplied capacity value. So now n refers the amount of memory we need.
 
-			if(can_overflow() && (((uintptr_t)mpBegin != (uintptr_t)mBuffer.buffer) || (allocSize > kMaxSize))) // If we are or would be using dynamically allocated memory instead of our fixed-size member buffer...
+			if(can_overflow() && (((uintptr_t)internalLayout().HeapBeginPtr() != (uintptr_t)mBuffer.buffer) || (allocSize > kMaxSize))) // If we are or would be using dynamically allocated memory instead of our fixed-size member buffer...
 			{
 				T* const pNewData = (allocSize <= kMaxSize) ? (T*)&mBuffer.buffer[0] : DoAllocate(allocSize);
-				T* const pCopyEnd = (n < nPrevSize) ? (mpBegin + n) : mpEnd;
-				CharStringUninitializedCopy(mpBegin, pCopyEnd, pNewData);  // Copy [mpBegin, pCopyEnd) to pNewData.
-				if((uintptr_t)mpBegin != (uintptr_t)mBuffer.buffer)
-					DoFree(mpBegin, (size_type)(mpCapacity - mpBegin));
+				T* const pCopyEnd = (n < nPrevSize) ? (internalLayout().HeapBeginPtr() + n) : internalLayout().HeapEndPtr();
+				CharStringUninitializedCopy(internalLayout().HeapBeginPtr(), pCopyEnd, pNewData);  // Copy [internalLayout().heap.mpBegin, pCopyEnd) to pNewData.
+				if((uintptr_t)internalLayout().HeapBeginPtr() != (uintptr_t)mBuffer.buffer)
+					DoFree(internalLayout().HeapBeginPtr(), internalLayout().GetHeapCapacity() + 1);
 
-				mpEnd      = pNewData + (pCopyEnd - mpBegin);
-				mpBegin    = pNewData;
-				mpCapacity = mpBegin + allocSize;
+				internalLayout().SetHeapSize((size_type)(pCopyEnd - internalLayout().HeapBeginPtr()));
+				internalLayout().SetHeapBeginPtr(pNewData);
+				internalLayout().SetHeapCapacity(allocSize - 1);
 			} // Else the new capacity would be within our fixed buffer.
 			else if(n < nPrevSize) // If the newly requested capacity is less than our size, we do what vector::set_capacity does and resize, even though we actually aren't reducing the capacity.
 				resize(n);
@@ -561,21 +579,12 @@ namespace eastl
 	}
 
 
-	#if EASTL_RESET_ENABLED
-		// This function name is deprecated; use reset_lose_memory instead.
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		inline void fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::reset()
-		{
-			reset_lose_memory();
-		}
-	#endif
-
-
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline void fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::reset_lose_memory()
 	{
-		mpBegin = mpEnd = mArray;
-		mpCapacity = mpBegin + nodeCount;
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapSize(0);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
 	}
 
 
@@ -590,9 +599,9 @@ namespace eastl
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline bool fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::full() const
 	{
-		// If size >= capacity, then we are definitely full. 
+		// If size >= capacity, then we are definitely full.
 		// Also, if our size is smaller but we've switched away from mBuffer due to a previous overflow, then we are considered full.
-		return ((size_t)(mpEnd - mpBegin) >= kMaxSize) || ((void*)mpBegin != (void*)mBuffer.buffer);
+		return ((size_t)(internalLayout().HeapEndPtr() - internalLayout().HeapBeginPtr()) >= kMaxSize) || ((void*)internalLayout().HeapBeginPtr() != (void*)mBuffer.buffer);
 	}
 
 
@@ -603,7 +612,7 @@ namespace eastl
 		// down to a small size where the fixed buffer could take over ownership of the data again.
 		// The only simple fix for this is to take on another member variable which tracks whether this overflow
 		// has occurred at some point in the past.
-		return ((void*)mpBegin != (void*)mBuffer.buffer);
+		return ((void*)internalLayout().HeapBeginPtr() != (void*)mBuffer.buffer);
 	}
 
 
@@ -619,11 +628,12 @@ namespace eastl
 	this_type fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::substr(size_type position, size_type n) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(position > (size_type)(mpEnd - mpBegin))
+			if(position > internalLayout().GetSize())
 				base_type::ThrowRangeException();
 		#endif
 
-		return fixed_string(mpBegin + position, mpBegin + position + eastl::min_alt(n, (size_type)(mpEnd - mpBegin) - position));
+			return fixed_string(internalLayout().HeapBeginPtr() + position,
+								internalLayout().HeapBeginPtr() + position + eastl::min_alt(n, internalLayout().GetSize() - position));
 	}
 
 
@@ -633,7 +643,7 @@ namespace eastl
 	{
 		const size_type nLength = size();
 		if(n < nLength)
-			return fixed_string(mpBegin, mpBegin + n);
+			return fixed_string(internalLayout().HeapBeginPtr(), internalLayout().HeapBeginPtr() + n);
 		return *this;
 	}
 
@@ -644,7 +654,7 @@ namespace eastl
 	{
 		const size_type nLength = size();
 		if(n < nLength)
-			return fixed_string(mpEnd - n, mpEnd);
+			return fixed_string(internalLayout().HeapEndPtr() - n, internalLayout().HeapEndPtr());
 		return *this;
 	}
 
@@ -653,7 +663,7 @@ namespace eastl
 	inline const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
 	overflow_allocator_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::get_overflow_allocator() const EA_NOEXCEPT
 	{
-		return mAllocator.get_overflow_allocator();
+		return get_allocator().get_overflow_allocator();
 	}
 
 
@@ -661,15 +671,15 @@ namespace eastl
 	inline typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
 	overflow_allocator_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::get_overflow_allocator() EA_NOEXCEPT
 	{
-		return mAllocator.get_overflow_allocator();
+		return get_allocator().get_overflow_allocator();
 	}
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	inline void 
+	inline void
 	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::set_overflow_allocator(const overflow_allocator_type& allocator)
 	{
-		mAllocator.set_overflow_allocator(allocator);
+		get_allocator().set_overflow_allocator(allocator);
 	}
 
 
@@ -680,10 +690,10 @@ namespace eastl
 
 	// Operator +
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a, 
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a,
 																			 const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
 	{
-		// We have a problem here because need to return an fixed_string by value. This will typically result in it 
+		// We have a problem here because need to return an fixed_string by value. This will typically result in it
 		// using stack space equal to its size. That size may be too large to be workable.
 		typedef fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> this_type;
 
@@ -695,7 +705,7 @@ namespace eastl
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p, 
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p,
 																			 const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
 	{
 		typedef fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> this_type;
@@ -709,7 +719,7 @@ namespace eastl
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c, 
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c,
 																				const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
 	{
 		typedef fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> this_type;
@@ -722,7 +732,7 @@ namespace eastl
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a, 
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a,
 																	const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p)
 	{
 		typedef fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> this_type;
@@ -736,7 +746,7 @@ namespace eastl
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a, 
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a,
 																		  typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c)
 	{
 		typedef fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> this_type;
@@ -750,7 +760,7 @@ namespace eastl
 
 	#if EASTL_MOVE_SEMANTICS_ENABLED
 		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a, 
+		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
 																				 fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
 		{
 			a.append(b); // Using an rvalue by name results in it becoming an lvalue.
@@ -758,7 +768,7 @@ namespace eastl
 		}
 
 		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a, 
+		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
 																		   const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
 		{
 			a.append(b);
@@ -766,7 +776,7 @@ namespace eastl
 		}
 
 		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p, 
+		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p,
 																								fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
 		{
 			b.insert(0, p);
@@ -774,7 +784,7 @@ namespace eastl
 		}
 
 		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a, 
+		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
 																  const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p)
 		{
 			a.append(p);
@@ -782,7 +792,7 @@ namespace eastl
 		}
 
 		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a, 
+		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
 																		typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c)
 		{
 			a.push_back(c);
@@ -794,7 +804,7 @@ namespace eastl
 	// operator ==, !=, <, >, <=, >= come from the string implementations.
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	inline void swap(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a, 
+	inline void swap(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& a,
 					 fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
 	{
 		// Fixed containers use a special swap that can deal with excessively large buffers.
@@ -804,20 +814,4 @@ namespace eastl
 
 } // namespace eastl
 
-
-#endif // EASTL_ABSTRACT_STRING_ENABLED
-
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-

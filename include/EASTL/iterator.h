@@ -468,7 +468,7 @@ namespace eastl
 			move_iterator operator++(int)
 			{
 				move_iterator tempMoveIterator = *this;
-				++tempMoveIterator;
+				++mIterator;
 				return tempMoveIterator;
 			}
 
@@ -481,7 +481,7 @@ namespace eastl
 			move_iterator operator--(int)
 			{
 				move_iterator tempMoveIterator = *this;
-				--tempMoveIterator;
+				--mIterator;
 				return tempMoveIterator;
 			}
 
@@ -1013,6 +1013,8 @@ namespace eastl
 		return it;
 	}
 
+
+#if defined(EA_COMPILER_CPP11_ENABLED) && EA_COMPILER_CPP11_ENABLED
 	
 	// eastl::data
 	//
@@ -1063,6 +1065,8 @@ namespace eastl
 	template <class E> 
 	EA_CONSTEXPR bool empty(std::initializer_list<E> il) EA_NOEXCEPT
 		{ return il.size() == 0; }
+
+#endif // defined(EA_COMPILER_CPP11_ENABLED) && EA_COMPILER_CPP11_ENABLED
 
 
 	// eastl::begin / eastl::end

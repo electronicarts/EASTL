@@ -17,8 +17,6 @@
 
 int TestIntrusiveSList()
 {
-	EASTLTest_Printf("TestIntrusiveSList\n");
-
 	int nErrorCount = 0;
 
 	// As of this writing, we don't yet have a completed intrusive_slist implementation.

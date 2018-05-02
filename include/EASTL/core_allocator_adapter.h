@@ -255,10 +255,13 @@ namespace EA
 		template<class AllocatorType>
 		inline CoreAllocatorAdapter<AllocatorType>& CoreAllocatorAdapter<AllocatorType>::operator=(const CoreAllocatorAdapter& x)
 		{
-			// In order to be consistent with EASTL's allocator implementation, 
-			// we don't copy the name from the source object.
 			mpCoreAllocator = x.mpCoreAllocator;
 			mnFlags         = x.mnFlags;
+
+			#if EASTL_NAME_ENABLED
+				mpName = x.mpName;
+			#endif
+				
 			return *this;
 		}
 

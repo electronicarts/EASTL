@@ -40,7 +40,7 @@ namespace eastl
 	/// intrusive_ptr
 	/// 
 	/// This is a class that acts like the C++ auto_ptr class except that instead
-	/// of deleting its member data when it goes out of scope, it Releases its
+	/// of deleting its member data when it goes out of scope, it releases its
 	/// member data when it goes out of scope. This class thus requires that the 
 	/// templated data type have an AddRef and Release function (or whatever is
 	/// configured to be the two refcount functions).
@@ -66,7 +66,6 @@ namespace eastl
 	template <typename T>
 	class intrusive_ptr
 	{
-
 	protected:
 		// Friend declarations.
 		template <typename U> friend class intrusive_ptr;
@@ -116,6 +115,15 @@ namespace eastl
 				intrusive_ptr_add_ref(mpObject);
 		}
 
+
+		/// intrusive_ptr
+		/// move constructor
+		intrusive_ptr(intrusive_ptr&& ip) 
+			: mpObject(nullptr)
+		{
+			swap(ip);
+		}
+
 		/// intrusive_ptr
 		/// Provides a constructor which copies a pointer from another intrusive_ptr.
 		/// The incoming pointer is AddRefd. The source intrusive_ptr object maintains
@@ -141,11 +149,20 @@ namespace eastl
 		}
 
 
-		/// operator =
+		/// operator=
 		/// Assignment to self type.
-		intrusive_ptr& operator=(const intrusive_ptr& ip)       
+		intrusive_ptr& operator=(const intrusive_ptr& ip)
 		{
 			return operator=(ip.mpObject);
+		}
+
+
+		/// operator=
+		/// Move assignment operator 
+		intrusive_ptr& operator=(intrusive_ptr&& ip)
+		{
+			swap(ip);
+			return *this;
 		}
 
 

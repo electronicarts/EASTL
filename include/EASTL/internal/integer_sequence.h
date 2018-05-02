@@ -63,6 +63,10 @@ struct make_integer_sequence_impl
 template <typename T, size_t N>
 using make_integer_sequence = typename make_integer_sequence_impl<T, N>::type;
 
+// Helper alias template that converts any type parameter pack into an index sequence of the same length
+template<typename... T>
+using index_sequence_for = make_index_sequence<sizeof...(T)>;
+
 #endif  // EASTL_VARIADIC_TEMPLATES_ENABLED
 
 }  // namespace eastl

@@ -15,17 +15,19 @@
 // They are provided here due to linkage requirements only.
 ///////////////////////////////////////////////////////////////////////////////
 
-void* operator new[](size_t, const char*, int, unsigned, const char*, int) EA_NOEXCEPT
+EA_DISABLE_CLANG_WARNING(-Wnew-returns-null)
+void* operator new[](size_t, const char*, int, unsigned, const char*, int)
 {
     EA_FAIL_MSG("Unexpected call to global new operator.  Does EASTL have an ICoreAllocator set?");
-    return static_cast<void*>(0);  // perform a static_cast to prevent a GCC warning.
+    return nullptr;
 }
 
-void* operator new[](size_t, size_t, size_t, const char*, int, unsigned, const char*, int) EA_NOEXCEPT
+void* operator new[](size_t, size_t, size_t, const char*, int, unsigned, const char*, int)
 {
     EA_FAIL_MSG("Unexpected call to global new operator.  Does EASTL have an ICoreAllocator set?");       
-    return static_cast<void*>(0);  // perform a static_cast to prevent a GCC warning.
+    return nullptr;
 }
+EA_RESTORE_CLANG_WARNING()
  
 #endif // header include guard
  

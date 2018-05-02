@@ -339,7 +339,18 @@ namespace eastl
 				mpHead = mpHead->mpNext;
 			}
 			else
-				p = mOverflowAllocator.allocate(mnNodeSize);
+			{
+				// If there's no free node in the free list, just
+				// allocate another from the reserved memory area
+
+				if (mpNext != mpCapacity)
+				{
+					p = mpNext;
+					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char8_t*>(mpNext) + mnNodeSize);
+				}
+				else
+					p = mOverflowAllocator.allocate(mnNodeSize);
+			}
 
 			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
 				if(p && (++mnCurrentSize > mnPeakSize))

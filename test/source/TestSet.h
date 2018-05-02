@@ -10,18 +10,11 @@
 #include <EASTL/scoped_ptr.h>
 #include <EASTL/random.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	#include <algorithm>
 #endif
-
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 

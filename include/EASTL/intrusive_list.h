@@ -54,7 +54,7 @@
 //   uses the name 'find' because:
 //      - So as not to confuse the member function with the well-defined free function from algorithm.h.
 //      - Because it is not API-compatible with eastl::find().
-//      - Because it simply locates an object within the list based on its node entry and doesn't p[erform before any value-based searches or comparisons.
+//      - Because it simply locates an object within the list based on its node entry and doesn't perform before any value-based searches or comparisons.
 //
 // Differences between intrusive_list and std::list:
 //
@@ -791,8 +791,8 @@ namespace eastl
 				EASTL_FAIL_MSG("intrusive_list::insert(): element already on a list.");
 		#endif
 
-		node_type& next = *const_cast<node_type*>(pos.mpNode);
-		node_type& prev = *static_cast<node_type*>(next.mpPrev);
+		intrusive_list_node& next = *const_cast<node_type*>(pos.mpNode);
+		intrusive_list_node& prev = *static_cast<node_type*>(next.mpPrev);
 		prev.mpNext = next.mpPrev = &x;
 		x.mpPrev    = &prev;
 		x.mpNext    = &next;
@@ -805,8 +805,8 @@ namespace eastl
 	inline typename intrusive_list<T>::iterator
 	intrusive_list<T>::erase(const_iterator pos)
 	{
-		node_type& prev = *static_cast<node_type*>(pos.mpNode->mpPrev);
-		node_type& next = *static_cast<node_type*>(pos.mpNode->mpNext);
+		intrusive_list_node& prev = *static_cast<node_type*>(pos.mpNode->mpPrev);
+		intrusive_list_node& next = *static_cast<node_type*>(pos.mpNode->mpNext);
 		prev.mpNext = &next;
 		next.mpPrev = &prev;
 
@@ -815,7 +815,7 @@ namespace eastl
 			ii.mpNode->mpPrev = ii.mpNode->mpNext = NULL;
 		#endif
 
-		return iterator(&next);
+		return iterator(static_cast<node_type*>(&next));
 	}
 
 
@@ -823,8 +823,8 @@ namespace eastl
 	inline typename intrusive_list<T>::iterator
 	intrusive_list<T>::erase(const_iterator first, const_iterator last)
 	{
-		node_type& prev = *static_cast<node_type*>(first.mpNode->mpPrev);
-		node_type& next = *const_cast<node_type*>(last.mpNode);
+		intrusive_list_node& prev = *static_cast<node_type*>(first.mpNode->mpPrev);
+		intrusive_list_node& next = *const_cast<node_type*>(last.mpNode);
 
 		#if EASTL_VALIDATE_INTRUSIVE_LIST
 			// need to clear out all the next/prev pointers in the elements;
@@ -929,10 +929,10 @@ namespace eastl
 		// Note: &x == this is prohibited, so self-insertion is not a problem.
 		if(x.mAnchor.mpNext != &x.mAnchor) // If the list 'x' isn't empty...
 		{
-			node_type& next       = *const_cast<node_type*>(pos.mpNode);
-			node_type& prev       = *static_cast<node_type*>(next.mpPrev);
-			node_type& insertPrev = *static_cast<node_type*>(x.mAnchor.mpNext);
-			node_type& insertNext = *static_cast<node_type*>(x.mAnchor.mpPrev);
+			intrusive_list_node& next       = *const_cast<node_type*>(pos.mpNode);
+			intrusive_list_node& prev       = *static_cast<node_type*>(next.mpPrev);
+			intrusive_list_node& insertPrev = *static_cast<node_type*>(x.mAnchor.mpNext);
+			intrusive_list_node& insertNext = *static_cast<node_type*>(x.mAnchor.mpPrev);
 
 			prev.mpNext       = &insertPrev;
 			insertPrev.mpPrev = &prev;
@@ -983,16 +983,16 @@ namespace eastl
 		// Note: &x == this is prohibited, so self-insertion is not a problem.
 		if(first != last)
 		{
-			node_type& insertPrev = *const_cast<node_type*>(first.mpNode);
-			node_type& insertNext = *static_cast<node_type*>(last.mpNode->mpPrev);
+			intrusive_list_node& insertPrev = *const_cast<node_type*>(first.mpNode);
+			intrusive_list_node& insertNext = *static_cast<node_type*>(last.mpNode->mpPrev);
 
 			// remove from old list
 			insertNext.mpNext->mpPrev = insertPrev.mpPrev;
 			insertPrev.mpPrev->mpNext = insertNext.mpNext;
 
 			// insert into this list
-			node_type& next = *const_cast<node_type*>(pos.mpNode);
-			node_type& prev = *static_cast<node_type*>(next.mpPrev);
+			intrusive_list_node& next = *const_cast<node_type*>(pos.mpNode);
+			intrusive_list_node& prev = *static_cast<node_type*>(next.mpPrev);
 
 			prev.mpNext       = &insertPrev;
 			insertPrev.mpPrev = &prev;

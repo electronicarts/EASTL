@@ -11,10 +11,10 @@ if not [x%PLATFORM:MinGW=%]==[x%PLATFORM%] (
 :test-msvc
 cd build
 cd test
-ctest -C Release -V 
+ctest -C Release -V || goto error
 cd .. 
 cd benchmark
-ctest -C Release -V
+ctest -C Release -V || goto error
 cd ..
 cd ..
 goto :end
@@ -41,14 +41,18 @@ if not [x%PLATFORM:x64=%]==[x%PLATFORM%] (
 for %%c in (%configurations%) do (
 	cd build-%PLATFORM%-%%~c
 	cd test
-	ctest -V 
+	ctest -V || goto error
 	cd .. 
 	cd benchmark
-	ctest -V
+	ctest -V || goto error
 	cd ..
 	cd ..
 )
+goto end
+
+:error
+echo Failed!
+EXIT /b %ERRORLEVEL%
 
 :end
-
 endlocal

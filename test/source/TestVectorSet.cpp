@@ -12,21 +12,11 @@
 #include <EASTL/deque.h>
 #include <EABase/eabase.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4702) // VC++ STL headers generate this. warning C4702: unreachable code
-	#pragma warning(disable:4350) // for whatever reason, the push,0 above does not turn this warning off with vs2012.
-								  // VC++ 2012 STL headers generate this. warning C4350: behavior change: 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc(const std::_Wrap_alloc<_Alloc> &) throw()' called instead of 'std::_Wrap_alloc<_Alloc>::_Wrap_alloc<std::_Wrap_alloc<_Alloc>>(_Other &) throw()'
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	#include <set>
 #endif
-
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_ALL_VC_WARNINGS()
 
 using namespace eastl;
 
@@ -60,11 +50,8 @@ typedef eastl::vector_multiset<TestObject, eastl::less<TestObject>, EASTLAllocat
 ///////////////////////////////////////////////////////////////////////////////
 
 
-
 int TestVectorSet()
 {
-	EASTLTest_Printf("TestVectorSet\n");
-
 	int nErrorCount = 0;
 
 	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -119,16 +106,46 @@ int TestVectorSet()
 
 
 	{ // Misc tests
+		{
+			// const key_compare& key_comp() const;
+			// key_compare&	   key_comp();
+			VS2	   vs;
+			const VS2 vsc;
 
-		// const key_compare& key_comp() const;
-		// key_compare&       key_comp();
-		VS2       vs;
-		const VS2 vsc;
+			// ensure count can be called from a const object
+			const VS2::key_compare& kc = vsc.key_comp();
+			vs.key_comp() = kc;
+			vsc.count(0);
+		}
 
-		const VS2::key_compare& kc = vsc.key_comp();
-		vs.key_comp() = kc;
+		{
+			// ensure count can be called from a const object
+			const VMS1 vms;
+			vms.count(0);
+		}
 	}
 
+	{ // find_as predicate
+		{ // vector_set
+			eastl::vector_set<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		{ // const vector_set
+			const eastl::vector_set<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		{ // vector_multiset
+			eastl::vector_multiset<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+
+		{ // const vector_multiset
+			const eastl::vector_multiset<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+		}
+	}
 
 	return nErrorCount;
 }
