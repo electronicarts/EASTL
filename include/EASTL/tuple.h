@@ -746,7 +746,7 @@ template <>
 class tuple<>
 {
 public:
-	void swap(tuple& t) {}
+	void swap(tuple&) {}
 };
 
 template <size_t I, typename... Ts>
