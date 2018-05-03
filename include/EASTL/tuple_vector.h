@@ -6,10 +6,29 @@
 #define EASTL_TUPLEVECTOR_H
 
 #include <EASTL/internal/config.h>
-#include <EASTL/utility.h>
 #include <EASTL/tuple.h>
+#include <EASTL/utility.h>
+
 namespace eastl
 {
+
+
+	/// EASTL_TUPLE_VECTOR_DEFAULT_NAME
+	///
+	/// Defines a default container name in the absence of a user-provided name.
+	///
+	#ifndef EASTL_TUPLE_VECTOR_DEFAULT_NAME
+	#define EASTL_TUPLE_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " tuple-vector" // Unless the user overrides something, this is "EASTL tuple-vector".
+	#endif
+
+
+	/// EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR
+	///
+	#ifndef EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR
+	#define EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR allocator_type(EASTL_TUPLE_VECTOR_DEFAULT_NAME)
+	#endif
+
+
 
 // forward declarations
 template <typename... Ts>
@@ -23,10 +42,10 @@ using tuplevec_element_t = typename tuplevec_element<I, TupleVector>::type;
 
 namespace TupleVecInternal
 {
-	template <typename Indices, typename... Ts>
+	template <typename Allocator, typename Indices, typename... Ts>
 	struct TupleVecImpl;
 
-	template < typename... Ts>
+	template <typename... Ts>
 	struct TupleRecurser;
 
 	template <size_t I, typename... Ts>
@@ -62,8 +81,8 @@ struct tuplevec_element<I, tuple_vector<T, Ts...>>
 	typedef tuplevec_element_t<I - 1, tuple_vector<Ts...>> type;
 };
 
-template <size_t I, typename Indices, typename... Ts>
-struct tuplevec_element<I, TupleVecInternal::TupleVecImpl<Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
+template <typename Allocator, size_t I, typename Indices, typename... Ts>
+struct tuplevec_element<I, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
 {
 };
 
@@ -97,8 +116,8 @@ struct tuplevec_index<T, tuple_vector<Ts, TsRest...>>
 	static const size_t index = tuplevec_index<T, tuple_vector<TsRest...>>::index + 1;
 };
 
-template <typename T, typename Indices, typename... Ts>
-struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
+template <typename Allocator, typename T, typename Indices, typename... Ts>
+struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
 {
 };
 
@@ -118,8 +137,8 @@ struct TupleRecurser<>
 		return 0;
 	}
 
-	template<size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Indices, VecTypes...> &vec, size_t capacity, size_t offset)
+	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
@@ -137,13 +156,13 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
 	}
 
-	template<size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Indices, VecTypes...> &vec, size_t capacity, size_t offset)
+	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
 		size_t alignment = alignof(T);
 		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
 		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<I+1, Indices, VecTypes...>(vec, capacity, offsetEnd);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetEnd);
 		void* pDest = (char*)(allocation.first)+offsetBegin;
 		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
 		return allocation;
@@ -212,14 +231,25 @@ void swallow(Ts&&...)
 }
 
 // TupleVecImpl
-template <size_t... Indices, typename... Ts>
-class TupleVecImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
+template <typename Allocator, size_t... Indices, typename... Ts>
+class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
+	typedef Allocator    allocator_type;
+
 public:
 	typedef eastl_size_t size_type;
-	
-	EA_CONSTEXPR TupleVecImpl() = default;
-	~TupleVecImpl() { EASTLFree(mAllocator, mpData, mDataSize); }
+
+	TupleVecImpl()
+		: mAllocator(allocator_type(EASTL_VECTOR_DEFAULT_NAME))
+	{}
+	TupleVecImpl(const allocator_type& allocator)
+		: mAllocator(allocator)
+	{}
+	~TupleVecImpl()
+	{ 
+		if (mpData)
+			EASTLFree(mAllocator, mpData, mDataSize); 
+	}
 
 	size_type push_back()
 	{
@@ -269,13 +299,15 @@ public:
 		return mNumCapacity;
 	}
 
+protected:
+	allocator_type mAllocator;
+
 private:
 	void* mpData = nullptr;
 	size_type mDataSize = 0;
 	size_type mNumElements = 0;
 	size_type mNumCapacity = 0;
 
-	EASTLAllocatorType mAllocator = EASTLAllocatorType(EASTL_VECTOR_DEFAULT_NAME);
 
 	friend struct TupleRecurser<>;
 	template<typename... Ts>
@@ -288,7 +320,7 @@ private:
 
 	void DoAllocate(size_type n)
 	{
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<0, integer_sequence<size_t, Indices...>, Ts...>(*this, n, 0);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, n, 0);
 		EASTLFree(mAllocator, mpData, mDataSize);
 		mpData = allocation.first;
 		mDataSize = allocation.second;
@@ -302,17 +334,17 @@ private:
 
 };
 
-template <size_t I, typename Indices, typename... Ts>
-tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>>* get(TupleVecImpl<Indices, Ts...>& t)
+template <typename Allocator, size_t I, typename Indices, typename... Ts>
+tuplevec_element_t<I, TupleVecImpl<Allocator, Indices, Ts...>>* get(TupleVecImpl<Allocator, Indices, Ts...>& t)
 {
-	typedef tuplevec_element_t<I, TupleVecImpl<Indices, Ts...>> Element;
+	typedef tuplevec_element_t<I, TupleVecImpl<Allocator, Indices, Ts...>> Element;
 	return t.TupleVecLeaf<I, Element>::mpData;
 }
 
-template <typename T, typename Indices, typename... Ts>
-T* get(TupleVecImpl<Indices, Ts...>& t)
+template <typename Allocator, typename T, typename Indices, typename... Ts>
+T* get(TupleVecImpl<Allocator, Indices, Ts...>& t)
 {
-	typedef tuplevec_index<T, TupleVecImpl<Indices, Ts...>> Index;
+	typedef tuplevec_index<T, TupleVecImpl<Allocator, Indices, Ts...>> Index;
 	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
@@ -424,7 +456,7 @@ template <typename... Ts>
 class tuple_vector
 {
 private:
-	typedef TupleVecInternal::TupleVecImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
+	typedef TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
 
 public:
 	typedef TupleVecInternal::TupleVecIter<Ts...> iterator;
@@ -508,14 +540,14 @@ template<typename... Ts>
 template<size_t I>
 tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<I>(mImpl);
+	return TupleVecInternal::get<EASTLAllocatorType, I>(mImpl);
 }
 
 template<typename... Ts>
 template<typename T>
 T* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<T>(mImpl);
+	return TupleVecInternal::get<EASTLAllocatorType, T>(mImpl);
 }
 
 }  // namespace eastl
