@@ -223,9 +223,9 @@ public:
 
 	size_type push_back()
 	{
-		if (mNumElements == mNumCapacity)
+		if (mNumElements >= mNumCapacity)
 		{
-			DoGrow(mNumElements + 1);
+			DoGrow(GetNewCapacity(mNumCapacity));
 		}
 		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements)...);
 		++mNumElements;
@@ -234,9 +234,9 @@ public:
 
 	void push_back(const Ts&... args)
 	{
-		if (mNumElements == mNumCapacity)
+		if (mNumElements >= mNumCapacity)
 		{
-			DoGrow(mNumElements + 1);
+			DoGrow(GetNewCapacity(mNumCapacity));
 		}
 		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, args)...);
 		++mNumElements;
@@ -244,9 +244,9 @@ public:
 
 	void push_back_uninitialized()
 	{
-		if (mNumElements == mNumCapacity)
+		if (mNumElements >= mNumCapacity)
 		{
-			DoGrow(mNumElements + 1);
+			DoGrow(GetNewCapacity(mNumCapacity));
 		}
 		++mNumElements;
 	}
@@ -295,6 +295,10 @@ private:
 		mNumCapacity = n;
 	}
 
+	size_type GetNewCapacity(size_type currentCapacity)
+	{
+		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
+	}
 
 };
 
