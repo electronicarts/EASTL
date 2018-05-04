@@ -334,17 +334,17 @@ private:
 
 };
 
-template <typename Allocator, size_t I, typename Indices, typename... Ts>
-tuplevec_element_t<I, TupleVecImpl<Allocator, Indices, Ts...>>* get(TupleVecImpl<Allocator, Indices, Ts...>& t)
+template <size_t I, typename TupleVecType>
+tuplevec_element_t<I, TupleVecType>* get(TupleVecType& t)
 {
-	typedef tuplevec_element_t<I, TupleVecImpl<Allocator, Indices, Ts...>> Element;
+	typedef tuplevec_element_t<I, TupleVecType> Element;
 	return t.TupleVecLeaf<I, Element>::mpData;
 }
 
-template <typename Allocator, typename T, typename Indices, typename... Ts>
-T* get(TupleVecImpl<Allocator, Indices, Ts...>& t)
+template <typename T, typename TupleVecType>
+T* get(TupleVecType& t)
 {
-	typedef tuplevec_index<T, TupleVecImpl<Allocator, Indices, Ts...>> Index;
+	typedef tuplevec_index<T, TupleVecType> Index;
 	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
@@ -540,14 +540,14 @@ template<typename... Ts>
 template<size_t I>
 tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<EASTLAllocatorType, I>(mImpl);
+	return TupleVecInternal::get<I>(mImpl);
 }
 
 template<typename... Ts>
 template<typename T>
 T* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<EASTLAllocatorType, T>(mImpl);
+	return TupleVecInternal::get<T>(mImpl);
 }
 
 }  // namespace eastl
