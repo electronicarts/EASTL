@@ -483,7 +483,7 @@ How does EASTL differ from standard C++ STL?</p>
   <li>EASTL implementations sometimes differ from STL implementations of the same thing.</li>
   <li>EASTL has functionality that doesn't exist in STL.</li>
 </ol>
-<p class="faq-answer">With respect to item #1, the changes are such that they benefit game development and and not the type that could silently hurt you if you were more familiar with STL interfaces.</p>
+<p class="faq-answer">With respect to item #1, the changes are such that they benefit game development and not the type that could silently hurt you if you were more familiar with STL interfaces.</p>
 <p class="faq-answer">With respect to item #2, where EASTL implementations differ from STL implementations it is almost always due to improvements being made in the EASTL versions or tradeoffs being made which are considered better for game development.</p>
 <p class="faq-answer">With respect to item #3, there are a number of facilities that EASTL has that STL doesn't have, such as intrusive_list and slist containers, smart pointers, and type traits. All of these are facilities that assist in making more efficient game code and data.</p>
 <p class="faq-answer">Ways in which EASTL is better than standard STL: </p>
@@ -651,7 +651,7 @@ Why is there EASTL when there is the STL?</p>
   <li>Useful STL extensions (e.g. slist, hash_map, shared_ptr) found in existing STL implementations such as STLPort are not portable because they don't exist in other versions of STL or aren't consistent between STL versions.<br>
   </li>
   <li>The STL lacks useful extensions that game programmers find useful (e.g. intrusive_list) but which could be best optimized in a portable STL environment.</li>
-  <li>The STL puts an emphasis on correctness before performance, whereas sometimes you can get significant performance gains by making things less academcially pure.</li>
+  <li>The STL puts an emphasis on correctness before performance, whereas sometimes you can get significant performance gains by making things less academically pure.</li>
   <li>STL containers have private implementations that don't allow you to work with their data in a portable way, yet sometimes this is an important thing to be able to do (e.g. node pools).</li>
   <li>All existing versions of STL allocate memory in empty versions of at least some of their containers. This is not ideal and prevents optimizations such as container memory resets that can greatly increase performance in some situations.</li>
   <li>The STL is slow to compile, as most modern STL implementations are very large.<br>
@@ -749,11 +749,11 @@ functions)?</p>
 </p>
 <p class="faq-answer">For VC++ EASTL should compile without warnings on level 4, and should compile without warnings for &quot;warnings disabled by default&quot; except C4242, C4514, C4710, C4786, and C4820. These latter warnings are somewhat draconian and most EA projects have little choice but to leave them disabled.</p>
 <p class="faq-answer">For GCC, EASTL should compile without warnings with -Wall. Extensive testing beyond that hasn't been done.</p>
-<p class="faq-answer">However, due to the nature of templated code generation and due to the way compilers compile templates, unforeseen warnings may occur in user code that may or may not be addressible by modifying EASTL.</p>
+<p class="faq-answer">However, due to the nature of templated code generation and due to the way compilers compile templates, unforeseen warnings may occur in user code that may or may not be addressable by modifying EASTL.</p>
 <p class="faq-question"><a name="Info.13"></a>Info.13
   Is EASTL compatible with Lint?
 </p>
-<p class="faq-answer">As of EASTL 1.0, minimal lint testing has occurred. Testing with the November 2005 release of Lint (8.00t) demonstrated bugs in Lint that made its analysisnot very useful. For example, Lint seems to get confused about the C++ typename keyword and spews many errors with code that uses it. We will work with the makers of Lint to get this resolved so that Lint can provide useful information about EASTL.</p>
+<p class="faq-answer">As of EASTL 1.0, minimal lint testing has occurred. Testing with the November 2005 release of Lint (8.00t) demonstrated bugs in Lint that made its analysis not very useful. For example, Lint seems to get confused about the C++ typename keyword and spews many errors with code that uses it. We will work with the makers of Lint to get this resolved so that Lint can provide useful information about EASTL.</p>
 <p class="faq-question"><a name="Info.14"></a>Info.14
   What compiler settings do I need to compile EASTL?
 </p>
@@ -763,7 +763,7 @@ functions)?</p>
 How hard is it to incorporate EASTL into my project?</p>
 <p>It's probably trivial.<br>
   <br>
-EASTL has only one dependency: EABase. And EASTL auto-configures itself for most compiler environments and for the most typical configuration choices. Since it is fairly highly warning-free, you won't likely need to modify your compiler warning settings, even if they're pretty stict. EASTL has a few .cpp files which need to be compiled if you want to use the modules associated with those files. You can just compile those files with your regular compiler settings. Alternatively, you can use one of the EASTL project files.<br>
+EASTL has only one dependency: EABase. And EASTL auto-configures itself for most compiler environments and for the most typical configuration choices. Since it is fairly highly warning-free, you won't likely need to modify your compiler warning settings, even if they're pretty strict. EASTL has a few .cpp files which need to be compiled if you want to use the modules associated with those files. You can just compile those files with your regular compiler settings. Alternatively, you can use one of the EASTL project files.<br>
 <br>
 In its default configuration, the only thing you need to provide to make EASTL work is to define implementations of the following operator new functions:</p>
 <pre class="code-example">#include &lt;new&gt;<br>
@@ -779,7 +779,7 @@ Should I use EASTL instead of std STL or instead of my custom&nbsp;library?</p>
 <div class="faq-answer" style="margin-left: 40px;"><span style="font-family: Courier New,Courier,monospace;">+</span> Has higher performance than any commercial STL, especially on console platforms.<br>
   <span style="font-family: Courier New,Courier,monospace;">+</span> Has extended functionality tailored for game development.<br>
   <span style="font-family: Courier New,Courier,monospace;">+</span> Is highly configurable, and we own it so it can be amended at will. Std STL is owned by a third party committee.<br>
-  <span style="font-family: Courier New,Courier,monospace;">+</span> Is much easier to read and debug than other similar libraries, especiallly std STL.<br>
+  <span style="font-family: Courier New,Courier,monospace;">+</span> Is much easier to read and debug than other similar libraries, especially std STL.<br>
   <br>
   <span style="font-family: Courier New,Courier,monospace;">-</span> Is highly unit tested, but does not have the same level as std STL.<br>
   <span style="font-family: Courier New,Courier,monospace;">-</span> Is more complicated than many users' lite template libraries, and may put off some beginners.<br>
@@ -817,7 +817,7 @@ There are various levels of bugs that can occur, which include the following: </
   <li>Runtime misbehavior by EASTL (function does the wrong thing).</li>
   <li>Runtime crash or data corruption by EASTL.</li>
   <li>Mismatch between EASTL documentation and behavior.</li>
-  <li>Mismatch between EASTL behavior and user's expections (mis-design).</li>
+  <li>Mismatch between EASTL behavior and user's expectations (mis-design).</li>
 </ol>
 <p class="faq-answer">Any of the above items can be the fault of EASTL. However, the first four can also be the fault of the user. Your primary goal in verifying a potential bug is to determine if it is an EASTL bug or a user bug. Template errors can sometimes be hard to diagnose. It's probably best if you first show the problem to somebody you know to make sure you are not missing something obvious. Creating a reproducible case may be useful in helping convince yourself, but as is mentioned below, this is not required in order to report the bug.<br>
   <br>
@@ -832,7 +832,7 @@ In reporting a bug, it is nice if there is a simple reproducible case that can b
 </h2>
 
 <p class="faq-question"><a name="Perf.1"></a>Perf.1 How efficient is EASTL compared to standard C++ STL implementations?</p>
-<p class="faq-answer">With respect to the functionality that is equivalent between EASTL and standard STL, the short answer to this is that EASTL is as at least as efficient as othe STL implementations and in a number of aspects is more so. EASTL has functionality such as intrusive_list and linked_ptr that don't exist in standard STL but are explicitly present to provide significant optimizations over standard STL.</p>
+<p class="faq-answer">With respect to the functionality that is equivalent between EASTL and standard STL, the short answer to this is that EASTL is as at least as efficient as other STL implementations and in a number of aspects is more so. EASTL has functionality such as intrusive_list and linked_ptr that don't exist in standard STL but are explicitly present to provide significant optimizations over standard STL.</p>
 <p class="faq-answer">The medium length answer is that EASTL is significantly more efficient than Dinkumware STL, and Microsoft Windows STL. EASTL is generally more efficient than Metrowerks STL, but Metrowerks has a few tricks up its sleeve which EASTL doesn't currently implement. EASTL is roughly equal in efficiency to STLPort and GCC 3.x+ STL, though EASTL has some optimizations that these do not.</p>
 <p class="faq-answer">The long answer requires a breakdown of the functionality between various versions of the STL.</p>
 
@@ -866,7 +866,7 @@ would result in a generally unacceptable string interface.</p>
 <ul>
   <li>A reference count needs to exist with the string, which increases string memory usage.</li>
   <li>With thread safety, atomic operations and mutex locks are expensive, especially on weaker memory systems such as console gaming platforms.</li>
-  <li>All non-const string accessor functions need to do a sharing check the the first such check needs to detach the string. Similarly, all string assignments need to do a sharing check as well. If you access the string before doing an assignment, the assignment doesn't result in a shared string, because the string has already been detached.</li>
+  <li>All non-const string accessor functions need to do a sharing check and the first such check needs to detach the string. Similarly, all string assignments need to do a sharing check as well. If you access the string before doing an assignment, the assignment doesn't result in a shared string, because the string has already been detached.</li>
   <li>String sharing doesn't happen the large majority of the time. In some cases, the total sum of the reference count memory can exceed any memory savings gained by the strings that share representations.</li>
 </ul>
 <p class="faq-answer">The addition of a cow_string class is under consideration for EASTL. There are conceivably some systems which have string usage patterns which would benefit from CoW sharing. Such functionality is best saved for a separate string implementation so that the other string uses aren't penalized.</p>
@@ -894,7 +894,7 @@ double min(const double a, const double b)
 <p class="faq-answer">Imagine this same effect happening with containers such as list and map and you can see how it is that templates can cause code proliferation.</p>
 <p class="faq-answer">A couple things offset the possibility of code proliferation: inlining and folding. In practice the above 'min' function would be converted to&nbsp;inlined functions by the compiler which occupy only a few CPU instructions. In many of the simplest cases the inlined version actually occupies less code than the code required to push parameters on the stack and execute a function call. And they will execute much faster as well.</p>
 <p class="faq-answer">Code folding (a.k.a. &quot;COMDAT folding&quot;, &quot;duplicate stripping&quot;, &quot;ICF&quot; / &quot;identical code folding&quot;) is a compiler optimization whereby the compiler realizes that two independent functions have compiled to the same code and thus can be reduced to a single function. The Microsoft VC++ compiler (Since VS2005), and GCC (v 4.5+) can do these kinds of optimizations on all platforms. This can result, for example, in all templated containers of pointers (e.g. vector&lt;char*&gt;, vector&lt;Widget*&gt;, etc.) to be linked as a single implementation. This folding occurs at a function level and so individual member functions can be folded while other member functions are not. A side effect of this optimization is that you aren't likely to gain much much declaring containers of void* instead of the pointer type actually contained.</p>
-<p class="faq-answer">The above two features reduce the extent of code proliferation, but certainly don't eliminate it. What you need to think about is how much code might be generated vs. what your alternatives are. Containers like vector can often inline completely away, whereas more complicated containers such as map can only partially be inlined. In the case of map, if you need an such a container for your Widgets, what alternatives do you have that would be more efficient than instantiating a map? This is up to you to answer.</p>
+<p class="faq-answer">The above two features reduce the extent of code proliferation, but certainly don't eliminate it. What you need to think about is how much code might be generated vs. what your alternatives are. Containers like vector can often inline completely away, whereas more complicated containers such as map can only partially be inlined. In the case of map, if you need such a container for your Widgets, what alternatives do you have that would be more efficient than instantiating a map? This is up to you to answer.</p>
 <p class="faq-answer">It's important to note that C++ compilers will throw away any templated functions that aren't used, including unused member functions of templated classes. However, some argue that by having many functions available to the user that users will choose to use that larger function set rather than stick with a more restricted set.</p>
 <p class="faq-answer">Also, don't be confused by syntax bloat vs. code bloat. In looking at templated libraries such as EASTL you will notice that there is sometimes a lot of text in the definition of a template implementation. But the actual underlying code is what you need to be concerned about.</p>
 <p class="faq-answer">There is a good Usenet discussion on this topic at: <small><a href=
@@ -953,12 +953,12 @@ How well does EASTL inline?</p>
 <pre class="code-example">reference operator[](size_type n) {
 &nbsp;&nbsp;&nbsp;&nbsp;return *(mpBegin + n);
 }</pre>
-<span class="faq-answer">Both implementations are correct, but hte EASTL implementation will run faster in debug builds, be easier to debug, and will be more likely to be inlined when the usage of this function is within a hierarchy of other functions being inlined. It is not so simple to say that the Microsoft version will always inline in an optimized build, as it could be part of a chain and cause the max depth to be exceeded.<br>
+<span class="faq-answer">Both implementations are correct, but the EASTL implementation will run faster in debug builds, be easier to debug, and will be more likely to be inlined when the usage of this function is within a hierarchy of other functions being inlined. It is not so simple to say that the Microsoft version will always inline in an optimized build, as it could be part of a chain and cause the max depth to be exceeded.<br>
 <br>
 That being said, EASTL appears to inline fairly well under most circumstances, including with GCC, which is the poorest of the compilers in its ability to inline well.</span>
 <p class="faq-question"><a name="Perf.11"></a>Perf.11
 How do I control function inlining?</p>
-<p class="faq-answer">Inlining is an important topic for templated code, as such code often relies on the compiler being able to do good function inlining for maximum performance. GCC,&nbsp;VC++, and Metrowerks are discussed here. We discuss compilation-level inlining and function-level inling here, though the latter is likely to be of more use to the user of EASTL, as it can externally control how EASTL is inlined. A related topic is GCC's template expansion depth, discussed <a href=
+<p class="faq-answer">Inlining is an important topic for templated code, as such code often relies on the compiler being able to do good function inlining for maximum performance. GCC,&nbsp;VC++, and Metrowerks are discussed here. We discuss compilation-level inlining and function-level inlining here, though the latter is likely to be of more use to the user of EASTL, as it can externally control how EASTL is inlined. A related topic is GCC's template expansion depth, discussed <a href=
 "file:///f:/Projects/SharedProjects/Core/EASTL/doc/EASTL%20FAQ.html#29">elsewhere</a> in this FAQ. We provide descriptions of inlining options here but don't currently have any advice on how to best use these with EASTL.</p>
 <p class="faq-answer">Compilation-Level Inlining -- VC++</p>
 <p class="faq-answer">VC++ has some basic functionality to control inlining, and the compiler is pretty good at doing aggressive inlining when optimizing on for all platforms.</p>
@@ -1034,7 +1034,7 @@ How do I control function inlining?</p>
         Specifies maximum recursion depth used by the recursive inlining. For functions declared inline --param max-inline-recursive-depth is taken into acount. For function not declared inline, recursive inlining happens only when -finline-functions (included in -O3) is enabled and --param max-inline-recursive-depth-auto is used. The default value is 450.<br>
         <br>
         inline-call-cost<br>
-        Specify cost of call instruction relative to simple arithmetics operations (having cost of 1). Increasing this cost disqualify inlinining of non-leaf functions and at same time increase size of leaf function that is believed to reduce function size by being inlined. In effect it increase amount of inlining for code having large abstraction penalty (many functions that just pass the argumetns to other functions) and decrease inlining for code with low abstraction penalty. Default value is 16.</td>
+        Specify cost of call instruction relative to simple arithmetics operations (having cost of 1). Increasing this cost disqualify inlining of non-leaf functions and at same time increase size of leaf function that is believed to reduce function size by being inlined. In effect it increase amount of inlining for code having large abstraction penalty (many functions that just pass the arguments to other functions) and decrease inlining for code with low abstraction penalty. Default value is 16.</td>
     </tr>
     <tr>
       <td>-finline-limit=n </td>
@@ -1107,10 +1107,10 @@ How do I control function inlining?</p>
   C++ / EASTL seems to bloat my .obj files much more than C does.
 </p>
 <p class="faq-answer">There is no need to worry. The way most C++ compilers compile templates, they compile all seen template code into the current .obj module, which results in larger .obj files and duplicated template code in multiple .obj files. However, the linker will (and in fact must) select only a single version of any given function for the application, and these linked functions will usually be located contiguously.</p>
-<p class="faq-answer">Additionally, the debug information for template definitions is usually larger than that for non-templated C++ definitions, which itself is sometimes larger than C defintions due to name decoration.</p>
+<p class="faq-answer">Additionally, the debug information for template definitions is usually larger than that for non-templated C++ definitions, which itself is sometimes larger than C definitions due to name decoration.</p>
 <p class="faq-question"><a name="Perf.13"></a>Perf.13
 What are the best compiler settings for EASTL?</p>
-<p class="faq-answer">We will discuss various aspects of this topic here. As of this writing, more EASTL research on this topic has been done on Microsoft compiler platforms (e.g. Win32) than GCC platforms. Thus currently this discussion focuses on VC++ optimization. Some of the concepts are applicable to GCC, though. EASTL has been sucessfully compiled and tested (the EASTL unit test) on our major development platforms with the highest optimization settings enabled, including GCC's infamous -O3 level.<br>
+<p class="faq-answer">We will discuss various aspects of this topic here. As of this writing, more EASTL research on this topic has been done on Microsoft compiler platforms (e.g. Win32) than GCC platforms. Thus currently this discussion focuses on VC++ optimization. Some of the concepts are applicable to GCC, though. EASTL has been successfully compiled and tested (the EASTL unit test) on our major development platforms with the highest optimization settings enabled, including GCC's infamous -O3 level.<br>
 <br>
 <span style="font-weight: bold;">Optimization Topics</span></p>
 <ul>
@@ -1410,7 +1410,7 @@ void DoSomething()
   <li class="faq-answer"> The specification for how to handle NULL is simple for some cases but not simple for others. Operator &lt; below a case where the proper handling of it in a consistent way is not simple, as all comparison code (&lt;, &gt;, ==, !=, &gt;=, &lt;=) in EASTL must universally and consistently handle the case where either or both sides are NULL. A NULL string seems similar to an empty string, but doesn't always work out so simply.</li>
   <li class="faq-answer">What about other invalid string pointers? NULL is merely one invalid value of many, with its only distinction being that sometimes it's intentionally NULL (as opposed to being NULL due to not being initialized). </li>
   <li class="faq-answer"> How and where to implement the NULL checks in such a way as to do it efficiently is not always simple, given that public functions call public functions. </li>
-  <li class="faq-answer">It's arguable (and in fact the the intent of the C++ standard library) that using pointers that are NULL is a user/app mistake. If we really want to be safe then we should be using string objects for everything. You may not  entirely buy this argument in practice, but on the other hand one might ask why is the caller of EASTL using a NULL pointer in the first place? The answer of course is that somebody gave it to him. </li>
+  <li class="faq-answer">It's arguable (and in fact the intent of the C++ standard library) that using pointers that are NULL is a user/app mistake. If we really want to be safe then we should be using string objects for everything. You may not  entirely buy this argument in practice, but on the other hand one might ask why is the caller of EASTL using a NULL pointer in the first place? The answer of course is that somebody gave it to him. </li>
 </ul>
 <h2>Debug</h2>
 <p class="faq-question"><a name="Debug.1"></a>Debug.1
@@ -1841,8 +1841,8 @@ In the custom allocator case, you will want to create a memory pool and assign i
 
 MemoryPool myPool(sizeof(WidgetList::node_type), 100); // Make a pool of 100 Widget nodes.
 WidgetList myList(&amp;myPool);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create a list that uses the pool.</pre>
-<p class="faq-answer">In the case of containers that are array-based, such as vector and basic_string, memory pools don't work very well as these containers work on a realloc-basis instead of by adding incremental nodes. What what want to do with these containers is assign a sufficient block of memory to them and&nbsp;reserve() the container's capacity to the size of the memory.</p>
-<p class="faq-answer">In the case of mixed containers which are partly array-based and partly node based, such as hash containers and deque, you can use a memory pool for the nodes but will need a single array block to supply for the buckets (hash containers and deque both use a bucket-like system).</p>
+<p class="faq-answer">In the case of containers that are array-based, such as vector and basic_string, memory pools don't work very well as these containers work on a realloc-basis instead of by adding incremental nodes. What we want to do with these containers is assign a sufficient block of memory to them and&nbsp;reserve() the container's capacity to the size of the memory.</p>
+<p class="faq-answer">In the case of mixed containers which are partly array-based and partly node-based, such as hash containers and deque, you can use a memory pool for the nodes but will need a single array block to supply for the buckets (hash containers and deque both use a bucket-like system).</p>
 <p class="faq-answer">You might consider using eastl::fixed_pool as such an allocator, as it provides such functionality and allows the user to provide the actual memory used for the pool. Here is some example code:</p>
 <pre class="code-example">char buffer[256];
 
@@ -2216,7 +2216,7 @@ How do I write a comparison (operator&lt;()) for a struct that contains two or m
 &nbsp;&nbsp;&nbsp; return (a.mType &lt; b.mType);
 }</pre>
 <p class="faq-answer">And a somewhat messy implementation if you wanted to use only operator &lt;.</p>
-<p class="faq-answer">Note also that you can use the above technique to implement operator &lt; for spatial types such as vectors, points, and rectangles. You would simply treat the members of the stuct as an array of values and ignore the fact that they have spatial meaning. All operator &lt; cares about is that things order consistently.</p>
+<p class="faq-answer">Note also that you can use the above technique to implement operator &lt; for spatial types such as vectors, points, and rectangles. You would simply treat the members of the struct as an array of values and ignore the fact that they have spatial meaning. All operator &lt; cares about is that things order consistently.</p>
 <pre class="code-example">bool operator&lt;(const Point2D&amp; a, const Point2D&amp; b) {
 &nbsp;&nbsp;&nbsp; return (a.x == b.x) ? (a.y &lt; b.y) : (a.x &lt; b.x);
 }</pre>
@@ -2253,7 +2253,7 @@ find_if(container.begin(), container.end(),&nbsp;dereferenced_equal&lt;Widget&gt
 <p class="faq-question"><a name="Algo.7"></a>Algo.7
 When do stored objects need to support <small><span style="font-family: Courier New;">operator &lt;</span></small> vs. when do they need to support <small><span style="font-family: Courier New;">operator ==</span></small>?</p>
 <p class="faq-answer">Any object which is sorted needs to have operator &lt; defined for it, implicitly via operator &lt; or explicitly via a user-supplied Compare function. Sets and map containers require operator &lt;, while sort, binary search, and min/max algorithms require operator &lt;.</p>
-<p class="faq-answer">Any object which is compareed for equality needs to have operator == defined for it, implicitly via operator == or explicitly via a user-supplied BinaryPredicate function. Hash containers required operator ==, while many of the algorithms other than those mentioned above for operator &lt; require operator ==.</p>
+<p class="faq-answer">Any object which is compared for equality needs to have operator == defined for it, implicitly via operator == or explicitly via a user-supplied BinaryPredicate function. Hash containers required operator ==, while many of the algorithms other than those mentioned above for operator &lt; require operator ==.</p>
 <p class="faq-answer">Some algorithms and containers require neither &lt; nor ==. Interestingly, no algorithm or container requires both &lt; and ==.</p>
 <p class="faq-question"><a name="Algo.8"></a>Algo.8 How do I sort via pointers or array indexes instead of objects directly?</p>
 <p class="faq-answer">Pointers </p>
