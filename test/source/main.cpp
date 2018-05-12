@@ -137,6 +137,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);
 	testSuite.AddTest("TupleVector", TestTupleVector);
+	testSuite.AddTest("FixedTupleVector", TestFixedTupleVector);
 
 	nErrorCount += testSuite.Run();
 
