@@ -542,7 +542,7 @@ template<typename... Ts>
 template<size_t I>
 tuplevec_element_t<I, Ts...>* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<I, tuple_vector<Ts...>::Impl, Ts...>(mImpl);
+	return TupleVecInternal::get<I, Impl, Ts...>(mImpl);
 }
 
 template<typename... Ts>
