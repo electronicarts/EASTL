@@ -34,11 +34,11 @@ namespace eastl
 template <typename... Ts>
 class tuple_vector;
 
-template <size_t I, typename TupleVector>
+template <size_t I, typename... Ts>
 struct tuplevec_element;
 
-template <size_t I, typename TupleVector>
-using tuplevec_element_t = typename tuplevec_element<I, TupleVector>::type;
+template <size_t I, typename... Ts>
+using tuplevec_element_t = typename tuplevec_element<I, Ts...>::type;
 
 namespace TupleVecInternal
 {
@@ -56,34 +56,23 @@ namespace TupleVecInternal
 }
 
 // tuplevec_element helper to be able to isolate a type given an index
-template <size_t I, typename T>
-struct tuplevec_element
-{
-};
-
-// attempt to isolate type given an index
 template <size_t I>
-struct tuplevec_element<I, tuple_vector<>>
+struct tuplevec_element<I>
 {
 	static_assert(I != I, "tuplevec_element index out of range");
 };
 
 template <typename T, typename... Ts>
-struct tuplevec_element<0, tuple_vector<T, Ts...>>
+struct tuplevec_element<0, T, Ts...>
 {
 	tuplevec_element() = delete; // tuplevec_element should only be used for compile-time assistance, and never be instantiated
 	typedef T type;
 };
 
 template <size_t I, typename T, typename... Ts>
-struct tuplevec_element<I, tuple_vector<T, Ts...>>
+struct tuplevec_element<I, T, Ts...>
 {
-	typedef tuplevec_element_t<I - 1, tuple_vector<Ts...>> type;
-};
-
-template <typename Allocator, size_t I, typename Indices, typename... Ts>
-struct tuplevec_element<I, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_element<I, tuple_vector<Ts...>>
-{
+	typedef tuplevec_element_t<I - 1, Ts...> type;
 };
 
 // attempt to isolate index given a type
@@ -137,6 +126,11 @@ struct TupleRecurser<>
 		return 0;
 	}
 
+	static constexpr size_t GetTotalAllocationSize(size_t capacity, size_t offset)
+	{
+		return offset;
+	}
+
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
 	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
@@ -154,6 +148,14 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	static constexpr size_t GetTotalAlignment()
 	{
 		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
+	}
+
+	static constexpr size_t GetTotalAllocationSize(size_t capacity, size_t offset)
+	{
+		size_t alignment = alignof(T);
+		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
+		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
+		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetEnd);
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
@@ -334,17 +336,17 @@ private:
 
 };
 
-template <size_t I, typename TupleVecType>
-tuplevec_element_t<I, TupleVecType>* get(TupleVecType& t)
+template <size_t I, typename TupleVecImplType, typename... Ts>
+tuplevec_element_t<I, Ts...>* get(TupleVecImplType& t)
 {
-	typedef tuplevec_element_t<I, TupleVecType> Element;
+	typedef tuplevec_element_t<I, Ts...> Element;
 	return t.TupleVecLeaf<I, Element>::mpData;
 }
 
-template <typename T, typename TupleVecType>
-T* get(TupleVecType& t)
+template <typename T, typename TupleVecImplType>
+T* get(TupleVecImplType& t)
 {
-	typedef tuplevec_index<T, TupleVecType> Index;
+	typedef tuplevec_index<T, TupleVecImplType> Index;
 	return t.TupleVecLeaf<Index::index, T>::mpData;
 }
 
@@ -477,7 +479,7 @@ public:
 	void reserve(size_t n);
 
 	template<size_t I>
-	tuplevec_element_t<I, tuple_vector<Ts...>>* get();
+	tuplevec_element_t<I, Ts...>* get();
 
 	template<typename T>
 	T* get();
@@ -538,9 +540,9 @@ void tuple_vector<Ts...>::reserve(size_t n)
 
 template<typename... Ts>
 template<size_t I>
-tuplevec_element_t<I, tuple_vector<Ts...>>* tuple_vector<Ts...>::get()
+tuplevec_element_t<I, Ts...>* tuple_vector<Ts...>::get()
 {
-	return TupleVecInternal::get<I>(mImpl);
+	return TupleVecInternal::get<I, tuple_vector<Ts...>::Impl, Ts...>(mImpl);
 }
 
 template<typename... Ts>
