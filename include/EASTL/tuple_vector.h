@@ -140,6 +140,10 @@ struct TupleRecurser<>
 		void* ptr = capacity ? allocate_memory(vec.mAllocator, offset, alignment, 0) : nullptr;
 		return make_pair(ptr, offset);
 	}
+
+	template<typename TupleVecImplType, size_t I>
+	static void SetNewData(TupleVecImplType &vec, void* pData, size_t capacity, size_t offset) 
+	{ }
 };
 
 template <typename T, typename... Ts>
@@ -152,22 +156,35 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 
 	static constexpr size_t GetTotalAllocationSize(size_t capacity, size_t offset)
 	{
-		size_t alignment = alignof(T);
-		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
-		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetEnd);
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetRange.second);
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
 	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetRange.second);
+		void* pDest = (char*)(allocation.first) + offsetRange.first;
+		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
+		return allocation;
+	}
+
+	template<typename TupleVecImplType, size_t I>
+	static void SetNewData(TupleVecImplType &vec, void* pData, size_t capacity, size_t offset)
+	{
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		vec.TupleVecLeaf<I, T>::mpData = (T*)((char*)pData + offsetRange.first);
+		TupleRecurser<Ts...>::SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
+	}
+
+private:
+	static constexpr pair<size_t, size_t> CalculateAllocationOffsetRange(size_t offset, size_t capacity)
+	{
 		size_t alignment = alignof(T);
 		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
 		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetEnd);
-		void* pDest = (char*)(allocation.first)+offsetBegin;
-		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
-		return allocation;
+		return pair<size_t, size_t>(offsetBegin, offsetEnd);
 	}
 };
 
@@ -237,6 +254,7 @@ template <typename Allocator, size_t... Indices, typename... Ts>
 class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 	typedef Allocator    allocator_type;
+	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> this_type;
 
 public:
 	typedef eastl_size_t size_type;
@@ -247,6 +265,11 @@ public:
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
 	{}
+	TupleVecImpl(const allocator_type& allocator, void* pData, size_t capacity)
+		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity)
+	{
+		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, pData, mNumCapacity, 0);
+	}
 	~TupleVecImpl()
 	{ 
 		if (mpData)
