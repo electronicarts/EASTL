@@ -129,7 +129,7 @@
 </tr>
 <tr>
 <td>27</td>
-<td><a href="#Best.27">Consider using reset() for fast container teardown.</a></td>
+<td><a href="#Best.27">Consider using reset_lose_memory() for fast container teardown.</a></td>
 </tr>
 <tr>
 <td>28</td>
@@ -953,13 +953,13 @@ Pass and return containers by reference instead of value.</p>
 }</p>
 <p class="faq-answer">The problem with the above is that widgetList is passed by value and not by reference. Thus the a copy of the container is made and passed instead of a reference of the container being passed. This may seem obvious to some but this happens periodically and the compiler gives no warning and the code will often execute properly, but inefficiently. Of course there are some occasions where you really do want to pass values instead of references.</p>
 <p class="faq-question"><a name="Best.27"></a>27
-Consider using reset() for fast container teardown.</p>
+Consider using reset_lose_memory() for fast container teardown.</p>
 <p class="faq-answer">EASTL containers have a reset function which unilaterally resets the container to a newly constructed state. The contents of the container are forgotten; no destructors are called and no memory is freed. This is a risky but power function for the purpose of implementing very fast temporary containers. There are numerous cases in high performance programming when you want to create a temporary container out of a scratch buffer area, use the container, and then just &quot;vaporize&quot; it, as it would be waste of time to go through the trouble of clearing the container and destroying and freeing the objects. Such functionality is often used with hash tables or maps and with a stack allocator (a.k.a. linear allocator).</p>
 <p class="faq-answer">Here's an example of usage of the reset function and a PPMalloc-like StackAllocator:</p>
 <p class="code-example">pStackAllocator-&gt;push_bookmark();<br>
   hash_set&lt;Widget, less&lt;Widget&gt;, StackAllocator&gt; wSet(pStackAllocator);<br>
 &lt;use wSet&gt;<br>
-  wSet.reset();<br>
+  wSet.reset_lose_memory();<br>
   pStackAllocator-&gt;pop_bookmark();</p>
 <p></p>
 <p class="faq-question">  <a name="Best.28"></a>28
