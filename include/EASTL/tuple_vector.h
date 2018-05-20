@@ -51,7 +51,7 @@ namespace TupleVecInternal
 	template <size_t I, typename... Ts>
 	struct TupleIndexRecurser;
 
-	template < typename... Ts>
+	template <typename AllocatorType, typename... Ts>
 	struct TupleVecIter;
 }
 
@@ -140,6 +140,10 @@ struct TupleRecurser<>
 		void* ptr = capacity ? allocate_memory(vec.mAllocator, offset, alignment, 0) : nullptr;
 		return make_pair(ptr, offset);
 	}
+
+	template<typename TupleVecImplType, size_t I>
+	static void SetNewData(TupleVecImplType &vec, void* pData, size_t capacity, size_t offset) 
+	{ }
 };
 
 template <typename T, typename... Ts>
@@ -152,22 +156,35 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 
 	static constexpr size_t GetTotalAllocationSize(size_t capacity, size_t offset)
 	{
-		size_t alignment = alignof(T);
-		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
-		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetEnd);
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetRange.second);
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
 	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
 	{
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetRange.second);
+		void* pDest = (char*)(allocation.first) + offsetRange.first;
+		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
+		return allocation;
+	}
+
+	template<typename TupleVecImplType, size_t I>
+	static void SetNewData(TupleVecImplType &vec, void* pData, size_t capacity, size_t offset)
+	{
+		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		vec.TupleVecLeaf<I, T>::mpData = (T*)((char*)pData + offsetRange.first);
+		TupleRecurser<Ts...>::SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
+	}
+
+private:
+	static constexpr pair<size_t, size_t> CalculateAllocationOffsetRange(size_t offset, size_t capacity)
+	{
 		size_t alignment = alignof(T);
 		size_t offsetBegin = (offset + alignment - 1) & (~alignment + 1);
 		size_t offsetEnd = offsetBegin + sizeof(T) * capacity;
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetEnd);
-		void* pDest = (char*)(allocation.first)+offsetBegin;
-		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
-		return allocation;
+		return pair<size_t, size_t>(offsetBegin, offsetEnd);
 	}
 };
 
@@ -237,6 +254,7 @@ template <typename Allocator, size_t... Indices, typename... Ts>
 class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 	typedef Allocator    allocator_type;
+	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> this_type;
 
 public:
 	typedef eastl_size_t size_type;
@@ -247,6 +265,11 @@ public:
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
 	{}
+	TupleVecImpl(const allocator_type& allocator, void* pData, size_t capacity)
+		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity)
+	{
+		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, pData, mNumCapacity, 0);
+	}
 	~TupleVecImpl()
 	{ 
 		if (mpData)
@@ -355,19 +378,19 @@ T* get(TupleVecImplType& t)
 // While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
 // storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
 
-template <typename... Ts>
+template <typename AllocatorType, typename... Ts>
 struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 private:
-	typedef TupleVecIter<Ts...> this_type;
-
+	typedef TupleVecIter<AllocatorType, Ts...> this_type;
+	typedef TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> vec_impl_type;
 public:
 	TupleVecIter() = default;
-	TupleVecIter(tuple_vector<Ts...>& tupleVec, size_t index)
+	TupleVecIter(vec_impl_type& tupleVec, size_t index)
 		: mTupleVec(&tupleVec), mIndex(index) { }
 
-	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
-	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && get<0, vec_impl_type, Ts...>(*mTupleVec) == get<0, vec_impl_type, Ts...>(*other.mTupleVec); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || get<0, vec_impl_type, Ts...>(*mTupleVec) != get<0, vec_impl_type, Ts...>(*other.mTupleVec); }
 	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
 
 	this_type& operator++() { ++mIndex; return *this; }
@@ -426,32 +449,26 @@ private:
 	template <size_t... Indices>
 	value_type MakeValue(integer_sequence<size_t, Indices...> indices)
 	{
-		return value_type(mTupleVec->get<Indices>()[mIndex]...);
+		return value_type(get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
 	}
 
 	template <size_t... Indices>
 	reference MakeReference(integer_sequence<size_t, Indices...> indices)
 	{
-		return reference(mTupleVec->get<Indices>()[mIndex]...);
+		return reference(get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
 	}
 
 	template <size_t... Indices>
 	pointer MakePointer(integer_sequence<size_t, Indices...> indices)
 	{
-		return pointer(&mTupleVec->get<Indices>()[mIndex]...);
+		return pointer(&get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
 	}
 
 	size_t mIndex = 0;
-	tuple_vector<Ts...> *mTupleVec = nullptr;
+	vec_impl_type *mTupleVec = nullptr;
 };
 
 }  // namespace TupleVecInternal
-
-//template <typename... Ts>
-//void iter_swap(TupleVecInternal::TupleVecIter<Ts...>& a, TupleVecInternal::TupleVecIter<Ts...>& b)
-//{
-//	TupleVecInternal::TupleIndexRecurser<sizeof...(Ts)-1, Ts... >::DoSwap(a.mTupleVec->mImpl, b.mTupleVec->mImpl, a.mIndex, b.mIndex);
-//}
 
 // External interface of tuple_vector
 template <typename... Ts>
@@ -461,7 +478,7 @@ private:
 	typedef TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
 
 public:
-	typedef TupleVecInternal::TupleVecIter<Ts...> iterator;
+	typedef TupleVecInternal::TupleVecIter<EASTLAllocatorType, Ts...> iterator;
 	typedef typename Impl::size_type size_type;
 
 	EA_CONSTEXPR tuple_vector() = default;
@@ -523,13 +540,13 @@ typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
 template <typename... Ts>
 typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::begin()
 {
-	return tuple_vector<Ts...>::iterator(*this, 0);
+	return tuple_vector<Ts...>::iterator(mImpl, 0);
 }
 
 template <typename... Ts>
 typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::end()
 {
-	return tuple_vector<Ts...>::iterator(*this, size());
+	return tuple_vector<Ts...>::iterator(mImpl, size());
 }
 
 template <typename...Ts>

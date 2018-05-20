@@ -40,6 +40,7 @@ int TestFixedMap();
 int TestFixedSList();
 int TestFixedSet();
 int TestFixedString();
+int TestFixedTupleVector();
 int TestFixedVector();
 int TestFunctional();
 int TestHash();
