@@ -25,7 +25,7 @@ private:
 	typedef aligned_buffer<fixed_allocator_type::kNodesSize, fixed_allocator_type::kNodeAlignment> aligned_buffer_type;
 
 public:
-	typedef TupleVecInternal::TupleVecIter<Ts...> iterator;
+	typedef TupleVecInternal::TupleVecIter<fixed_allocator_type, Ts...> iterator;
 	typedef typename Impl::size_type size_type;
 
 	fixed_tuple_vector();
@@ -95,13 +95,13 @@ typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::size_type fixed_
 template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
 typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::begin()
 {
-	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(*this, 0);
+	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(mImpl, 0);
 }
 
 template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
 typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::end()
 {
-	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(*this, size());
+	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(mImpl, size());
 }
 
 template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
