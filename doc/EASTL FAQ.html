@@ -535,7 +535,7 @@ How does EASTL differ from standard C++ STL?</p>
   <li>allocators work in a simpler way.</li>
   <li>exception handling can be disabled.</li>
   <li>all containers expose/declare their node size, so you can make a node allocator for them.</li>
-  <li>all containers have reset(), which unilaterally forgets their contents.</li>
+  <li>all containers have reset_lose_memory(), which unilaterally forgets their contents.</li>
   <li>all containers have validate() and validate_iterator() functions.</li>
   <li>all containers understand and respect object alignment requirements.</li>
   <li>all containers guarantee no memory allocation upon being newly created as empty.</li>
