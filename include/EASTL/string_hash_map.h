@@ -76,7 +76,7 @@ string_hash_map<T, Hash, Predicate, Allocator>::clear()
 {
 	allocator_type& allocator = base::base_type::get_allocator();
 	for (const_iterator i=base::base_type::begin(), e=base::base_type::end(); i!=e; ++i)
-		allocator.deallocate((void*)i->first, 0);
+		EASTLFree(allocator, (void*)i->first, 0);
 	base::base_type::clear();
 }
 
@@ -86,7 +86,7 @@ string_hash_map<T, Hash, Predicate, Allocator>::clear(bool clearBuckets)
 {
 	allocator_type& allocator = base::base_type::get_allocator();
 	for (const_iterator i=base::base_type::begin(), e=base::base_type::end(); i!=e; ++i)
-		allocator.deallocate((void*)i->first, 0);
+		EASTLFree(allocator, (void*)i->first, 0);
 	base::base_type::clear(clearBuckets);
 }
 
@@ -129,7 +129,7 @@ string_hash_map<T, Hash, Predicate, Allocator>::erase(const_iterator position)
 {
 	const char* key = position->first;
 	iterator result = base::base_type::erase(position);
-	base::base_type::get_allocator().deallocate((void*)key, 0);
+	EASTLFree(base::base_type::get_allocator(), (void*)key, 0);
 	return result;
 }
 
@@ -163,7 +163,7 @@ char*
 string_hash_map<T, Hash, Predicate, Allocator>::strduplicate(const char* str)
 {
 	size_t len = strlen(str);
-	char* result = (char*)base::base_type::get_allocator().allocate(len + 1);
+	char* result = (char*)EASTLAlloc(base::base_type::get_allocator(), (len + 1));
 	memcpy(result, str, len+1);
 	return result;
 }
