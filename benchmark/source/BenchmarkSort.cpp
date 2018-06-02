@@ -431,15 +431,17 @@ namespace
 
 		return 0;
 	}
-
-	// Used in the radix_sort tests below.
-	template <typename T>
-	struct RadixSortElement
+	
+	template <typename integer_type>
+	struct identity_extract_radix_key
 	{
-		typedef T radix_type;
-		radix_type mKey; // eastl::radix_sort requires an unsigned key type.
-	};
+		typedef typename integer_type radix_type;
 
+		const radix_type operator()(const integer_type& x) const
+		{
+			return x;
+		}
+	};
 } // namespace
 
 
@@ -492,7 +494,6 @@ int CompareSortPerformance()
 
 		typedef uint32_t ElementType;
 		typedef eastl::less<ElementType> CompareFunction;
-		typedef RadixSortElement<ElementType> RadixSortElementType;
 
 		eastl::string sOutput;
 		sOutput.set_capacity(100000);
@@ -587,26 +588,12 @@ int CompareSortPerformance()
 								break;
 
 							case sf_radix_sort:
-							{
-								eastl::vector<RadixSortElementType> vr(size);
-								eastl::vector<RadixSortElementType> vrBuffer(size);
-								for (eastl_size_t r = 0; r < size; r++) // Normally you wouldn't need to do this
-								                                        // copying, but it allows this benchmark code to
-								                                        // be cleaner.
-									vr[r].mKey = v[r];
-
 								stopwatch.Restart();
-								eastl::radix_sort<RadixSortElementType*,
-								                  eastl::Internal::extract_radix_key<RadixSortElementType> >(
-								    vr.begin(), vr.end(), &vrBuffer[0]);
+								eastl::radix_sort<ElementType*,
+									identity_extract_radix_key<ElementType> >(
+								    v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
-
-								for (eastl_size_t r = 0; r < size; r++) // Normally you wouldn't need to do this
-								                                        // copying, but it allows this benchmark code to
-								                                        // be cleaner.
-									v[r] = vr[r].mKey;
 								break;
-							}
 
 							case sf_qsort:
 								stopwatch.Restart();
