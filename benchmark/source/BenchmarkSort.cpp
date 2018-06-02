@@ -227,6 +227,7 @@ namespace
 	enum RandomizationType
 	{
 		kRandom,        // Completely random data.
+		kRandomSorted,  // Random values already sorted.
 		kOrdered,       // Already sorted.
 		kMostlyOrdered, // Partly sorted already.
 		kRandomizationTypeCount
@@ -238,6 +239,9 @@ namespace
 		{
 			case kRandom:
 				return "random";
+
+			case kRandomSorted:
+				return "random sorted";
 
 			case kOrdered:
 				return "ordered";
@@ -262,6 +266,16 @@ namespace
 			case kRandom:
 			{
 				eastl::generate(v.begin(), v.end(), rng);
+				break;
+			}
+
+			case kRandomSorted:
+			{
+				// This randomization type differs from kOrdered because the set of values is random (but sorted), in the kOrdered
+				// case the set of values is contiguous (i.e. 0, 1, ..., n) which can have different performance characteristics.
+				// For example, radix_sort performs poorly for kOrdered.
+				eastl::generate(v.begin(), v.end(), rng);
+				eastl::sort(v.begin(), v.end());
 				break;
 			}
 
