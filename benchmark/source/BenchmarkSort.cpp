@@ -323,6 +323,7 @@ namespace
 	template <typename T>
 	struct SlowAssign
 	{
+		typedef T key_type;
 		T x;
 
 		static int nAssignCount;
@@ -358,7 +359,7 @@ namespace
 	};
 
 	template <>
-	int SlowAssign<int32_t>::nAssignCount = 0;
+	int SlowAssign<uint32_t>::nAssignCount = 0;
 
 	template <typename T>
 	bool operator<(const SlowAssign<T>& a, const SlowAssign<T>& b)
@@ -431,11 +432,22 @@ namespace
 
 		return 0;
 	}
+
+	template <typename slow_assign_type>
+	struct slow_assign_extract_radix_key
+	{
+		typedef typename slow_assign_type::key_type radix_type;
+
+		const radix_type operator()(const slow_assign_type& obj) const
+		{
+			return obj.x;
+		}
+	};
 	
 	template <typename integer_type>
 	struct identity_extract_radix_key
 	{
-		typedef typename integer_type radix_type;
+		typedef integer_type radix_type;
 
 		const radix_type operator()(const integer_type& x) const
 		{
@@ -821,15 +833,13 @@ int CompareSortPerformance()
 		// minimizing the amount of movement, some minimize the amount of comparisons, and the
 		// best do a good job of minimizing both.
 		auto sortFunctions = allSortFunctions;
-		// We can't test this radix_sort because what we need isn't exposed.
-		sortFunctions.erase(eastl::remove(sortFunctions.begin(), sortFunctions.end(), sf_radix_sort), sortFunctions.end());
 		// Can't implement this for qsort because the C standard library doesn't expose it.
 		// We could implement it by copying and modifying the source code.
 		sortFunctions.erase(eastl::remove(sortFunctions.begin(), sortFunctions.end(), sf_qsort), sortFunctions.end());
 
 		EA::UnitTest::ReportVerbosity(2, "Sort comparison: Slow assignment speed test\n");
 
-		typedef SlowAssign<int32_t> ElementType;
+		typedef SlowAssign<uint32_t> ElementType;
 		typedef eastl::less<ElementType> CompareFunction;
 
 		eastl::string sOutput;
@@ -921,6 +931,14 @@ int CompareSortPerformance()
 							case sf_shaker_sort:
 								stopwatch.Restart();
 								eastl::shaker_sort(v.begin(), v.end(), CompareFunction());
+								stopwatch.Stop();
+								break;
+
+							case sf_radix_sort:
+								stopwatch.Restart();
+								eastl::radix_sort<ElementType*,
+									slow_assign_extract_radix_key<ElementType> >(
+										v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
 								break;
 
