@@ -227,6 +227,7 @@ namespace
 	enum RandomizationType
 	{
 		kRandom,        // Completely random data.
+		kRandomSorted,  // Random values already sorted.
 		kOrdered,       // Already sorted.
 		kMostlyOrdered, // Partly sorted already.
 		kRandomizationTypeCount
@@ -238,6 +239,9 @@ namespace
 		{
 			case kRandom:
 				return "random";
+
+			case kRandomSorted:
+				return "random sorted";
 
 			case kOrdered:
 				return "ordered";
@@ -262,6 +266,16 @@ namespace
 			case kRandom:
 			{
 				eastl::generate(v.begin(), v.end(), rng);
+				break;
+			}
+
+			case kRandomSorted:
+			{
+				// This randomization type differs from kOrdered because the set of values is random (but sorted), in the kOrdered
+				// case the set of values is contiguous (i.e. 0, 1, ..., n) which can have different performance characteristics.
+				// For example, radix_sort performs poorly for kOrdered.
+				eastl::generate(v.begin(), v.end(), rng);
+				eastl::sort(v.begin(), v.end());
 				break;
 			}
 
@@ -309,6 +323,7 @@ namespace
 	template <typename T>
 	struct SlowAssign
 	{
+		typedef T key_type;
 		T x;
 
 		static int nAssignCount;
@@ -344,7 +359,7 @@ namespace
 	};
 
 	template <>
-	int SlowAssign<int32_t>::nAssignCount = 0;
+	int SlowAssign<uint32_t>::nAssignCount = 0;
 
 	template <typename T>
 	bool operator<(const SlowAssign<T>& a, const SlowAssign<T>& b)
@@ -418,14 +433,27 @@ namespace
 		return 0;
 	}
 
-	// Used in the radix_sort tests below.
-	template <typename T>
-	struct RadixSortElement
+	template <typename slow_assign_type>
+	struct slow_assign_extract_radix_key
 	{
-		typedef T radix_type;
-		radix_type mKey; // eastl::radix_sort requires an unsigned key type.
-	};
+		typedef typename slow_assign_type::key_type radix_type;
 
+		const radix_type operator()(const slow_assign_type& obj) const
+		{
+			return obj.x;
+		}
+	};
+	
+	template <typename integer_type>
+	struct identity_extract_radix_key
+	{
+		typedef integer_type radix_type;
+
+		const radix_type operator()(const integer_type& x) const
+		{
+			return x;
+		}
+	};
 } // namespace
 
 
@@ -478,7 +506,6 @@ int CompareSortPerformance()
 
 		typedef uint32_t ElementType;
 		typedef eastl::less<ElementType> CompareFunction;
-		typedef RadixSortElement<ElementType> RadixSortElementType;
 
 		eastl::string sOutput;
 		sOutput.set_capacity(100000);
@@ -573,26 +600,12 @@ int CompareSortPerformance()
 								break;
 
 							case sf_radix_sort:
-							{
-								eastl::vector<RadixSortElementType> vr(size);
-								eastl::vector<RadixSortElementType> vrBuffer(size);
-								for (eastl_size_t r = 0; r < size; r++) // Normally you wouldn't need to do this
-								                                        // copying, but it allows this benchmark code to
-								                                        // be cleaner.
-									vr[r].mKey = v[r];
-
 								stopwatch.Restart();
-								eastl::radix_sort<RadixSortElementType*,
-								                  eastl::Internal::extract_radix_key<RadixSortElementType> >(
-								    vr.begin(), vr.end(), &vrBuffer[0]);
+								eastl::radix_sort<ElementType*,
+									identity_extract_radix_key<ElementType> >(
+								    v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
-
-								for (eastl_size_t r = 0; r < size; r++) // Normally you wouldn't need to do this
-								                                        // copying, but it allows this benchmark code to
-								                                        // be cleaner.
-									v[r] = vr[r].mKey;
 								break;
-							}
 
 							case sf_qsort:
 								stopwatch.Restart();
@@ -820,15 +833,13 @@ int CompareSortPerformance()
 		// minimizing the amount of movement, some minimize the amount of comparisons, and the
 		// best do a good job of minimizing both.
 		auto sortFunctions = allSortFunctions;
-		// We can't test this radix_sort because what we need isn't exposed.
-		sortFunctions.erase(eastl::remove(sortFunctions.begin(), sortFunctions.end(), sf_radix_sort), sortFunctions.end());
 		// Can't implement this for qsort because the C standard library doesn't expose it.
 		// We could implement it by copying and modifying the source code.
 		sortFunctions.erase(eastl::remove(sortFunctions.begin(), sortFunctions.end(), sf_qsort), sortFunctions.end());
 
 		EA::UnitTest::ReportVerbosity(2, "Sort comparison: Slow assignment speed test\n");
 
-		typedef SlowAssign<int32_t> ElementType;
+		typedef SlowAssign<uint32_t> ElementType;
 		typedef eastl::less<ElementType> CompareFunction;
 
 		eastl::string sOutput;
@@ -920,6 +931,14 @@ int CompareSortPerformance()
 							case sf_shaker_sort:
 								stopwatch.Restart();
 								eastl::shaker_sort(v.begin(), v.end(), CompareFunction());
+								stopwatch.Stop();
+								break;
+
+							case sf_radix_sort:
+								stopwatch.Restart();
+								eastl::radix_sort<ElementType*,
+									slow_assign_extract_radix_key<ElementType> >(
+										v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
 								break;
 
