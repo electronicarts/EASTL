@@ -496,8 +496,8 @@ public:
 	size_type size() { return mImpl.size(); }
 	size_type capacity() { return mImpl.capacity(); }
 	
-	iterator begin() { return tuple_vector<Ts...>::iterator(mImpl, 0); }
-	iterator end() { return tuple_vector<Ts...>::iterator(mImpl, size()); }
+	iterator begin() { return iterator(mImpl, 0); }
+	iterator end() { return iterator(mImpl, size()); }
 
 	void reserve(size_t n) { mImpl.reserve(n); }
 
