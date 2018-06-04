@@ -127,11 +127,13 @@ int TestFixedTupleVector()
 		fixed_tuple_vector<4, false, int> singleElementVec;
 		EATEST_VERIFY(singleElementVec.size() == 0);
 		EATEST_VERIFY(singleElementVec.capacity() == 4);
+		EATEST_VERIFY(singleElementVec.empty() == true);
 		singleElementVec.push_back_uninitialized();
 		singleElementVec.push_back(5);
 		EATEST_VERIFY(singleElementVec.size() == 2);
 		EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
 		EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+		EATEST_VERIFY(singleElementVec.empty() == false);
 
 
 		fixed_tuple_vector<4, true, int, float, bool> complexVec;

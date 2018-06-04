@@ -314,6 +314,11 @@ public:
 		}
 	}
 
+	bool empty() const 
+	{
+		return mNumElements == 0;
+	}
+
 	size_type size() const
 	{
 		return mNumElements;
@@ -483,91 +488,28 @@ public:
 
 	EA_CONSTEXPR tuple_vector() = default;
 	
-	void push_back();
-	void push_back(const Ts&... args);
-	void push_back_uninitialized();
+	void push_back() { mImpl.push_back(); }
+	void push_back(const Ts&... args) { mImpl.push_back(args...);  }
+	void push_back_uninitialized() { mImpl.push_back_uninitialized(); }
 
-	size_type size();
-	size_type capacity();
+	bool empty() { return mImpl.empty(); }
+	size_type size() { return mImpl.size(); }
+	size_type capacity() { return mImpl.capacity(); }
+	
+	iterator begin() { return tuple_vector<Ts...>::iterator(mImpl, 0); }
+	iterator end() { return tuple_vector<Ts...>::iterator(mImpl, size()); }
 
-	iterator begin();
-	iterator end();
-
-	void reserve(size_t n);
+	void reserve(size_t n) { mImpl.reserve(n); }
 
 	template<size_t I>
-	tuplevec_element_t<I, Ts...>* get();
-
+	tuplevec_element_t<I, Ts...>* get() { return TupleVecInternal::get<I, Impl, Ts...>(mImpl); }
 	template<typename T>
-	T* get();
+	T* get() { return TupleVecInternal::get<T>(mImpl); }
 
 private:
 	Impl mImpl;
 
 };
-
-template <typename... Ts>
-void tuple_vector<Ts...>::push_back()
-{
-	mImpl.push_back();
-}
-
-
-template <typename... Ts>
-void tuple_vector<Ts...>::push_back(const Ts&... args)
-{
-	mImpl.push_back(args...);
-}
-
-template <typename... Ts>
-void tuple_vector<Ts...>::push_back_uninitialized()
-{
-	mImpl.push_back_uninitialized();
-}
-
-template <typename... Ts>
-typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::size()
-{
-	return mImpl.size();
-}
-
-template <typename... Ts>
-typename tuple_vector<Ts...>::size_type tuple_vector<Ts...>::capacity()
-{
-	return mImpl.capacity();
-}
-
-template <typename... Ts>
-typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::begin()
-{
-	return tuple_vector<Ts...>::iterator(mImpl, 0);
-}
-
-template <typename... Ts>
-typename tuple_vector<Ts...>::iterator tuple_vector<Ts...>::end()
-{
-	return tuple_vector<Ts...>::iterator(mImpl, size());
-}
-
-template <typename...Ts>
-void tuple_vector<Ts...>::reserve(size_t n)
-{
-	mImpl.reserve(n);
-}
-
-template<typename... Ts>
-template<size_t I>
-tuplevec_element_t<I, Ts...>* tuple_vector<Ts...>::get()
-{
-	return TupleVecInternal::get<I, Impl, Ts...>(mImpl);
-}
-
-template<typename... Ts>
-template<typename T>
-T* tuple_vector<Ts...>::get()
-{
-	return TupleVecInternal::get<T>(mImpl);
-}
 
 }  // namespace eastl
 

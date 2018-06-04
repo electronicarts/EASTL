@@ -28,101 +28,34 @@ public:
 	typedef TupleVecInternal::TupleVecIter<fixed_allocator_type, Ts...> iterator;
 	typedef typename Impl::size_type size_type;
 
-	fixed_tuple_vector();
+	fixed_tuple_vector()
+		:mImpl(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+	{ }
 	
-	void push_back();
-	void push_back(const Ts&... args);
-	void push_back_uninitialized();
+	void push_back() { mImpl.push_back(); }
+	void push_back(const Ts&... args) { mImpl.push_back(args...); }
+	void push_back_uninitialized() { mImpl.push_back_uninitialized(); }
 
-	size_type size();
-	size_type capacity();
+	bool empty() { return mImpl.empty(); }
+	size_type size() { return mImpl.size(); }
+	size_type capacity() { return mImpl.capacity(); }
 
-	iterator begin();
-	iterator end();
+	iterator begin() { return iterator(mImpl, 0); }
+	iterator end() { return iterator(mImpl, size()); }
 
-	void reserve(size_t n);
+	void reserve(size_t n) { mImpl.reserve(n); }
 
 	template<size_t I>
-	tuplevec_element_t<I, Ts...>* get();
+	tuplevec_element_t<I, Ts...>* get() { return TupleVecInternal::get<I, Impl, Ts...>(mImpl); }
 
 	template<typename T>
-	T* get();
+	T* get() { return TupleVecInternal::get<T>(mImpl); }
 
 private:
 	Impl mImpl;
 	aligned_buffer_type mBuffer;
 
 };
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::fixed_tuple_vector()
-	:mImpl(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
-{
-	
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-void fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::push_back()
-{
-	mImpl.push_back();
-}
-
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-void fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::push_back(const Ts&... args)
-{
-	mImpl.push_back(args...);
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-void fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::push_back_uninitialized()
-{
-	mImpl.push_back_uninitialized();
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::size_type fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::size()
-{
-	return mImpl.size();
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::size_type fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::capacity()
-{
-	return mImpl.capacity();
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::begin()
-{
-	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(mImpl, 0);
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-typename fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::end()
-{
-	return fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::iterator(mImpl, size());
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-void fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::reserve(size_t n)
-{
-	mImpl.reserve(n);
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-template <size_t I>
-tuplevec_element_t<I, Ts...>* fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::get()
-{
-	return TupleVecInternal::get<I, Impl, Ts...>(mImpl);
-}
-
-template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
-template<typename T>
-T* fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>::get()
-{
-	return TupleVecInternal::get<T>(mImpl);
-}
 
 }  // namespace eastl
 

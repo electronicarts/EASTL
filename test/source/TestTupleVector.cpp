@@ -31,13 +31,13 @@ int TestTupleVector()
 		tuple_vector<int> singleElementVec;
 		EATEST_VERIFY(singleElementVec.size() == 0);
 		EATEST_VERIFY(singleElementVec.capacity() == 0);
+		EATEST_VERIFY(singleElementVec.empty() == true);
 		singleElementVec.push_back_uninitialized();
 		singleElementVec.push_back(5);
 		EATEST_VERIFY(singleElementVec.size() == 2);
 		EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
 		EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
-
-		
+		EATEST_VERIFY(singleElementVec.empty() == false);
 		
 		tuple_vector<int, float, bool> complexVec;
 		complexVec.push_back(3, 2.0f, true);
