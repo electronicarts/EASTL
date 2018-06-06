@@ -114,6 +114,19 @@ int TestTupleVectorIterator()
 		}
 		EATEST_VERIFY(i == 20.0f);
 		EATEST_VERIFY(j == 40);
+
+		float reverse_i = 0;
+		int reverse_j = 0;
+
+		eastl::for_each(tripleElementVec.rbegin(), tripleElementVec.rend(),
+			[&](const tuple<int, float, int> tup)
+		{
+			reverse_i += get<1>(tup);
+			reverse_j += get<2>(tup);
+		});
+		EATEST_VERIFY(i == reverse_i);
+		EATEST_VERIFY(j == reverse_j);
+		EATEST_VERIFY(get<0>(*tripleElementVec.rbegin()) == 5);
 	}
 	return nErrorCount;
 }
@@ -150,6 +163,16 @@ int TestFixedTupleVector()
 		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
 		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
 		EATEST_VERIFY(complexVec.get<2>()[2] == complexVec.get<bool>()[2]);
+
+		tuple<int*, float*, bool*> complexPtrTuple = complexVec.data();
+		EATEST_VERIFY(get<0>(complexPtrTuple) != nullptr);
+		EATEST_VERIFY(get<2>(complexPtrTuple)[2] == complexVec.get<2>()[2]);
+
+		tuple<int&, float&, bool&> complexRefTuple = complexVec.at(2);
+		EATEST_VERIFY(get<2>(complexRefTuple) == complexVec.get<2>()[2]);
+		EATEST_VERIFY(get<1>(complexVec[2]) == 1.0f);
+		EATEST_VERIFY(get<1>(complexVec.front()) == 2.0f);
+		EATEST_VERIFY(get<1>(complexVec.back()) == 3.0f);
 
 		__declspec(align(16)) struct AlignTestVec4
 		{

@@ -6,6 +6,7 @@
 #define EASTL_TUPLEVECTOR_H
 
 #include <EASTL/internal/config.h>
+#include <EASTL/iterator.h>
 #include <EASTL/tuple.h>
 #include <EASTL/utility.h>
 
@@ -258,6 +259,9 @@ class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : pub
 
 public:
 	typedef eastl_size_t size_type;
+	typedef eastl::tuple<Ts...> value_tuple;
+	typedef eastl::tuple<Ts&...> reference_tuple;
+	typedef eastl::tuple<Ts*...> ptr_tuple;
 
 	TupleVecImpl()
 		: mAllocator(allocator_type(EASTL_VECTOR_DEFAULT_NAME))
@@ -327,6 +331,16 @@ public:
 	size_type capacity() const
 	{
 		return mNumCapacity;
+	}
+
+	ptr_tuple data() const
+	{
+		return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...);
+	}
+
+	reference_tuple at(size_type n) const
+	{
+		return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...);
 	}
 
 protected:
@@ -484,6 +498,10 @@ private:
 
 public:
 	typedef TupleVecInternal::TupleVecIter<EASTLAllocatorType, Ts...> iterator;
+	typedef eastl::reverse_iterator<iterator> reverse_iterator;
+	typedef eastl::tuple<Ts...> value_tuple;
+	typedef eastl::tuple<Ts&...> reference_tuple;
+	typedef eastl::tuple<Ts*...> ptr_tuple;
 	typedef typename Impl::size_type size_type;
 
 	EA_CONSTEXPR tuple_vector() = default;
@@ -498,8 +516,16 @@ public:
 	
 	iterator begin() { return iterator(mImpl, 0); }
 	iterator end() { return iterator(mImpl, size()); }
+	reverse_iterator rbegin() { return reverse_iterator(end()); }
+	reverse_iterator rend() { return reverse_iterator(begin()); }
 
 	void reserve(size_t n) { mImpl.reserve(n); }
+	
+	ptr_tuple data() { return mImpl.data(); }
+	reference_tuple at(size_type n) { return mImpl.at(n); }
+	reference_tuple operator[](size_type n) { return at(n); }
+	reference_tuple front() { return at(0); }
+	reference_tuple back() { return at(size() - 1); }
 
 	template<size_t I>
 	tuplevec_element_t<I, Ts...>* get() { return TupleVecInternal::get<I, Impl, Ts...>(mImpl); }

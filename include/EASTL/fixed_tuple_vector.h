@@ -26,6 +26,10 @@ private:
 
 public:
 	typedef TupleVecInternal::TupleVecIter<fixed_allocator_type, Ts...> iterator;
+	typedef eastl::reverse_iterator<iterator> reverse_iterator;
+	typedef eastl::tuple<Ts...> value_tuple;
+	typedef eastl::tuple<Ts&...> reference_tuple;
+	typedef eastl::tuple<Ts*...> ptr_tuple;
 	typedef typename Impl::size_type size_type;
 
 	fixed_tuple_vector()
@@ -42,8 +46,16 @@ public:
 
 	iterator begin() { return iterator(mImpl, 0); }
 	iterator end() { return iterator(mImpl, size()); }
+	reverse_iterator rbegin() { return reverse_iterator(end()); }
+	reverse_iterator rend() { return reverse_iterator(begin()); }
 
 	void reserve(size_t n) { mImpl.reserve(n); }
+
+	ptr_tuple data() { return mImpl.data(); }
+	reference_tuple at(size_type n) { return mImpl.at(n); }
+	reference_tuple operator[](size_type n) { return at(n); }
+	reference_tuple front() { return at(0); }
+	reference_tuple back() { return at(size() - 1); }
 
 	template<size_t I>
 	tuplevec_element_t<I, Ts...>* get() { return TupleVecInternal::get<I, Impl, Ts...>(mImpl); }
