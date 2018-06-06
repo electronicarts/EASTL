@@ -32,9 +32,6 @@ namespace eastl
 
 
 // forward declarations
-template <typename... Ts>
-class tuple_vector;
-
 template <size_t I, typename... Ts>
 struct tuplevec_element;
 
@@ -83,7 +80,7 @@ struct tuplevec_index
 };
 
 template <typename T>
-struct tuplevec_index<T, tuple_vector<>>
+struct tuplevec_index<T, tuple<>>
 {
 	typedef void DuplicateTypeCheck;
 	tuplevec_index() = delete; // tuplevec_index should only be used for compile-time assistance, and never be instantiated
@@ -91,23 +88,23 @@ struct tuplevec_index<T, tuple_vector<>>
 };
 
 template <typename T, typename... TsRest>
-struct tuplevec_index<T, tuple_vector<T, TsRest...>>
+struct tuplevec_index<T, tuple<T, TsRest...>>
 {
 	typedef int DuplicateTypeCheck;
-	static_assert(is_void<typename tuplevec_index<T, tuple_vector<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+	static_assert(is_void<typename tuplevec_index<T, tuple<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
 
 	static const size_t index = 0;
 };
 
 template <typename T, typename Ts, typename... TsRest>
-struct tuplevec_index<T, tuple_vector<Ts, TsRest...>>
+struct tuplevec_index<T, tuple<Ts, TsRest...>>
 {
-	typedef typename tuplevec_index<T, tuple_vector<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
-	static const size_t index = tuplevec_index<T, tuple_vector<TsRest...>>::index + 1;
+	typedef typename tuplevec_index<T, tuple<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
+	static const size_t index = tuplevec_index<T, tuple<TsRest...>>::index + 1;
 };
 
 template <typename Allocator, typename T, typename Indices, typename... Ts>
-struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, tuple_vector<Ts...>>
+struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, tuple<Ts...>>
 {
 };
 
@@ -250,6 +247,102 @@ void swallow(Ts&&...)
 {
 }
 
+// The Iterator operates by storing a persistent index internally,
+// and resolving the tuple of pointers to the various parts of the original tupleVec when dereferenced.
+// While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
+// storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
+
+template <typename AllocatorType, typename... Ts>
+struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
+{
+private:
+	typedef TupleVecIter<AllocatorType, Ts...> this_type;
+	typedef TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> vec_impl_type;
+public:
+	TupleVecIter() = default;
+	TupleVecIter(vec_impl_type& tupleVec, size_t index)
+		: mTupleVec(&tupleVec), mIndex(index) { }
+
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
+	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
+
+	this_type& operator++() { ++mIndex; return *this; }
+	this_type operator++(int)
+	{
+		this_type temp = *this;
+		++mIndex;
+		return temp;
+	}
+
+	this_type& operator--() { --mIndex; return *this; }
+	this_type operator--(int)
+	{
+		this_type temp = *this;
+		--mIndex;
+		return temp;
+	}
+
+	this_type& operator+=(difference_type n) { mIndex += n; return *this; }
+	this_type operator+(difference_type n)
+	{
+		this_type temp = *this;
+		return temp += n;
+	}
+	friend this_type operator+(difference_type n, const this_type& rhs)
+	{
+		this_type temp = rhs;
+		return temp += n;
+	}
+
+	this_type& operator-=(difference_type n) { mIndex -= n; return *this; }
+	this_type operator-(difference_type n)
+	{
+		this_type temp = *this;
+		return temp -= n;
+	}
+	friend this_type operator-(difference_type n, const this_type& rhs)
+	{
+		this_type temp = rhs;
+		return temp -= n;
+	}
+
+	difference_type operator-(const this_type& rhs) { return mIndex - rhs.mIndex; }
+	bool operator<(const this_type& rhs) { return mIndex < rhs.mIndex; }
+	bool operator>(const this_type& rhs) { return mIndex > rhs.mIndex; }
+	bool operator>=(const this_type& rhs) { return mIndex >= rhs.mIndex; }
+	bool operator<=(const this_type& rhs) { return mIndex <= rhs.mIndex; }
+
+	reference operator[](size_t n)
+	{
+		return *(*this + n);
+	}
+
+private:
+
+	template <size_t... Indices>
+	value_type MakeValue(integer_sequence<size_t, Indices...> indices)
+	{
+		return value_type(mTupleVec->get<Indices>()[mIndex]...);
+	}
+
+	template <size_t... Indices>
+	reference MakeReference(integer_sequence<size_t, Indices...> indices)
+	{
+		return reference(mTupleVec->get<Indices>()[mIndex]...);
+	}
+
+	template <size_t... Indices>
+	pointer MakePointer(integer_sequence<size_t, Indices...> indices)
+	{
+		return pointer(&mTupleVec->get<Indices>()[mIndex]...);
+	}
+
+	size_t mIndex = 0;
+	vec_impl_type *mTupleVec = nullptr;
+};
+
+
 // TupleVecImpl
 template <typename Allocator, size_t... Indices, typename... Ts>
 class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
@@ -258,6 +351,8 @@ class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : pub
 	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> this_type;
 
 public:
+	typedef TupleVecInternal::TupleVecIter<Allocator, Ts...> iterator;
+	typedef eastl::reverse_iterator<iterator> reverse_iterator;
 	typedef eastl_size_t size_type;
 	typedef eastl::tuple<Ts...> value_tuple;
 	typedef eastl::tuple<Ts&...> reference_tuple;
@@ -318,29 +413,33 @@ public:
 		}
 	}
 
-	bool empty() const 
+	bool empty() const { return mNumElements == 0; }
+	size_type size() const { return mNumElements; }
+	size_type capacity() const { return mNumCapacity; }
+
+	iterator begin() { return iterator(*this, 0); }
+	iterator end() { return iterator(*this, size()); }
+	reverse_iterator rbegin() { return reverse_iterator(end()); }
+	reverse_iterator rend() { return reverse_iterator(begin()); }
+
+	ptr_tuple data() const { return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
+	reference_tuple at(size_type n) const { return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
+	reference_tuple operator[](size_type n) { return at(n); }
+	reference_tuple front() { return at(0); }
+	reference_tuple back() { return at(size() - 1); }
+
+	template<size_t I>
+	tuplevec_element_t<I, Ts...>* get() 
 	{
-		return mNumElements == 0;
+		typedef tuplevec_element_t<I, Ts...> Element;
+		return TupleVecLeaf<I, Element>::mpData;
 	}
 
-	size_type size() const
-	{
-		return mNumElements;
-	}
-
-	size_type capacity() const
-	{
-		return mNumCapacity;
-	}
-
-	ptr_tuple data() const
-	{
-		return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...);
-	}
-
-	reference_tuple at(size_type n) const
-	{
-		return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...);
+	template<typename T>
+	T* get() 
+	{ 
+		typedef tuplevec_index<T, tuple<Ts...>> Index;
+		return TupleVecLeaf<Index::index, T>::mpData;
 	}
 
 protected:
@@ -351,7 +450,6 @@ private:
 	size_type mDataSize = 0;
 	size_type mNumElements = 0;
 	size_type mNumCapacity = 0;
-
 
 	friend struct TupleRecurser<>;
 	template<typename... Ts>
@@ -378,163 +476,12 @@ private:
 
 };
 
-template <size_t I, typename TupleVecImplType, typename... Ts>
-tuplevec_element_t<I, Ts...>* get(TupleVecImplType& t)
-{
-	typedef tuplevec_element_t<I, Ts...> Element;
-	return t.TupleVecLeaf<I, Element>::mpData;
-}
-
-template <typename T, typename TupleVecImplType>
-T* get(TupleVecImplType& t)
-{
-	typedef tuplevec_index<T, TupleVecImplType> Index;
-	return t.TupleVecLeaf<Index::index, T>::mpData;
-}
-
-// The Iterator operates by storing a persistent index internally,
-// and resolving the tuple of pointers to the various parts of the original tupleVec when dereferenced.
-// While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
-// storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
-
-template <typename AllocatorType, typename... Ts>
-struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
-{
-private:
-	typedef TupleVecIter<AllocatorType, Ts...> this_type;
-	typedef TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> vec_impl_type;
-public:
-	TupleVecIter() = default;
-	TupleVecIter(vec_impl_type& tupleVec, size_t index)
-		: mTupleVec(&tupleVec), mIndex(index) { }
-
-	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && get<0, vec_impl_type, Ts...>(*mTupleVec) == get<0, vec_impl_type, Ts...>(*other.mTupleVec); }
-	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || get<0, vec_impl_type, Ts...>(*mTupleVec) != get<0, vec_impl_type, Ts...>(*other.mTupleVec); }
-	reference operator*() { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
-
-	this_type& operator++() { ++mIndex; return *this; }
-	this_type operator++(int)
-	{
-		this_type temp = *this;
-		++mIndex;
-		return temp;
-	}
-
-	this_type& operator--() { --mIndex; return *this; }
-	this_type operator--(int)
-	{
-		this_type temp = *this;
-		--mIndex;
-		return temp;
-	}
-
-	this_type& operator+=(difference_type n) { mIndex += n; return *this; }
-	this_type operator+(difference_type n)
-	{
-		this_type temp = *this;
-		return temp += n;
-	}
-	friend this_type operator+(difference_type n, const this_type& rhs)
-	{
-		this_type temp = rhs;
-		return temp += n;
-	}
-
-	this_type& operator-=(difference_type n) { mIndex -= n; return *this; }
-	this_type operator-(difference_type n)
-	{
-		this_type temp = *this;
-		return temp -= n;
-	}
-	friend this_type operator-(difference_type n, const this_type& rhs)
-	{
-		this_type temp = rhs;
-		return temp -= n;
-	}
-
-	difference_type operator-(const this_type& rhs) { return mIndex - rhs.mIndex; }
-	bool operator<(const this_type& rhs) { return mIndex < rhs.mIndex; }
-	bool operator>(const this_type& rhs) { return mIndex > rhs.mIndex; }
-	bool operator>=(const this_type& rhs) { return mIndex >= rhs.mIndex; }
-	bool operator<=(const this_type& rhs) { return mIndex <= rhs.mIndex; }
-
-	reference operator[](size_t n)
-	{
-		return *(*this + n);
-	}
-
-private:
-
-	template <size_t... Indices>
-	value_type MakeValue(integer_sequence<size_t, Indices...> indices)
-	{
-		return value_type(get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
-	}
-
-	template <size_t... Indices>
-	reference MakeReference(integer_sequence<size_t, Indices...> indices)
-	{
-		return reference(get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
-	}
-
-	template <size_t... Indices>
-	pointer MakePointer(integer_sequence<size_t, Indices...> indices)
-	{
-		return pointer(&get<Indices, vec_impl_type, Ts...>(*mTupleVec)[mIndex]...);
-	}
-
-	size_t mIndex = 0;
-	vec_impl_type *mTupleVec = nullptr;
-};
-
 }  // namespace TupleVecInternal
 
 // External interface of tuple_vector
 template <typename... Ts>
-class tuple_vector
+class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
 {
-private:
-	typedef TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
-
-public:
-	typedef TupleVecInternal::TupleVecIter<EASTLAllocatorType, Ts...> iterator;
-	typedef eastl::reverse_iterator<iterator> reverse_iterator;
-	typedef eastl::tuple<Ts...> value_tuple;
-	typedef eastl::tuple<Ts&...> reference_tuple;
-	typedef eastl::tuple<Ts*...> ptr_tuple;
-	typedef typename Impl::size_type size_type;
-
-	EA_CONSTEXPR tuple_vector() = default;
-	
-	void push_back() { mImpl.push_back(); }
-	void push_back(const Ts&... args) { mImpl.push_back(args...);  }
-	void push_back_uninitialized() { mImpl.push_back_uninitialized(); }
-
-	bool empty() { return mImpl.empty(); }
-	size_type size() { return mImpl.size(); }
-	size_type capacity() { return mImpl.capacity(); }
-	
-	iterator begin() { return iterator(mImpl, 0); }
-	iterator end() { return iterator(mImpl, size()); }
-	reverse_iterator rbegin() { return reverse_iterator(end()); }
-	reverse_iterator rend() { return reverse_iterator(begin()); }
-
-	void reserve(size_t n) { mImpl.reserve(n); }
-	
-	ptr_tuple data() { return mImpl.data(); }
-	reference_tuple at(size_type n) { return mImpl.at(n); }
-	reference_tuple operator[](size_type n) { return at(n); }
-	reference_tuple front() { return at(0); }
-	reference_tuple back() { return at(size() - 1); }
-
-	template<size_t I>
-	tuplevec_element_t<I, Ts...>* get() { return TupleVecInternal::get<I, Impl, Ts...>(mImpl); }
-	template<typename T>
-	T* get() { return TupleVecInternal::get<T>(mImpl); }
-
-private:
-	Impl mImpl;
-
 };
 
 }  // namespace eastl
