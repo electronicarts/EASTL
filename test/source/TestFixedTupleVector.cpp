@@ -199,12 +199,41 @@ int TestFixedTupleVector()
 		alignElementVec.push_back();
 	}
 
+	// Test various modifications
+	{
+		TestObject::Reset();
+
+		fixed_tuple_vector<20, true, bool, TestObject, float> testVec;
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+		testVec.pop_back();
+		EATEST_VERIFY(testVec.size() == 9);
+		testVec.resize(5);
+		EATEST_VERIFY(testVec.size() == 5);
+		testVec.resize(10);
+		EATEST_VERIFY(testVec.size() == 10);
+		testVec.push_back();
+		testVec.pop_back();
+		EATEST_VERIFY(testVec.capacity() != 10);
+		testVec.shrink_to_fit();
+		EATEST_VERIFY(testVec.capacity() == 10);
+
+		testVec.clear();
+		EATEST_VERIFY(testVec.empty());
+
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+
 	// Test fixed_tuple_Vector in a ranged for, and other large-scale iterator testing
 	nErrorCount += TestTupleVectorIterator<4, true>();
 	nErrorCount += TestTupleVectorIterator<16, false>();
 	nErrorCount += TestTupleVectorIterator<16, true>();
 
 	// test sort.h
+	if(0)
 	{
 		using namespace eastl;
 		using namespace Internal;

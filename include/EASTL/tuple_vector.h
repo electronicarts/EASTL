@@ -230,6 +230,19 @@ struct TupleVecLeaf
 		return 0;
 	}
 
+	int DoConstruction(const size_t begin, const size_t end)
+	{
+		eastl::uninitialized_default_fill(mpData + begin, mpData + end);
+		return 0;
+	}
+
+	int DoConstruction(const size_t begin, const size_t end, const T& arg)
+	{
+		eastl::uninitialized_fill(mpData + begin, mpData + end, arg);
+		return 0;
+	}
+
+
 	int DoMove(void* pDest, const size_t srcNumElements)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcNumElements, (T*)pDest);
@@ -239,6 +252,12 @@ struct TupleVecLeaf
 	}
 
 	T* mpData = nullptr;
+
+	int DoDestruct(size_t begin, size_t end)
+	{
+		eastl::destruct(mpData + begin, mpData + end);
+		return 0;
+	}
 };
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
@@ -364,7 +383,7 @@ public:
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
 	{}
-	TupleVecImpl(const allocator_type& allocator, void* pData, size_t capacity)
+	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity)
 		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity)
 	{
 		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, pData, mNumCapacity, 0);
@@ -405,12 +424,50 @@ public:
 		++mNumElements;
 	}
 
-	void reserve(size_t n)
+	void resize(size_type n)
+	{
+		if (n > mNumElements)
+		{
+			if (n >= mNumCapacity)
+			{
+				DoGrow(n);
+			}
+			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, n)...);
+		}
+		else
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(n, mNumElements)...);
+		}
+		mNumElements = n;
+
+	}
+
+	void reserve(size_type n)
 	{
 		if (n > mNumCapacity)
 		{
 			DoGrow(n);
 		}
+	}
+
+	void shrink_to_fit()
+	{
+		if (mNumElements < mNumCapacity)
+		{
+			DoAllocate(mNumElements);
+		}
+	}
+
+	void clear()
+	{
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(0, mNumElements)...);
+		mNumElements = 0;
+	}
+
+	void pop_back()
+	{
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements-1, mNumElements)...);
+		mNumElements--;
 	}
 
 	bool empty() const { return mNumElements == 0; }
@@ -473,7 +530,6 @@ private:
 	{
 		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
 	}
-
 };
 
 }  // namespace TupleVecInternal
