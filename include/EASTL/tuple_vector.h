@@ -7,6 +7,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/iterator.h>
+#include <EASTL/memory.h>
 #include <EASTL/tuple.h>
 #include <EASTL/utility.h>
 
@@ -378,7 +379,7 @@ public:
 	typedef eastl::tuple<Ts*...> ptr_tuple;
 
 	TupleVecImpl()
-		: mAllocator(allocator_type(EASTL_VECTOR_DEFAULT_NAME))
+		: mAllocator(allocator_type(EASTL_TUPLE_VECTOR_DEFAULT_NAME))
 	{}
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
