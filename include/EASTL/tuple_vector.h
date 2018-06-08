@@ -428,7 +428,7 @@ public:
 	{
 		if (n > mNumElements)
 		{
-			if (n >= mNumCapacity)
+			if (n > mNumCapacity)
 			{
 				DoGrow(n);
 			}
