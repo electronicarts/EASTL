@@ -5,6 +5,7 @@
 #ifndef EAMAIN_EAENTRYPOINTMAIN_INL
 #define EAMAIN_EAENTRYPOINTMAIN_INL
 
+#include <cctype>
 
 namespace EA
 {
@@ -22,6 +23,31 @@ namespace EA
 			,m_argv(argv)
 		{
 		}
+
+		namespace
+		{
+			bool HasPrefix(const char *str, const char *prefix, bool bCaseSensitive)
+			{
+				for (; *prefix != '\0'; str++, prefix++)
+				{
+					if (bCaseSensitive)
+					{
+						if (*str != *prefix)
+						{
+							return false;
+						}
+					}
+					else
+					{
+						if (std::tolower(*str) != std::tolower(*prefix))
+						{
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+		}
 		
 		int CommandLine::FindSwitch(const char *pSwitch, bool bCaseSensitive, const char **pResult, int nStartingIndex, char delimiter) const
 		{
@@ -30,15 +56,7 @@ namespace EA
 			{
 				const char *arg = m_argv[i];
 				bool prefixMatch = false;
-				if (bCaseSensitive)
-				{
-					prefixMatch = strncmp(arg, pSwitch, switchLen) == 0;
-				}
-				else
-				{
-					prefixMatch = _strnicmp(arg, pSwitch, switchLen) == 0;
-				}
-				if (prefixMatch && (arg[switchLen] == '\0' || arg[switchLen] == delimiter))
+				if (HasPrefix(arg, pSwitch, bCaseSensitive) && (arg[switchLen] == '\0' || arg[switchLen] == delimiter))
 				{
 					if (pResult)
 					{
