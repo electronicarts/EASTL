@@ -1622,6 +1622,12 @@ namespace eastl
 				const size_t radixByte = extractKey(*temp);
 				buffer[bucketPosition[radixByte]++] = *temp;
 			}
+
+			// Copy the sorted values in buffer back to the correct destination
+			for (temp = first; temp != last; ++temp)
+			{
+				*temp = *buffer++;
+			}
 		}
 
 		// uint16_t version.
