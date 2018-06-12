@@ -165,6 +165,16 @@ namespace eastl
 		typedef RadixSortElement<uint16_t> RadixSortElement16;
 		typedef RadixSortElement<uint32_t> RadixSortElement32;
 
+		template <typename integer_type>
+		struct identity_extract_radix_key
+		{
+			typedef integer_type radix_type;
+
+			const radix_type operator()(const integer_type& x) const
+			{
+				return x;
+			}
+		};
 	} // namespace Internal
 
 } // namespace eastl
@@ -439,6 +449,75 @@ int TestSort()
 		}
 	}
 
+	{
+		// Do some white-box testing of radix sort to verify internal optimizations work properly for some edge cases.
+
+		{
+			uint32_t input[] = { 123, 15, 76, 2, 74, 12, 62, 91 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			// Test values where some digit positions have identical values
+			uint32_t input[] = { 0x75000017, 0x74000003, 0x73000045, 0x76000024, 0x78000033, 0x76000099, 0x78000043, 0x75000010 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			// Test values where some digit positions have identical values
+			uint32_t input[] = { 0x00750017, 0x00740003, 0x00730045, 0x00760024, 0x00780033, 0x00760099, 0x00780043, 0x00750010 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			// Test values where an odd number of scatter operations will be done during sorting (which forces a copy operation to move values back to the input buffer).
+			uint32_t input[] = { 0x00000017, 0x00000003, 0x00000045, 0x00000024, 0x00000033, 0x00000099, 0x00000043, 0x00000010 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+	}
+
+	{
+		// Test different values for DigitBits
+
+		{
+			uint32_t input[] = {2514513, 6278225, 2726217, 963245656, 35667326, 2625624562, 3562562562, 1556256252};
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>, 1>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			uint32_t input[] = { 2514513, 6278225, 2726217, 963245656, 35667326, 2625624562, 3562562562, 1556256252 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>, 3>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			uint32_t input[] = { 2514513, 6278225, 2726217, 963245656, 35667326, 2625624562, 3562562562, 1556256252 };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>, 6>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			// Test a value for DigitBits that is more than half the size of the type.
+			uint16_t input[] = { 14513, 58225, 26217, 34656, 63326, 24562, 35562, 15652 };
+			uint16_t buffer[EAArrayCount(input)];
+			radix_sort<uint16_t*, identity_extract_radix_key<uint16_t>, 11>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+		{
+			// Test a value for DigitBits that is the size of the type itself.
+			uint8_t input[] = { 113, 225, 217, 56, 26, 162, 62, 152 };
+			uint8_t buffer[EAArrayCount(input)];
+			radix_sort<uint8_t*, identity_extract_radix_key<uint8_t>, 8>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
+
+	}
 
 	{
 		// void bucket_sort(ForwardIterator first, ForwardIterator last, ContainerArray& bucketArray, HashFunction hash)
