@@ -239,7 +239,7 @@ struct TupleVecLeaf
 
 	int DoConstruction(const size_t begin, const size_t end, const T& arg)
 	{
-		eastl::uninitialized_fill(mpData + begin, mpData + end, arg);
+		eastl::uninitialized_fill_ptr(mpData + begin, mpData + end, arg);
 		return 0;
 	}
 
