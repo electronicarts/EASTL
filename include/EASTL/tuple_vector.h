@@ -384,11 +384,16 @@ public:
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
 	{}
+
+protected:
+	// ctor to provide a pre-allocated field of data that the container will own, specifically for fixed_tuple_vector
 	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity)
 		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity)
 	{
-		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, pData, mNumCapacity, 0);
+		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, mpData, mNumCapacity, 0);
 	}
+
+public:
 	~TupleVecImpl()
 	{ 
 		if (mpData)
