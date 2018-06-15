@@ -187,34 +187,6 @@ private:
 	}
 };
 
-
-template <typename... Ts>
-struct TupleIndexRecurser<0, Ts...>
-{
-	static void DoPtrMove(tuple<Ts*...>& tuple, ptrdiff_t offset)
-	{
-		get<0>(tuple) += offset;
-	}
-};
-
-
-template <size_t I, typename... Ts>
-struct TupleIndexRecurser<I, Ts...>
-{
-	static void DoPtrMove(tuple<Ts*...>& tuple, ptrdiff_t offset)
-	{
-		get<I>(tuple) += offset;
-		TupleIndexRecurser<I - 1, Ts...>::DoPtrMove(tuple, offset);
-	}
-};
-
-template <typename... Ts>
-static void DoPtrMove(tuple<Ts*...>& tuple, ptrdiff_t offset)
-{
-	TupleIndexRecurser<sizeof...(Ts)-1, Ts... >::DoPtrMove(tuple, offset);
-}
-
-
 template <size_t I, typename T>
 struct TupleVecLeaf
 {
