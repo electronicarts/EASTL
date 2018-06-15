@@ -172,7 +172,7 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	static void SetNewData(TupleVecImplType &vec, void* pData, size_t capacity, size_t offset)
 	{
 		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		vec.TupleVecLeaf<I, T>::mpData = (T*)((char*)pData + offsetRange.first);
+		vec.TupleVecLeaf<I, T>::mpData = (T*)((uintptr_t)pData + offsetRange.first);
 		TupleRecurser<Ts...>::SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
 	}
 
