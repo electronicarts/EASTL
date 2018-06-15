@@ -131,7 +131,7 @@ struct TupleRecurser<>
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** newLeafData, size_t capacity, size_t offset)
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** ppNewLeaf, size_t capacity, size_t offset)
 	{
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
@@ -160,11 +160,11 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** newLeafData, size_t capacity, size_t offset)
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** ppNewLeaf, size_t capacity, size_t offset)
 	{
 		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, newLeafData, capacity, offsetRange.second);
-		newLeafData[I] = (void*)((uintptr_t)(allocation.first) + offsetRange.first);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, ppNewLeaf, capacity, offsetRange.second);
+		ppNewLeaf[I] = (void*)((uintptr_t)(allocation.first) + offsetRange.first);
 		return allocation;
 	}
 
@@ -533,9 +533,9 @@ private:
 
 	void DoAllocate(size_type n)
 	{
-		void* newLeafData[sizeof...(Ts)];
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, newLeafData, n, 0);
-		swallow(TupleVecLeaf<Indices, Ts>::DoMove(newLeafData[Indices], mNumElements)...);
+		void* ppNewLeaf[sizeof...(Ts)];
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, n, 0);
+		swallow(TupleVecLeaf<Indices, Ts>::DoMove(ppNewLeaf[Indices], mNumElements)...);
 		EASTLFree(mAllocator, mpData, mDataSize);
 		mpData = allocation.first;
 		mDataSize = allocation.second;
