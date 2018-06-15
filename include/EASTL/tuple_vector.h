@@ -131,7 +131,7 @@ struct TupleRecurser<>
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** newLeafData, size_t capacity, size_t offset)
 	{
 		// If n is zero, then we allocate no memory and just return NULL. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
@@ -160,12 +160,11 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	}
 
 	template<typename Allocator, size_t I, typename Indices, typename... VecTypes>
-	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, size_t capacity, size_t offset)
+	static pair<void*, size_t> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** newLeafData, size_t capacity, size_t offset)
 	{
 		auto offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, capacity, offsetRange.second);
-		void* pDest = (char*)(allocation.first) + offsetRange.first;
-		vec.TupleVecLeaf<I, T>::DoMove(pDest, vec.mNumElements);
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I+1, Indices, VecTypes...>(vec, newLeafData, capacity, offsetRange.second);
+		newLeafData[I] = (void*)((uintptr_t)(allocation.first) + offsetRange.first);
 		return allocation;
 	}
 
@@ -215,7 +214,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-
 	int DoMove(void* pDest, const size_t srcNumElements)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData, mpData + srcNumElements, (T*)pDest);
@@ -224,13 +222,13 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	T* mpData = nullptr;
-
 	int DoDestruct(size_t begin, size_t end)
 	{
 		eastl::destruct(mpData + begin, mpData + end);
 		return 0;
 	}
+
+	T* mpData = nullptr;
 };
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
@@ -535,7 +533,9 @@ private:
 
 	void DoAllocate(size_type n)
 	{
-		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, n, 0);
+		void* newLeafData[sizeof...(Ts)];
+		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, newLeafData, n, 0);
+		swallow(TupleVecLeaf<Indices, Ts>::DoMove(newLeafData[Indices], mNumElements)...);
 		EASTLFree(mAllocator, mpData, mDataSize);
 		mpData = allocation.first;
 		mDataSize = allocation.second;
