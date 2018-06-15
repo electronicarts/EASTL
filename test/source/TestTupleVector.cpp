@@ -58,6 +58,26 @@ int TestTupleVector()
 		EATEST_VERIFY(get<1>(complexVec.front()) == 2.0f);
 		EATEST_VERIFY(get<1>(complexVec.back()) == 3.0f);
 
+		// verify the equivalent accessors for the const container exist/compile
+		{
+			const tuple_vector<int, float, bool>& constVec = complexVec;
+
+			EATEST_VERIFY(constVec.size() == 4);
+			EATEST_VERIFY(constVec.capacity() >= constVec.size());
+			EATEST_VERIFY(constVec.empty() == false);
+			EATEST_VERIFY(constVec.get<1>() == constVec.get<float>());
+			
+			tuple<const int*, const float*, const bool*> constPtrTuple = constVec.data();
+			EATEST_VERIFY(get<0>(constPtrTuple) != nullptr);
+			EATEST_VERIFY(get<2>(constPtrTuple)[2] == constVec.get<2>()[2]);
+
+			tuple<const int&, const float&, const bool&> constRefTuple = constVec.at(2);
+			EATEST_VERIFY(get<2>(constRefTuple) == constVec.get<2>()[2]);
+			EATEST_VERIFY(get<1>(constVec[2]) == 1.0f);
+			EATEST_VERIFY(get<1>(constVec.front()) == 2.0f);
+			EATEST_VERIFY(get<1>(constVec.back()) == 3.0f);
+		}
+
 		__declspec(align(16)) struct AlignTestVec4
 		{
 			float a[4];
@@ -125,7 +145,7 @@ int TestTupleVector()
 
 		// test copyConstructible, copyAssignable, swappable, prefix inc, !=, reference convertible to value_type (InputIterator!)
 		{
-			tuple_vector<int, float, int>::iterator iter = tripleElementVec.begin();
+			tuple_vector<int, float, int>::const_iterator iter = tripleElementVec.cbegin();
 			++iter;
 			auto copiedIter(iter);
 			EATEST_VERIFY(get<2>(*copiedIter) == 7);
@@ -142,7 +162,7 @@ int TestTupleVector()
 
 			EATEST_VERIFY(copiedIter != iter);
 
-			tuple<int&, float&, int&> ref(*iter);
+			tuple<const int&, const float&, const int&> ref(*iter);
 			tuple<int, float, int> value(*iter);
 			EATEST_VERIFY(get<2>(ref) == get<2>(value));
 		}
