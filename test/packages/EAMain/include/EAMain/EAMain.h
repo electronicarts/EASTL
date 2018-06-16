@@ -11,7 +11,7 @@ namespace EA
     {
 		namespace Internal
 		{
-			static unsigned gVerbosityLevel = 0;	
+			extern unsigned gVerbosityLevel;
 		};
 
         typedef void (*ReportFunction)(const char8_t*);
