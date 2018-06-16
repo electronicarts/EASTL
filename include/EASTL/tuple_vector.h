@@ -239,6 +239,12 @@ struct TupleVecLeaf
 		return 0;
 	}
 
+	int DoSwap(TupleVecLeaf<I, T>& x)
+	{
+		eastl::swap(mpData, x.mpData);
+		return 0;
+	}
+
 	int SetData(void* pData)
 	{
 		mpData = (T*)pData;
@@ -546,6 +552,16 @@ public:
 	{
 		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements-1, mNumElements)...);
 		mNumElements--;
+	}
+
+	void swap(this_type& x)
+	{
+		swallow(TupleVecLeaf<Indices, Ts>::DoSwap(x)...);
+		eastl::swap(mAllocator, x.mAllocator);
+		eastl::swap(mpData, x.mpData);
+		eastl::swap(mDataSize, x.mDataSize);
+		eastl::swap(mNumElements, x.mNumElements);
+		eastl::swap(mNumCapacity, x.mNumCapacity);
 	}
 
 	bool empty() const { return mNumElements == 0; }

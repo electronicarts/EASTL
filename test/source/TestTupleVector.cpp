@@ -162,6 +162,33 @@ int TestTupleVector()
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
 	}
+	
+	// Test swap
+	{
+		tuple_vector<int, float, bool> complexVec;
+		complexVec.push_back(3, 2.0f, true);
+		complexVec.push_back(1, 4.0f, false);
+		complexVec.push_back(2, 1.0f, true);
+		complexVec.push_back(4, 3.0f, false);
+
+		tuple_vector<int, float, bool> otherComplexVec;
+		complexVec.swap(otherComplexVec);
+		
+		EATEST_VERIFY(complexVec.size() == 0);
+		EATEST_VERIFY(otherComplexVec.get<0>()[0] == 3);
+		EATEST_VERIFY(otherComplexVec.get<float>()[1] == 4.0f);
+
+		complexVec.push_back(10, 10.0f, true);
+		otherComplexVec.swap(complexVec);
+
+		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
+		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
+
+		EATEST_VERIFY(otherComplexVec.get<float>()[0] == 10.0f);
+		EATEST_VERIFY(otherComplexVec.size() == 1);
+
+	}
+
 
 	// Test tuple_Vector in a ranged for, and other large-scale iterator testing
 	{
