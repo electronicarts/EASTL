@@ -226,16 +226,25 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoInsertValue(size_t pos, size_t numElements, const T& arg)
+	int DoInsertValues(size_t pos, size_t n, size_t numElements, const T& arg)
 	{
 		T* pDest = mpData + pos;
 		T* pEnd = mpData + numElements;
-		// pEnd is uninitialized memory, so we must construct into it
-		// instead of move into it like we do with the other elements below.
-		new ((void*)(pEnd)) T(eastl::move(*(pEnd - 1))); 
-		eastl::move_backward(pDest, pEnd - 1, pEnd); // We need to go backward because of potential overlap issues.
-		eastl::destruct(pDest);
-		new ((void*)(pDest)) T(arg);         
+		
+		const T temp = arg;
+		const size_t nExtra = (numElements - pos);
+		if (n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
+		{
+			eastl::uninitialized_move_ptr(pEnd - n, pEnd, pEnd);
+			eastl::move_backward(pDest, pEnd - n, pEnd); // We need move_backward because of potential overlap issues.
+			eastl::fill(pDest, pDest + n, temp);
+		}
+		else
+		{
+			eastl::uninitialized_fill_n_ptr(pEnd, n - nExtra, temp);
+			eastl::uninitialized_move_ptr(pDest, pEnd, pEnd + n - nExtra);
+			eastl::fill(pDest, pEnd, temp);
+		}
 		return 0;
 	}
 
@@ -470,20 +479,30 @@ public:
 	
 	iterator insert(const_iterator pos, const Ts&... args)
 	{
-		size_t destIdx = pos - cbegin();
-		if (mNumElements >= mNumCapacity || destIdx != mNumElements)
+		return insert(pos, 1, args...);
+	}
+
+	iterator insert(const_iterator pos, size_t n, const Ts&... args)
+	{
+		size_t firstIdx = pos - cbegin();
+		size_t lastIdx = firstIdx + n;
+		size_t newNumElements = mNumElements + n;
+		if (newNumElements >= mNumCapacity || firstIdx != mNumElements)
 		{
-			if (mNumElements >= mNumCapacity)
+			if (newNumElements >= mNumCapacity)
 			{
-				const auto newCapacity = GetNewCapacity(mNumCapacity);
-				
+				const auto newCapacity = max(GetNewCapacity(mNumCapacity), newNumElements);
+
 				void* ppNewLeaf[sizeof...(Ts)];
-				auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, newCapacity, 0);
-				
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, destIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + destIdx + 1), destIdx, mNumElements)...);
+				auto allocation =
+					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
+						*this, ppNewLeaf, newCapacity, 0);
+
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + lastIdx),
+						                                               firstIdx, mNumElements)...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(destIdx, args)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, lastIdx, args)...);
 
 				EASTLFree(mAllocator, mpData, mDataSize);
 				mpData = allocation.first;
@@ -492,15 +511,16 @@ public:
 			}
 			else
 			{
-				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValue(destIdx, mNumElements, args)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValues(firstIdx, n, mNumElements, args)...);
 			}
 		}
 		else
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, args)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, newNumElements, args)...);
 		}
-		++mNumElements;
-		return begin() + destIdx;
+		mNumElements = newNumElements;
+		return begin() + firstIdx;
+
 	}
 
 	iterator erase(const_iterator pos)
