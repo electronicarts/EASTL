@@ -30,7 +30,8 @@ namespace eastl
 	#define EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR allocator_type(EASTL_TUPLE_VECTOR_DEFAULT_NAME)
 	#endif
 
-
+namespace TupleVecInternal
+{
 
 // forward declarations
 template <size_t I, typename... Ts>
@@ -39,20 +40,20 @@ struct tuplevec_element;
 template <size_t I, typename... Ts>
 using tuplevec_element_t = typename tuplevec_element<I, Ts...>::type;
 
-namespace TupleVecInternal
-{
-	template <typename Allocator, typename Indices, typename... Ts>
-	struct TupleVecImpl;
+template <typename... Ts>
+struct TupleTypes {};
 
-	template <typename... Ts>
-	struct TupleRecurser;
+template <typename Allocator, typename Indices, typename... Ts>
+struct TupleVecImpl;
 
-	template <size_t I, typename... Ts>
-	struct TupleIndexRecurser;
+template <typename... Ts>
+struct TupleRecurser;
 
-	template <typename AllocatorType, typename... Ts>
-	struct TupleVecIter;
-}
+template <size_t I, typename... Ts>
+struct TupleIndexRecurser;
+
+template <typename AllocatorType, typename... Ts>
+struct TupleVecIter;
 
 // tuplevec_element helper to be able to isolate a type given an index
 template <size_t I>
@@ -81,7 +82,7 @@ struct tuplevec_index
 };
 
 template <typename T>
-struct tuplevec_index<T, tuple<>>
+struct tuplevec_index<T, TupleTypes<>>
 {
 	typedef void DuplicateTypeCheck;
 	tuplevec_index() = delete; // tuplevec_index should only be used for compile-time assistance, and never be instantiated
@@ -89,28 +90,26 @@ struct tuplevec_index<T, tuple<>>
 };
 
 template <typename T, typename... TsRest>
-struct tuplevec_index<T, tuple<T, TsRest...>>
+struct tuplevec_index<T, TupleTypes<T, TsRest...>>
 {
 	typedef int DuplicateTypeCheck;
-	static_assert(is_void<typename tuplevec_index<T, tuple<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
+	static_assert(is_void<typename tuplevec_index<T, TupleTypes<TsRest...>>::DuplicateTypeCheck>::value, "duplicate type T in tuple_vector::get<T>(); unique types must be provided in declaration, or only use get<size_t>()");
 
 	static const size_t index = 0;
 };
 
 template <typename T, typename Ts, typename... TsRest>
-struct tuplevec_index<T, tuple<Ts, TsRest...>>
+struct tuplevec_index<T, TupleTypes<Ts, TsRest...>>
 {
-	typedef typename tuplevec_index<T, tuple<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
-	static const size_t index = tuplevec_index<T, tuple<TsRest...>>::index + 1;
+	typedef typename tuplevec_index<T, TupleTypes<TsRest...>>::DuplicateTypeCheck DuplicateTypeCheck;
+	static const size_t index = tuplevec_index<T, TupleTypes<TsRest...>>::index + 1;
 };
 
 template <typename Allocator, typename T, typename Indices, typename... Ts>
-struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, tuple<Ts...>>
+struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, TupleTypes<Ts...>>
 {
 };
 
-namespace TupleVecInternal
-{
 
 // helper to calculate the sizeof the full tuple
 template <>
@@ -261,11 +260,11 @@ template <bool IsSameSize, typename From, typename To>
 struct TupleVecIterCompatibleImpl : public false_type { };
 	
 template<>
-struct TupleVecIterCompatibleImpl<true, tuple<>, tuple<>> : public true_type { };
+struct TupleVecIterCompatibleImpl<true, TupleTypes<>, TupleTypes<>> : public true_type { };
 
 template <typename From, typename... FromRest, typename To, typename... ToRest>
-struct TupleVecIterCompatibleImpl<true, tuple<From, FromRest...>, tuple<To, ToRest...>> : public integral_constant<bool,
-		TupleVecIterCompatibleImpl<true, tuple<FromRest...>, tuple<ToRest...>>::value &&
+struct TupleVecIterCompatibleImpl<true, TupleTypes<From, FromRest...>, TupleTypes<To, ToRest...>> : public integral_constant<bool,
+		TupleVecIterCompatibleImpl<true, TupleTypes<FromRest...>, TupleTypes<ToRest...>>::value &&
 		is_same<typename remove_const<From>::type, typename remove_const<To>::type>::value >
 { };
 
@@ -273,8 +272,8 @@ template <typename From, typename To>
 struct TupleVecIterCompatible;
 
 template<typename... Us, typename... Ts>
-struct TupleVecIterCompatible<tuple<Us...>, tuple<Ts...>> :
-	public TupleVecIterCompatibleImpl<sizeof...(Us) == sizeof...(Ts), tuple<Us...>, tuple<Ts...>>
+struct TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>> :
+	public TupleVecIterCompatibleImpl<sizeof...(Us) == sizeof...(Ts), TupleTypes<Us...>, TupleTypes<Ts...>>
 { };
 
 // The Iterator operates by storing a persistent index internally,
@@ -298,7 +297,7 @@ public:
 
 	template <typename OtherAllocType,
 			  typename... Us,
-			  typename = typename enable_if<TupleVecIterCompatible<tuple<Us...>, tuple<Ts...>>::value, bool>::type>
+			  typename = typename enable_if<TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>>::value, bool>::type>
 	TupleVecIter(const TupleVecIter<OtherAllocType, Us...>& other)
 		: mTupleVec((vec_impl_type*)(other.mTupleVec))
 		, mIndex(other.mIndex)
@@ -588,13 +587,13 @@ public:
 	template<typename T>
 	T* get() 
 	{ 
-		typedef tuplevec_index<T, tuple<Ts...>> Index;
+		typedef tuplevec_index<T, TupleTypes<Ts...>> Index;
 		return TupleVecLeaf<Index::index, T>::mpData;
 	}
 	template <typename T>
 	const T* get() const
 	{
-		typedef tuplevec_index<T, tuple<Ts...>> Index;
+		typedef tuplevec_index<T, TupleTypes<Ts...>> Index;
 		return TupleVecLeaf<Index::index, T>::mpData;
 	}
 
