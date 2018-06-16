@@ -258,7 +258,7 @@ void swallow(Ts&&...)
 // Helper struct to check for strict compatibility between two iterators, whilst still allowing for
 // conversion between TupleVecImpl<Ts...>::iterator and TupleVecImpl<Ts...>::const_iterator. 
 template <bool IsSameSize, typename From, typename To>
-struct TupleVecIterCompatibleImpl : public true_type { };
+struct TupleVecIterCompatibleImpl : public false_type { };
 	
 template<>
 struct TupleVecIterCompatibleImpl<true, tuple<>, tuple<>> : public true_type { };
