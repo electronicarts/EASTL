@@ -266,10 +266,24 @@ struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, 
 private:
 	typedef TupleVecIter<AllocatorType, Ts...> this_type;
 	typedef TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> vec_impl_type;
+
+	template<typename U, typename... Us> 
+	friend struct TupleVecIter;
+
 public:
 	TupleVecIter() = default;
 	TupleVecIter(vec_impl_type* tupleVec, size_t index)
 		: mTupleVec(tupleVec), mIndex(index) { }
+
+	template <typename OtherAllocType, typename... Us,
+			  typename = typename enable_if<
+				sizeof...(Us) == sizeof...(Ts) && Internal::TupleConvertible<tuple<Us...>, tuple<Ts...>>::value,
+				bool>::type>
+	 TupleVecIter(const TupleVecIter<OtherAllocType, Us...>& other)
+		: mTupleVec((vec_impl_type*)(const_cast<TupleVecIter<OtherAllocType, Us...>::vec_impl_type*>(other.mTupleVec)))
+		, mIndex(other.mIndex)
+	{
+	}
 
 	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
 	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }

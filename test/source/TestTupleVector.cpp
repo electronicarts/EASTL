@@ -131,18 +131,18 @@ int TestTupleVector()
 		testVec.shrink_to_fit();
 		EATEST_VERIFY(testVec.capacity() == 0);
 
-		auto testVecIter = testVec.cbegin();
+		auto testVecIter = testVec.begin();
 		testVec.insert(testVecIter, true, TestObject(5), 5.0f);
 		testVec.insert(testVecIter, false, TestObject(4), 4.0f);
 		testVec.insert(testVecIter, true, TestObject(1), 1.0f);
 		testVecIter++;
 		testVec.insert(testVecIter, false, TestObject(3), 3.0f);
 		testVec.insert(testVecIter, true, TestObject(2), 2.0f);
-		testVec.insert(testVec.cbegin(), false, TestObject(0), 0.0f);
-		testVec.insert(testVec.cend(), true, TestObject(6), 6.0f);
+		testVec.insert(testVec.begin(), false, TestObject(0), 0.0f);
+		testVec.insert(testVec.end(), true, TestObject(6), 6.0f);
 		for (unsigned int i = 0; i < testVec.size(); ++i)
 		{
-			EATEST_VERIFY(testVec.get<2>()[i] == (float)i);
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i));
 		}
 		testVec.clear();
 
@@ -162,7 +162,7 @@ int TestTupleVector()
 
 		// test copyConstructible, copyAssignable, swappable, prefix inc, !=, reference convertible to value_type (InputIterator!)
 		{
-			tuple_vector<int, float, int>::const_iterator iter = tripleElementVec.cbegin();
+			tuple_vector<int, float, int>::iterator iter = tripleElementVec.begin();
 			++iter;
 			auto copiedIter(iter);
 			EATEST_VERIFY(get<2>(*copiedIter) == 7);
