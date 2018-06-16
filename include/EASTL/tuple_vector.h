@@ -213,10 +213,16 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoMove(void* pDest, const size_t begin, const size_t end)
+	int DoUninitializedMove(void* pDest, const size_t begin, const size_t end)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest);
 		eastl::destruct(mpData + begin, mpData + end);
+		return 0;
+	}
+
+	int DoMove(const size_t srcBegin, const size_t srcEnd, const size_t destBegin)
+	{
+		eastl::move(mpData + srcBegin, mpData + srcEnd, mpData + destBegin);
 		return 0;
 	}
 
@@ -475,8 +481,8 @@ public:
 				void* ppNewLeaf[sizeof...(Ts)];
 				auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, newCapacity, 0);
 				
-				swallow(TupleVecLeaf<Indices, Ts>::DoMove(ppNewLeaf[Indices], 0, destIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoMove((void*)((Ts*)ppNewLeaf[Indices] + destIdx + 1), destIdx, mNumElements)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, destIdx)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + destIdx + 1), destIdx, mNumElements)...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(destIdx, args)...);
 
@@ -502,10 +508,10 @@ public:
 		size_t idx = pos - cbegin();
 		if (idx + 1 < mNumElements)
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoMove(TupleVecLeaf<Indices, Ts>::mpData + idx, idx + 1, mNumElements)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoMove(idx + 1, mNumElements, idx)...);
 		}
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements, mNumElements + 1)...);
 		--mNumElements;
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements, mNumElements + 1)...);
 	}
 
 
@@ -643,7 +649,7 @@ private:
 	{
 		void* ppNewLeaf[sizeof...(Ts)];
 		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, n, 0);
-		swallow(TupleVecLeaf<Indices, Ts>::DoMove(ppNewLeaf[Indices], 0, mNumElements)...);
+		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, mNumElements)...);
 		swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
 		EASTLFree(mAllocator, mpData, mDataSize);
 		mpData = allocation.first;
