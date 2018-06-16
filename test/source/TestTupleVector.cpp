@@ -132,12 +132,10 @@ int TestTupleVector()
 		EATEST_VERIFY(testVec.capacity() == 0);
 
 		// convoluted inserts to get "0, 1, 2, 3, 4, 5, 6" on the floats/testobject's
-		auto testVecIter = testVec.begin();
-		testVec.insert(testVecIter, true, TestObject(5), 5.0f);
+		auto testVecIter = testVec.insert(testVec.begin(), true, TestObject(5), 5.0f);
 		testVec.insert(testVecIter, false, TestObject(4), 4.0f);
 		testVec.insert(testVecIter, true, TestObject(1), 1.0f);
-		testVecIter++;
-		testVec.insert(testVecIter, false, TestObject(3), 3.0f);
+		testVecIter = testVec.insert(testVecIter + 1, false, TestObject(3), 3.0f);
 		testVec.insert(testVecIter, true, TestObject(2), 2.0f);
 		testVec.insert(testVec.begin(), false, TestObject(0), 0.0f);
 		testVec.insert(testVec.end(), true, TestObject(6), 6.0f);
@@ -148,10 +146,10 @@ int TestTupleVector()
 		}
 
 		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
-		testVec.erase(testVec.begin());
-		testVec.erase(testVecIter); 
-		testVec.erase(testVec.end() - 1); 
-		testVec.erase(testVec.begin() + 2);
+		testVecIter = testVec.erase(testVec.begin());
+		testVecIter = testVec.erase(testVecIter + 1); 
+		testVec.erase(testVecIter + 1);
+		testVec.erase(testVec.end() - 1);
 		for (unsigned int i = 0; i < testVec.size(); ++i)
 		{
 			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));

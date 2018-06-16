@@ -468,10 +468,9 @@ public:
 		++mNumElements;
 	}
 	
-	void insert(const_iterator pos, const Ts&... args)
+	iterator insert(const_iterator pos, const Ts&... args)
 	{
 		size_t destIdx = pos - cbegin();
-		iterator destPos = begin() + destIdx;
 		if (mNumElements >= mNumCapacity || destIdx != mNumElements)
 		{
 			if (mNumElements >= mNumCapacity)
@@ -501,9 +500,10 @@ public:
 			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, args)...);
 		}
 		++mNumElements;
+		return begin() + destIdx;
 	}
 
-	void erase(const_iterator pos)
+	iterator erase(const_iterator pos)
 	{
 		size_t idx = pos - cbegin();
 		if (idx + 1 < mNumElements)
@@ -512,6 +512,8 @@ public:
 		}
 		--mNumElements;
 		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements, mNumElements + 1)...);
+
+		return begin() + idx;
 	}
 
 
