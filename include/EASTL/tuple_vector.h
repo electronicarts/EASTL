@@ -255,11 +255,32 @@ void swallow(Ts&&...)
 {
 }
 
+// Helper struct to check for strict compatibility between two iterators, whilst still allowing for
+// conversion between TupleVecImpl<Ts...>::iterator and TupleVecImpl<Ts...>::const_iterator. 
+template <bool IsSameSize, typename From, typename To>
+struct TupleVecIterCompatibleImpl : public true_type { };
+	
+template<>
+struct TupleVecIterCompatibleImpl<true, tuple<>, tuple<>> : public true_type { };
+
+template <typename From, typename... FromRest, typename To, typename... ToRest>
+struct TupleVecIterCompatibleImpl<true, tuple<From, FromRest...>, tuple<To, ToRest...>> : public integral_constant<bool,
+		TupleVecIterCompatibleImpl<true, tuple<FromRest...>, tuple<ToRest...>>::value &&
+		is_same<typename remove_const<From>::type, typename remove_const<To>::type>::value >
+{ };
+
+template <typename From, typename To>
+struct TupleVecIterCompatible;
+
+template<typename... Us, typename... Ts>
+struct TupleVecIterCompatible<tuple<Us...>, tuple<Ts...>> :
+	public TupleVecIterCompatibleImpl<sizeof...(Us) == sizeof...(Ts), tuple<Us...>, tuple<Ts...>>
+{ };
+
 // The Iterator operates by storing a persistent index internally,
 // and resolving the tuple of pointers to the various parts of the original tupleVec when dereferenced.
 // While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
 // storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
-
 template <typename AllocatorType, typename... Ts>
 struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
@@ -275,12 +296,11 @@ public:
 	TupleVecIter(vec_impl_type* tupleVec, size_t index)
 		: mTupleVec(tupleVec), mIndex(index) { }
 
-	template <typename OtherAllocType, typename... Us,
-			  typename = typename enable_if<
-				sizeof...(Us) == sizeof...(Ts) && Internal::TupleConvertible<tuple<Us...>, tuple<Ts...>>::value,
-				bool>::type>
-	 TupleVecIter(const TupleVecIter<OtherAllocType, Us...>& other)
-		: mTupleVec((vec_impl_type*)(const_cast<TupleVecIter<OtherAllocType, Us...>::vec_impl_type*>(other.mTupleVec)))
+	template <typename OtherAllocType,
+			  typename... Us,
+			  typename = typename enable_if<TupleVecIterCompatible<tuple<Us...>, tuple<Ts...>>::value, bool>::type>
+	TupleVecIter(const TupleVecIter<OtherAllocType, Us...>& other)
+		: mTupleVec((vec_impl_type*)(other.mTupleVec))
 		, mIndex(other.mIndex)
 	{
 	}
