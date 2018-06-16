@@ -505,15 +505,22 @@ public:
 
 	iterator erase(const_iterator pos)
 	{
-		size_t idx = pos - cbegin();
-		if (idx + 1 < mNumElements)
-		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoMove(idx + 1, mNumElements, idx)...);
-		}
-		--mNumElements;
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements, mNumElements + 1)...);
+		return erase(pos, pos + 1);
+	}
 
-		return begin() + idx;
+	iterator erase(const_iterator first, const_iterator last)
+	{
+		if (first != last)
+		{
+			size_t firstIdx = first - cbegin();
+			size_t lastIdx = last - cbegin();
+			swallow(TupleVecLeaf<Indices, Ts>::DoMove(lastIdx, mNumElements, firstIdx)...);
+			size_t newNumElements = mNumElements - (lastIdx - firstIdx);
+			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(newNumElements, mNumElements)...);
+			mNumElements = newNumElements;
+		}
+
+		return first;
 	}
 
 

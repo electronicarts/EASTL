@@ -155,8 +155,13 @@ int TestTupleVector()
 			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));
 		}
 		EATEST_VERIFY(TestObject::sTOCount == testVec.size());
-		testVec.clear();
-
+		
+		testVec.erase(testVec.begin(), testVec.begin() + 2);
+		EATEST_VERIFY(testVec.size() == 1);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(testVec.empty());
+		
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
 	}
