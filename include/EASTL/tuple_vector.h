@@ -215,7 +215,7 @@ struct TupleVecLeaf
 
 	int DoMove(void* pDest, const size_t begin, const size_t end)
 	{
-		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest + begin);
+		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest);
 		eastl::destruct(mpData + begin, mpData + end);
 		return 0;
 	}
@@ -470,7 +470,7 @@ public:
 				auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, newCapacity, 0);
 				
 				swallow(TupleVecLeaf<Indices, Ts>::DoMove(ppNewLeaf[Indices], 0, destIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoMove((void*)((Ts*)ppNewLeaf[Indices] + 1), destIdx, mNumElements)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoMove((void*)((Ts*)ppNewLeaf[Indices] + destIdx + 1), destIdx, mNumElements)...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(destIdx, args)...);
 
@@ -490,6 +490,18 @@ public:
 		}
 		++mNumElements;
 	}
+
+	void erase(const_iterator pos)
+	{
+		size_t idx = pos - cbegin();
+		if (idx + 1 < mNumElements)
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoMove(TupleVecLeaf<Indices, Ts>::mpData + idx, idx + 1, mNumElements)...);
+		}
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements, mNumElements + 1)...);
+		--mNumElements;
+	}
+
 
 	void resize(size_type n)
 	{
