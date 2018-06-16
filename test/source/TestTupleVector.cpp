@@ -156,6 +156,7 @@ int TestTupleVector()
 		}
 		EATEST_VERIFY(TestObject::sTOCount == testVec.size());
 		
+		// remove 1, 3 from the list and make sure 5 is present, then remove the rest of the list
 		testVec.erase(testVec.begin(), testVec.begin() + 2);
 		EATEST_VERIFY(testVec.size() == 1);
 		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));

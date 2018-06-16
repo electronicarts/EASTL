@@ -522,8 +522,7 @@ public:
 
 		return first;
 	}
-
-
+	
 	void resize(size_type n)
 	{
 		if (n > mNumElements)
