@@ -159,7 +159,11 @@ int TestTupleVector()
 				return get<2>(tup) == 10.0f;  
 			}),
 			testVec.end());
-		EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
+		EATEST_VERIFY(testVec.size() == 7);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<2>()[i] != 10.0f);
+		}
 
 		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
 		testVecIter = testVec.erase(testVec.begin());
