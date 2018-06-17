@@ -52,7 +52,7 @@ struct TupleRecurser;
 template <size_t I, typename... Ts>
 struct TupleIndexRecurser;
 
-template <typename AllocatorType, typename... Ts>
+template <typename Indices, typename... Ts>
 struct TupleVecIter;
 
 // tuplevec_element helper to be able to isolate a type given an index
@@ -301,33 +301,36 @@ struct TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>> :
 // and resolving the tuple of pointers to the various parts of the original tupleVec when dereferenced.
 // While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
 // storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
-template <typename AllocatorType, typename... Ts>
-struct TupleVecIter : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
+template <size_t... Indices, typename... Ts>
+struct TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> : public iterator<random_access_iterator_tag, tuple<Ts...>, ptrdiff_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 private:
-	typedef TupleVecIter<AllocatorType, Ts...> this_type;
-	typedef TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> vec_impl_type;
+	typedef TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> this_type;
 
 	template<typename U, typename... Us> 
 	friend struct TupleVecIter;
 
 public:
 	TupleVecIter() = default;
-	TupleVecIter(vec_impl_type* tupleVec, size_t index)
-		: mTupleVec(tupleVec), mIndex(index) { }
 
-	template <typename OtherAllocType,
+	template<typename VecImplType>
+	TupleVecIter(VecImplType* tupleVec, size_t index)
+		: mIndex(index)
+		, mpData{(void*)tupleVec->TupleVecLeaf<Indices, Ts>::mpData...}
+	{ }
+
+	template <typename OtherIndicesType,
 			  typename... Us,
 			  typename = typename enable_if<TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>>::value, bool>::type>
-	TupleVecIter(const TupleVecIter<OtherAllocType, Us...>& other)
-		: mTupleVec((vec_impl_type*)(other.mTupleVec))
-		, mIndex(other.mIndex)
+	TupleVecIter(const TupleVecIter<OtherIndicesType, Us...>& other)
+		: mIndex(other.mIndex)
+		, mpData{other.mpData[Indices]...}
 	{
 	}
 
-	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mTupleVec->get<0>() == other.mTupleVec->get<0>(); }
-	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mTupleVec->get<0>() != other.mTupleVec->get<0>(); }
-	reference operator*() const { return MakeReference(make_index_sequence<sizeof...(Ts)>()); }
+	bool operator==(const TupleVecIter& other) const { return mIndex == other.mIndex && mpData[0] == other.mpData[0]; }
+	bool operator!=(const TupleVecIter& other) const { return mIndex != other.mIndex || mpData[0] != other.mpData[0]; }
+	reference operator*() const { return MakeReference(); }
 
 	this_type& operator++() { ++mIndex; return *this; }
 	this_type operator++(int)
@@ -382,26 +385,23 @@ public:
 
 private:
 
-	template <size_t... Indices>
-	value_type MakeValue(integer_sequence<size_t, Indices...> indices) const
+	value_type MakeValue() const
 	{
-		return value_type(mTupleVec->get<Indices>()[mIndex]...);
+		return value_type(((Ts*)mpData[Indices])[mIndex]...);
 	}
 
-	template <size_t... Indices>
-	reference MakeReference(integer_sequence<size_t, Indices...> indices) const
+	reference MakeReference() const
 	{
-		return reference(mTupleVec->get<Indices>()[mIndex]...);
+		return reference(((Ts*)mpData[Indices])[mIndex]...);
 	}
 
-	template <size_t... Indices>
-	pointer MakePointer(integer_sequence<size_t, Indices...> indices) const
+	pointer MakePointer() const
 	{
-		return pointer(&mTupleVec->get<Indices>()[mIndex]...);
+		return pointer(&((Ts*)mpData[Indices])[mIndex]...);
 	}
 
 	size_t mIndex = 0;
-	vec_impl_type* mTupleVec = nullptr;
+	const void* mpData[sizeof...(Ts)];
 };
 
 
@@ -414,8 +414,8 @@ class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : pub
 	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, const Ts...> const_this_type;
 
 public:
-	typedef TupleVecInternal::TupleVecIter<Allocator, Ts...> iterator;
-	typedef TupleVecInternal::TupleVecIter<Allocator, const Ts...> const_iterator;
+	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> iterator;
+	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, const Ts...> const_iterator;
 	typedef eastl::reverse_iterator<iterator> reverse_iterator;
 	typedef eastl::reverse_iterator<const_iterator> const_reverse_iterator;
 	typedef eastl_size_t size_type;
