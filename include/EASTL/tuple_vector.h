@@ -201,9 +201,9 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoConstruction(const size_t begin, const size_t end)
+	int DoDefaultFill(const size_t begin, const size_t n)
 	{
-		eastl::uninitialized_default_fill(mpData + begin, mpData + end);
+		eastl::uninitialized_default_fill_n(mpData + begin, n);
 		return 0;
 	}
 
@@ -551,7 +551,7 @@ public:
 			{
 				DoGrow(n);
 			}
-			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, n)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoDefaultFill(mNumElements, n - mNumElements)...);
 		}
 		else
 		{
