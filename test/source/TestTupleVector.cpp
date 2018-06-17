@@ -146,14 +146,20 @@ int TestTupleVector()
 		}
 		
 		// test for large inserts that don't resize capacity, and clean out the added range
-		testVec.reserve(30);
+		testVec.reserve(20);
 		testVec.insert(testVec.begin() + 5, 5, false, TestObject(10), 10.0f);
 		testVec.insert(testVec.begin() + 5, 5, false, TestObject(10), 10.0f);
 		for (unsigned int i = 5; i < 15; ++i)
 		{
 			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
 		}
-		testVec.erase(testVec.begin() + 5, testVec.begin() + 15);
+		testVec.erase(eastl::remove_if(testVec.begin(), testVec.end(),
+			[](auto tup)
+			{
+				return get<2>(tup) == 10.0f;  
+			}),
+			testVec.end());
+		EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
 
 		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
 		testVecIter = testVec.erase(testVec.begin());
