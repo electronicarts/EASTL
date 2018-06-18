@@ -147,28 +147,23 @@ namespace eastl
 			   { return (*mpArray)[a] < (*mpArray)[b]; }
 		};
 
-
 		// Radix sort elements
-		struct RadixSortElement8
+		template <typename Key>
+		struct RadixSortElement
 		{
-			typedef uint8_t radix_type;
-			uint8_t  mKey;
+			typedef Key radix_type;
+			Key  mKey;
 			uint16_t mData;
+
+			bool operator<(const RadixSortElement<Key> &other) const
+			{
+				return mKey < other.mKey;
+			}
 		};
 
-		struct RadixSortElement16
-		{
-			typedef uint16_t radix_type;
-			uint16_t mKey;
-			uint16_t mData;
-		};
-
-		struct RadixSortElement32
-		{
-			typedef uint32_t radix_type;
-			uint32_t mKey;
-			uint16_t mData;
-		};
+		typedef RadixSortElement<uint8_t> RadixSortElement8;
+		typedef RadixSortElement<uint16_t> RadixSortElement16;
+		typedef RadixSortElement<uint32_t> RadixSortElement32;
 
 	} // namespace Internal
 
@@ -410,7 +405,7 @@ int TestSort()
 				pRadixSortElementArray32[i].mData = (uint16_t)i;
 			}
 			radix_sort<RadixSortElement32*, extract_radix_key<RadixSortElement32> >(pRadixSortElementArray32, pRadixSortElementArray32 + kCount, pRadixSortElementArrayTemp32);
-			// To do: EATEST_VERIFY sort proceeded correctly.
+			EATEST_VERIFY(is_sorted(pRadixSortElementArray32, pRadixSortElementArray32 + kCount));
 			delete[] pRadixSortElementArray32;
 			delete[] pRadixSortElementArrayTemp32;
 		}
@@ -424,7 +419,7 @@ int TestSort()
 				pRadixSortElementArray16[i].mData = (uint16_t)i;
 			}
 			radix_sort<RadixSortElement16*, extract_radix_key<RadixSortElement16> >(pRadixSortElementArray16, pRadixSortElementArray16 + kCount, pRadixSortElementArrayTemp16);
-			// To do: EATEST_VERIFY sort proceeded correctly.
+			EATEST_VERIFY(is_sorted(pRadixSortElementArray16, pRadixSortElementArray16 + kCount));
 			delete[] pRadixSortElementArray16;
 			delete[] pRadixSortElementArrayTemp16;
 		}
@@ -438,7 +433,7 @@ int TestSort()
 				pRadixSortElementArray8[i].mData = (uint8_t)i;
 			}
 			radix_sort<RadixSortElement8*, extract_radix_key<RadixSortElement8> >(pRadixSortElementArray8, pRadixSortElementArray8 + kCount, pRadixSortElementArrayTemp8);
-			// To do: EATEST_VERIFY sort proceeded correctly.
+			EATEST_VERIFY(is_sorted(pRadixSortElementArray8, pRadixSortElementArray8 + kCount));
 			delete[] pRadixSortElementArray8;
 			delete[] pRadixSortElementArrayTemp8;
 		}

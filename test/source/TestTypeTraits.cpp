@@ -454,6 +454,7 @@ typedef void (*FunctionVoidVoidPtr)();
 namespace
 {
 	const eastl::string gEmptyStringInstance("");
+	const eastl::integral_constant<int*, nullptr> gIntNullptrConstant;
 }
 
 int TestTypeTraits()

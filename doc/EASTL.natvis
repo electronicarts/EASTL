@@ -421,12 +421,7 @@
       <Size>kSize</Size>
 
       <Loop>
-        <If Condition="iBitInWord == 0">
-          <Exec>bBitValue = (mWord[iWord] % 2 != 0) ? true : false</Exec>
-        </If>
-        <Else>
-          <Exec>bBitValue = (mWord[iWord] >> iBitInWord) != 0 ? true : false</Exec>
-        </Else>
+        <Exec>bBitValue = ((mWord[iWord] >> iBitInWord) % 2) != 0 ? true : false</Exec>
         <Item>bBitValue</Item>
         <Exec>iBitInWord++</Exec>
         <If Condition="iBitInWord == kBitsPerWord">

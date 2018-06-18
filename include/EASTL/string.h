@@ -474,7 +474,7 @@ namespace eastl
 			inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { eastl::swap(dst.raw, src.raw); }
 			inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { eastl::swap(a.raw, b.raw); }
 
-			inline void ResetToSSO() EA_NOEXCEPT { memset(sso.mData, 0, sizeof(SSOLayout)); }
+			inline void ResetToSSO() EA_NOEXCEPT { memset(&raw, 0, sizeof(RawLayout)); }
 		};
 
 		eastl::compressed_pair<Layout, allocator_type> mPair;

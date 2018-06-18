@@ -396,42 +396,42 @@ struct TupleImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleLeaf
 };
 
 template <size_t I, typename Indices, typename... Ts>
-tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(TupleImpl<Indices, Ts...>& t)
+inline tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(TupleImpl<Indices, Ts...>& t)
 {
 	typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
 	return static_cast<Internal::TupleLeaf<I, Type>&>(t).getInternal();
 }
 
 template <size_t I, typename Indices, typename... Ts>
-const tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(const TupleImpl<Indices, Ts...>& t)
+inline const tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(const TupleImpl<Indices, Ts...>& t)
 {
 	typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
 	return static_cast<const Internal::TupleLeaf<I, Type>&>(t).getInternal();
 }
 
 template <size_t I, typename Indices, typename... Ts>
-tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& t)
+inline tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& t)
 {
 	typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
 	return static_cast<Type&&>(static_cast<Internal::TupleLeaf<I, Type>&>(t).getInternal());
 }
 
 template <typename T, typename Indices, typename... Ts>
-T& get(TupleImpl<Indices, Ts...>& t)
+inline T& get(TupleImpl<Indices, Ts...>& t)
 {
 	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
 	return static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
 }
 
 template <typename T, typename Indices, typename... Ts>
-const T& get(const TupleImpl<Indices, Ts...>& t)
+inline const T& get(const TupleImpl<Indices, Ts...>& t)
 {
 	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
 	return static_cast<const Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
 }
 
 template <typename T, typename Indices, typename... Ts>
-T&& get(TupleImpl<Indices, Ts...>&& t)
+inline T&& get(TupleImpl<Indices, Ts...>&& t)
 {
 	typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
 	return static_cast<T&&>(static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal());
@@ -746,7 +746,7 @@ template <>
 class tuple<>
 {
 public:
-	void swap(tuple& t) {}
+	void swap(tuple&) {}
 };
 
 template <size_t I, typename... Ts>

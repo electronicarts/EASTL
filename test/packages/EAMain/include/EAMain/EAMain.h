@@ -11,7 +11,7 @@ namespace EA
     {
 		namespace Internal
 		{
-			static unsigned gVerbosityLevel = 0;	
+			extern unsigned gVerbosityLevel;
 		};
 
         typedef void (*ReportFunction)(const char8_t*);
@@ -58,13 +58,16 @@ namespace EA
 		{
 		public:
 
-            CommandLine(int argc, char** argv) {}
+			CommandLine(int argc, char** argv);
 			explicit CommandLine(const char *commandLineString) { }
             CommandLine(const char *commandLineString, unsigned int flags) { }
 
-            int FindSwitch(const char *pSwitch, bool bCaseSensitive = false, const char **pResult = NULL, int nStartingIndex = 0, char delimiter = DEFAULT_DELIMITER) const { return -1; }
+			int FindSwitch(const char *pSwitch, bool bCaseSensitive = false, const char **pResult = NULL, int nStartingIndex = 0, char delimiter = DEFAULT_DELIMITER) const;
 
-            bool HasHelpSwitch() const { return false; }
+			bool HasHelpSwitch() const;
+		private:
+			int m_argc;
+			char **m_argv;
 		};
 	}
 }
