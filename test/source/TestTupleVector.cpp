@@ -184,6 +184,34 @@ int TestTupleVector()
 		EATEST_VERIFY(testVec.empty());
 		
 		EATEST_VERIFY(TestObject::IsClear());
+
+		// erase_unsorted test
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		testVec.erase_unsorted(testVec.begin() + 0);
+		EATEST_VERIFY(testVec.size() == 9);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[1] == TestObject(1));
+		EATEST_VERIFY(testVec.get<1>()[8] == TestObject(8));
+
+		testVec.erase_unsorted(testVec.begin() + 5);
+		EATEST_VERIFY(testVec.size() == 8);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[7] == TestObject(7));
+
+		testVec.erase_unsorted(testVec.begin() + 7);
+		EATEST_VERIFY(testVec.size() == 7);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[6] == TestObject(6));
+
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(TestObject::IsClear());
+
 		TestObject::Reset();
 	}
 	

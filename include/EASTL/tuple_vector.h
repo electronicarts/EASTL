@@ -543,6 +543,15 @@ public:
 		return first;
 	}
 	
+	iterator erase_unsorted(const_iterator pos)
+	{
+		auto newNumElements = mNumElements - 1;
+		swallow(TupleVecLeaf<Indices, Ts>::DoMove(newNumElements, mNumElements, pos - begin())...);
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(newNumElements, mNumElements)...);
+		mNumElements = newNumElements;
+		return pos;
+	}
+
 	void resize(size_type n)
 	{
 		if (n > mNumElements)
