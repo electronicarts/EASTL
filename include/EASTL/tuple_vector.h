@@ -220,6 +220,12 @@ struct TupleVecLeaf
 		return 0;
 	}
 
+	int DoUninitializedCopy(T* dest, T* srcBegin, T* srcEnd)
+	{
+		eastl::uninitialized_copy_ptr(srcBegin, srcEnd, dest);
+		return 0;
+	}
+
 	int DoMove(const size_t srcBegin, const size_t srcEnd, const size_t destBegin)
 	{
 		eastl::move(mpData + srcBegin, mpData + srcEnd, mpData + destBegin);
@@ -309,6 +315,9 @@ private:
 
 	template<typename U, typename... Us> 
 	friend struct TupleVecIter;
+
+	template<typename U, typename V, typename... Ts>
+	friend class TupleVecImpl;
 
 public:
 	TupleVecIter() = default;
@@ -428,9 +437,19 @@ public:
 	TupleVecImpl()
 		: mAllocator(allocator_type(EASTL_TUPLE_VECTOR_DEFAULT_NAME))
 	{}
+
 	TupleVecImpl(const allocator_type& allocator)
 		: mAllocator(allocator)
 	{}
+
+	TupleVecImpl(const_iterator begin, const_iterator end, const allocator_type& allocator)
+		: mAllocator(allocator)
+	{
+		auto newNumElements = end - begin;
+		DoGrow(newNumElements);
+		mNumElements = newNumElements;
+		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(TupleVecLeaf<Indices, Ts>::mpData, (Ts*)(begin.mpData[Indices]), (Ts*)(end.mpData[Indices]) + end.mIndex)...);
+	}
 
 protected:
 	// ctor to provide a pre-allocated field of data that the container will own, specifically for fixed_tuple_vector
@@ -595,10 +614,8 @@ public:
 
 	void shrink_to_fit()
 	{
-		if (mNumElements < mNumCapacity)
-		{
-			DoGrow(mNumElements);
-		}
+		this_type temp(begin(), end(), mAllocator);
+		swap(temp);
 	}
 
 	void clear()
