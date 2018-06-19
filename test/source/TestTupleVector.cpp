@@ -214,7 +214,67 @@ int TestTupleVector()
 
 		TestObject::Reset();
 	}
-	
+
+	// Test erase with reverse iterators
+	{
+		TestObject::Reset();
+
+		tuple_vector<bool, TestObject, float> testVec;
+		for (int i = 0; i < 7; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
+		auto testVecIter = testVec.erase(testVec.rbegin());
+		testVecIter = testVec.erase(testVecIter + 1);
+		testVec.erase(testVecIter + 1);
+		testVec.erase(testVec.rend() - 1);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));
+		}
+		EATEST_VERIFY(TestObject::sTOCount == testVec.size());
+
+		// remove 1, 3 from the list and make sure 5 is present, then remove the rest of the list
+		testVec.erase(testVec.rbegin() + 1, testVec.rend());
+		EATEST_VERIFY(testVec.size() == 1);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));
+		testVec.erase(testVec.rbegin(), testVec.rend());
+		EATEST_VERIFY(testVec.empty());
+
+		EATEST_VERIFY(TestObject::IsClear());
+
+		// erase_unsorted test
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		testVec.erase_unsorted(testVec.rbegin() + 9);
+		EATEST_VERIFY(testVec.size() == 9);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[1] == TestObject(1));
+		EATEST_VERIFY(testVec.get<1>()[8] == TestObject(8));
+
+		testVec.erase_unsorted(testVec.rbegin() + 3);
+		EATEST_VERIFY(testVec.size() == 8);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[7] == TestObject(7));
+
+		testVec.erase_unsorted(testVec.rbegin() + 0);
+		EATEST_VERIFY(testVec.size() == 7);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[6] == TestObject(6));
+
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(TestObject::IsClear());
+
+		TestObject::Reset();
+	}
+
 	// Test swap
 	{
 		tuple_vector<int, float, bool> complexVec;

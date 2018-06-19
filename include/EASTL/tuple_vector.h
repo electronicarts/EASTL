@@ -552,6 +552,21 @@ public:
 		return pos;
 	}
 
+	reverse_iterator erase(const_reverse_iterator pos) 
+	{
+		return reverse_iterator(erase((pos+1).base(), (pos).base()));
+	}
+
+	reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last)
+	{
+		return reverse_iterator(erase((last).base(), (first).base()));
+	}
+
+	reverse_iterator erase_unsorted(const_reverse_iterator pos)
+	{
+		return reverse_iterator(erase_unsorted((pos + 1).base()));
+	}
+
 	void resize(size_type n)
 	{
 		if (n > mNumElements)
