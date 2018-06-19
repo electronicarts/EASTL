@@ -443,6 +443,7 @@ protected:
 public:
 	~TupleVecImpl()
 	{ 
+		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(0, mNumElements)...);
 		if (mpData)
 			EASTLFree(mAllocator, mpData, mDataSize); 
 	}

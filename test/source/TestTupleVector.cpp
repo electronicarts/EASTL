@@ -212,6 +212,16 @@ int TestTupleVector()
 		testVec.erase(testVec.begin(), testVec.end());
 		EATEST_VERIFY(TestObject::IsClear());
 
+		// test tuple_vector dtor
+		{
+			tuple_vector<bool, TestObject, float> dtorCheck;
+			for (int i = 0; i < 10; ++i)
+			{
+				dtorCheck.push_back(i % 3 == 0, TestObject(i), (float)i);
+			}
+		}
+		EATEST_VERIFY(TestObject::IsClear());
+
 		TestObject::Reset();
 	}
 
