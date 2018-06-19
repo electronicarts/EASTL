@@ -426,6 +426,47 @@ int TestTupleVector()
 		}
 	}
 
+	// Test move operations (esp. with unique_ptr)
+	{
+		TestObject::Reset();
+
+		{
+			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v1;
+			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v2;
+			int testValues[] = {42, 43, 44, 45, 46, 47};
+
+			// add some data in the vector so we can move it to the other vector.
+			for (int i = 0; i < 5; ++i)
+			{
+				v1.push_back(eastl::move(i), eastl::make_unique<int>(testValues[i]), TestObject(i + 1));
+			}
+			EATEST_VERIFY(!v1.empty() && v2.empty());
+			v2 = eastl::move(v1);
+			EATEST_VERIFY(v1.empty() && !v2.empty());
+			v1.swap(v2);
+			EATEST_VERIFY(!v1.empty() && v2.empty());
+
+			v2.insert(v2.begin(), *make_move_iterator(v1.begin()));
+			EATEST_VERIFY(v2.size() == 1);
+			EATEST_VERIFY(v1.size() == 5);
+			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
+			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
+			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
+			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+
+			v1.shrink_to_fit();
+			v2.shrink_to_fit();
+			EATEST_VERIFY(v2.size() == 1);
+			EATEST_VERIFY(v1.size() == 5);
+			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
+			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
+			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
+			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+		}
+		EATEST_VERIFY(TestObject::IsClear());
+	}
+
+	#if ENABLE_SORT_TEST
 	// test sort.h
 	{
 		LARGE_INTEGER  tupleLoopCounter; tupleLoopCounter.QuadPart = 0;
