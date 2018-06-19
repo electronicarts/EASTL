@@ -429,7 +429,6 @@ int TestTupleVector()
 	// Test move operations (esp. with unique_ptr)
 	{
 		TestObject::Reset();
-
 		{
 			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v1;
 			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v2;
