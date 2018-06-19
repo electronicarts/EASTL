@@ -44,7 +44,7 @@ template <typename... Ts>
 struct TupleTypes {};
 
 template <typename Allocator, typename Indices, typename... Ts>
-struct TupleVecImpl;
+class TupleVecImpl;
 
 template <typename... Ts>
 struct TupleRecurser;
@@ -106,7 +106,7 @@ struct tuplevec_index<T, TupleTypes<Ts, TsRest...>>
 };
 
 template <typename Allocator, typename T, typename Indices, typename... Ts>
-struct tuplevec_index<T, TupleVecInternal::TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, TupleTypes<Ts...>>
+struct tuplevec_index<T, TupleVecImpl<Allocator, Indices, Ts...>> : public tuplevec_index<T, TupleTypes<Ts...>>
 {
 };
 
