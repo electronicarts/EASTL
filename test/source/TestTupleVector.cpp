@@ -466,7 +466,6 @@ int TestTupleVector()
 		EATEST_VERIFY(TestObject::IsClear());
 	}
 
-	#if ENABLE_SORT_TEST
 	// test sort.h
 	{
 		LARGE_INTEGER  tupleLoopCounter; tupleLoopCounter.QuadPart = 0;
