@@ -127,6 +127,7 @@ int TestTupleVector()
 
 		testVec.clear();
 		EATEST_VERIFY(testVec.empty());
+		EATEST_VERIFY(TestObject::IsClear());
 
 		testVec.shrink_to_fit();
 		EATEST_VERIFY(testVec.capacity() == 0);
