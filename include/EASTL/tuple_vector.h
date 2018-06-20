@@ -458,39 +458,22 @@ protected:
 
 public:
 	move_iterator() : mIterator() {}
-
 	explicit move_iterator(iterator_type mi) : mIterator(mi) {}
 
-	template <typename U>
-	move_iterator(const move_iterator<U>& mi) : mIterator(mi.base())
-	{
-	}
+	move_iterator(const move_iterator<U>& mi) : mIterator(mi.base()) {}
 
 	iterator_type base() const { return mIterator; }
-
 	reference operator*() const { return eastl::move(MakeReference()); }
-	
 	pointer operator->() const { return mIterator; }
 
-	this_type& operator++()
-	{
-		++mIterator;
-		return *this;
-	}
-
-	this_type operator++(int)
-	{
+	this_type& operator++() { ++mIterator; return *this; }
+	this_type operator++(int) {
 		this_type tempMoveIterator = *this;
 		++mIterator;
 		return tempMoveIterator;
 	}
 
-	this_type& operator--()
-	{
-		--mIterator;
-		return *this;
-	}
-
+	this_type& operator--() { --mIterator; return *this; }
 	this_type operator--(int)
 	{
 		this_type tempMoveIterator = *this;
@@ -499,7 +482,6 @@ public:
 	}
 
 	this_type operator+(difference_type n) const { return move_iterator(mIterator + n); }
-
 	this_type& operator+=(difference_type n)
 	{
 		mIterator += n;
@@ -507,7 +489,6 @@ public:
 	}
 
 	this_type operator-(difference_type n) const { return move_iterator(mIterator - n); }
-	
 	this_type& operator-=(difference_type n)
 	{
 		mIterator -= n;
@@ -521,7 +502,6 @@ private:
 	{
 		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
 	}
-
 };
 
 // TupleVecImpl
