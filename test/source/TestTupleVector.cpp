@@ -127,6 +127,7 @@ int TestTupleVector()
 
 		testVec.clear();
 		EATEST_VERIFY(testVec.empty());
+		EATEST_VERIFY(TestObject::IsClear());
 
 		testVec.shrink_to_fit();
 		EATEST_VERIFY(testVec.capacity() == 0);
@@ -424,6 +425,58 @@ int TestTupleVector()
 			EATEST_VERIFY(j == reverse_j);
 			EATEST_VERIFY(get<0>(*tripleElementVec.rbegin()) == 5);
 		}
+	}
+
+	// Test move operations (esp. with unique_ptr)
+	{
+		TestObject::Reset();
+		{
+			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v1;
+			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v2;
+			int testValues[] = {42, 43, 44, 45, 46, 47};
+
+			// add some data in the vector so we can move it to the other vector.
+			v1.reserve(5);
+			for (int i = 0; i < 3; ++i)
+			{
+				auto emplacedTup = v1.emplace_back(i * 2 + 1, eastl::make_unique<int>(testValues[i * 2]), TestObject(i * 2 + 1));
+			}
+			v1.emplace(v1.end(), 6, eastl::make_unique<int>(testValues[5]), TestObject(6));
+			v1.emplace(v1.begin() + 1, 2, eastl::make_unique<int>(testValues[1]), TestObject(2));
+			v1.emplace(v1.begin() + 3, 4, eastl::make_unique<int>(testValues[3]), TestObject(4));
+
+ 			tuple<int&, eastl::unique_ptr<int>&, TestObject&> movedTup = v1.at(0);
+ 			EATEST_VERIFY(get<0>(movedTup) == 1);
+ 			EATEST_VERIFY(get<0>(*v1.begin()) == 1);
+
+			for (unsigned int i = 0; i < v1.size(); ++i)
+			{
+				EATEST_VERIFY(v1.get<0>()[i] == i + 1);
+			}
+			EATEST_VERIFY(!v1.empty() && v2.empty());
+			v2 = eastl::move(v1);
+			EATEST_VERIFY(v1.empty() && !v2.empty());
+			v1.swap(v2);
+			EATEST_VERIFY(!v1.empty() && v2.empty());
+
+			v2.insert(v2.begin(), *make_move_iterator(v1.begin()));
+			EATEST_VERIFY(v2.size() == 1);
+			EATEST_VERIFY(v1.size() == 6);
+			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
+			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
+			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
+			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+
+			v1.shrink_to_fit();
+			v2.shrink_to_fit();
+			EATEST_VERIFY(v2.size() == 1);
+			EATEST_VERIFY(v1.size() == 6);
+			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
+			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
+			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
+			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+		}
+		EATEST_VERIFY(TestObject::IsClear());
 	}
 
 	// test sort.h
