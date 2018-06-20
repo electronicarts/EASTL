@@ -606,15 +606,15 @@ public:
 			EASTLFree(mAllocator, mpData, mDataSize); 
 	}
 
-	size_type push_back()
+	reference_tuple push_back()
 	{
 		if (mNumElements >= mNumCapacity)
 		{
 			DoGrow(GetNewCapacity(mNumCapacity));
 		}
 		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements)...);
-		++mNumElements;
-		return mNumElements;
+		mNumElements++;
+		return back();
 	}
 
 	void push_back(const Ts&... args)
@@ -627,16 +627,6 @@ public:
 		++mNumElements;
 	}
 
-	void push_back(Ts&&... args)
-	{
-		if (mNumElements >= mNumCapacity)
-		{
-			DoGrow(GetNewCapacity(mNumCapacity));
-		}
-		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
-		++mNumElements;
-	}
-
 	void push_back_uninitialized()
 	{
 		if (mNumElements >= mNumCapacity)
@@ -646,9 +636,54 @@ public:
 		++mNumElements;
 	}
 	
-	iterator insert(const_iterator pos, const Ts&... args)
+	reference_tuple emplace_back(Ts&&... args)
 	{
-		return insert(pos, 1, args...);
+		if (mNumElements >= mNumCapacity)
+		{
+			DoGrow(GetNewCapacity(mNumCapacity));
+		}
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
+		mNumElements++;
+		return back();
+	}
+
+	iterator emplace(const_iterator pos, Ts&&... args)
+	{
+		size_t firstIdx = pos - cbegin();
+		size_t newNumElements = mNumElements + 1;
+		if (newNumElements >= mNumCapacity || firstIdx != mNumElements)
+		{
+			if (newNumElements >= mNumCapacity)
+			{
+				const auto newCapacity = max(GetNewCapacity(mNumCapacity), newNumElements);
+
+				void* ppNewLeaf[sizeof...(Ts)];
+				auto allocation =
+					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
+						*this, ppNewLeaf, newCapacity, 0);
+
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + firstIdx + 1),
+						                                               firstIdx, mNumElements)...);
+				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, eastl::move(args))...);
+
+				EASTLFree(mAllocator, mpData, mDataSize);
+				mpData = allocation.first;
+				mDataSize = allocation.second;
+				mNumCapacity = newCapacity;
+			}
+			else
+			{
+				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValue(firstIdx, mNumElements, eastl::move(args))...);
+			}
+		}
+		else
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
+		}
+		mNumElements = newNumElements;
+		return begin() + firstIdx;
 	}
 
 	iterator insert(const_iterator pos, size_t n, const Ts&... args)
@@ -691,51 +726,6 @@ public:
 		return begin() + firstIdx;
 	}
 
-	iterator insert(const_iterator pos, Ts&&... args)
-	{
-		size_t firstIdx = pos - cbegin();
-		size_t lastIdx = firstIdx + 1;
-		size_t newNumElements = mNumElements + 1;
-		if (newNumElements >= mNumCapacity || firstIdx != mNumElements)
-		{
-			if (newNumElements >= mNumCapacity)
-			{
-				const auto newCapacity = max(GetNewCapacity(mNumCapacity), newNumElements);
-
-				void* ppNewLeaf[sizeof...(Ts)];
-				auto allocation =
-					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
-						*this, ppNewLeaf, newCapacity, 0);
-
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + lastIdx),
-						                                               firstIdx, mNumElements)...);
-				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, eastl::move(args))...);
-
-				EASTLFree(mAllocator, mpData, mDataSize);
-				mpData = allocation.first;
-				mDataSize = allocation.second;
-				mNumCapacity = newCapacity;
-			}
-			else
-			{
-				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValue(firstIdx, mNumElements, eastl::move(args))...);
-			}
-		}
-		else
-		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
-		}
-		mNumElements = newNumElements;
-		return begin() + firstIdx;
-	}
-
-	iterator erase(const_iterator pos)
-	{
-		return erase(pos, pos + 1);
-	}
-
 	iterator erase(const_iterator first, const_iterator last)
 	{
 		if (first != last)
@@ -757,21 +747,6 @@ public:
 		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(newNumElements, mNumElements)...);
 		mNumElements = newNumElements;
 		return pos;
-	}
-
-	reverse_iterator erase(const_reverse_iterator pos) 
-	{
-		return reverse_iterator(erase((pos+1).base(), (pos).base()));
-	}
-
-	reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last)
-	{
-		return reverse_iterator(erase((last).base(), (first).base()));
-	}
-
-	reverse_iterator erase_unsorted(const_reverse_iterator pos)
-	{
-		return reverse_iterator(erase_unsorted((pos + 1).base()));
 	}
 
 	void resize(size_type n)
@@ -827,12 +802,20 @@ public:
 		eastl::swap(mNumCapacity, x.mNumCapacity);
 	}
 
+	void push_back(Ts&&... args) { emplace_back(eastl::move(args)...); }
 	void push_back(const_reference_tuple tup) { push_back(eastl::get<Indices>(tup)...); }
-	void push_back(rvalue_tuple tup) { push_back(eastl::move(eastl::get<Indices>(tup))...); }
+	void push_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))...); }
 
+	iterator insert(const_iterator pos, const Ts&... args) { return insert(pos, 1, args...); }
+	iterator insert(const_iterator pos, Ts&&... args) { return emplace(pos, eastl::move(args)...); }
+	iterator insert(const_iterator pos, rvalue_tuple tup) { return emplace(pos, eastl::move(eastl::get<Indices>(tup))...); }
 	iterator insert(const_iterator pos, const_reference_tuple tup) { return insert(pos, eastl::get<Indices>(tup)...); }
-	iterator insert(const_iterator pos, rvalue_tuple tup) { return insert(pos, eastl::move(eastl::get<Indices>(tup))...); }
 	iterator insert(const_iterator pos, size_t n, const_reference_tuple tup) { return insert(pos, n, eastl::get<Indices>(tup)...); }
+
+	iterator erase(const_iterator pos) { return erase(pos, pos + 1); }
+	reverse_iterator erase(const_reverse_iterator pos) { return reverse_iterator(erase((pos + 1).base(), (pos).base())); }
+	reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last) { return reverse_iterator(erase((last).base(), (first).base())); }
+	reverse_iterator erase_unsorted(const_reverse_iterator pos) { return reverse_iterator(erase_unsorted((pos + 1).base())); }
 
 	bool empty() const { return mNumElements == 0; }
 	size_type size() const { return mNumElements; }
@@ -855,10 +838,10 @@ public:
 	const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
 	ptr_tuple data() { return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
-	const_ptr_tuple data() const { return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
+	const_ptr_tuple data() const { return const_ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
 
 	reference_tuple at(size_type n) { return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
-	const_reference_tuple at(size_type n) const { return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
+	const_reference_tuple at(size_type n) const { return const_reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
 	
 	reference_tuple operator[](size_type n) { return at(n); }
 	const_reference_tuple operator[](size_type n) const { return at(n); }
