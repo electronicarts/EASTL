@@ -460,6 +460,7 @@ public:
 	move_iterator() : mIterator() {}
 	explicit move_iterator(iterator_type mi) : mIterator(mi) {}
 
+	template <typename U>
 	move_iterator(const move_iterator<U>& mi) : mIterator(mi.base()) {}
 
 	iterator_type base() const { return mIterator; }
