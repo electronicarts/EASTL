@@ -226,6 +226,76 @@ int TestTupleVector()
 		TestObject::Reset();
 	}
 
+	// Test multitude of constructors
+	{
+		TestObject::Reset();
+		tuple_vector<bool, TestObject, float> srcVec;
+		for (int i = 0; i < 10; ++i)
+		{
+			srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		{
+			tuple_vector<bool, TestObject, float> ctorFromConstRef(srcVec);
+			EATEST_VERIFY(ctorFromConstRef.size() == 10);
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+			}
+		}
+
+		{
+			tuple_vector<bool, TestObject, float> ctorFromIters(srcVec.begin() + 2, srcVec.begin() + 7);
+			EATEST_VERIFY(ctorFromIters.size() == 5);
+			for (int i = 2; i < 7; ++i)
+			{
+				EATEST_VERIFY(ctorFromIters.get<0>()[i - 2] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromIters.get<1>()[i - 2] == TestObject(i));
+				EATEST_VERIFY(ctorFromIters.get<2>()[i - 2] == (float)i);
+			}
+		}
+
+		{
+			tuple_vector<bool, TestObject, float> ctorFromFill(10);
+			EATEST_VERIFY(ctorFromFill.size() == 10);
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromFill.get<0>()[i] == false);
+				EATEST_VERIFY(ctorFromFill.get<1>()[i] == TestObject());
+				EATEST_VERIFY(ctorFromFill.get<2>()[i] == 0.0f);
+			}
+		}
+
+		{
+			tuple_vector<bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f);
+			EATEST_VERIFY(ctorFromFillArgs.size() == 10);
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+			}
+		}
+
+		{
+			tuple<bool, TestObject, float> tup(true, TestObject(5), 5.0f);
+			tuple_vector<bool, TestObject, float> ctorFromFillTup(10, tup);
+			EATEST_VERIFY(ctorFromFillTup.size() == 10);
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromFillTup.get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillTup.get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillTup.get<2>()[i] == 5.0f);
+			}
+		}
+		srcVec.clear();
+		EATEST_VERIFY(TestObject::IsClear());
+
+		TestObject::Reset();
+	}
+
 	// Test erase with reverse iterators
 	{
 		TestObject::Reset();
@@ -475,6 +545,12 @@ int TestTupleVector()
 			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
 			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
 			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+
+			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v3(eastl::move(v2));
+			EATEST_VERIFY(v2.size() == 0);
+			EATEST_VERIFY(v3.size() == 1);
+			EATEST_VERIFY(v3.get<2>()[0] == TestObject(1));
+			EATEST_VERIFY(*v3.get<1>()[0].get() == testValues[0]);
 		}
 		EATEST_VERIFY(TestObject::IsClear());
 	}

@@ -527,7 +527,7 @@ public:
 	typedef eastl::tuple<Ts&&...> rvalue_tuple;
 
 	TupleVecImpl()
-		: mAllocator(allocator_type(EASTL_TUPLE_VECTOR_DEFAULT_NAME))
+		: mAllocator(EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 	{}
 
 	TupleVecImpl(const allocator_type& allocator)
@@ -540,36 +540,69 @@ public:
 		swap(x);
 	}
 
-	template<typename MoveIterBase>
-	TupleVecImpl(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const allocator_type& allocator)
+	TupleVecImpl(this_type&& x, const Allocator& allocator)
 		: mAllocator(allocator)
 	{
-		auto newNumElements = end - begin;
-		DoGrow(newNumElements);
-		mNumElements = newNumElements;
-		swallow(
-			TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
-				TupleVecLeaf<Indices, Ts>::mpData, 
-				eastl::move_iterator<Ts*>((Ts*)begin.base().mpData[Indices]),
-				eastl::move_iterator<Ts*>((Ts*)end.base().mpData[Indices] + end.base().mIndex)
-			)...
-		);
+		swap(x);
 	}
 
- 	TupleVecImpl(const_iterator begin, const_iterator end, const allocator_type& allocator)
+	TupleVecImpl(const this_type& x)
+		: mAllocator(x.mAllocator)
+	{
+		DoInitFromIterator(x.begin(), x.end());
+	}
+
+	TupleVecImpl(const this_type& x, const Allocator& allocator) 
+		: mAllocator(allocator)
+	{
+		DoInitFromIterator(x.begin(), x.end());
+	}
+
+	template<typename MoveIterBase>
+	TupleVecImpl(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: mAllocator(allocator)
+	{
+		DoInitFromIterator(begin, end);
+	}
+
+	template<typename Iterator>
+ 	TupleVecImpl(Iterator begin, Iterator end, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
  		: mAllocator(allocator)
  	{
- 		auto newNumElements = end - begin;
- 		DoGrow(newNumElements);
- 		mNumElements = newNumElements;
- 		swallow(
-			TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
-				TupleVecLeaf<Indices, Ts>::mpData,
-				(Ts*)(begin.mpData[Indices]),
-				(Ts*)(end.mpData[Indices]) + end.mIndex
-			)...
-		);
+		DoInitFromIterator(begin, end);
  	}
+
+	TupleVecImpl(size_t n, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: mAllocator(allocator)
+	{
+		DoGrow(n);
+		mNumElements = n;
+		swallow(TupleVecLeaf<Indices, Ts>::DoDefaultFill(0, n)...);
+	}
+
+	TupleVecImpl(size_t n, const Ts&... args)
+		: mAllocator(EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+	{
+		DoGrow(n);
+		mNumElements = n;
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(0, n, args)...);
+	}
+
+	TupleVecImpl(size_t n, const Ts&... args, const allocator_type& allocator)
+		: mAllocator(allocator)
+	{
+		DoGrow(n);
+		mNumElements = n;
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(0, n, args)...);
+	}
+
+	TupleVecImpl(size_t n, const_reference_tuple tup, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: mAllocator(allocator)
+	{
+		DoGrow(n);
+		mNumElements = n;
+		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(0, n, eastl::get<Indices>(tup))...);
+	}
 
 protected:
 	// ctor to provide a pre-allocated field of data that the container will own, specifically for fixed_tuple_vector
@@ -893,6 +926,40 @@ private:
 	template<typename... Ts>
 	friend struct TupleRecurser;
 
+	template <typename MoveIterBase>
+	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
+	{
+		auto newNumElements = end - begin;
+		const void* otherPdata[sizeof...(Ts)] = { begin.base().mpData[Indices]... };
+		auto beginIdx = begin.base().mIndex;
+		auto endIdx = end.base().mIndex;
+		DoGrow(newNumElements);
+		mNumElements = newNumElements;
+		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
+				TupleVecLeaf<Indices, Ts>::mpData,
+				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + beginIdx),
+				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + endIdx)
+			)...
+		);
+	}
+
+	template <typename Iterator>
+	void DoInitFromIterator(Iterator begin, Iterator end)
+	{
+		auto newNumElements = end - begin;
+		const void* otherPdata[sizeof...(Ts)] = { begin.mpData[Indices]... };
+		auto beginIdx = begin.mIndex;
+		auto endIdx = end.mIndex;
+		DoGrow(newNumElements);
+		mNumElements = newNumElements;
+		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
+				TupleVecLeaf<Indices, Ts>::mpData,
+				(Ts*)(otherPdata[Indices]) + beginIdx,
+				(Ts*)(otherPdata[Indices]) + endIdx
+			)...
+		);
+	}
+
 	void DoGrow(size_type n)
 	{
 		void* ppNewLeaf[sizeof...(Ts)];
@@ -917,6 +984,8 @@ private:
 template <typename... Ts>
 class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
 {
+	typedef TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
+	using base_type::base_type;
 };
 
 }  // namespace eastl
