@@ -207,9 +207,9 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoDefaultFill(const size_t begin, const size_t n)
+	int DoDefaultFill(const size_t begin, const size_t end)
 	{
-		eastl::uninitialized_default_fill_n(mpData + begin, n);
+		eastl::uninitialized_default_fill_n(mpData + begin, end - begin);
 		return 0;
 	}
 
@@ -771,7 +771,24 @@ public:
 			{
 				DoGrow(n);
 			}
-			swallow(TupleVecLeaf<Indices, Ts>::DoDefaultFill(mNumElements, n - mNumElements)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoDefaultFill(mNumElements, n)...);
+		}
+		else
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(n, mNumElements)...);
+		}
+		mNumElements = n;
+	}
+
+	void resize(size_type n, const Ts&... args)
+	{
+		if (n > mNumElements)
+		{
+			if (n > mNumCapacity)
+			{
+				DoGrow(n);
+			}
+			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, n, args)...);
 		}
 		else
 		{
@@ -833,6 +850,8 @@ public:
 	reverse_iterator erase(const_reverse_iterator pos) { return reverse_iterator(erase((pos + 1).base(), (pos).base())); }
 	reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last) { return reverse_iterator(erase((last).base(), (first).base())); }
 	reverse_iterator erase_unsorted(const_reverse_iterator pos) { return reverse_iterator(erase_unsorted((pos + 1).base())); }
+
+	void resize(size_type n, const_reference_tuple tup) { resize(n, eastl::get<Indices>(tup)...); }
 
 	bool empty() const { return mNumElements == 0; }
 	size_type size() const { return mNumElements; }

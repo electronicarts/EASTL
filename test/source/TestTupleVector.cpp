@@ -119,15 +119,44 @@ int TestTupleVector()
 		EATEST_VERIFY(testVec.size() == 5);
 		testVec.resize(10);
 		EATEST_VERIFY(testVec.size() == 10);
+
+		testVec.resize(15, true, TestObject(5), 5.0f);
+		EATEST_VERIFY(testVec.size() == 15);
+		for (unsigned int i = 10; i < 15; ++i)
+		{
+			EATEST_VERIFY(testVec.get<0>()[i] == true);
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
+			EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
+		}
+
+		{
+			tuple<bool, TestObject, float> resizeTup(true, TestObject(10), 10.0f);
+			testVec.resize(20, resizeTup);
+		}
+		EATEST_VERIFY(testVec.size() == 20);
+		for (unsigned int i = 10; i < 15; ++i)
+		{
+			EATEST_VERIFY(testVec.get<0>()[i] == true);
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
+			EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
+		}
+		for (unsigned int i = 15; i < 20; ++i)
+		{
+			EATEST_VERIFY(testVec.get<0>()[i] == true);
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
+			EATEST_VERIFY(testVec.get<2>()[i] == 10.0f);
+		}
+
 		testVec.push_back();
 		testVec.pop_back();
-		EATEST_VERIFY(testVec.capacity() != 10);
+		EATEST_VERIFY(testVec.capacity() != 20);
 		testVec.shrink_to_fit();
-		EATEST_VERIFY(testVec.capacity() == 10);
+		EATEST_VERIFY(testVec.capacity() == 20);
 
 		testVec.clear();
 		EATEST_VERIFY(testVec.empty());
 		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
 
 		testVec.shrink_to_fit();
 		EATEST_VERIFY(testVec.capacity() == 0);
