@@ -401,7 +401,7 @@ int TestTupleVector()
 		EATEST_VERIFY(otherComplexVec.get<float>()[1] == 4.0f);
 
 		complexVec.push_back(10, 10.0f, true);
-		otherComplexVec.swap(complexVec);
+		swap(complexVec, otherComplexVec);
 
 		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
 		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);

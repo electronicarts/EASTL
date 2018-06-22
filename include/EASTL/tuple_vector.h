@@ -999,6 +999,14 @@ private:
 
 }  // namespace TupleVecInternal
 
+template <typename Allocator, typename... Ts>
+template <typename Allocator, typename... Ts>
+inline void swap(TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+				TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+{
+	a.swap(b);
+}
+
 // External interface of tuple_vector
 template <typename... Ts>
 class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
