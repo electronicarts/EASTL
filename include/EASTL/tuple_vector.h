@@ -444,7 +444,7 @@ class move_iterator<TupleVecIter<integer_sequence<size_t, Indices...>, Ts...>>
 public:
 	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> iterator_type;
 	typedef iterator_type wrapped_iterator_type; // This is not in the C++ Standard; it's used by use to identify it as
-			                                     // a wrapping iterator type.
+												 // a wrapping iterator type.
 	typedef iterator_traits<iterator_type> traits_type;
 	typedef typename traits_type::iterator_category iterator_category;
 	typedef typename traits_type::value_type value_type;
@@ -509,7 +509,7 @@ private:
 template <typename Allocator, size_t... Indices, typename... Ts>
 class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
-	typedef Allocator    allocator_type;
+	typedef Allocator	allocator_type;
 	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> this_type;
 	typedef TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, const Ts...> const_this_type;
 
@@ -678,7 +678,7 @@ public:
 
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + firstIdx + 1),
-						                                               firstIdx, mNumElements)...);
+																	   firstIdx, mNumElements)...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, eastl::move(args))...);
 
@@ -718,7 +718,7 @@ public:
 
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + lastIdx),
-						                                               firstIdx, mNumElements)...);
+																	   firstIdx, mNumElements)...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, lastIdx, args)...);
 
