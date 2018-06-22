@@ -264,6 +264,15 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(aTupleWithMoveOnlyMember).mVal == 1);
 		get<0>(aTupleWithMoveOnlyMember) = MoveOnlyType(2);
 		EATEST_VERIFY(get<0>(aTupleWithMoveOnlyMember).mVal == 2);
+
+		tuple<const MoveOnlyType&> aTupleWithRefToMoveOnlyMember(aTupleWithMoveOnlyMember);
+		EATEST_VERIFY(get<0>(aTupleWithRefToMoveOnlyMember).mVal == 2);
+
+		tuple<const MoveOnlyType&> aTupleWithConstRefToGetMoveOnly(get<0>(aTupleWithMoveOnlyMember));
+		EATEST_VERIFY(get<0>(aTupleWithConstRefToGetMoveOnly).mVal == 2);
+
+		tuple<MoveOnlyType&> aTupleWithRefToGetMoveOnly(get<0>(aTupleWithMoveOnlyMember));
+		EATEST_VERIFY(get<0>(aTupleWithRefToGetMoveOnly).mVal == 2);
 	}
 
 	{
