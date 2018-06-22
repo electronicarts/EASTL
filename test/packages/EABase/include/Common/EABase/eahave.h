@@ -126,7 +126,7 @@
 		EA_RESTORE_ALL_VC_WARNINGS()
 	#endif
 
-	#if defined(__cplusplus) && defined(_YVALS) /* If using the Dinkumware Standard library... */
+	#if defined(__cplusplus) && defined(_CPPLIB_VER) /* If using the Dinkumware Standard library... */
 		#define EA_HAVE_DINKUMWARE_CPP_LIBRARY 1
 	#else
 		#define EA_NO_HAVE_DINKUMWARE_CPP_LIBRARY 1
@@ -193,7 +193,7 @@
 
 // #include <sys/time.h>
 #if !defined(EA_HAVE_SYS_TIME_H) && !defined(EA_NO_HAVE_SYS_TIME_H)
-	#if !defined(EA_PLATFORM_MICROSOFT) && !defined(_YVALS) /* Yvals indicates Dinkumware. */
+	#if !defined(EA_PLATFORM_MICROSOFT) && !defined(_CPPLIB_VER) /* _CPPLIB_VER indicates Dinkumware. */
 		#define EA_HAVE_SYS_TIME_H 1 /* defines struct timeval */
 	#else
 		#define EA_NO_HAVE_SYS_TIME_H 1
@@ -696,7 +696,7 @@
 
 // <time.h> clock_gettime()
 #if !defined(EA_HAVE_clock_gettime_IMPL) && !defined(EA_NO_HAVE_clock_gettime_IMPL)
-	#if defined(EA_PLATFORM_LINUX) || defined(__CYGWIN__) || (defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)) || (defined(EA_PLATFORM_POSIX) && defined(_YVALS) /*Dinkumware*/)
+	#if defined(EA_PLATFORM_LINUX) || defined(__CYGWIN__) || (defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)) || (defined(EA_PLATFORM_POSIX) && defined(_CPPLIB_VER) /*Dinkumware*/)
 		#define EA_HAVE_clock_gettime_IMPL 1 /* You need to link the 'rt' library to get this */
 	#else
 		#define EA_NO_HAVE_clock_gettime_IMPL 1
