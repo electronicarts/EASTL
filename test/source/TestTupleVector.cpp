@@ -584,6 +584,34 @@ int TestTupleVector()
 		EATEST_VERIFY(TestObject::IsClear());
 	}
 
+	// Test comparisons
+	{
+		tuple_vector<bool, TestObject, float> equalsVec1, equalsVec2;
+		for (int i = 0; i < 10; ++i)
+		{
+			equalsVec1.push_back(i % 3 == 0, TestObject(i), (float)i);
+			equalsVec2.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+		EATEST_VERIFY(equalsVec1 == equalsVec2);
+
+		tuple_vector<bool, TestObject, float> smallSizeVec(5);
+		tuple_vector<bool, TestObject, float> lessThanVec(10);
+		tuple_vector<bool, TestObject, float> greaterThanVec(10);
+		for (int i = 0; i < 10; ++i)
+		{
+			lessThanVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+			greaterThanVec.push_back(i % 3 == 0, TestObject(i * 2), (float)i * 2);
+		}
+		EATEST_VERIFY(equalsVec1 != smallSizeVec);
+		EATEST_VERIFY(equalsVec1 != lessThanVec);
+		EATEST_VERIFY(equalsVec1 != greaterThanVec);
+		EATEST_VERIFY(lessThanVec < greaterThanVec);
+		EATEST_VERIFY(greaterThanVec > lessThanVec);
+		EATEST_VERIFY(lessThanVec <= greaterThanVec);
+		EATEST_VERIFY(equalsVec1 <= equalsVec2);
+		EATEST_VERIFY(equalsVec1 >= equalsVec2);
+	}
+
 	// test sort.h
 	{
 		LARGE_INTEGER  tupleLoopCounter; tupleLoopCounter.QuadPart = 0;

@@ -1000,6 +1000,48 @@ private:
 }  // namespace TupleVecInternal
 
 template <typename Allocator, typename... Ts>
+inline bool operator==(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					   const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+}
+
+template <typename Allocator, typename... Ts>
+inline bool operator!=(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					   const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+}
+
+template <typename Allocator, typename... Ts>
+inline bool operator<(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					  const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+}
+
+template <typename Allocator, typename... Ts>
+inline bool operator>(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					  const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return b < a;
+}
+
+template <typename Allocator, typename... Ts>
+inline bool operator<=(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					   const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return !(b < a);
+}
+
+template <typename Allocator, typename... Ts>
+inline bool operator>=(const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> a,
+					   const TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+{
+	return !(a < b);
+}
+
+template <typename Allocator, typename... Ts>
 inline void swap(TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
 				TupleVecInternal::TupleVecImpl<Allocator, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
