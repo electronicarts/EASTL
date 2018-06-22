@@ -238,6 +238,10 @@ public:
 	{
 	}
 
+	explicit TupleLeaf(ValueType& t) : mValue(t)
+	{
+	}
+
 	template <typename T>
 	explicit TupleLeaf(const TupleLeaf<I, T>& t)
 		: mValue(t.getInternal())
