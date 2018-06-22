@@ -5,7 +5,7 @@
 #ifndef EASTL_FIXEDTUPLEVECTOR_H
 #define EASTL_FIXEDTUPLEVECTOR_H
 
-#include <EASTL/tuple_vector.h>
+#include <EASTL/bonus/tuple_vector.h>
 #include <EASTL/internal/fixed_pool.h>
 
 namespace eastl
