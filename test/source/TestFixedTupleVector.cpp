@@ -6,7 +6,7 @@
 
 #include "EASTLTest.h"
 
-#include <EASTL/fixed_tuple_vector.h>
+#include <EASTL/bonus/fixed_tuple_vector.h>
 
 #include <EASTL/array.h>
 #include <EASTL/sort.h>

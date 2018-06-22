@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 
 #include <EASTL/array.h>
-#include <EASTL/tuple_vector.h>
+#include <EASTL/bonus/tuple_vector.h>
 #include <EASTL/sort.h>
 
 #include <random>
