@@ -582,6 +582,7 @@ int TestTupleVector()
 			EATEST_VERIFY(*v3.get<1>()[0].get() == testValues[0]);
 		}
 		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
 	}
 
 	// Test comparisons
@@ -610,6 +611,94 @@ int TestTupleVector()
 		EATEST_VERIFY(lessThanVec <= greaterThanVec);
 		EATEST_VERIFY(equalsVec1 <= equalsVec2);
 		EATEST_VERIFY(equalsVec1 >= equalsVec2);
+	}
+
+	// Test assign()
+	{
+		TestObject::Reset();
+
+		tuple_vector<bool, TestObject, float> assignTest(10);
+
+		// test the case where we shrink/erase elements using args
+		{
+			tuple<bool, TestObject, float> assignTup(true, TestObject(100), 100.0f);
+			assignTest.assign(3, assignTup);
+			EATEST_VERIFY(assignTest.size() == 3);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignTup);
+			}
+		}
+
+		// test expansion using args (w/o increasing capacity)
+		{
+			tuple<bool, TestObject, float> assignTup(false, TestObject(150), 150.0f);
+			assignTest.assign(8, assignTup);
+			EATEST_VERIFY(assignTest.size() == 8);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignTup);
+			}
+		}
+		
+		// test expansion using args (w/ increasing capacity)
+		{
+			tuple<bool, TestObject, float> assignTup(true, TestObject(200), 200.0f);
+			assignTest.assign(15, assignTup);
+			EATEST_VERIFY(assignTest.size() == 15);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignTup);
+			}
+		}
+		assignTest.clear();
+		
+		assignTest.shrink_to_fit();
+		assignTest.resize(7);
+		EATEST_VERIFY(assignTest.capacity() == 7);
+
+		tuple_vector<bool, TestObject, float> assignSrc;
+		for (int i = 0; i < 10; ++i)
+		{
+			assignSrc.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		// test the case where we shrink/erase elements using iterators
+		{
+			assignTest.assign(assignSrc.begin() + 2, assignSrc.begin() + 5);
+			EATEST_VERIFY(assignTest.size() == 3);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignSrc[ i+ 2]);
+			}
+		}
+
+		// test expansion using iterators (w/o increasing capacity)
+		{
+			assignTest.assign(assignSrc.begin() + 1, assignSrc.begin()+7);
+			EATEST_VERIFY(assignTest.size() == 6);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignSrc[i + 1]);
+			}
+		}
+
+		// test expansion using iterators (w/ increasing capacity)
+		{
+
+			assignTest.assign(assignSrc.begin() + 2, assignSrc.end());
+			EATEST_VERIFY(assignTest.size() == 8);
+			for (unsigned int i = 0; i < assignTest.size(); ++i)
+			{
+				EATEST_VERIFY(assignTest[i] == assignSrc[i + 2]);
+			}
+		}
+
+		assignTest.clear();
+		assignSrc.clear();
+
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
 	}
 
 	// test sort.h

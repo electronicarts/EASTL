@@ -219,6 +219,12 @@ struct TupleVecLeaf
 		return 0;
 	}
 
+	int DoFill(const size_t begin, const size_t end, const T& arg)
+	{
+		eastl::fill(mpData + begin, mpData + end, arg);
+		return 0;
+	}
+
 	int DoUninitializedMove(void* pDest, const size_t begin, const size_t end)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest);
@@ -230,6 +236,13 @@ struct TupleVecLeaf
 	int DoUninitializedCopy(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin)
 	{
 		eastl::uninitialized_copy_ptr(srcBegin, srcEnd, destBegin);
+		return 0;
+	}
+
+	template <typename InputIterator, typename DestIterator>
+	int DoCopy(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin)
+	{
+		eastl::copy(srcBegin, srcEnd, destBegin);
 		return 0;
 	}
 
@@ -620,6 +633,69 @@ public:
 			EASTLFree(mAllocator, mpData, mDataSize); 
 	}
 
+	void assign(size_t n, const Ts&... args)
+	{
+		if (n > mNumCapacity)
+		{
+			this_type temp(n, args..., mAllocator); // We have little choice but to reallocate with new memory.
+			swap(temp);
+		}
+		else if (n > mNumElements) // If n > mNumElements ...
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoFill(0, mNumElements, args)...);
+			swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedFill(mNumElements, n, args)...);
+			mNumElements = n;
+		}
+		else // else 0 <= n <= mNumElements
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoFill(0, n, args)...);
+			erase(begin() + n, end());
+		}
+	}
+
+	template <typename Iterator>
+	void assign(Iterator first, Iterator last)
+	{
+		size_t newNumElements = last - first;
+		if (newNumElements > mNumCapacity)
+		{
+			this_type temp(first, last, mAllocator);
+			swap(temp);
+		}
+		else
+		{
+			const void* otherPdata[sizeof...(Ts)] = {first.mpData[Indices]...};
+			auto firstIdx = first.mIndex;
+			auto lastIdx = last.mIndex;
+			if (newNumElements > mNumElements) // If n > mNumElements ...
+			{
+				swallow(TupleVecLeaf<Indices, Ts>::DoCopy(
+						(Ts*)(otherPdata[Indices]) + firstIdx,
+						(Ts*)(otherPdata[Indices]) + firstIdx + mNumElements,
+						TupleVecLeaf<Indices, Ts>::mpData
+					)...
+				);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
+						(Ts*)(otherPdata[Indices]) + firstIdx + mNumElements,
+						(Ts*)(otherPdata[Indices]) + lastIdx,
+						TupleVecLeaf<Indices, Ts>::mpData + mNumElements
+					)...
+				);
+				mNumElements = newNumElements;
+			}
+			else // else 0 <= n <= mNumElements
+			{
+				swallow(TupleVecLeaf<Indices, Ts>::DoCopy(
+						(Ts*)(otherPdata[Indices]) + firstIdx,
+						(Ts*)(otherPdata[Indices]) + lastIdx,
+						TupleVecLeaf<Indices, Ts>::mpData
+					)...
+				);
+				erase(begin() + newNumElements, end());
+			}
+		}
+	}
+
 	reference_tuple push_back()
 	{
 		if (mNumElements >= mNumCapacity)
@@ -832,6 +908,8 @@ public:
 		eastl::swap(mNumElements, x.mNumElements);
 		eastl::swap(mNumCapacity, x.mNumCapacity);
 	}
+
+	void assign(size_t n, const_reference_tuple tup) { assign(n, eastl::get<Indices>(tup)...); }
 
 	void push_back(Ts&&... args) { emplace_back(eastl::move(args)...); }
 	void push_back(const_reference_tuple tup) { push_back(eastl::get<Indices>(tup)...); }
