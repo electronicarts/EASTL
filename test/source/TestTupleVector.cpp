@@ -701,6 +701,113 @@ int TestTupleVector()
 		TestObject::Reset();
 	}
 
+	// Test insert() via iterators
+	{
+		TestObject::Reset();
+
+		tuple_vector<bool, TestObject, float> insertTest(10);
+		tuple_vector<bool, TestObject, float> insertSrc;
+		for (int i = 0; i < 10; ++i)
+		{
+			insertSrc.push_back(i % 3 == 0, TestObject(i), (float)(i));
+		}
+
+		// test the case where we insert elements anywhere, with a realloc
+		{
+			tuple<bool, TestObject, float> defaultTup;
+			EATEST_VERIFY(insertTest.capacity() == 10);
+			insertTest.insert(insertTest.begin() + 3, insertSrc.begin() + 6, insertSrc.begin() + 9);
+			EATEST_VERIFY(insertTest.capacity() != 10);
+			EATEST_VERIFY(insertTest.size() == 13);
+			for (unsigned int i = 0; i < insertTest.size(); ++i)
+			{
+				if (i >= 3 && i < 6)
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i + 3]);
+				}
+				else
+				{
+					EATEST_VERIFY(insertTest[i] == defaultTup);
+				}
+			}
+		}
+
+		insertTest.clear();
+		insertTest.reserve(30);
+		insertTest.resize(5);
+		{
+			auto originalInsertTestPtrs = insertTest.data();
+			// test the case where we insert elements to the end, without realloc
+			tuple<bool, TestObject, float> defaultTup;
+			insertTest.insert(insertTest.end(), insertSrc.begin() + 4, insertSrc.begin() + 9);
+			EATEST_VERIFY(insertTest.size() == 10);
+			for (unsigned int i = 0; i < insertTest.size(); ++i)
+			{
+				if (i < 5)
+				{
+					EATEST_VERIFY(insertTest[i] == defaultTup);
+				}
+				else
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 1]);
+				}
+			}
+
+			// test the case where we insert a couple elements to the middle, without a realloc
+			insertTest.insert(insertTest.begin() + 5, insertSrc.begin() + 3, insertSrc.begin() + 8);
+			EATEST_VERIFY(insertTest.size() == 15);
+			for (unsigned int i = 0; i < insertTest.size(); ++i)
+			{
+				if (i < 5)
+				{
+					EATEST_VERIFY(insertTest[i] == defaultTup);
+				}
+				else if (i < 10)
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 2]);
+				}
+				else
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 6]);
+				}
+			}
+
+			// test the case where we insert a lot of elements near the end, without a realloc
+			insertTest.insert(insertTest.begin() + 12, insertSrc.begin() + 2, insertSrc.begin() + 7);
+			EATEST_VERIFY(insertTest.size() == 20);
+			for (unsigned int i = 0; i < insertTest.size(); ++i)
+			{
+				if (i < 5)
+				{
+					EATEST_VERIFY(insertTest[i] == defaultTup);
+				}
+				else if (i < 10)
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 2]);
+				}
+				else if (i < 12)
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 6]);
+				}
+				else if (i < 17)
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 10]);
+				}
+				else
+				{
+					EATEST_VERIFY(insertTest[i] == insertSrc[i - 11]);
+				}
+			}
+			EATEST_VERIFY(originalInsertTestPtrs == insertTest.data());
+		}
+
+		insertTest.clear();
+		insertSrc.clear();
+
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+
 	// test sort.h
 	{
 		LARGE_INTEGER  tupleLoopCounter; tupleLoopCounter.QuadPart = 0;

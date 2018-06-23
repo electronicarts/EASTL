@@ -274,6 +274,30 @@ struct TupleVecLeaf
 		return 0;
 	}
 
+	template <typename InputIterator, typename DestIterator>
+	int DoInsertValues(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin, size_t numElements)
+	{
+		size_t pos = destBegin - mpData;
+		size_t n = srcEnd - srcBegin;
+		T* pDest = mpData + pos;
+		T* pEnd = mpData + numElements;
+
+		const size_t nExtra = numElements - pos;
+		if (n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
+		{
+			eastl::uninitialized_move_ptr(pEnd - n, pEnd, pEnd);
+			eastl::move_backward(pDest, pEnd - n, pEnd); // We need move_backward because of potential overlap issues.
+			eastl::copy(srcBegin, srcEnd, destBegin);
+		}
+		else
+		{
+			eastl::uninitialized_copy(srcEnd - (n - nExtra), srcEnd, pEnd);
+			eastl::uninitialized_move_ptr(pDest, pEnd, pEnd + n - nExtra);
+			eastl::copy(srcBegin, srcEnd, destBegin);
+		}
+		return 0;
+	}
+
 	int DoInsertValue(size_t pos, size_t numElements, T&& arg)
 	{
 		T* pDest = mpData + pos;
@@ -814,6 +838,64 @@ public:
 		}
 		mNumElements = newNumElements;
 		return begin() + firstIdx;
+	}
+
+	template<typename Iterator>
+	iterator insert(const_iterator pos, Iterator first, Iterator last)
+	{
+		size_t posIdx = pos - cbegin();
+		auto firstIdx = first.mIndex;
+		auto lastIdx = last.mIndex;
+		size_t newNumElements = mNumElements + (last - first);
+		const void* otherPdata[sizeof...(Ts)] = {first.mpData[Indices]...};
+		if (newNumElements >= mNumCapacity || posIdx != mNumElements)
+		{
+			if (newNumElements >= mNumCapacity)
+			{
+ 				const auto newCapacity = max(GetNewCapacity(mNumCapacity), newNumElements);
+ 
+ 				void* ppNewLeaf[sizeof...(Ts)];
+ 				auto allocation =
+ 					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
+ 						*this, ppNewLeaf, newCapacity, 0);
+ 
+ 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, posIdx)...);
+ 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + posIdx + (lastIdx - firstIdx)),
+ 																	   posIdx, mNumElements)...);
+ 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
+						(Ts*)(otherPdata[Indices]) + firstIdx,
+						(Ts*)(otherPdata[Indices]) + lastIdx,
+						(Ts*)ppNewLeaf[Indices] + posIdx
+					)...
+				);
+ 				EASTLFree(mAllocator, mpData, mDataSize);
+ 				mpData = allocation.first;
+ 				mDataSize = allocation.second;
+ 				mNumCapacity = newCapacity;
+			}
+			else
+			{
+				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValues(
+						(Ts*)(otherPdata[Indices]) + firstIdx,
+						(Ts*)(otherPdata[Indices]) + lastIdx,
+						TupleVecLeaf<Indices, Ts>::mpData + posIdx,
+						mNumElements
+					)...
+				);
+			}
+		}
+		else
+		{
+			swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedCopy(
+					(Ts*)(otherPdata[Indices]) + firstIdx,
+					(Ts*)(otherPdata[Indices]) + lastIdx,
+					TupleVecLeaf<Indices, Ts>::mpData + posIdx
+				)...
+			);
+		}
+		mNumElements = newNumElements;
+		return begin() + posIdx;
 	}
 
 	iterator erase(const_iterator first, const_iterator last)
