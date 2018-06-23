@@ -248,6 +248,18 @@ int TestTuple()
 		EATEST_VERIFY(lesserTuple < greaterTuple && !(greaterTuple < lesserTuple) && greaterTuple > lesserTuple &&
 					  !(lesserTuple > greaterTuple));
 
+		tuple<int, float, TestObject> valTup(2, 2.0f, TestObject(2));
+		tuple<int&, float&, TestObject&> refTup(valTup);
+		tuple<const int&, const float&, const TestObject&> constRefTup(valTup);
+
+		EATEST_VERIFY(get<0>(refTup) == get<0>(valTup));
+		EATEST_VERIFY(get<1>(refTup) == get<1>(valTup));
+		EATEST_VERIFY(refTup == valTup);
+		EATEST_VERIFY(get<0>(refTup) == get<0>(constRefTup));
+		EATEST_VERIFY(get<1>(refTup) == get<1>(constRefTup));
+		EATEST_VERIFY(constRefTup == valTup);
+		EATEST_VERIFY(constRefTup == refTup);
+
 		// swap
 		swap(lesserTuple, greaterTuple);
 		EATEST_VERIFY(get<2>(lesserTuple) == 4 && get<2>(greaterTuple) == 3);
