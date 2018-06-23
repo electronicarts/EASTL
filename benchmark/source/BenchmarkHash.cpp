@@ -94,7 +94,7 @@ struct HashString8
 		typedef stdext::hash_map<std::string, uint32_t, HashString8<std::string> >    StdMapStrUint32;
 		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
 
-	#elif defined(_YVALS) // Dinkumware STL.
+	#elif defined(_CPPLIB_VER) // Dinkumware STL.
 		typedef std::hash_map<uint32_t, TestObject>     StdMapUint32TO;
 		typedef eastl::hash_map<uint32_t, TestObject>   EaMapUint32TO;
 
@@ -238,7 +238,7 @@ namespace
 		{
 			// The erase fucntion is supposed to return an iterator, but the C++ standard was 
 			// not initially clear about it and some STL implementations don't do it correctly.
-			#if (defined(_MSC_VER) || defined(_YVALS)) // yvals is something defined by Dinkumware STL.
+			#if (defined(_MSC_VER) || defined(_CPPLIB_VER)) // _CPPLIB_VER is something defined by Dinkumware STL.
 				it = c.erase(it);
 			#else
 				// This pathway may execute at a slightly different speed than the 
