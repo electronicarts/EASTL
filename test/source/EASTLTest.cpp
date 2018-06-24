@@ -158,7 +158,7 @@ StdSTLType GetStdSTLType()
 		return kSTLPort;                    // Descendent of the old HP / SGI STL.
 	#elif defined(_RWSTD_VER_STR)
 		return kSTLApache;                  // a.k.a. Rogue Wave, which is a descendent of the old HP / SGI STL.
-	#elif defined(_YVALS)
+	#elif defined(_CPPLIB_VER)
 		return kSTLDinkumware;              // Indicated by the presence of the central yvals.h header.
 	#elif defined(_LIBCPP_VECTOR)
 		return kSTLClang;
@@ -196,7 +196,7 @@ const char* GetStdSTLName()
 		return "Sony Dinkumware";
 
 	// Special case for Dinkumware.
-	#elif defined(_YVALS)
+	#elif defined(_CPPLIB_VER)
 		#if defined(_MSC_VER)
 			return "VC++ Dinkumware";
 		#else

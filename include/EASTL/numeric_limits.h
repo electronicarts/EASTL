@@ -37,7 +37,7 @@
 #include <EASTL/type_traits.h>
 #include <limits.h>                 // C limits.h header
 #include <float.h>
-#if defined(_YVALS)                 // Dinkumware.
+#if defined(_CPPLIB_VER)            // Dinkumware.
 	#include <ymath.h>
 #endif
 
@@ -56,7 +56,7 @@ EA_DISABLE_VC_WARNING(4310 4296)
 // Indicates whether we need to define our own implementations of inf, nan, snan, denorm floating point constants. 
 //
 #if !defined(EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED)
-	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG) && defined(__FLT_MIN__)) || defined(_YVALS) // __FLT_MIN__ detects if it's really GCC/clang and not a mimic. yvals (Dinkumware) covers VC++, and Microsoft platforms.
+	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG) && defined(__FLT_MIN__)) || defined(_CPPLIB_VER) // __FLT_MIN__ detects if it's really GCC/clang and not a mimic. _CPPLIB_VER (Dinkumware) covers VC++, and Microsoft platforms.
 		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 0
 	#else
 		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 1
@@ -1418,7 +1418,7 @@ namespace eastl
 			static EA_CONSTEXPR value_type denorm_min() 
 				{ return __FLT_DENORM_MIN__; }
 
-		#elif defined(_YVALS) // If using the Dinkumware Standard library...
+		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
 			static value_type min()
 				{ return FLT_MIN; }
 
@@ -1536,7 +1536,7 @@ namespace eastl
 			static EA_CONSTEXPR value_type denorm_min() 
 				{ return __DBL_DENORM_MIN__; }
 
-		#elif defined(_YVALS) // If using the Dinkumware Standard library...
+		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
 			static value_type min()
 				{ return DBL_MIN; }
 
@@ -1654,7 +1654,7 @@ namespace eastl
 			static EA_CONSTEXPR value_type denorm_min() 
 				{ return __LDBL_DENORM_MIN__; }
 
-		#elif defined(_YVALS) // If using the Dinkumware Standard library...
+		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
 			static value_type min()
 				{ return LDBL_MIN; }
 

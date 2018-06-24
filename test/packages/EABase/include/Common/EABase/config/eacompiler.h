@@ -618,7 +618,7 @@
 			EA_RESTORE_ALL_VC_WARNINGS()
 		#endif
 
-		#if defined(__cplusplus) && defined(_YVALS) /* If using the Dinkumware Standard library... */
+		#if defined(__cplusplus) && defined(_CPPLIB_VER) /* If using the Dinkumware Standard library... */
 			#define EA_HAVE_DINKUMWARE_CPP_LIBRARY 1
 		#else
 			#define EA_NO_HAVE_DINKUMWARE_CPP_LIBRARY 1
