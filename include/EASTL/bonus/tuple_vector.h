@@ -1093,7 +1093,6 @@ public:
 protected:
 	allocator_type mAllocator;
 
-private:
 	void* mpData = nullptr;
 	size_type mDataSize = 0;
 	size_type mNumElements = 0;
