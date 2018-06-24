@@ -196,13 +196,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	template<typename InputIterator, typename DestIterator>
-	int DoUninitializedCopy(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin)
-	{
-		eastl::uninitialized_copy_ptr(srcBegin, srcEnd, destBegin);
-		return 0;
-	}
-
 	template <typename InputIterator, typename DestIterator>
 	int DoCopy(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin)
 	{
