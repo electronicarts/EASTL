@@ -671,20 +671,20 @@ public:
 		}
 		else
 		{
-			const void* otherPdata[sizeof...(Ts)] = {first.mpData[Indices]...};
+			const void* ppOtherData[sizeof...(Ts)] = {first.mpData[Indices]...};
 			auto firstIdx = first.mIndex;
 			auto lastIdx = last.mIndex;
 			if (newNumElements > mNumElements) // If n > mNumElements ...
 			{
 				size_t oldNumElements = mNumElements;
 				swallow(DoCopy(
-						(Ts*)(otherPdata[Indices]) + firstIdx,
-						(Ts*)(otherPdata[Indices]) + firstIdx + oldNumElements,
+						(Ts*)(ppOtherData[Indices]) + firstIdx,
+						(Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
 						TupleVecLeaf<Indices, Ts>::mpData
 					)...);
 				swallow(DoUninitializedCopyPtr(
-						(Ts*)(otherPdata[Indices]) + firstIdx + oldNumElements,
-						(Ts*)(otherPdata[Indices]) + lastIdx,
+						(Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
+						(Ts*)(ppOtherData[Indices]) + lastIdx,
 						TupleVecLeaf<Indices, Ts>::mpData + oldNumElements
 					)...);
 				mNumElements = newNumElements;
@@ -692,8 +692,8 @@ public:
 			else // else 0 <= n <= mNumElements
 			{
 				swallow(DoCopy(
-						(Ts*)(otherPdata[Indices]) + firstIdx,
-						(Ts*)(otherPdata[Indices]) + lastIdx,
+						(Ts*)(ppOtherData[Indices]) + firstIdx,
+						(Ts*)(ppOtherData[Indices]) + lastIdx,
 						TupleVecLeaf<Indices, Ts>::mpData
 					)...);
 				erase(begin() + newNumElements, end());
@@ -1107,14 +1107,14 @@ private:
 	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
 	{
 		auto newNumElements = end - begin;
-		const void* otherPdata[sizeof...(Ts)] = { begin.base().mpData[Indices]... };
+		const void* ppOtherData[sizeof...(Ts)] = { begin.base().mpData[Indices]... };
 		auto beginIdx = begin.base().mIndex;
 		auto endIdx = end.base().mIndex;
 		DoReallocate(0, newNumElements);
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
-				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + beginIdx),
-				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + endIdx),
+				eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
+				eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + endIdx),
 				TupleVecLeaf<Indices, Ts>::mpData
 			)...);
 	}
@@ -1123,14 +1123,14 @@ private:
 	void DoInitFromIterator(Iterator begin, Iterator end)
 	{
 		auto newNumElements = end - begin;
-		const void* otherPdata[sizeof...(Ts)] = { begin.mpData[Indices]... };
+		const void* ppOtherData[sizeof...(Ts)] = { begin.mpData[Indices]... };
 		auto beginIdx = begin.mIndex;
 		auto endIdx = end.mIndex;
 		DoReallocate(0, newNumElements);
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
-				(Ts*)(otherPdata[Indices]) + beginIdx,
-				(Ts*)(otherPdata[Indices]) + endIdx,
+				(Ts*)(ppOtherData[Indices]) + beginIdx,
+				(Ts*)(ppOtherData[Indices]) + endIdx,
 				TupleVecLeaf<Indices, Ts>::mpData
 			)...);
 	}
