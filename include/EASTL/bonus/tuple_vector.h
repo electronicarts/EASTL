@@ -285,13 +285,13 @@ struct TupleVecLeaf
 
 // specializations of various memory/utility functions w/ return 0 to allow for compatibility with swallow(...)
 template <typename T>
-int DoConstruction(T* ptr) { ::new (ptr) T(); return 0; }
+inline int DoConstruction(T* ptr) { ::new (ptr) T(); return 0; }
 
 template <typename T>
-int DoConstruction(T* ptr, const T& arg) { ::new (ptr) T(arg); return 0; }
+inline int DoConstruction(T* ptr, const T& arg) { ::new (ptr) T(arg); return 0; }
 
 template <typename T>
-int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::move(arg)); return 0; }
+inline int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::move(arg)); return 0; }
 
 template <typename ForwardIterator>
 inline int DoDestruct(ForwardIterator first, ForwardIterator last) { eastl::destruct(first, last); return 0; }
