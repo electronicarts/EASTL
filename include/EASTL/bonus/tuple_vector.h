@@ -189,24 +189,6 @@ template <size_t I, typename T>
 struct TupleVecLeaf
 {
 	// functions that get piped through swallow need to return some kind of value, hence why these are not void
-	int DoConstruction(const size_t index)
-	{
-		::new(mpData + index) T();
-		return 0;
-	}
-
-	int DoConstruction(const size_t index, const T& arg)
-	{
-		::new(mpData + index) T(arg);
-		return 0;
-	}
-
-	int DoConstruction(const size_t index, T&& arg)
-	{
-		::new(mpData + index) T(eastl::move(arg));
-		return 0;
-	}
-
 	int DoUninitializedMove(void* pDest, const size_t begin, const size_t end)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest);
@@ -309,6 +291,15 @@ struct TupleVecLeaf
 };
 
 // specializations of various memory/utility functions w/ return 0 to allow for compatibility with swallow(...)
+template <typename T>
+int DoConstruction(T* ptr) { ::new (ptr) T(); return 0; }
+
+template <typename T>
+int DoConstruction(T* ptr, const T& arg) { ::new (ptr) T(arg); return 0; }
+
+template <typename T>
+int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::move(arg)); return 0; }
+
 template <typename ForwardIterator>
 inline int DoDestruct(ForwardIterator first, ForwardIterator last) { eastl::destruct(first, last); return 0; }
 
@@ -736,7 +727,7 @@ public:
 		{
 			DoGrow(GetNewCapacity(mNumCapacity));
 		}
-		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements)...);
+		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		mNumElements++;
 		return back();
 	}
@@ -747,7 +738,7 @@ public:
 		{
 			DoGrow(GetNewCapacity(mNumCapacity));
 		}
-		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, args)...);
+		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + mNumElements, args)...);
 		++mNumElements;
 	}
 
@@ -766,7 +757,7 @@ public:
 		{
 			DoGrow(GetNewCapacity(mNumCapacity));
 		}
-		swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
+		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + mNumElements, eastl::move(args))...);
 		mNumElements++;
 		return back();
 	}
@@ -789,8 +780,8 @@ public:
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + firstIdx + 1),
 																	   firstIdx, mNumElements)...);
+				swallow(DoConstruction((Ts*)ppNewLeaf[Indices] + firstIdx, eastl::move(args))...);
 				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(firstIdx, eastl::move(args))...);
 
 				EASTLFree(mAllocator, mpData, mDataSize);
 				mpData = allocation.first;
@@ -804,7 +795,7 @@ public:
 		}
 		else
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoConstruction(mNumElements, eastl::move(args))...);
+			swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + mNumElements, eastl::move(args))...);
 		}
 		mNumElements = newNumElements;
 		return begin() + firstIdx;
