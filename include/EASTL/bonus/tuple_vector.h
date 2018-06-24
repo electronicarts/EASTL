@@ -189,7 +189,7 @@ template <size_t I, typename T>
 struct TupleVecLeaf
 {
 	// functions that get piped through swallow need to return some kind of value, hence why these are not void
-	int DoUninitializedMove(void* pDest, const size_t begin, const size_t end)
+	int DoUninitializedMoveAndDestruct(const size_t begin, const size_t end, T* pDest)
 	{
 		eastl::uninitialized_move_ptr_if_noexcept(mpData + begin, mpData + end, (T*)pDest);
 		eastl::destruct(mpData + begin, mpData + end);
@@ -757,9 +757,8 @@ public:
 					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
 						*this, ppNewLeaf, newCapacity, 0);
 
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + firstIdx + 1),
-																	   firstIdx, mNumElements)...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, firstIdx, (Ts*)ppNewLeaf[Indices])...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(firstIdx, mNumElements, (Ts*)ppNewLeaf[Indices] + firstIdx + 1)...);
 				swallow(DoConstruction((Ts*)ppNewLeaf[Indices] + firstIdx, eastl::move(args))...);
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
 
@@ -797,15 +796,11 @@ public:
 					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
 						*this, ppNewLeaf, newCapacity, 0);
 
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, firstIdx)...);
-				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + lastIdx),
-																	   firstIdx, mNumElements)...);
-				swallow(DoUninitializedFillPtr(
-					(Ts*)ppNewLeaf[Indices] + firstIdx,
-					(Ts*)ppNewLeaf[Indices] + lastIdx,
-					args
-				)...);
-
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, firstIdx, (Ts*)ppNewLeaf[Indices])...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(firstIdx, mNumElements, (Ts*)ppNewLeaf[Indices] + lastIdx)...);
+				swallow(DoUninitializedFillPtr((Ts*)ppNewLeaf[Indices] + firstIdx, (Ts*)ppNewLeaf[Indices] + lastIdx, args)...);
+				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
+		
 				EASTLFree(mAllocator, mpData, mDataSize);
 				mpData = allocation.first;
 				mDataSize = allocation.second;
@@ -834,7 +829,8 @@ public:
 		size_t posIdx = pos - cbegin();
 		auto firstIdx = first.mIndex;
 		auto lastIdx = last.mIndex;
-		size_t newNumElements = mNumElements + (last - first);
+		auto numToInsert = last - first;
+		size_t newNumElements = mNumElements + numToInsert;
 		const void* otherPdata[sizeof...(Ts)] = {first.mpData[Indices]...};
 		if (newNumElements >= mNumCapacity || posIdx != mNumElements)
 		{
@@ -847,16 +843,12 @@ public:
  					TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(
  						*this, ppNewLeaf, newCapacity, 0);
  
- 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, posIdx)...);
- 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + posIdx + (lastIdx - firstIdx)),
- 																	   posIdx, mNumElements)...);
+ 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, posIdx, (Ts*)ppNewLeaf[Indices])...);
+ 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(posIdx, mNumElements, (Ts*)ppNewLeaf[Indices] + posIdx + numToInsert)...);
+				swallow(DoUninitializedCopyPtr((Ts*)(otherPdata[Indices]) + firstIdx, (Ts*)(otherPdata[Indices]) + lastIdx, (Ts*)ppNewLeaf[Indices] + posIdx)...);
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
-				swallow(DoUninitializedCopyPtr(
-						(Ts*)(otherPdata[Indices]) + firstIdx,
-						(Ts*)(otherPdata[Indices]) + lastIdx,
-						(Ts*)ppNewLeaf[Indices] + posIdx
-					)...);
- 				EASTLFree(mAllocator, mpData, mDataSize);
+				
+				EASTLFree(mAllocator, mpData, mDataSize);
  				mpData = allocation.first;
  				mDataSize = allocation.second;
  				mNumCapacity = newCapacity;
@@ -1139,7 +1131,7 @@ private:
 	{
 		void* ppNewLeaf[sizeof...(Ts)];
 		auto allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, integer_sequence<size_t, Indices...>, Ts...>(*this, ppNewLeaf, n, 0);
-		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove(ppNewLeaf[Indices], 0, mNumElements)...);
+		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, mNumElements, (Ts*)ppNewLeaf[Indices])...);
 		swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
 
 		EASTLFree(mAllocator, mpData, mDataSize);
