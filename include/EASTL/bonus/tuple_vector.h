@@ -289,6 +289,9 @@ inline int DoMove(InputIterator first, InputIterator last, OutputIterator result
 template <typename T>
 inline int DoSwap(T& a, T& b) { eastl::swap(a, b); return 0; }
 
+template <typename First, typename Last, typename Result>
+inline int DoUninitializedCopyPtr(First first, Last last, Result result) { eastl::uninitialized_copy_ptr(first, last, result); return 0; }
+
 template <typename ForwardIterator, typename Count>
 inline int DoUninitializedDefaultFillN(ForwardIterator first, Count n) { eastl::uninitialized_default_fill_n(first, n); return 0; }
 
@@ -685,7 +688,7 @@ public:
 						(Ts*)(otherPdata[Indices]) + firstIdx + mNumElements,
 						TupleVecLeaf<Indices, Ts>::mpData
 					)...);
-				swallow(eastl::uninitialized_copy_ptr(
+				swallow(DoUninitializedCopyPtr(
 						(Ts*)(otherPdata[Indices]) + firstIdx + mNumElements,
 						(Ts*)(otherPdata[Indices]) + lastIdx,
 						TupleVecLeaf<Indices, Ts>::mpData + mNumElements
@@ -854,7 +857,7 @@ public:
  				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMove((void*)((Ts*)ppNewLeaf[Indices] + posIdx + (lastIdx - firstIdx)),
  																	   posIdx, mNumElements)...);
  				swallow(TupleVecLeaf<Indices, Ts>::SetData(ppNewLeaf[Indices])...);
-				swallow(uninitialized_copy_ptr(
+				swallow(DoUninitializedCopyPtr(
 						(Ts*)(otherPdata[Indices]) + firstIdx,
 						(Ts*)(otherPdata[Indices]) + lastIdx,
 						(Ts*)ppNewLeaf[Indices] + posIdx
@@ -876,7 +879,7 @@ public:
 		}
 		else
 		{
-			swallow(uninitialized_copy_ptr(
+			swallow(DoUninitializedCopyPtr(
 					(Ts*)(otherPdata[Indices]) + firstIdx,
 					(Ts*)(otherPdata[Indices]) + lastIdx,
 					TupleVecLeaf<Indices, Ts>::mpData + posIdx
@@ -1115,7 +1118,7 @@ private:
 		auto endIdx = end.base().mIndex;
 		DoGrow(newNumElements);
 		mNumElements = newNumElements;
-		swallow(uninitialized_copy_ptr(
+		swallow(DoUninitializedCopyPtr(
 				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + beginIdx),
 				eastl::move_iterator<Ts*>((Ts*)(otherPdata[Indices]) + endIdx),
 				TupleVecLeaf<Indices, Ts>::mpData
@@ -1131,7 +1134,7 @@ private:
 		auto endIdx = end.mIndex;
 		DoGrow(newNumElements);
 		mNumElements = newNumElements;
-		swallow(uninitialized_copy_ptr(
+		swallow(DoUninitializedCopyPtr(
 				(Ts*)(otherPdata[Indices]) + beginIdx,
 				(Ts*)(otherPdata[Indices]) + endIdx,
 				TupleVecLeaf<Indices, Ts>::mpData
