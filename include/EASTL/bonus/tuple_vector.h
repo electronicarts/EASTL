@@ -255,12 +255,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoSwap(TupleVecLeaf<I, T>& x)
-	{
-		eastl::swap(mpData, x.mpData);
-		return 0;
-	}
-
 	int SetData(void* pData)
 	{
 		mpData = (T*)pData;
@@ -291,6 +285,9 @@ inline int DoFill(ForwardIterator first, ForwardIterator last, const T& value) {
 
 template <typename InputIterator, typename OutputIterator>
 inline int DoMove(InputIterator first, InputIterator last, OutputIterator result) { eastl::move(first, last, result); return 0; }
+
+template <typename T>
+inline int DoSwap(T& a, T& b) { eastl::swap(a, b); return 0; }
 
 template <typename ForwardIterator, typename Count>
 inline int DoUninitializedDefaultFillN(ForwardIterator first, Count n) { eastl::uninitialized_default_fill_n(first, n); return 0; }
@@ -987,7 +984,7 @@ public:
 
 	void swap(this_type& x)
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::DoSwap(x)...);
+		swallow(DoSwap(TupleVecLeaf<Indices, Ts>::mpData, x.TupleVecLeaf<Indices, Ts>::mpData)...);
 		eastl::swap(mAllocator, x.mAllocator);
 		eastl::swap(mpData, x.mpData);
 		eastl::swap(mDataSize, x.mDataSize);
