@@ -214,7 +214,7 @@ int EASTLTest_CheckMemory_Imp(const char* pFile, int nLine);
 	#define EASTLTEST_STD_STL_VER_STLPORT
 #elif defined(_RWSTD_VER_STR) || defined(_RWSTD_NAMESPACE_END)
 	#define EASTLTEST_STD_STL_VER_APACHE
-#elif defined(_YVALS)
+#elif defined(_CPPLIB_VER)
 	#define EASTLTEST_STD_STL_VER_DINKUMWARE
 #elif defined(__GNUC__) && defined(_CXXCONFIG)
 	#define EASTLTEST_STD_STL_VER_GCC

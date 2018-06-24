@@ -151,7 +151,7 @@ namespace
 		{
 			// The erase fucntion is supposed to return an iterator, but the C++ standard was 
 			// not initially clear about it and some STL implementations don't do it correctly.
-			#if (((defined(_MSC_VER) || defined(_YVALS)) && !defined(_HAS_STRICT_CONFORMANCE))) // yvals is something defined by Dinkumware STL.
+			#if (((defined(_MSC_VER) || defined(_CPPLIB_VER)) && !defined(_HAS_STRICT_CONFORMANCE))) // _CPPLIB_VER is something defined by Dinkumware STL.
 				it = c.erase(it);  // Standard behavior.
 			#else
 				// This pathway may execute at a slightly different speed than the 
