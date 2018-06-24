@@ -293,12 +293,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoDestruct(size_t begin, size_t end)
-	{
-		eastl::destruct(mpData + begin, mpData + end);
-		return 0;
-	}
-
 	int DoSwap(TupleVecLeaf<I, T>& x)
 	{
 		eastl::swap(mpData, x.mpData);
@@ -315,6 +309,9 @@ struct TupleVecLeaf
 };
 
 // specializations of various memory/utility functions w/ return 0 to allow for compatibility with swallow(...)
+template <typename ForwardIterator>
+inline int DoDestruct(ForwardIterator first, ForwardIterator last) { eastl::destruct(first, last); return 0; }
+
 template <typename ForwardIterator, typename T>
 inline int DoFill(ForwardIterator first, ForwardIterator last, const T& value) { eastl::fill(first, last, value); return 0; }
 
@@ -656,7 +653,7 @@ protected:
 public:
 	~TupleVecImpl()
 	{ 
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(0, mNumElements)...);
+		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		if (mpData)
 			EASTLFree(mAllocator, mpData, mDataSize); 
 	}
@@ -923,7 +920,7 @@ public:
 			size_t lastIdx = last - cbegin();
 			swallow(TupleVecLeaf<Indices, Ts>::DoMove(lastIdx, mNumElements, firstIdx)...);
 			size_t newNumElements = mNumElements - (lastIdx - firstIdx);
-			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(newNumElements, mNumElements)...);
+			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 			mNumElements = newNumElements;
 		}
 		return first;
@@ -933,7 +930,7 @@ public:
 	{
 		auto newNumElements = mNumElements - 1;
 		swallow(TupleVecLeaf<Indices, Ts>::DoMove(newNumElements, mNumElements, pos - begin())...);
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(newNumElements, mNumElements)...);
+		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		mNumElements = newNumElements;
 		return pos;
 	}
@@ -951,7 +948,7 @@ public:
 		}
 		else
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(n, mNumElements)...);
+			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + n, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		}
 		mNumElements = n;
 	}
@@ -972,7 +969,8 @@ public:
 		}
 		else
 		{
-			swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(n, mNumElements)...);
+			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + n, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
+
 		}
 		mNumElements = n;
 	}
@@ -993,13 +991,13 @@ public:
 
 	void clear()
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(0, mNumElements)...);
+		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		mNumElements = 0;
 	}
 
 	void pop_back()
 	{
-		swallow(TupleVecLeaf<Indices, Ts>::DoDestruct(mNumElements-1, mNumElements)...);
+		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + mNumElements - 1, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		mNumElements--;
 	}
 
