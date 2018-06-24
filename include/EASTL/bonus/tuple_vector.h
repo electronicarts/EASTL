@@ -203,12 +203,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	int DoMove(const size_t srcBegin, const size_t srcEnd, const size_t destBegin)
-	{
-		eastl::move(mpData + srcBegin, mpData + srcEnd, mpData + destBegin);
-		return 0;
-	}
-
 	int DoInsertValues(size_t pos, size_t n, size_t numElements, const T& arg)
 	{
 		T* pDest = mpData + pos;
@@ -298,6 +292,9 @@ inline int DoDestruct(ForwardIterator first, ForwardIterator last) { eastl::dest
 
 template <typename ForwardIterator, typename T>
 inline int DoFill(ForwardIterator first, ForwardIterator last, const T& value) { eastl::fill(first, last, value); return 0; }
+
+template <typename InputIterator, typename OutputIterator>
+inline int DoMove(InputIterator first, InputIterator last, OutputIterator result) { eastl::move(first, last, result); return 0; }
 
 template <typename ForwardIterator, typename Count>
 inline int DoUninitializedDefaultFillN(ForwardIterator first, Count n) { eastl::uninitialized_default_fill_n(first, n); return 0; }
@@ -902,7 +899,11 @@ public:
 		{
 			size_t firstIdx = first - cbegin();
 			size_t lastIdx = last - cbegin();
-			swallow(TupleVecLeaf<Indices, Ts>::DoMove(lastIdx, mNumElements, firstIdx)...);
+			swallow(DoMove(
+				TupleVecLeaf<Indices, Ts>::mpData + lastIdx, 
+				TupleVecLeaf<Indices, Ts>::mpData + mNumElements,
+				TupleVecLeaf<Indices, Ts>::mpData + firstIdx
+			)...);
 			size_t newNumElements = mNumElements - (lastIdx - firstIdx);
 			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 			mNumElements = newNumElements;
@@ -913,7 +914,11 @@ public:
 	iterator erase_unsorted(const_iterator pos)
 	{
 		auto newNumElements = mNumElements - 1;
-		swallow(TupleVecLeaf<Indices, Ts>::DoMove(newNumElements, mNumElements, pos - begin())...);
+		swallow(DoMove(
+			TupleVecLeaf<Indices, Ts>::mpData + newNumElements,
+			TupleVecLeaf<Indices, Ts>::mpData + mNumElements,
+			TupleVecLeaf<Indices, Ts>::mpData + (pos - begin())
+		)...);
 		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements, TupleVecLeaf<Indices, Ts>::mpData + mNumElements)...);
 		mNumElements = newNumElements;
 		return pos;
@@ -928,7 +933,6 @@ public:
 				DoGrow(n);
 			}
 			swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData + mNumElements, n - mNumElements)...);
-
 		}
 		else
 		{
