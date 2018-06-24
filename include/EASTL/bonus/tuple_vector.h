@@ -196,13 +196,6 @@ struct TupleVecLeaf
 		return 0;
 	}
 
-	template <typename InputIterator, typename DestIterator>
-	int DoCopy(InputIterator srcBegin, InputIterator srcEnd, DestIterator destBegin)
-	{
-		eastl::copy(srcBegin, srcEnd, destBegin);
-		return 0;
-	}
-
 	int DoInsertValues(size_t pos, size_t n, size_t numElements, const T& arg)
 	{
 		T* pDest = mpData + pos;
@@ -286,6 +279,9 @@ inline int DoConstruction(T* ptr, const T& arg) { ::new (ptr) T(arg); return 0; 
 
 template <typename T>
 inline int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::move(arg)); return 0; }
+
+template <typename InputIterator, typename OutputIterator>
+inline int DoCopy(InputIterator first, InputIterator last, OutputIterator result) { eastl::copy(first, last, result); return 0; }
 
 template <typename ForwardIterator>
 inline int DoDestruct(ForwardIterator first, ForwardIterator last) { eastl::destruct(first, last); return 0; }
@@ -687,7 +683,7 @@ public:
 			auto lastIdx = last.mIndex;
 			if (newNumElements > mNumElements) // If n > mNumElements ...
 			{
-				swallow(TupleVecLeaf<Indices, Ts>::DoCopy(
+				swallow(DoCopy(
 						(Ts*)(otherPdata[Indices]) + firstIdx,
 						(Ts*)(otherPdata[Indices]) + firstIdx + mNumElements,
 						TupleVecLeaf<Indices, Ts>::mpData
@@ -701,7 +697,7 @@ public:
 			}
 			else // else 0 <= n <= mNumElements
 			{
-				swallow(TupleVecLeaf<Indices, Ts>::DoCopy(
+				swallow(DoCopy(
 						(Ts*)(otherPdata[Indices]) + firstIdx,
 						(Ts*)(otherPdata[Indices]) + lastIdx,
 						TupleVecLeaf<Indices, Ts>::mpData
