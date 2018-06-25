@@ -129,7 +129,270 @@ int TestFixedTupleVectorVariant()
 
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
+
+		if (testVec.has_overflowed())
+		{
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 0);
+		}
+
+		// convoluted inserts to get "0, 1, 2, 3, 4, 5, 6" on the floats/testobject's
+		auto testVecIter = testVec.insert(testVec.begin(), true, TestObject(5), 5.0f);
+		testVec.insert(testVecIter, false, TestObject(4), 4.0f);
+		testVec.insert(testVecIter, true, TestObject(1), 1.0f);
+		testVecIter = testVec.insert(testVecIter + 1, false, TestObject(3), 3.0f);
+		testVec.insert(testVecIter, true, TestObject(2), 2.0f);
+		testVec.insert(testVec.begin(), false, TestObject(0), 0.0f);
+		testVec.insert(testVec.end(), true, TestObject(6), 6.0f);
+		EATEST_VERIFY(testVec.size() == 7);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i));
+		}
+
+		// test for large inserts that don't resize capacity, and clean out the added range
+		testVec.reserve(20);
+		testVec.insert(testVec.begin() + 5, 5, false, TestObject(10), 10.0f);
+		testVec.insert(testVec.begin() + 5, 5, false, TestObject(10), 10.0f);
+		for (unsigned int i = 5; i < 15; ++i)
+		{
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
+		}
+		testVec.erase(eastl::remove_if(testVec.begin(), testVec.end(), [](auto tup) { return get<2>(tup) == 10.0f; }),
+		              testVec.end());
+		EATEST_VERIFY(testVec.size() == 7);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<2>()[i] != 10.0f);
+		}
+
+		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
+		testVecIter = testVec.erase(testVec.begin());
+		testVecIter = testVec.erase(testVecIter + 1);
+		testVec.erase(testVecIter + 1);
+		testVec.erase(testVec.end() - 1);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));
+		}
+		EATEST_VERIFY(TestObject::sTOCount == testVec.size());
+
+		// remove 1, 3 from the list and make sure 5 is present, then remove the rest of the list
+		testVec.erase(testVec.begin(), testVec.begin() + 2);
+		EATEST_VERIFY(testVec.size() == 1);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(testVec.empty());
+
+		EATEST_VERIFY(TestObject::IsClear());
+
+		// erase_unsorted test
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		testVec.erase_unsorted(testVec.begin() + 0);
+		EATEST_VERIFY(testVec.size() == 9);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[1] == TestObject(1));
+		EATEST_VERIFY(testVec.get<1>()[8] == TestObject(8));
+
+		testVec.erase_unsorted(testVec.begin() + 5);
+		EATEST_VERIFY(testVec.size() == 8);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[7] == TestObject(7));
+
+		testVec.erase_unsorted(testVec.begin() + 7);
+		EATEST_VERIFY(testVec.size() == 7);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[6] == TestObject(6));
+
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(TestObject::IsClear());
+
+		// test tuple_vector dtor
+		{
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> dtorCheck;
+			for (int i = 0; i < 10; ++i)
+			{
+				dtorCheck.push_back(i % 3 == 0, TestObject(i), (float)i);
+			}
+		}
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
 	}
+
+	// todo: uncomment after fleshing out fixed_tuple_vector ctors
+	// Test multitude of constructors
+	//{
+	//	TestObject::Reset();
+	//	fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> srcVec;
+	//	for (int i = 0; i < 10; ++i)
+	//	{
+	//		srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+	//	}
+
+	//	{
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromConstRef(srcVec);
+	//		EATEST_VERIFY(ctorFromConstRef.size() == 10);
+	//		for (int i = 0; i < 10; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
+	//			EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
+	//			EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+	//		}
+	//	}
+
+	//	{
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromAssignment;
+	//		ctorFromAssignment = srcVec;
+	//		EATEST_VERIFY(ctorFromAssignment.size() == 10);
+	//		for (int i = 0; i < 10; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromAssignment.get<0>()[i] == (i % 3 == 0));
+	//			EATEST_VERIFY(ctorFromAssignment.get<1>()[i] == TestObject(i));
+	//			EATEST_VERIFY(ctorFromAssignment.get<2>()[i] == (float)i);
+	//		}
+	//	}
+
+	//	{
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromIters(srcVec.begin() + 2, srcVec.begin() + 7);
+	//		EATEST_VERIFY(ctorFromIters.size() == 5);
+	//		for (int i = 2; i < 7; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromIters.get<0>()[i - 2] == (i % 3 == 0));
+	//			EATEST_VERIFY(ctorFromIters.get<1>()[i - 2] == TestObject(i));
+	//			EATEST_VERIFY(ctorFromIters.get<2>()[i - 2] == (float)i);
+	//		}
+	//	}
+
+	//	{
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromFill(10);
+	//		EATEST_VERIFY(ctorFromFill.size() == 10);
+	//		for (int i = 0; i < 10; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromFill.get<0>()[i] == false);
+	//			EATEST_VERIFY(ctorFromFill.get<1>()[i] == TestObject());
+	//			EATEST_VERIFY(ctorFromFill.get<2>()[i] == 0.0f);
+	//		}
+	//	}
+
+	//	{
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f);
+	//		EATEST_VERIFY(ctorFromFillArgs.size() == 10);
+	//		for (int i = 0; i < 10; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
+	//			EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
+	//			EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+	//		}
+	//	}
+
+	//	{
+	//		tuple<bool, TestObject, float> tup(true, TestObject(5), 5.0f);
+	//		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromFillTup(10, tup);
+	//		EATEST_VERIFY(ctorFromFillTup.size() == 10);
+	//		for (int i = 0; i < 10; ++i)
+	//		{
+	//			EATEST_VERIFY(ctorFromFillTup.get<0>()[i] == true);
+	//			EATEST_VERIFY(ctorFromFillTup.get<1>()[i] == TestObject(5));
+	//			EATEST_VERIFY(ctorFromFillTup.get<2>()[i] == 5.0f);
+	//		}
+	//	}
+	//	srcVec.clear();
+	//	EATEST_VERIFY(TestObject::IsClear());
+
+	//	TestObject::Reset();
+	//}
+
+	// Test erase with reverse iterators
+	{
+		TestObject::Reset();
+
+		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> testVec;
+		for (int i = 0; i < 7; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
+		auto testVecIter = testVec.erase(testVec.rbegin());
+		testVecIter = testVec.erase(testVecIter + 1);
+		testVec.erase(testVecIter + 1);
+		testVec.erase(testVec.rend() - 1);
+		for (unsigned int i = 0; i < testVec.size(); ++i)
+		{
+			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));
+		}
+		EATEST_VERIFY(TestObject::sTOCount == testVec.size());
+
+		// remove 1, 3 from the list and make sure 5 is present, then remove the rest of the list
+		testVec.erase(testVec.rbegin() + 1, testVec.rend());
+		EATEST_VERIFY(testVec.size() == 1);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));
+		testVec.erase(testVec.rbegin(), testVec.rend());
+		EATEST_VERIFY(testVec.empty());
+
+		EATEST_VERIFY(TestObject::IsClear());
+
+		// erase_unsorted test
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+		}
+
+		testVec.erase_unsorted(testVec.rbegin() + 9);
+		EATEST_VERIFY(testVec.size() == 9);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[1] == TestObject(1));
+		EATEST_VERIFY(testVec.get<1>()[8] == TestObject(8));
+
+		testVec.erase_unsorted(testVec.rbegin() + 3);
+		EATEST_VERIFY(testVec.size() == 8);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[7] == TestObject(7));
+
+		testVec.erase_unsorted(testVec.rbegin() + 0);
+		EATEST_VERIFY(testVec.size() == 7);
+		EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
+		EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
+		EATEST_VERIFY(testVec.get<1>()[6] == TestObject(6));
+
+		testVec.erase(testVec.begin(), testVec.end());
+		EATEST_VERIFY(TestObject::IsClear());
+
+		TestObject::Reset();
+	}
+
+	// todo: uncomment after fleshing out fixed_tuple_vector ctors
+	// Test swap
+	//{
+	//	fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, bool> complexVec;
+	//	complexVec.push_back(3, 2.0f, true);
+	//	complexVec.push_back(1, 4.0f, false);
+	//	complexVec.push_back(2, 1.0f, true);
+	//	complexVec.push_back(4, 3.0f, false);
+
+	//	fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, bool> otherComplexVec;
+	//	complexVec.swap(otherComplexVec);
+
+	//	EATEST_VERIFY(complexVec.size() == 0);
+	//	EATEST_VERIFY(otherComplexVec.get<0>()[0] == 3);
+	//	EATEST_VERIFY(otherComplexVec.get<float>()[1] == 4.0f);
+
+	//	complexVec.push_back(10, 10.0f, true);
+	//	swap(complexVec, otherComplexVec);
+
+	//	EATEST_VERIFY(*(complexVec.get<0>()) == 3);
+	//	EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
+
+	//	EATEST_VERIFY(otherComplexVec.get<float>()[0] == 10.0f);
+	//	EATEST_VERIFY(otherComplexVec.size() == 1);
+	//}
 
 	// Test fixed_tuple_Vector in a ranged for, and other large-scale iterator testing
 	{

@@ -23,20 +23,35 @@ private:
 		TupleVecInternal::TupleRecurser<Ts...>::GetTotalAllocationSize(nodeCount, 0), 1,
 		TupleVecInternal::TupleRecurser<Ts...>::GetTotalAlignment(), 0,
 		bEnableOverflow, EASTLAllocatorType> fixed_allocator_type;
+	typedef aligned_buffer<fixed_allocator_type::kNodesSize, fixed_allocator_type::kNodeAlignment> aligned_buffer_type;
+	typedef fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...> this_type;
+	typedef EASTLAllocatorType overflow_allocator_type;
 
 	typedef TupleVecInternal::TupleVecImpl<fixed_allocator_type, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
-	typedef aligned_buffer<fixed_allocator_type::kNodesSize, fixed_allocator_type::kNodeAlignment> aligned_buffer_type;
+	using base_type::base_type;
+	typedef typename base_type::size_type size_type;
 
 	aligned_buffer_type mBuffer;
-
-	using base_type::base_type;
-
-	typedef typename base_type::size_type size_type;
 
 public:
 	fixed_tuple_vector()
 		:base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
 	{ }
+
+	void swap(this_type& x)
+	{
+		// If both containers are using the heap instead of local memory 
+		// then we can do a fast pointer swap instead of content swap.
+		if ((has_overflowed() && x.has_overflowed()) && (get_overflow_allocator() == x.get_overflow_allocator()))
+		{
+			base_type::swap(x);
+		}
+		else
+		{
+			// Fixed containers use a special swap that can deal with excessively large buffers.
+			eastl::fixed_swap(*this, x);
+		}
+	}
 
 	// Returns the max fixed size, which is the user-supplied nodeCount parameter.
 	size_type max_size() const { return nodeCount; }
@@ -49,7 +64,18 @@ public:
 	bool has_overflowed() const { return ((void*)mpData != (void*)mBuffer.buffer); }
 	// Returns the value of the bEnableOverflow template parameter.
 	bool can_overflow() const { return bEnableOverflow; }
+
+	const overflow_allocator_type& get_overflow_allocator() const { return mAllocator.get_overflow_allocator(); }
 };
+
+
+template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
+inline void swap(fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>& a,
+				fixed_tuple_vector<nodeCount, bEnableOverflow, Ts...>& b)
+{
+	a.swap(b);
+}
+
 
 }  // namespace eastl
 
