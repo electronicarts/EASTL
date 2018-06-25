@@ -86,6 +86,14 @@ union Union
 	int   x;
 	short y;
 };
+
+struct FinalStruct final
+{
+};
+
+class FinalClass final
+{
+};
 #if !EASTL_TYPE_TRAIT_is_union_CONFORMANCE
 	EASTL_DECLARE_UNION(Union) // We have to do this because is_union simply cannot work without user help.
 #endif
@@ -1874,6 +1882,20 @@ int TestTypeTraits()
 		}
 	#endif
 	}
+	
+	// is_final
+	static_assert(std::is_final<FinalStruct>::value, "final struct not correctly detected");
+	static_assert(std::is_final<FinalClass>::value, "final struct not correctly detected");
+	static_assert(!std::is_final<Enum>::value, "enum not correctly detected");
+	static_assert(!std::is_final<int>::value, "int not correctly detected");
+	static_assert(!std::is_final<Struct>::value, "non-final struct not correctly detected");
+	static_assert(!std::is_final<Class>::value, "non-final class not correctly detected");
+	static_assert(is_final<FinalStruct>::value, "final struct not correctly detected");
+	static_assert(is_final<FinalClass>::value, "final struct not correctly detected");
+	static_assert(!is_final<Enum>::value, "enum not correctly detected");
+	static_assert(!is_final<int>::value, "int not correctly detected");
+	static_assert(!is_final<Struct>::value, "non-final struct not correctly detected");
+	static_assert(!is_final<Class>::value, "non-final class not correctly detected");
 
 	return nErrorCount;
 }
