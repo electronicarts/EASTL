@@ -1076,7 +1076,8 @@ public:
 	{
 		if (this != &other)
 		{
-			insert(other.begin(), other.end());
+			clear();
+			assign(other.begin(), other.end());
 		}
 		return *this;
 	}

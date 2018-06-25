@@ -276,6 +276,18 @@ int TestTupleVector()
 		}
 
 		{
+			tuple_vector<bool, TestObject, float> ctorFromAssignment;
+			ctorFromAssignment = srcVec;
+			EATEST_VERIFY(ctorFromAssignment.size() == 10);
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromAssignment.get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromAssignment.get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromAssignment.get<2>()[i] == (float)i);
+			}
+		}
+
+		{
 			tuple_vector<bool, TestObject, float> ctorFromIters(srcVec.begin() + 2, srcVec.begin() + 7);
 			EATEST_VERIFY(ctorFromIters.size() == 5);
 			for (int i = 2; i < 7; ++i)
