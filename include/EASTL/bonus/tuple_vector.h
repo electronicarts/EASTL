@@ -570,45 +570,26 @@ public:
 	TupleVecImpl(size_t n, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: mAllocator(allocator)
 	{
-		DoReallocate(0, n);
-		mNumElements = n;
-		swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData, n)...);
+		DoInitDefaultFill(n);
+
 	}
 
 	TupleVecImpl(size_t n, const Ts&... args)
 		: mAllocator(EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 	{
-		DoReallocate(0, n);
-		mNumElements = n;
-		swallow(DoUninitializedFillPtr(
-			TupleVecLeaf<Indices, Ts>::mpData,
-			TupleVecLeaf<Indices, Ts>::mpData + n,
-			args
-		)...);
+		DoInitFillArgs(n, args...);
 	}
 
 	TupleVecImpl(size_t n, const Ts&... args, const allocator_type& allocator)
 		: mAllocator(allocator)
 	{
-		DoReallocate(0, n);
-		mNumElements = n;
-		swallow(DoUninitializedFillPtr(
-			TupleVecLeaf<Indices, Ts>::mpData,
-			TupleVecLeaf<Indices, Ts>::mpData + n,
-			args
-		)...);
+		DoInitFillArgs(n, args...);
 	}
 
 	TupleVecImpl(size_t n, const_reference_tuple tup, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: mAllocator(allocator)
 	{
-		DoReallocate(0, n);
-		mNumElements = n;
-		swallow(DoUninitializedFillPtr(
-			TupleVecLeaf<Indices, Ts>::mpData,
-			TupleVecLeaf<Indices, Ts>::mpData + n,
-			eastl::get<Indices>(tup)
-		)...);
+		DoInitFillTuple(n, tup);
 	}
 
 protected:
@@ -1106,11 +1087,14 @@ protected:
 	template <typename MoveIterBase>
 	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
 	{
-		auto newNumElements = end - begin;
+		size_t newNumElements = (size_t)(end - begin);
 		const void* ppOtherData[sizeof...(Ts)] = { begin.base().mpData[Indices]... };
 		auto beginIdx = begin.base().mIndex;
 		auto endIdx = end.base().mIndex;
-		DoReallocate(0, newNumElements);
+		if (newNumElements > mNumCapacity)
+		{
+			DoReallocate(0, newNumElements);
+		}
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
 				eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
@@ -1122,17 +1106,42 @@ protected:
 	template <typename Iterator>
 	void DoInitFromIterator(Iterator begin, Iterator end)
 	{
-		auto newNumElements = end - begin;
+		size_t newNumElements = (size_t)(end - begin);
 		const void* ppOtherData[sizeof...(Ts)] = { begin.mpData[Indices]... };
 		auto beginIdx = begin.mIndex;
 		auto endIdx = end.mIndex;
-		DoReallocate(0, newNumElements);
+		if (newNumElements > mNumCapacity)
+		{
+			DoReallocate(0, newNumElements);
+		}
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
 				(Ts*)(ppOtherData[Indices]) + beginIdx,
 				(Ts*)(ppOtherData[Indices]) + endIdx,
 				TupleVecLeaf<Indices, Ts>::mpData
 			)...);
+	}
+
+	void DoInitFillTuple(size_t n, const_reference_tuple tup) { DoInitFillArgs(n, eastl::get<Indices>(tup)...); }
+
+	void DoInitFillArgs(size_t n, const Ts&... args)
+	{
+		if (n > mNumCapacity)
+		{
+			DoReallocate(0, n);
+		}
+		mNumElements = n;
+		swallow(DoUninitializedFillPtr(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + n, args)...);
+	}
+
+	void DoInitDefaultFill(size_t n)
+	{
+		if (n > mNumCapacity)
+		{
+			DoReallocate(0, n);
+		}
+		mNumElements = n;
+		swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData, n)...);
 	}
 
 	void DoReallocate(size_type oldNumElements, size_type newCapacity)

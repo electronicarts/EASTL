@@ -11,6 +11,23 @@
 namespace eastl
 {
 
+	/// EASTL_FIXED_TUPLE_VECTOR_DEFAULT_NAME
+	///
+	/// Defines a default container name in the absence of a user-provided name.
+	/// In the case of fixed-size containers, the allocator name always refers
+	/// to overflow allocations. 
+	///
+	#ifndef EASTL_FIXED_TUPLE_VECTOR_DEFAULT_NAME
+		#define EASTL_FIXED_TUPLE_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " fixed_tuple_vector" // Unless the user overrides something, this is "EASTL fixed_vector".
+	#endif
+
+
+	/// EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR
+	///
+	#ifndef EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR
+		#define EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR overflow_allocator_type(EASTL_FIXED_TUPLE_VECTOR_DEFAULT_NAME)
+	#endif
+
 // External interface of fixed_tuple_vector
 template <size_t nodeCount, bool bEnableOverflow, typename... Ts>
 class fixed_tuple_vector : public TupleVecInternal::TupleVecImpl<fixed_vector_allocator<
@@ -28,15 +45,97 @@ private:
 	typedef EASTLAllocatorType overflow_allocator_type;
 
 	typedef TupleVecInternal::TupleVecImpl<fixed_allocator_type, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
-	using base_type::base_type;
 	typedef typename base_type::size_type size_type;
 
 	aligned_buffer_type mBuffer;
 
 public:
 	fixed_tuple_vector()
-		:base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
 	{ }
+
+	fixed_tuple_vector(const overflow_allocator_type& allocator)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{ }
+
+	fixed_tuple_vector(this_type&& x)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+	{ 
+		mAllocator.copy_overflow_allocator(x.mAllocator);
+		swap(x);
+	}
+
+	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		swap(x);
+	}
+
+	fixed_tuple_vector(const this_type& x)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+	{ 
+		mAllocator.copy_overflow_allocator(x.mAllocator);
+		DoInitFromIterator(x.begin(), x.end());
+	}
+
+	fixed_tuple_vector(const this_type& x, const overflow_allocator_type& allocator)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		DoInitFromIterator(x.begin(), x.end());
+	}
+
+	template <typename MoveIterBase>
+	fixed_tuple_vector(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+
+	{
+		DoInitFromIterator(begin, end);
+	}
+
+	template <typename Iterator>
+	fixed_tuple_vector(Iterator begin, Iterator end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		DoInitFromIterator(begin, end);
+	}
+
+	fixed_tuple_vector(size_t n, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		DoInitDefaultFill(n);
+	}
+
+	fixed_tuple_vector(size_t n, const Ts&... args)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+	{
+		DoInitFillArgs(n, args...);
+	}
+
+	fixed_tuple_vector(size_t n, const Ts&... args, const overflow_allocator_type& allocator)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		DoInitFillArgs(n, args...);
+	}
+
+	fixed_tuple_vector(size_t n,
+				typename base_type::const_reference_tuple tup,
+				const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+	{
+		DoInitFillTuple(n, tup);
+	}
+
+	this_type& operator=(const this_type& other)
+	{
+		(base_type&)(*this) = (base_type&)other;
+		return *this;
+	}
+
+	this_type& operator=(this_type&& other)
+	{
+		(base_type&)(*this) = (base_type&&)(eastl::forward(other));
+		return *this;
+	}
 
 	void swap(this_type& x)
 	{
