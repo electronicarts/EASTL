@@ -618,6 +618,11 @@ int CompareSortPerformance()
 								std::sort(v.data(), v.data() + v.size(), std::less<ElementType>());
 								stopwatch.Stop();
 								break;
+
+							case sf_count:
+							default:
+								// unsupported
+								break;
 						}
 
 						const uint64_t elapsedTime = (uint64_t)stopwatch.GetElapsedTime();
@@ -779,6 +784,12 @@ int CompareSortPerformance()
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), CompareFunction());
 								stopwatch.Stop();
+								break;
+
+							case sf_radix_sort:
+							case sf_count:
+							default:
+								// unsupported
 								break;
 						}
 
@@ -946,6 +957,12 @@ int CompareSortPerformance()
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), std::less<ElementType>());
 								stopwatch.Stop();
+								break;
+
+							case sf_qsort:
+							case sf_count:
+							default:
+								// unsupported
 								break;
 						}
 

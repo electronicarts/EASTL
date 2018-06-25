@@ -461,7 +461,6 @@ int TestTypeTraits()
 {
 	int nErrorCount = 0;
 
-
 	// static_min / static_max
 	#if EASTL_TYPE_TRAIT_static_min_CONFORMANCE
 		static_assert((static_min<3, 7, 1, 5>::value == 1),  "static_min failure");
@@ -1822,6 +1821,8 @@ int TestTypeTraits()
 			static_assert(!negation_v<true_type>, "negation failure");
 		#endif
 	}
+
+	EATEST_VERIFY(gIntNullptrConstant == nullptr);
 
 	return nErrorCount;
 }
