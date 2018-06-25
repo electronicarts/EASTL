@@ -1822,7 +1822,7 @@ int TestTypeTraits()
 		#endif
 	}
 
-	EATEST_VERIFY(gIntNullptrConstant == nullptr);
+	static_assert(gIntNullptrConstant == nullptr, "integral constant with value of nullptr failure");
 
 	return nErrorCount;
 }
