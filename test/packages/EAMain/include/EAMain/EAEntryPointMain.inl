@@ -60,7 +60,6 @@ namespace EA
 			for (int i = nStartingIndex; i < m_argc; i++)
 			{
 				const char *arg = m_argv[i];
-				bool prefixMatch = false;
 				if (HasPrefix(arg, pSwitch, bCaseSensitive) && (arg[switchLen] == '\0' || arg[switchLen] == delimiter))
 				{
 					if (pResult)
