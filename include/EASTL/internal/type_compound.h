@@ -719,6 +719,10 @@ namespace eastl
 		// is_final requires compiler support detect final classes: __is_final
 		template <typename T>
 		struct is_final : public integral_constant<bool, __is_final(T)> {};
+	#else
+		// there's no compiler support... cannot determine
+		template <typename T>
+		struct is_final : public false_type {};
 	#endif
 
 } // namespace eastl
