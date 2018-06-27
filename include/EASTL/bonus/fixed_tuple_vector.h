@@ -51,42 +51,42 @@ private:
 
 public:
 	fixed_tuple_vector()
-		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ }
 
 	fixed_tuple_vector(const overflow_allocator_type& allocator)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ }
 
 	fixed_tuple_vector(this_type&& x)
-		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 		swap(x);
 	}
 
 	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		swap(x);
 	}
 
 	fixed_tuple_vector(const this_type& x)
-		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 		DoInitFromIterator(x.begin(), x.end());
 	}
 
 	fixed_tuple_vector(const this_type& x, const overflow_allocator_type& allocator)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFromIterator(x.begin(), x.end());
 	}
 
 	template <typename MoveIterBase>
 	fixed_tuple_vector(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 
 	{
 		DoInitFromIterator(begin, end);
@@ -94,25 +94,25 @@ public:
 
 	template <typename Iterator>
 	fixed_tuple_vector(Iterator begin, Iterator end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFromIterator(begin, end);
 	}
 
 	fixed_tuple_vector(size_t n, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitDefaultFill(n);
 	}
 
 	fixed_tuple_vector(size_t n, const Ts&... args)
-		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFillArgs(n, args...);
 	}
 
 	fixed_tuple_vector(size_t n, const Ts&... args, const overflow_allocator_type& allocator)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFillArgs(n, args...);
 	}
@@ -120,7 +120,7 @@ public:
 	fixed_tuple_vector(size_t n,
 				typename base_type::const_reference_tuple tup,
 				const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFillTuple(n, tup);
 	}

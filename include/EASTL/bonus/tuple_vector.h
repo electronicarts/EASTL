@@ -296,6 +296,13 @@ void swallow(Ts&&...)
 {
 }
 
+inline bool variadicAnd(bool cond) { return cond; }
+
+inline bool variadicAnd(bool cond, bool conds...)
+{
+	return cond && variadicAnd(conds);
+}
+
 // Helper struct to check for strict compatibility between two iterators, whilst still allowing for
 // conversion between TupleVecImpl<Ts...>::iterator and TupleVecImpl<Ts...>::const_iterator. 
 template <bool IsSameSize, typename From, typename To>
@@ -594,8 +601,8 @@ public:
 
 protected:
 	// ctor to provide a pre-allocated field of data that the container will own, specifically for fixed_tuple_vector
-	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity)
-		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity)
+	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity, size_t dataSize)
+		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity), mDataSize(dataSize)
 	{
 		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, mpData, mNumCapacity, 0);
 	}
@@ -1071,6 +1078,36 @@ public:
 		}
 		return *this;
 	}
+
+	bool validate() const EA_NOEXCEPT
+	{
+		if (mNumElements > mNumCapacity)
+			return false;
+		if (!(variadicAnd(mpData <= TupleVecLeaf<Indices, Ts>::mpData...)))
+			return false;
+		void* pDataEnd = (void*)((uintptr_t)mpData + mDataSize);
+		if (!(variadicAnd(pDataEnd >= TupleVecLeaf<Indices, Ts>::mpData...)))
+			return false;
+		return true;
+	}
+
+	template<typename Iterator>
+	int validate_iterator(Iterator iter) const EA_NOEXCEPT
+	{
+		return validate_iterator_nongeneric(unwrap_iterator(iter));
+	}
+
+	int validate_iterator_nongeneric(const_iterator iter) const EA_NOEXCEPT
+	{
+		if (!(variadicAnd(iter.mpData[Indices] == TupleVecLeaf<Indices, Ts>::mpData...)))
+			return isf_none;
+		if (iter.mIndex < mNumElements)
+			return (isf_valid | isf_current | isf_can_dereference);
+		if (iter.mIndex <= mNumElements)
+			return (isf_valid | isf_current);
+		return isf_none;
+	}
+
 
 protected:
 	allocator_type mAllocator;
