@@ -954,7 +954,7 @@ public:
 		swap(temp);
 	}
 
-	void clear()
+	void clear() EA_NOEXCEPT
 	{
 		size_t oldNumElements = mNumElements;
 		mNumElements = 0;
@@ -999,28 +999,28 @@ public:
 
 	void resize(size_type n, const_reference_tuple tup) { resize(n, eastl::get<Indices>(tup)...); }
 
-	bool empty() const { return mNumElements == 0; }
-	size_type size() const { return mNumElements; }
-	size_type capacity() const { return mNumCapacity; }
+	bool empty() const EA_NOEXCEPT { return mNumElements == 0; }
+	size_type size() const EA_NOEXCEPT { return mNumElements; }
+	size_type capacity() const EA_NOEXCEPT { return mNumCapacity; }
 
-	iterator begin() { return iterator(this, 0); }
-	const_iterator begin() const { return const_iterator((const_this_type*)(this), 0); }
-	const_iterator cbegin() const { return const_iterator((const_this_type*)(this), 0); }
+	iterator begin() EA_NOEXCEPT { return iterator(this, 0); }
+	const_iterator begin() const EA_NOEXCEPT { return const_iterator((const_this_type*)(this), 0); }
+	const_iterator cbegin() const EA_NOEXCEPT { return const_iterator((const_this_type*)(this), 0); }
 
-	iterator end() { return iterator(this, size()); }
-	const_iterator end() const { return const_iterator((const_this_type*)(this), size()); }
-	const_iterator cend() const { return const_iterator((const_this_type*)(this), size()); }
+	iterator end() EA_NOEXCEPT { return iterator(this, size()); }
+	const_iterator end() const EA_NOEXCEPT { return const_iterator((const_this_type*)(this), size()); }
+	const_iterator cend() const EA_NOEXCEPT { return const_iterator((const_this_type*)(this), size()); }
 
-	reverse_iterator rbegin() { return reverse_iterator(end()); }
-	const_reverse_iterator rbegin() const  { return const_reverse_iterator(end()); }
-	const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
+	reverse_iterator rbegin() EA_NOEXCEPT { return reverse_iterator(end()); }
+	const_reverse_iterator rbegin() const  EA_NOEXCEPT { return const_reverse_iterator(end()); }
+	const_reverse_iterator crbegin() const EA_NOEXCEPT { return const_reverse_iterator(end()); }
 	
-	reverse_iterator rend() { return reverse_iterator(begin()); }
-	const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
-	const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
+	reverse_iterator rend() EA_NOEXCEPT { return reverse_iterator(begin()); }
+	const_reverse_iterator rend() const EA_NOEXCEPT { return const_reverse_iterator(begin()); }
+	const_reverse_iterator crend() const EA_NOEXCEPT { return const_reverse_iterator(begin()); }
 
-	ptr_tuple data() { return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
-	const_ptr_tuple data() const { return const_ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
+	ptr_tuple data() EA_NOEXCEPT { return ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
+	const_ptr_tuple data() const EA_NOEXCEPT { return const_ptr_tuple(TupleVecLeaf<Indices, Ts>::mpData...); }
 
 	reference_tuple at(size_type n) { return reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
 	const_reference_tuple at(size_type n) const { return const_reference_tuple(*(TupleVecLeaf<Indices, Ts>::mpData + n)...); }
