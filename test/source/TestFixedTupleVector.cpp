@@ -170,9 +170,9 @@ int TestFixedTupleVectorVariant()
 
 		// convoluted inserts to get "0, 1, 2, 3, 4, 5, 6" on the floats/testobject's
 		auto testVecIter = testVec.insert(testVec.begin(), true, TestObject(5), 5.0f);
-		testVec.insert(testVecIter, false, TestObject(4), 4.0f);
-		testVec.insert(testVecIter, true, TestObject(1), 1.0f);
-		testVecIter = testVec.insert(testVecIter + 1, false, TestObject(3), 3.0f);
+		testVec.insert(testVec.begin(), false, TestObject(4), 4.0f);
+		testVec.insert(testVec.begin(), true, TestObject(1), 1.0f);
+		testVecIter = testVec.insert(testVec.begin() + 1, false, TestObject(3), 3.0f);
 		testVec.insert(testVecIter, true, TestObject(2), 2.0f);
 		testVec.insert(testVec.begin(), false, TestObject(0), 0.0f);
 		testVec.insert(testVec.end(), true, TestObject(6), 6.0f);
