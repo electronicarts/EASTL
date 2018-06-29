@@ -168,6 +168,7 @@ namespace
 		sf_tim_sort,          // eastl::tim_sort
 		sf_insertion_sort,    // eastl::insertion_sort
 		sf_std_sort,          // std::sort
+		sf_std_stable_sort,   // std::stable_sort
 		sf_radix_sort,        // eastl::radix_sort (unconventional sort)
 		sf_count              //
 	};
@@ -217,6 +218,9 @@ namespace
 
 			case sf_std_sort:
 				return "std::sort";
+
+			case sf_std_stable_sort:
+				return "std::stable_sort";
 
 			default:
 				return "unknown";
@@ -619,6 +623,12 @@ int CompareSortPerformance()
 								stopwatch.Stop();
 								break;
 
+							case sf_std_stable_sort:
+								stopwatch.Restart();
+								std::stable_sort(v.data(), v.data() + v.size(), std::less<ElementType>());
+								stopwatch.Stop();
+								break;
+
 							case sf_count:
 							default:
 								// unsupported
@@ -783,6 +793,12 @@ int CompareSortPerformance()
 							case sf_std_sort:
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), CompareFunction());
+								stopwatch.Stop();
+								break;
+
+							case sf_std_stable_sort:
+								stopwatch.Restart();
+								std::stable_sort(v.begin(), v.end(), CompareFunction());
 								stopwatch.Stop();
 								break;
 
@@ -956,6 +972,12 @@ int CompareSortPerformance()
 							case sf_std_sort:
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), std::less<ElementType>());
+								stopwatch.Stop();
+								break;
+
+							case sf_std_stable_sort:
+								stopwatch.Restart();
+								std::stable_sort(v.begin(), v.end(), std::less<ElementType>());
 								stopwatch.Stop();
 								break;
 
