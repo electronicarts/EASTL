@@ -43,6 +43,7 @@ void BenchmarkHash();
 void BenchmarkAlgorithm();
 void BenchmarkHeap();
 void BenchmarkBitset();
+void BenchmarkTupleVector();
 
 
 namespace Benchmark
