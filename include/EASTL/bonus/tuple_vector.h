@@ -929,7 +929,7 @@ public:
 		{
 			if (n > mNumCapacity)
 			{
-				DoReallocate(oldNumElements, n);
+				DoReallocate(oldNumElements, eastl::max(GetNewCapacity(oldNumElements), n));
 			}
 			swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, n - oldNumElements)...);
 		}
@@ -947,7 +947,7 @@ public:
 		{
 			if (n > mNumCapacity)
 			{
-				DoReallocate(oldNumElements, n);
+				DoReallocate(oldNumElements, eastl::max(GetNewCapacity(oldNumElements), n));
 			}
 			swallow(DoUninitializedFillPtr(
 				TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
