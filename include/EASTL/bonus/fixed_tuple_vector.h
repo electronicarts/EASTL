@@ -99,25 +99,25 @@ public:
 		DoInitFromIterator(begin, end);
 	}
 
-	fixed_tuple_vector(size_t n, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+	fixed_tuple_vector(size_type n, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitDefaultFill(n);
 	}
 
-	fixed_tuple_vector(size_t n, const Ts&... args)
+	fixed_tuple_vector(size_type n, const Ts&... args)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFillArgs(n, args...);
 	}
 
-	fixed_tuple_vector(size_t n, const Ts&... args, const overflow_allocator_type& allocator)
+	fixed_tuple_vector(size_type n, const Ts&... args, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
 		DoInitFillArgs(n, args...);
 	}
 
-	fixed_tuple_vector(size_t n,
+	fixed_tuple_vector(size_type n,
 				typename base_type::const_reference_tuple tup,
 				const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
