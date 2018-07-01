@@ -73,10 +73,19 @@ How to work with tuple_vector, and where to use it
 		
 Performance comparisons/discussion
 	-in comparison to structure of vectors, performance is fair
-	-loses on some micro-benchmarks due to index-based iteration
+	-loses on some micro-benchmarks due to index-based iteration, not pointer based-iteration
+	-requires a lot of optimization and inlining in order to keep performance up: there are a lot of function calls required as part of the per-element operations.
+		-thankfully in every case investigated with full optimizations on, the compiler does generate the code desired with little overhead!
+	-Can always just access the data like a bunch of C-style-arrays, and use t_v to create the memory allocation and manage the pointers, at the very least.
 	
-
+	
+	-in comparison to vectors, performance can vary
+		-operations that don't touch all of the data tend to win
+		-operations that do touch all of the data tend to lose by a bit (anywhere from 10-30% has been observed)
+			e.g. remove_if, sort, etc...
+			This is more-or-less expected, though. More work to touch same amount of memory, after all.
+		-So know what you're doing!
 
 Other drawbacks
-	-No symbolic reference to members 
+	-No symbolic reference to members!! Strongest suggestion is to make enumerated values to refer to members.
 	
