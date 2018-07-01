@@ -9,6 +9,7 @@
 #include <EASTL/array.h>
 #include <EASTL/bonus/tuple_vector.h>
 #include <EASTL/sort.h>
+#include <EASTL/unique_ptr.h>
 
 #include <random>
 #include <windows.h>
