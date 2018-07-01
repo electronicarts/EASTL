@@ -2,6 +2,25 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////////////////////////////////////////////////////
+// tuple_vector is a data container that is designed to abstract and simplify
+// the handling of a "structure of arrays" layout of data in memory. In
+// particular, it mimics the interface of vector, including functionality to do
+// inserts, erases, push_backs, and random-access. It also provides a
+// RandomAccessIterator and corresponding functionality, making it compatible
+// with most STL (and STL-esque) algorithms such as ranged-for loops, find_if,
+// remove_if, or sort.
+
+// When used or applied properly, this container can improve performance of
+// some algorithms through cache-coherent data accesses or allowing for
+// sensible SIMD programming, while keeping the structure of a single
+// container, to permit a developer to continue to use existing algorithms in
+// STL and the like.
+//
+// Consult tuple_vector_readme.txt for more information.
+///////////////////////////////////////////////////////////////////////////////
+
 #ifndef EASTL_TUPLEVECTOR_H
 #define EASTL_TUPLEVECTOR_H
 
@@ -11,10 +30,12 @@
 #include <EASTL/tuple.h>
 #include <EASTL/utility.h>
 
+#if defined(EA_PRAGMA_ONCE_SUPPORTED)
+	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
+#endif
+
 namespace eastl
 {
-
-
 	/// EASTL_TUPLE_VECTOR_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
