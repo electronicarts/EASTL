@@ -29,6 +29,14 @@ using namespace EA;
 typedef std::vector<uint64_t>     StdVectorUint64;
 typedef eastl::tuple_vector<uint64_t>   EaTupleVectorUint64;
 
+ struct PaddingStruct
+{
+	char padding[56];
+};
+static const PaddingStruct DefaultPadding;
+typedef eastl::tuple<uint64_t, PaddingStruct> PaddedTuple;
+typedef std::vector<PaddedTuple> StdVectorUint64Padded;
+typedef eastl::tuple_vector<uint64_t, PaddingStruct> EaTupleVectorUint64Padded;
 
 namespace
 {
@@ -207,12 +215,11 @@ namespace
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
-	template <typename Container>
-	void TestTupleBracket(EA::StdC::Stopwatch& stopwatch, Container& c)
+	void TestBracket(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
 	{
 		uint64_t temp = 0;
 		stopwatch.Restart();
-		for (typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
+		for (typename EaTupleVectorUint64::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += eastl::get<0>(c[j]);
 		stopwatch.Stop();
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
@@ -229,13 +236,11 @@ namespace
 			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);
 	}
 
-	template <typename Container>
-	void TestTupleFind(EA::StdC::Stopwatch& stopwatch, Container& c)
+	void TestFind(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
 	{
 		eastl::tuple<uint64_t> val(0xffffffffffff);
 		stopwatch.Restart();
-		typedef typename Container::iterator iterator_t; // This typedef is required to get this code to compile on RVCT
-		iterator_t it = eastl::find(c.begin(), c.end(), val);
+		EaTupleVectorUint64::iterator it = eastl::find(c.begin(), c.end(), val);
 		stopwatch.Stop();
 		if (it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eastl::get<0>(*it));
@@ -252,8 +257,7 @@ namespace
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(c[0] & 0xffffffff));
 	}
 
-	template <typename Container>
-	void TestTupleSort(EA::StdC::Stopwatch& stopwatch, Container& c)
+	void TestSort(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
 	{
 		// Intentionally use eastl sort in order to measure just
 		// vector access speed and not be polluted by sort speed.
@@ -327,6 +331,97 @@ namespace
 		stopwatch.Stop();
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// Variations of test functions for the Padded structures
+	template <typename Container>
+	void TestTuplePushBack(EA::StdC::Stopwatch& stopwatch, Container& c, eastl::vector<uint32_t>& intVector)
+	{
+		stopwatch.Restart();
+		for (eastl_size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
+		{
+			PaddedTuple tup((uint64_t)intVector[j], DefaultPadding);
+			c.push_back(tup);
+		}
+		stopwatch.Stop();
+	}
+
+	
+	template <typename Container>
+	void TestTupleBracket(EA::StdC::Stopwatch& stopwatch, Container& c)
+	{
+		uint64_t temp = 0;
+		stopwatch.Restart();
+		for (typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
+			temp += eastl::get<0>(c[j]);
+		stopwatch.Stop();
+		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+	}
+
+
+	template <typename Container>
+	void TestTupleFind(EA::StdC::Stopwatch& stopwatch, Container& c)
+	{
+		stopwatch.Restart();
+		typedef typename Container::iterator iterator_t; // This typedef is required to get this code to compile on RVCT
+		iterator_t it = eastl::find_if(c.begin(), c.end(), [](auto tup) { return eastl::get<0>(tup) == 0xFFFFFFFF; });
+		stopwatch.Stop();
+		if (it != c.end())
+			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eastl::get<0>(*it));
+	}
+
+	template <typename Container>
+	void TestTupleSort(EA::StdC::Stopwatch& stopwatch, Container& c)
+	{
+		// Intentionally use eastl sort in order to measure just
+		// vector access speed and not be polluted by sort speed.
+		stopwatch.Restart();
+		eastl::quick_sort(c.begin(), c.end(), [](auto a, auto b) { return eastl::get<0>(a) < eastl::get<0>(b); });
+		stopwatch.Stop();
+		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(eastl::get<0>(c[0]) & 0xffffffff));
+	}
+
+	template <typename Container>
+	void TestTupleInsert(EA::StdC::Stopwatch& stopwatch, Container& c)
+	{
+		typename Container::size_type j, jEnd;
+		typename Container::iterator it;
+		PaddedTuple tup(0xFFFFFFFF, DefaultPadding);
+
+		stopwatch.Restart();
+		for (j = 0, jEnd = 100, it = c.begin(); j < jEnd; ++j)
+		{
+			it = c.insert(it, tup);
+
+			if (it == c.end()) // Try to safely increment the iterator three times.
+				it = c.begin();
+			if (++it == c.end())
+				it = c.begin();
+			if (++it == c.end())
+				it = c.begin();
+		}
+		stopwatch.Stop();
+	}
+
+	template <typename Container>
+	void TestTupleErase(EA::StdC::Stopwatch& stopwatch, Container& c)
+	{
+		typename Container::size_type j, jEnd;
+		typename Container::iterator it;
+
+		stopwatch.Restart();
+		for (j = 0, jEnd = 100, it = c.begin(); j < jEnd; ++j)
+		{
+			it = c.erase(it);
+
+			if (it == c.end()) // Try to safely increment the iterator three times.
+				it = c.begin();
+			if (++it == c.end())
+				it = c.begin();
+			if (++it == c.end())
+				it = c.begin();
+		}
+		stopwatch.Stop();
+	}
 
 } // namespace
 
@@ -357,7 +452,7 @@ void BenchmarkTupleVector()
 			///////////////////////////////
 
 			TestPushBack(stopwatch1, stdVectorUint64, intVector);
-			TestPushBack(stopwatch2, eaTupleVectorUint64,  intVector);
+			TestPushBack(stopwatch2, eaTupleVectorUint64, intVector);
 
 			if(i == 1)
 				Benchmark::AddResult("tuple_vector<uint64>/push_back", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
@@ -368,7 +463,7 @@ void BenchmarkTupleVector()
 			///////////////////////////////
 
 			TestBracket(stopwatch1, stdVectorUint64);
-			TestTupleBracket(stopwatch2, eaTupleVectorUint64);
+			TestBracket(stopwatch2, eaTupleVectorUint64);
 
 			if(i == 1)
 				Benchmark::AddResult("tuple_vector<uint64>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
@@ -379,9 +474,9 @@ void BenchmarkTupleVector()
 			///////////////////////////////
 
 			TestFind(stopwatch1, stdVectorUint64);
-			TestTupleFind(stopwatch2, eaTupleVectorUint64);
+			TestFind(stopwatch2, eaTupleVectorUint64);
 			TestFind(stopwatch1, stdVectorUint64);
-			TestTupleFind(stopwatch2, eaTupleVectorUint64);
+			TestFind(stopwatch2, eaTupleVectorUint64);
 
 			if(i == 1)
 				Benchmark::AddResult("tuple_vector<uint64>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
@@ -394,11 +489,11 @@ void BenchmarkTupleVector()
 			// Currently VC++ complains about our sort function decrementing std::iterator that is already at begin(). In the strictest sense,
 			// that's a valid complaint, but we aren't testing std STL here. We will want to revise our sort function eventually.
 			#if !defined(_MSC_VER) || !defined(_ITERATOR_DEBUG_LEVEL) || (_ITERATOR_DEBUG_LEVEL < 2)
-				TestSort(stopwatch1, stdVectorUint64);
-				TestTupleSort(stopwatch2, eaTupleVectorUint64);
+			TestSort(stopwatch1, stdVectorUint64);
+			TestSort(stopwatch2, eaTupleVectorUint64);
 
-				if(i == 1)
-					Benchmark::AddResult("tuple_vector<uint64>/sort", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64>/sort", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 			#endif
 
 			///////////////////////////////
@@ -471,6 +566,90 @@ void BenchmarkTupleVector()
 
 			if(i == 1)
 				Benchmark::AddResult("tuple_vector<AutoRefCount>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			
+			//////////////////////////////////////////////////////////////////////////
+			// Test various operations with "padded" data, to demonstrate access/modification of sparse data
+
+			StdVectorUint64Padded stdVectorUint64Padded;
+			EaTupleVectorUint64Padded eaTupleVectorUint64Padded;
+
+			///////////////////////////////
+			// Test push_back
+			///////////////////////////////
+
+			TestTuplePushBack(stopwatch1, stdVectorUint64Padded, intVector);
+			TestTuplePushBack(stopwatch2, eaTupleVectorUint64Padded, intVector);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/push_back", stopwatch1.GetUnits(),
+									 stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test operator[].
+			///////////////////////////////
+
+			TestTupleBracket(stopwatch1, stdVectorUint64Padded);
+			TestTupleBracket(stopwatch2, eaTupleVectorUint64Padded);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/operator[]", stopwatch1.GetUnits(),
+									 stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			
+
+			///////////////////////////////
+			// Test iteration via find().
+			///////////////////////////////
+
+			TestTupleFind(stopwatch1, stdVectorUint64Padded);
+			TestTupleFind(stopwatch2, eaTupleVectorUint64Padded);
+			TestTupleFind(stopwatch1, stdVectorUint64Padded);
+			TestTupleFind(stopwatch2, eaTupleVectorUint64Padded);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/iteration", stopwatch1.GetUnits(),
+									 stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test sort
+			///////////////////////////////
+
+			// Currently VC++ complains about our sort function decrementing std::iterator that is already at
+			// begin(). In the strictest sense, that's a valid complaint, but we aren't testing std STL here. We
+			// will want to revise our sort function eventually.
+			#if !defined(_MSC_VER) || !defined(_ITERATOR_DEBUG_LEVEL) || (_ITERATOR_DEBUG_LEVEL < 2)
+			TestTupleSort(stopwatch1, stdVectorUint64Padded);
+			TestTupleSort(stopwatch2, eaTupleVectorUint64Padded);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/sort", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(),
+									 stopwatch2.GetElapsedTime());
+			#endif
+
+			///////////////////////////////
+			// Test insert
+			///////////////////////////////
+
+			TestTupleInsert(stopwatch1, stdVectorUint64Padded);
+			TestTupleInsert(stopwatch2, eaTupleVectorUint64Padded);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(),
+									 stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test erase
+			///////////////////////////////
+
+			TestTupleErase(stopwatch1, stdVectorUint64Padded);
+			TestTupleErase(stopwatch2, eaTupleVectorUint64Padded);
+
+			if(i == 1)
+				Benchmark::AddResult("tuple_vector<uint64,Padding>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(),
+									 stopwatch2.GetElapsedTime());
 		}
 	}
 }
