@@ -6,13 +6,8 @@
 
 #include "EASTLTest.h"
 
-#include <EASTL/array.h>
 #include <EASTL/bonus/tuple_vector.h>
-#include <EASTL/sort.h>
 #include <EASTL/unique_ptr.h>
-
-#include <random>
-#include <windows.h>
 
 using namespace eastl;
 
@@ -876,124 +871,6 @@ int TestTupleVector()
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
 	}
-
-	// test sort.h
-	{
-		LARGE_INTEGER  tupleLoopCounter; tupleLoopCounter.QuadPart = 0;
-		LARGE_INTEGER  vectorLoopCounter; vectorLoopCounter.QuadPart = 0;
-		LARGE_INTEGER  tupleSortCounter; tupleSortCounter.QuadPart = 0;
-		LARGE_INTEGER  vectorSortCounter; vectorSortCounter.QuadPart = 0;
-		const int cacheFlushSize = 10 * 1024 * 1024;
-		int* cacheFlushSrc = new int[cacheFlushSize];
-		int* cacheFlushDest = new int[cacheFlushSize];
-		LARGE_INTEGER frequency;
-		const int NumData = 64;
-		struct LargeData
-		{
-			LargeData(float f)
-			{
-				data.fill(f);
-			}
-			eastl::array<float, NumData> data;
-		};
-		QueryPerformanceFrequency(&frequency);
-		do
-		{
-			LARGE_INTEGER startTime, endTime;
-
-			// create+populate the two vectors with some junk
-			tuple_vector<bool, LargeData, int> tripleElementVec;
-			const int ElementCount = 1 * 1024 * 1024;
-			tripleElementVec.reserve(ElementCount);
-
-			struct TripleElement
-			{
-				bool a;
-				LargeData b;
-				int c;
-			};
-			vector<TripleElement> aosTripleElement;
-			aosTripleElement.reserve(ElementCount);
-
-			std::default_random_engine e1(0);
-			std::uniform_int_distribution<int> bool_picker(0, 1);
-			std::uniform_real_distribution<float> float_picker(0, 32768);
-			std::uniform_int_distribution<int> int_picker(0, 32768);
-
-			for (int i = 0; i < ElementCount; ++i)
-			{
-				bool randomBool = bool_picker(e1) < 1 ? false : true;
-				float randomFloat = float_picker(e1);
-				int randomInt = int_picker(e1);
-				tripleElementVec.push_back(randomBool, {randomFloat}, randomInt);
-				aosTripleElement.push_back({ randomBool, {randomFloat}, randomInt });
-			}
-
-			flushCache(cacheFlushSrc, cacheFlushSize, cacheFlushDest);
-
-			// measure tuplevec in a loop
-			QueryPerformanceCounter(&startTime);
-			volatile int numTupleBools = 0;
-			for (auto& iter : tripleElementVec)
-			{
-				numTupleBools += get<0>(iter) ? 1 : 0;
-			}
-			QueryPerformanceCounter(&endTime);
-			tupleLoopCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
-
-			flushCache(cacheFlushSrc, cacheFlushSize, cacheFlushDest);
-
-			// measure tuplevec in a sort
-			QueryPerformanceCounter(&startTime);
-			sort(tripleElementVec.begin(), tripleElementVec.end(),
-				[](auto& a, auto& b)
-			{
-				return get<2>(a) > get<2>(b);
-			});
-			QueryPerformanceCounter(&endTime);
-			tupleSortCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
-
-			flushCache(cacheFlushSrc, cacheFlushSize, cacheFlushDest);
-
-			// measure vector in a loop
-			QueryPerformanceCounter(&startTime);
-			volatile int numVecBools = 0;
-			for (auto& iter : aosTripleElement)
-			{
-				numVecBools += iter.a ? 1 : 0;
-			}
-			QueryPerformanceCounter(&endTime);
-			vectorLoopCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
-
-			flushCache(cacheFlushSrc, cacheFlushSize, cacheFlushDest);
-
-			// measure vector in a sort
-			QueryPerformanceCounter(&startTime);
-			sort(aosTripleElement.begin(), aosTripleElement.end(), [](const TripleElement& a, const TripleElement& b)
-			{
-				return a.c > b.c;
-			});
-			QueryPerformanceCounter(&endTime);
-			vectorSortCounter.QuadPart += (endTime.QuadPart - startTime.QuadPart);
-
-		} while (((tupleSortCounter.QuadPart * 1000.0) / frequency.QuadPart) < 5.0);
-
-		EATEST_VERIFY(nErrorCount == 0);
-
-		double tupleLoopTime = (tupleLoopCounter.QuadPart * 1000.0) / frequency.QuadPart;
-		double vectorLoopTime = (vectorLoopCounter.QuadPart * 1000.0) / frequency.QuadPart;
-		double tupleSortTime = (tupleSortCounter.QuadPart * 1000.0) / frequency.QuadPart;
-		double vectorSortTime = (vectorSortCounter.QuadPart * 1000.0) / frequency.QuadPart;
-
-		EA::EAMain::ReportVerbosity(0, "Tuple loop time (ms): %f\n", tupleLoopTime);
-		EA::EAMain::ReportVerbosity(0, "Vector loop time (ms): %f\n", vectorLoopTime);
-		EA::EAMain::ReportVerbosity(0, "Tuple sort time (ms): %f\n", tupleSortTime);
-		EA::EAMain::ReportVerbosity(0, "Vector sort time (ms): %f\n", vectorSortTime);
-
-		EATEST_VERIFY(nErrorCount == 0);
-
-	}
-
 
 	return nErrorCount;
 }

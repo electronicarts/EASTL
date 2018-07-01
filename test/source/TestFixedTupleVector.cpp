@@ -8,13 +8,6 @@
 
 #include <EASTL/bonus/fixed_tuple_vector.h>
 
-#include <EASTL/array.h>
-#include <EASTL/sort.h>
-#include <EASTL/random.h>
-
-
-#include "EASTL/fixed_vector.h"
-
 using namespace eastl;
 
 template <size_t nodeCount, bool bEnableOverflow>
@@ -580,47 +573,6 @@ int TestFixedTupleVector()
 	nErrorCount += TestFixedTupleVectorVariant<16, true>();
 	nErrorCount += TestFixedTupleVectorVariant<64, false>();
 
-	// test sort.h
-	if(0)
-	{
-		using namespace eastl;
-		using namespace Internal;
-
-		EASTLTest_Rand rng(EA::UnitTest::GetRandSeed());
-		
-		const int NumData = 64;
-		struct LargeData
-		{
-			LargeData(float f)
-			{
-				data.fill(f);
-			}
-			eastl::array<float, NumData> data;
-		};
-
-		const int ElementCount = 1 * 1024;
-		fixed_tuple_vector<ElementCount, false, bool, LargeData, int> tripleElementVec;
-		tripleElementVec.reserve(ElementCount);
-
-		for (int i = 0; i < ElementCount; ++i)
-		{
-			tripleElementVec.push_back((i % 2 == 0), { (float)i }, ElementCount - i);
-		}
-		eastl::random_shuffle(tripleElementVec.begin(), tripleElementVec.end(), rng);
-
-		// measure tuplevec in a sort
-		sort(tripleElementVec.begin(), tripleElementVec.end(),
-			[](auto& a, auto& b)
-			{
-				return get<2>(a) > get<2>(b);
-			});
-
-		EATEST_VERIFY(is_sorted(tripleElementVec.begin(), tripleElementVec.end(), [](auto& a, auto& b)
-			{
-				return get<2>(a) > get<2>(b);
-			}));
-
-	}
 	return nErrorCount;
 }
 
