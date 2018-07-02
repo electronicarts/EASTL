@@ -557,12 +557,12 @@ void BenchmarkTupleVector()
 			RefCounted::msAddRefCount  = 0;
 			RefCounted::msReleaseCount = 0;
 			TestMoveErase(stopwatch1, stdVectorAutoRefCount);
-			EASTLTest_Printf("tuple_vector<AutoRefCount>/erase std counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
+			//EASTLTest_Printf("tuple_vector<AutoRefCount>/erase std counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
 
 			RefCounted::msAddRefCount  = 0;
 			RefCounted::msReleaseCount = 0;
 			TestMoveErase(stopwatch2, eaTupleVectorAutoRefCount);
-			EASTLTest_Printf("tuple_vector<AutoRefCount>/erase EA counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
+			//EASTLTest_Printf("tuple_vector<AutoRefCount>/erase EA counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
 
 			if(i == 1)
 				Benchmark::AddResult("tuple_vector<AutoRefCount>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
