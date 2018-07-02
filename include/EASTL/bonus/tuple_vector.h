@@ -812,11 +812,8 @@ public:
 		}
 		else
 		{
-			swallow(DoUninitializedFillPtr(
-				TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
-				TupleVecLeaf<Indices, Ts>::mpData + newNumElements,
-				args
-			)...);
+			swallow(DoUninitializedFillPtr(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
+					                       TupleVecLeaf<Indices, Ts>::mpData + newNumElements, args)...);
 		}
 		return begin() + firstIdx;
 	}
@@ -864,20 +861,15 @@ public:
 			else
 			{
 				swallow(TupleVecLeaf<Indices, Ts>::DoInsertRange(
-						(Ts*)(ppOtherData[Indices]) + firstIdx,
-						(Ts*)(ppOtherData[Indices]) + lastIdx,
-						TupleVecLeaf<Indices, Ts>::mpData + posIdx,
-					oldNumElements
-					)...);
+					(Ts*)(ppOtherData[Indices]) + firstIdx, (Ts*)(ppOtherData[Indices]) + lastIdx,
+					TupleVecLeaf<Indices, Ts>::mpData + posIdx, oldNumElements)...);
 			}
 		}
 		else
 		{
-			swallow(DoUninitializedCopyPtr(
-					(Ts*)(ppOtherData[Indices]) + firstIdx,
-					(Ts*)(ppOtherData[Indices]) + lastIdx,
-					TupleVecLeaf<Indices, Ts>::mpData + posIdx
-				)...);
+			swallow(DoUninitializedCopyPtr((Ts*)(ppOtherData[Indices]) + firstIdx,
+					                       (Ts*)(ppOtherData[Indices]) + lastIdx,
+					                       TupleVecLeaf<Indices, Ts>::mpData + posIdx)...);
 		}
 		return begin() + posIdx;
 	}
