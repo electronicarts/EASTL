@@ -675,7 +675,7 @@ public:
 	void assign(const_iterator first, const_iterator last)
 	{
 #if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(!validateIteratorPair(first, last)))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(first, last)))
 			EASTL_FAIL_MSG("tuple_vector::assign -- invalid iterator pair");
 #endif
 
@@ -854,7 +854,7 @@ public:
 #if EASTL_ASSERT_ENABLED
 		if (EASTL_UNLIKELY(validate_iterator(pos) == isf_none))
 			EASTL_FAIL_MSG("tuple_vector::insert -- invalid iterator");
-		if (EASTL_UNLIKELY(!validateIteratorPair(first, last)))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(first, last)))
 			EASTL_FAIL_MSG("tuple_vector::insert -- invalid iterator pair");
 #endif
 		size_type posIdx = pos - cbegin();
@@ -912,7 +912,7 @@ public:
 #if EASTL_ASSERT_ENABLED
 		if (EASTL_UNLIKELY(validate_iterator(first) == isf_none || validate_iterator(last) == isf_none))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator");
-		if (EASTL_UNLIKELY(!validateIteratorPair(first, last)))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(first, last)))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
 #endif
 		if (first != last)
@@ -1222,7 +1222,7 @@ public:
 		return isf_none;
 	}
 
-	static bool validateIteratorPair(const_iterator first, const_iterator last) EA_NOEXCEPT
+	static bool validate_iterator_pair(const_iterator first, const_iterator last) EA_NOEXCEPT
 	{
 		return (first.mIndex <= last.mIndex) && variadicAnd(first.mpData[Indices] == last.mpData[Indices]...);
 	}
@@ -1243,7 +1243,7 @@ protected:
 	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
 	{
 #if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(!validateIteratorPair(begin.base(), end.base())))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(begin.base(), end.base())))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
 #endif
 		size_type newNumElements = (size_type)(end - begin);
@@ -1266,7 +1266,7 @@ protected:
 	void DoInitFromIterator(Iterator begin, Iterator end)
 	{
 #if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(!validateIteratorPair(begin, end)))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
 #endif
 		size_type newNumElements = (size_type)(end - begin);
