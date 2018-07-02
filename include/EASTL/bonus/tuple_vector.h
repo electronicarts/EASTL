@@ -719,10 +719,7 @@ public:
 	reference_tuple push_back()
 	{
 		size_type oldNumElements = mNumElements++;
-		if (oldNumElements >= mNumCapacity)
-		{
-			DoReallocate(oldNumElements, GetNewCapacity(oldNumElements));
-		}
+		DoConditionalReallocate(oldNumElements, GetNewCapacity(oldNumElements));
 		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements)...);
 		return back();
 	}
@@ -730,29 +727,20 @@ public:
 	void push_back(const Ts&... args)
 	{
 		size_type oldNumElements = mNumElements++;
-		if (oldNumElements >= mNumCapacity)
-		{
-			DoReallocate(oldNumElements, GetNewCapacity(oldNumElements));
-		}
+		DoConditionalReallocate(oldNumElements, GetNewCapacity(oldNumElements));
 		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, args)...);
 	}
 
 	void push_back_uninitialized()
 	{
 		size_type oldNumElements = mNumElements++;
-		if (oldNumElements >= mNumCapacity)
-		{
-			DoReallocate(oldNumElements, GetNewCapacity(oldNumElements));
-		}
+		DoConditionalReallocate(oldNumElements, GetNewCapacity(oldNumElements));
 	}
 	
 	reference_tuple emplace_back(Ts&&... args)
 	{
 		size_type oldNumElements = mNumElements++;
-		if (oldNumElements >= mNumCapacity)
-		{
-			DoReallocate(oldNumElements, GetNewCapacity(oldNumElements));
-		}
+		DoConditionalReallocate(oldNumElements, GetNewCapacity(oldNumElements));
 		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::move(args))...);
 		return back();
 	}
@@ -955,10 +943,7 @@ public:
 		mNumElements = n;
 		if (n > oldNumElements)
 		{
-			if (n > mNumCapacity)
-			{
-				DoReallocate(oldNumElements, eastl::max<size_type>(GetNewCapacity(oldNumElements), n));
-			}
+			DoConditionalReallocate(oldNumElements, eastl::max<size_type>(GetNewCapacity(oldNumElements), n));
 			swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, n - oldNumElements)...);
 		}
 		else
@@ -973,10 +958,7 @@ public:
 		mNumElements = n;
 		if (n > oldNumElements)
 		{
-			if (n > mNumCapacity)
-			{
-				DoReallocate(oldNumElements, eastl::max<size_type>(GetNewCapacity(oldNumElements), n));
-			}
+			DoConditionalReallocate(oldNumElements, eastl::max<size_type>(GetNewCapacity(oldNumElements), n));
 			swallow(DoUninitializedFillPtr(
 				TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
 				TupleVecLeaf<Indices, Ts>::mpData + n,
@@ -992,10 +974,7 @@ public:
 
 	void reserve(size_type n)
 	{
-		if (n > mNumCapacity)
-		{
-			DoReallocate(mNumElements, n);
-		}
+		DoConditionalReallocate(mNumElements, n);
 	}
 
 	void shrink_to_fit()
@@ -1249,10 +1228,7 @@ protected:
 		const void* ppOtherData[sizeof...(Ts)] = { begin.base().mpData[Indices]... };
 		size_type beginIdx = begin.base().mIndex;
 		size_type endIdx = end.base().mIndex;
-		if (newNumElements > mNumCapacity)
-		{
-			DoReallocate(0, newNumElements);
-		}
+		DoConditionalReallocate(0, newNumElements);
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
 				eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
@@ -1271,10 +1247,7 @@ protected:
 		const void* ppOtherData[sizeof...(Ts)] = { begin.mpData[Indices]... };
 		size_type beginIdx = begin.mIndex;
 		size_type endIdx = end.mIndex;
-		if (newNumElements > mNumCapacity)
-		{
-			DoReallocate(0, newNumElements);
-		}
+		DoConditionalReallocate(0, newNumElements);
 		mNumElements = newNumElements;
 		swallow(DoUninitializedCopyPtr(
 				(Ts*)(ppOtherData[Indices]) + beginIdx,
@@ -1287,26 +1260,23 @@ protected:
 
 	void DoInitFillArgs(size_type n, const Ts&... args)
 	{
-		if (n > mNumCapacity)
-		{
-			DoReallocate(0, n);
-		}
+		DoConditionalReallocate(0, n);
 		mNumElements = n;
 		swallow(DoUninitializedFillPtr(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + n, args)...);
 	}
 
 	void DoInitDefaultFill(size_type n)
 	{
-		if (n > mNumCapacity)
-		{
-			DoReallocate(0, n);
-		}
+		DoConditionalReallocate(0, n);
 		mNumElements = n;
 		swallow(DoUninitializedDefaultFillN(TupleVecLeaf<Indices, Ts>::mpData, n)...);
 	}
 
-	void DoReallocate(size_type oldNumElements, size_type newCapacity)
+	void DoConditionalReallocate(size_type oldNumElements, size_type newCapacity)
 	{
+		if (newCapacity < mNumCapacity)
+			return;
+
 		void* ppNewLeaf[sizeof...(Ts)];
 		pair<void*, size_type> allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(*this, ppNewLeaf, newCapacity, 0);
 		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, oldNumElements, (Ts*)ppNewLeaf[Indices])...);
