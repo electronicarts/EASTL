@@ -1205,13 +1205,7 @@ public:
 		return true;
 	}
 
-	template<typename Iterator>
-	int validate_iterator(Iterator iter) const EA_NOEXCEPT
-	{
-		return validate_iterator_nongeneric(unwrap_iterator(iter));
-	}
-
-	int validate_iterator_nongeneric(const_iterator iter) const EA_NOEXCEPT
+	int validate_iterator(const_iterator iter) const EA_NOEXCEPT
 	{
 		if (!(variadicAnd(iter.mpData[Indices] == TupleVecLeaf<Indices, Ts>::mpData...)))
 			return isf_none;
@@ -1226,6 +1220,12 @@ public:
 	{
 		return (first.mIndex <= last.mIndex) && variadicAnd(first.mpData[Indices] == last.mpData[Indices]...);
 	}
+
+	template <typename Iterator, typename = typename enable_if<is_iterator_wrapper<Iterator>::value, bool>::type>
+	int validate_iterator(Iterator iter) const EA_NOEXCEPT { return validate_iterator(unwrap_iterator(iter)); }
+
+	template <typename Iterator, typename = typename enable_if<is_iterator_wrapper<Iterator>::value, bool>::type>
+	static bool validate_iterator_pair(Iterator first, Iterator last) EA_NOEXCEPT { return validate_iterator_pair(unwrap_iterator(first), unwrap_iterator(last)); }
 
 protected:
 	allocator_type mAllocator;
@@ -1243,7 +1243,7 @@ protected:
 	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
 	{
 #if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(!validate_iterator_pair(begin.base(), end.base())))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
 #endif
 		size_type newNumElements = (size_type)(end - begin);
