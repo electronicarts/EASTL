@@ -591,8 +591,7 @@ public:
 		DoInitFromIterator(begin, end);
 	}
 
-	template<typename Iterator>
- 	TupleVecImpl(Iterator begin, Iterator end, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+ 	TupleVecImpl(const_iterator begin, const_iterator end, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
  		: mAllocator(allocator)
  	{
 		DoInitFromIterator(begin, end);
@@ -1262,8 +1261,7 @@ protected:
 			)...);
 	}
 
-	template <typename Iterator>
-	void DoInitFromIterator(Iterator begin, Iterator end)
+	void DoInitFromIterator(const_iterator begin, const_iterator end)
 	{
 #if EASTL_ASSERT_ENABLED
 		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
