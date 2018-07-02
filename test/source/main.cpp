@@ -100,6 +100,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("FixedSList",				TestFixedSList);
 	testSuite.AddTest("FixedSet",				TestFixedSet);
 	testSuite.AddTest("FixedString",			TestFixedString);
+	testSuite.AddTest("FixedTupleVector",		TestFixedTupleVector);
 	testSuite.AddTest("FixedVector",			TestFixedVector);
 	testSuite.AddTest("Functional",				TestFunctional);
 	testSuite.AddTest("Hash",					TestHash);
@@ -130,14 +131,13 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("StringView",			    TestStringView);
 	testSuite.AddTest("TestCppCXTypeTraits",	TestCppCXTypeTraits);
 	testSuite.AddTest("Tuple",					TestTuple);
+	testSuite.AddTest("TupleVector",			TestTupleVector);
 	testSuite.AddTest("TypeTraits",				TestTypeTraits);
 	testSuite.AddTest("Utility",				TestUtility);
 	testSuite.AddTest("Variant",				TestVariant);
 	testSuite.AddTest("Vector",					TestVector);
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);
-	testSuite.AddTest("TupleVector", TestTupleVector);
-	testSuite.AddTest("FixedTupleVector", TestFixedTupleVector);
 
 	nErrorCount += testSuite.Run();
 
