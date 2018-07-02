@@ -1336,6 +1336,15 @@ class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, m
 	using base_type::base_type;
 };
 
+// Variant of tuple_vector that allows a user-defined allocator type (can't mix default template params with variadics)
+template <typename AllocatorType, typename... Ts>
+class tuple_vector_alloc
+	: public TupleVecInternal::TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
+{
+	typedef TupleVecInternal::TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
+	using base_type::base_type;
+};
+
 }  // namespace eastl
 
 #endif  // EASTL_TUPLEVECTOR_H
