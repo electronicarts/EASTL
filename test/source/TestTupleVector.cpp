@@ -11,13 +11,6 @@
 
 using namespace eastl;
 
-void flushCache(int* cacheFlushSrc, const int cacheFlushSize, int* cacheFlushDest)
-{
-	// try and evict all of the cache
-	memset(cacheFlushSrc, 0, cacheFlushSize);
-	memcpy(cacheFlushDest, cacheFlushSrc, cacheFlushSize);
-}
-
 int TestTupleVector()
 {
 	int nErrorCount = 0;
