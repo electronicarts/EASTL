@@ -564,7 +564,7 @@ template <>
 struct TupleEqual<0>
 {
 	template <typename Tuple1, typename Tuple2>
-	bool operator()(const Tuple1& t1, const Tuple2& t2)
+	bool operator()(const Tuple1&, const Tuple2&)
 	{
 		return true;
 	}
@@ -587,7 +587,7 @@ template <>
 struct TupleLess<0>
 {
 	template <typename Tuple1, typename Tuple2>
-	bool operator()(const Tuple1& t1, const Tuple2& t2)
+	bool operator()(const Tuple1&, const Tuple2&)
 	{
 		return false;
 	}

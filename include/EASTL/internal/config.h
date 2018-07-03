@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.09.00"
-	#define EASTL_VERSION_N  30900
+	#define EASTL_VERSION   "3.10.00"
+	#define EASTL_VERSION_N  31000
 #endif
 
 
@@ -1536,7 +1536,7 @@ namespace eastl
 //
 // Defined as an unsigned integer type, usually either size_t or uint32_t.
 // Defaults to size_t to match std STL unless the user specifies to use 
-// uint32_t explicitly via tje EASTL_SIZE_T_32BIT define
+// uint32_t explicitly via the EASTL_SIZE_T_32BIT define
 //
 // Example usage:
 //     eastl_size_t n = intVector.size();
@@ -1827,6 +1827,20 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	#define EASTL_OPTIONAL_ENABLED 1
 #else
 	#define EASTL_OPTIONAL_ENABLED 0
+#endif
+
+
+/// EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE
+#if defined(_MSC_VER) && (_MSC_VER >= 1913)  // VS2017+
+	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
+#elif defined(EA_COMPILER_CLANG)
+	#if !__is_identifier(__has_unique_object_representations)
+		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
+	#else
+		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
+	#endif
+#else
+	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
 #endif
 
 #endif // Header include guard

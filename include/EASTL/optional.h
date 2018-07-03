@@ -50,14 +50,17 @@ namespace eastl
 	///
 	/// nullopt_t is class type used to indicate eastl::optional type with uninitialized state.
 	///
+	struct nullopt_tag_t {};
+
 	struct nullopt_t
 	{
-		EA_CONSTEXPR nullopt_t(int) {}
+		EA_CONSTEXPR nullopt_t(nullopt_tag_t) {}
 	};
-	EA_CONSTEXPR nullopt_t nullopt{0};
+
+	EA_CONSTEXPR nullopt_t nullopt{nullopt_tag_t{}};
 
 
-	///////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////
 	/// bad_optional_access
 	///
 	#if EASTL_EXCEPTIONS_ENABLED
@@ -73,14 +76,25 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////////
 		/// optional_storage
 		///
-		template<typename T, bool IsTriviallyDestructible = eastl::is_trivially_destructible<T>::value>
+		template<typename T, bool IsTriviallyDestructible = eastl::is_trivially_destructible_v<T>>
 		struct optional_storage
 		{
 			typedef typename eastl::remove_const<T>::type value_type;
 
 			inline optional_storage() EA_NOEXCEPT : empty_val('\0') {}
-			inline optional_storage(const optional_storage& other) : val(other.val), engaged(other.engaged) { }
-			inline optional_storage(const value_type& v) : val(v), engaged(true) {}
+
+			template<typename TT = T, typename = eastl::enable_if_t<eastl::is_copy_constructible_v<TT>>>
+			inline optional_storage(const optional_storage& other) : engaged(other.engaged) 
+			{
+				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+				::new (eastl::addressof(val)) value_type(*pOtherValue);
+			}
+
+			inline optional_storage(const value_type& v) : engaged(true)
+			{
+				::new (eastl::addressof(val)) value_type(v);
+			}
+
 			inline optional_storage(value_type&& v) : engaged(true)
 			{
 				::new (eastl::addressof(val)) value_type(eastl::move(v));
@@ -90,25 +104,33 @@ namespace eastl
 			{
 				if (engaged)
 					destruct_value();
+
+				// engaged = false;  // probably not needed as we are destroying the object
 			}
 
-			inline optional_storage& operator=(const optional_storage& other) {}
+			template<typename TT = T, typename = eastl::enable_if_t<eastl::is_copy_constructible_v<TT>>>
+			inline optional_storage& operator=(const optional_storage& other) 
+			{
+				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+				::new (eastl::addressof(val)) value_type(*pOtherValue);
+				return *this;
+			}
 
-			#if EASTL_VARIADIC_TEMPLATES_ENABLED
-				template <class... Args>
-				inline explicit optional_storage(in_place_t, Args&&... args)
-					: val(eastl::forward<Args>(args)...), engaged(true) {}
+			template <class... Args>
+			inline explicit optional_storage(in_place_t, Args&&... args)
+			    : engaged(true)
+			{
+				::new (eastl::addressof(val)) T{std::forward<Args>(args)...};
+			}
 
-				template <typename U,
-						  typename... Args,
-						  typename = typename eastl::enable_if<
-							  eastl::is_constructible<T, std::initializer_list<U>&, Args&&...>::value>::type>
-				inline explicit optional_storage(in_place_t, std::initializer_list<U> ilist, Args&&... args)
-					: engaged(true) 
-					{
-						::new (eastl::addressof(val)) value_type(ilist, eastl::forward<Args>(args)...);
-					}
-			#endif
+			template <typename U,
+			          typename... Args,
+			          typename = eastl::enable_if_t<eastl::is_constructible_v<T, std::initializer_list<U>&, Args&&...>>>
+			inline explicit optional_storage(in_place_t, std::initializer_list<U> ilist, Args&&... args)
+			    : engaged(true)
+			{
+				::new (eastl::addressof(val)) value_type{ilist, eastl::forward<Args>(args)...};
+			}
 
 			inline void destruct_value() { (*(value_type*)eastl::addressof(val)).~value_type(); }
 
@@ -132,14 +154,24 @@ namespace eastl
 		template<typename T>
 		struct optional_storage<T, true>
 		{
-			typedef typename eastl::remove_const<T>::type value_type;
+			typedef eastl::remove_const_t<T> value_type;
 
 			inline optional_storage() EA_NOEXCEPT : empty_val('\0') {}
-			inline optional_storage(const optional_storage& other) : val(other.val), engaged(other.engaged) { }
-			inline optional_storage(const value_type& v) : val(v), engaged(true) {}
-			inline optional_storage(value_type&& v) : engaged(true) 
+
+			inline optional_storage(const optional_storage& other) : engaged(other.engaged)
 			{
-				::new (eastl::addressof(val)) value_type(eastl::move(v)); 
+				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+				::new (eastl::addressof(val)) value_type(*pOtherValue);
+			}
+
+			inline optional_storage(const value_type& v) : engaged(true)
+			{
+				::new (eastl::addressof(val)) value_type(v);
+			}
+
+			inline optional_storage(value_type&& v) : engaged(true)
+			{
+				::new (eastl::addressof(val)) value_type(eastl::move(v));
 			}
 
 			// Removed to make optional<T> trivially destructible when T is trivially destructible.
@@ -150,26 +182,28 @@ namespace eastl
 			//         destruct_value();
 			// }
 
-			inline optional_storage& operator=(const optional_storage& other) {}
+			inline optional_storage& operator=(const optional_storage& other) 
+			{
+				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+				::new (eastl::addressof(val)) value_type(*pOtherValue);
+				return *this;
+			}
 
-			#if EASTL_VARIADIC_TEMPLATES_ENABLED
-				template <class... Args>
-				inline explicit optional_storage(in_place_t, Args&&... args)
-					: engaged(true) 
-					{
-						new (eastl::addressof(val)) value_type(eastl::forward<Args>(args)...); 
-					}
+			template <class... Args>
+			inline explicit optional_storage(in_place_t, Args&&... args)
+			    : engaged(true)
+			{
+				new (eastl::addressof(val)) value_type{eastl::forward<Args>(args)...};
+			}
 
-				template <typename U,
-						  typename... Args,
-						  typename = typename eastl::enable_if<
-							  eastl::is_constructible<T, std::initializer_list<U>&, Args&&...>::value>::type>
-				inline explicit optional_storage(in_place_t, std::initializer_list<U> ilist, Args&&... args)
-					:  engaged(true) 
-					{
-						new (eastl::addressof(val)) value_type(ilist, eastl::forward<Args>(args)...);
-					}
-			#endif
+			template <typename U,
+			          typename... Args,
+			          typename = eastl::enable_if_t<eastl::is_constructible_v<T, std::initializer_list<U>&, Args&&...>>>
+			inline explicit optional_storage(in_place_t, std::initializer_list<U> ilist, Args&&... args)
+			    : engaged(true)
+			{
+				new (eastl::addressof(val)) value_type{ilist, eastl::forward<Args>(args)...};
+			}
 
 			inline void destruct_value() {}  // no implementation necessary since T is trivially destructible.
 
@@ -183,7 +217,7 @@ namespace eastl
 			};
 			bool engaged = false;
 		};
-	}
+	} // namespace Internal
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -210,26 +244,51 @@ namespace eastl
 	    inline optional() EA_NOEXCEPT {}
 	    inline optional(nullopt_t) EA_NOEXCEPT {}
 	    inline optional(const value_type& value) : base_type(value) {}
-	    inline optional(value_type&& value) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value)
-	        : base_type(eastl::move(value)) {}
+		inline optional(value_type&& value) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible_v<T>)
+		    : base_type(eastl::move(value))
+		{
+		}
 
-	    optional(const optional& other) = default; 
-	    optional(optional&& other) = default; 
+		optional(const optional& other)
+		{
+			engaged = other.engaged;
 
-		#if EASTL_VARIADIC_TEMPLATES_ENABLED 
-			template <typename... Args>
-			inline explicit optional(in_place_t, Args&&... args)
-				: base_type(in_place, eastl::forward<Args>(args)...) {}
+			auto* pOtherStorage = reinterpret_cast<const base_type*>(eastl::addressof(other.val));
+			base_type::operator=(*pOtherStorage);  
+		}
 
-	        template <typename U,
-	                  typename... Args,
-	                  typename = typename eastl::enable_if<
-	                      eastl::is_constructible<T, std::initializer_list<U>&, Args&&...>::value>::type>
-	        inline explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args)
-	            : base_type(in_place, ilist, eastl::forward<Args>(args)...) {}
-        #endif
+	    optional(optional&& other)
+		{
+			eastl::swap(engaged, other.engaged);
 
-	    inline optional& operator=(nullopt_t)
+			auto* pOtherValue = reinterpret_cast<T*>(eastl::addressof(other.val));
+			::new (eastl::addressof(val)) value_type(eastl::move(*pOtherValue));
+		}
+
+		template <typename... Args>
+		inline explicit optional(in_place_t, Args&&... args)
+		    : base_type(in_place, eastl::forward<Args>(args)...)
+		{
+		}
+
+		template <typename U,
+		          typename... Args,
+		          typename = eastl::enable_if_t<eastl::is_constructible_v<T, std::initializer_list<U>&, Args&&...>>>
+		inline explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args)
+		    : base_type(in_place, ilist, eastl::forward<Args>(args)...)
+		{
+		}
+
+		template <typename U = value_type,
+		          typename = eastl::enable_if_t<eastl::is_constructible_v<T, U&&> &&
+		                                        !eastl::is_same_v<eastl::remove_cvref_t<U>, eastl::in_place_t> &&
+		                                        !eastl::is_same_v<eastl::remove_cvref_t<U>, optional>>>
+		inline explicit EA_CONSTEXPR optional(U&& value)
+		    : base_type(in_place, eastl::forward<U>(value))
+		{
+		}
+
+		inline optional& operator=(nullopt_t)
 	    {
 		    reset();
 		    return *this;
@@ -238,7 +297,10 @@ namespace eastl
 	    inline optional& operator=(const optional& other) 
 		{
 			engaged = other.engaged;
-			val = other.val;
+
+			auto* pOtherStorage = reinterpret_cast<const base_type*>(eastl::addressof(other.val));
+			base_type::operator=(*pOtherStorage);  
+
 			return *this;
 		}
 
@@ -246,8 +308,11 @@ namespace eastl
 	        EA_NOEXCEPT_IF(EA_NOEXCEPT(eastl::is_nothrow_move_assignable<value_type>::value &&
 	                                       eastl::is_nothrow_move_constructible<value_type>::value))
 	    {
-			engaged = other.engaged;
-			val = eastl::move(other.val);
+			eastl::swap(engaged, other.engaged);
+
+			auto* pOtherValue = reinterpret_cast<T*>(eastl::addressof(other.val));
+			::new (eastl::addressof(val)) value_type(eastl::move(*pOtherValue));
+
 		    return *this;
 	    }
 
@@ -273,13 +338,13 @@ namespace eastl
 
 	    template <class U>
 	    inline value_type value_or(U&& default_value) const
-			{ return engaged ? val : static_cast<value_type>(eastl::forward<U>(default_value)); }
+			{ return engaged ? *get_value_address() : static_cast<value_type>(eastl::forward<U>(default_value)); }
 
 	    template <class U>
 	    inline value_type value_or(U&& default_value)
 			{ return engaged ? *get_value_address() : static_cast<value_type>(eastl::forward<U>(default_value)); }
 
-		inline const T& value()&              { return get_value_ref(); }
+		inline T& value()&                    { return get_value_ref(); }
 		inline const T& value() const&        { return get_value_ref(); }
 		inline T&& value()&&                  { return get_rvalue_ref(); }
 		inline const T&& value() const&&      { return get_rvalue_ref(); }
@@ -291,21 +356,19 @@ namespace eastl
 	    inline const T& operator*() const&    { return get_value_ref(); }
 		inline const T&& operator*() const&&  { return get_rvalue_ref(); }
 
-		#if EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			void emplace(Args&&... args)
-			{
-				construct_value(eastl::move(T(eastl::forward<Args>(args)...)));
-				engaged = true;
-			}
+		template <class... Args>
+		void emplace(Args&&... args)
+		{
+			construct_value(eastl::move(T(eastl::forward<Args>(args)...)));
+			engaged = true;
+		}
 
-			template <class U, class... Args>
-			void emplace(std::initializer_list<U> ilist, Args&&... args)
-			{
-				construct_value(eastl::move(T(ilist, eastl::forward<Args>(args)...)));
-				engaged = true;
-			}
-        #endif
+		template <class U, class... Args>
+		void emplace(std::initializer_list<U> ilist, Args&&... args)
+		{
+			construct_value(eastl::move(T(ilist, eastl::forward<Args>(args)...)));
+			engaged = true;
+		}
 
 	    inline void swap(optional& other)
 	        EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value&& eastl::is_nothrow_swappable<T>::value)
@@ -403,7 +466,7 @@ namespace eastl
 			#endif
 		    return eastl::move(*((value_type*)eastl::addressof(val)));
 	    }
-    };
+    }; // class optional
 
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -604,13 +667,26 @@ namespace eastl
     ///////////////////////////////////////////////////////////////////////////////
 	/// make_optional
 	///
-    template <class T>
-    inline optional<typename eastl::decay<T>::type> make_optional(T&& value)
-    {
-	    return optional<typename eastl::decay<T>::type>(eastl::forward<T>(value));
-    }
+	template <class T>
+	inline EA_CONSTEXPR optional<decay_t<T>> make_optional(T&& value)
+	{
+		return optional<decay_t<T>>(eastl::forward<T>(value));
+	}
 
-	#undef EASTL_OPTIONAL_NOEXCEPT 
+	template <class T, class... Args>
+	inline EA_CONSTEXPR optional<T> make_optional(Args&&... args)
+	{
+		return optional<T>(eastl::in_place, eastl::forward<Args>(args)...);
+	}
+
+	template <class T, class U, class... Args>
+	inline EA_CONSTEXPR optional<T> make_optional(std::initializer_list<U> il, Args&&... args)
+	{
+		return eastl::optional<T>(eastl::in_place, il, eastl::forward<Args>(args)...);
+	}
+
+
+    #undef EASTL_OPTIONAL_NOEXCEPT 
 
 }  // namespace eastl
 

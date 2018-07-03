@@ -605,7 +605,7 @@ namespace EA
             /// If the test name is not supplied, it is empty. If the ReportFunction is
             /// not supplied, the default global report function is used.
             ///
-            Test(const char8_t* pTestName = NULL, EA::EAMain::ReportFunction pReportFunction = NULL);
+            Test(const char8_t* pTestName = NULL, EA::EAMain::ReportFunction pReportFunction = EA::EAMain::GetReportFunction());
 
             /// ~Test
             ///
@@ -1076,7 +1076,7 @@ namespace EA
             /// character is reserved for separating hierarchical test suites.
             /// The test result is initialized to kTestResultNone.
             ///
-            TestSuite(const char8_t* pTestName = NULL);
+            TestSuite(const char8_t* pTestName = NULL, EA::EAMain::ReportFunction pReportFunction = EA::EAMain::GetReportFunction());
 
             /// ~TestSuite
             ///

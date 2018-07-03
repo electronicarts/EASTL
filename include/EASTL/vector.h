@@ -293,6 +293,15 @@ namespace eastl
 		template <typename InputIterator>
 		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
+		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
+		iterator erase_first(const T& value);
+		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
+		iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
+		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
+		reverse_iterator erase_last(const T& value);
+		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
+		reverse_iterator erase_last_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
+
 		iterator erase(const_iterator position);
 		iterator erase(const_iterator first, const_iterator last);
 		iterator erase_unsorted(const_iterator position);         // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
@@ -1227,6 +1236,56 @@ namespace eastl
 		return destPosition;
 	}
 
+	template <typename T, typename Allocator>
+	template <typename>
+	inline typename vector<T, Allocator>::iterator vector<T, Allocator>::erase_first(const T& value)
+	{
+		iterator it = eastl::find(begin(), end(), value);
+
+		if (it != end())
+			return erase(it);
+		else
+			return it;
+	}
+
+	template <typename T, typename Allocator>
+	template <typename>
+	inline typename vector<T, Allocator>::iterator 
+	vector<T, Allocator>::erase_first_unsorted(const T& value)
+	{
+		iterator it = eastl::find(begin(), end(), value);
+
+		if (it != end())
+			return erase_unsorted(it);
+		else
+			return it;
+	}
+
+	template <typename T, typename Allocator>
+	template <typename>
+	inline typename vector<T, Allocator>::reverse_iterator 
+	vector<T, Allocator>::erase_last(const T& value)
+	{
+		reverse_iterator it = eastl::find(rbegin(), rend(), value);
+
+		if (it != rend())
+			return erase(it);
+		else
+			return it;
+	}
+
+	template <typename T, typename Allocator>
+	template <typename>
+	inline typename vector<T, Allocator>::reverse_iterator 
+	vector<T, Allocator>::erase_last_unsorted(const T& value)
+	{
+		reverse_iterator it = eastl::find(rbegin(), rend(), value);
+
+		if (it != rend())
+			return erase_unsorted(it);
+		else
+			return it;
+	}
 
 	template <typename T, typename Allocator>
 	inline typename vector<T, Allocator>::reverse_iterator

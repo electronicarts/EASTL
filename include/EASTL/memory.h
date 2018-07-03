@@ -532,7 +532,7 @@ namespace eastl
 				{
 			#endif
 					for(; first != last; ++first, ++currentDest)
-						::new((void*)eastl::addressof(*currentDest)) value_type(*first);
+						::new(static_cast<void*>(eastl::addressof(*currentDest))) value_type(*first);
 			#if EASTL_EXCEPTIONS_ENABLED
 				}
 				catch(...)
@@ -1354,7 +1354,7 @@ namespace eastl
 	/// compiler can already see in our version here that the destructor
 	/// is a no-op.
 	///
-	/// This is the say as eastl::destruct but we included for C++17 compliance.
+	/// This is the same as eastl::destruct but we included for C++17 compliance.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/destroy_at
 	/// 

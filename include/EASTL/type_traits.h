@@ -621,6 +621,10 @@ namespace eastl
 	template <typename T> struct is_const : public eastl::is_const_value<T*>{};
 	template <typename T> struct is_const<T&> : public eastl::false_type{}; // Note here that T is const, not the reference to T. So is_const is false. See section 8.3.2p1 of the C++ standard.
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_const_v = is_const<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -787,6 +791,10 @@ namespace eastl
 	template <typename T>           struct remove_const<const T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_const<const T[N]> { typedef T type[N]; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_const_t = typename remove_const<T>::type;
+	#endif
 
 	///////////////////////////////////////////////////////////////////////
 	// remove_volatile
@@ -809,6 +817,11 @@ namespace eastl
 	template <typename T>           struct remove_volatile<volatile T>    { typedef T type;    };
 	template <typename T>           struct remove_volatile<volatile T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_volatile<volatile T[N]> { typedef T type[N]; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_volatile_t = typename remove_volatile<T>::type;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////

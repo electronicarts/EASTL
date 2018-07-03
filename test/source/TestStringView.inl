@@ -493,6 +493,23 @@ int TEST_STRING_NAME()
 			VERIFY(eastl::hash<StringViewT>{}(sw3) == eastl::hash<decltype(s)>{}(s));
 		}
 	}
+
+	{
+		StringViewT sw1(LITERAL("AAAAABBBBBCCCDDDDDEEEEEFFFGGH"));
+
+		VERIFY( sw1.starts_with(LITERAL('A')));
+		VERIFY(!sw1.starts_with(LITERAL('X')));
+		VERIFY( sw1.starts_with(LITERAL("AAAA")));
+		VERIFY( sw1.starts_with(StringViewT(LITERAL("AAAA"))));
+		VERIFY(!sw1.starts_with(LITERAL("AAAB")));
+
+		VERIFY( sw1.ends_with(LITERAL('H')));
+		VERIFY(!sw1.ends_with(LITERAL('X')));
+		VERIFY( sw1.ends_with(LITERAL("FGGH")));
+		VERIFY( sw1.ends_with(StringViewT(LITERAL("FGGH"))));
+		VERIFY(!sw1.ends_with(LITERAL("FGGH$")));
+	}
+
 	return nErrorCount;
 }
 

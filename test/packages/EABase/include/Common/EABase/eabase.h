@@ -439,14 +439,7 @@
 	#define PRIx64        EA_PRI_64_LENGTH_SPECIFIER "x"
 	#define PRIX64        EA_PRI_64_LENGTH_SPECIFIER "X"
 
-	#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION >= 1900)
-		#define PRIdPTR       "Id"
-		#define PRIiPTR       "Ii"
-		#define PRIoPTR       "Io"
-		#define PRIuPTR       "Iu"
-		#define PRIxPTR       "Ix"
-		#define PRIXPTR       "IX"
-	#elif (EA_PLATFORM_PTR_SIZE == 4)
+	#if (EA_PLATFORM_PTR_SIZE == 4)
 		#define PRIdPTR       PRId32 // Usage of pointer values will generate warnings with 
 		#define PRIiPTR       PRIi32 // some compilers because they are defined in terms of 
 		#define PRIoPTR       PRIo32 // integers. However, you can't simply use "p" because

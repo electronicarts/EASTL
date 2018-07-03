@@ -251,10 +251,8 @@ namespace eastl
 	template <typename T>
 	reference_wrapper<T> ref(T& t) EA_NOEXCEPT;
 
-	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
-		template <typename T>
-		void ref(const T&&) = delete;
-	#endif
+	template <typename T>
+	void ref(const T&&) = delete;
 
 	template <typename T>
 	reference_wrapper<T> ref(reference_wrapper<T>t) EA_NOEXCEPT;
@@ -262,10 +260,8 @@ namespace eastl
 	template <typename T> 
 	reference_wrapper<const T> cref(const T& t) EA_NOEXCEPT;
 
-	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
-		template <typename T> 
-		void cref(const T&&) = delete;
-	#endif
+	template <typename T> 
+	void cref(const T&&) = delete;
 
 	template <typename T>
 	reference_wrapper<const T> cref(reference_wrapper<T> t) EA_NOEXCEPT;
@@ -303,20 +299,16 @@ namespace eastl
 	// definition of invoke, so these specializations need to come after everything else has been defined.
 	template <typename R, typename C, typename T, typename... Args>
 	auto invoke_impl(R (C::*func)(Args...), T&& obj, Args&&... args) ->
-	typename enable_if<
-		is_reference_wrapper<typename remove_reference<T>::type>::value,
-		decltype((obj.get().*func)(forward<Args>(args)...))
-	>::type
+		typename enable_if<is_reference_wrapper<typename remove_reference<T>::type>::value,
+						   decltype((obj.get().*func)(forward<Args>(args)...))>::type
 	{
 		return (obj.get().*func)(forward<Args>(args)...);
 	}
 
 	template <typename M, typename C, typename T>
-	auto invoke_impl(M (C::*member), T&& obj) ->
-	typename enable_if<
-		is_reference_wrapper<typename remove_reference<T>::type>::value,
-		decltype(obj.get().*member)
-	>::type
+	auto invoke_impl(M(C::*member), T&& obj) ->
+	    typename enable_if<is_reference_wrapper<typename remove_reference<T>::type>::value,
+	                       decltype(obj.get().*member)>::type
 	{
 		return obj.get().*member;
 	}

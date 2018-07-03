@@ -70,24 +70,3 @@ popd
 popd
 ```
 
-### Building using Buck
-
-EASTL can also be built using [Buck Build](https://www.buckbuild.com).
-
-To build EASTL:
-
-```bash=
-buck build :eastl
-```
-
-To run the tests:
-
-```bash=
-buck run :test-runner
-```
-
-To run the benchmarks:
-
-```bash=
-buck run :benchmark
-```

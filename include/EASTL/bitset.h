@@ -70,9 +70,9 @@ namespace eastl
 	/// WordType refers to the type of integer word which stores bitet data. By default it is BitsetWordType.
 	///
 	#if !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x can't handle the simpler declaration below.
-		#define BITSET_WORD_COUNT(nBitCount, WordType) (N == 0 ? 1 : ((N - 1) / (8 * sizeof(WordType)) + 1))
+		#define BITSET_WORD_COUNT(nBitCount, WordType) (nBitCount == 0 ? 1 : ((nBitCount - 1) / (8 * sizeof(WordType)) + 1))
 	#else
-		#define BITSET_WORD_COUNT(nBitCount, WordType) ((N - 1) / (8 * sizeof(WordType)) + 1)
+		#define BITSET_WORD_COUNT(nBitCount, WordType) ((nBitCount - 1) / (8 * sizeof(WordType)) + 1)
 	#endif
 
 

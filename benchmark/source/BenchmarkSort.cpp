@@ -64,13 +64,13 @@ int VPCompareC(const void* elem1, const void* elem2)
 }
 
 
-typedef std::vector<ValuePair> StdVectorVP;
-typedef eastl::vector<ValuePair> EaVectorVP;
+typedef std::vector<ValuePair>    StdVectorVP;
+typedef eastl::vector<ValuePair>  EaVectorVP;
 
-typedef std::vector<uint32_t> StdVectorInt;
-typedef eastl::vector<uint32_t> EaVectorInt;
+typedef std::vector<uint32_t>     StdVectorInt;
+typedef eastl::vector<uint32_t>   EaVectorInt;
 
-typedef std::vector<TestObject> StdVectorTO;
+typedef std::vector<TestObject>   StdVectorTO;
 typedef eastl::vector<TestObject> EaVectorTO;
 
 
@@ -155,22 +155,21 @@ namespace
 {
 	enum SortFunctionType
 	{
-		sf_qsort,             // C qsort
-		sf_shell_sort,        // eastl::shell_sort.
-		sf_heap_sort,         // eastl::heap_sort
-		sf_merge_sort,        // eastl::merge_sort
-		sf_merge_sort_buffer, // eastl::merge_sort_buffer
-		sf_comb_sort,         // eastl::comb_sort
-		sf_bubble_sort,       // eastl::bubble_sort
-		sf_selection_sort,    // eastl::selection_sort
-		sf_shaker_sort,       // eastl::shaker_sort
-		sf_quick_sort,        // eastl::quick_sort
-		sf_tim_sort,          // eastl::tim_sort
-		sf_insertion_sort,    // eastl::insertion_sort
-		sf_std_sort,          // std::sort
-		sf_std_stable_sort,   // std::stable_sort
-		sf_radix_sort,        // eastl::radix_sort (unconventional sort)
-		sf_count              //
+		sf_qsort,                   // C qsort
+		sf_shell_sort,              // eastl::shell_sort.
+		sf_heap_sort,               // eastl::heap_sort
+		sf_merge_sort,              // eastl::merge_sort
+		sf_merge_sort_buffer,       // eastl::merge_sort_buffer
+		sf_comb_sort,               // eastl::comb_sort
+		sf_bubble_sort,             // eastl::bubble_sort
+		sf_selection_sort,          // eastl::selection_sort
+		sf_shaker_sort,             // eastl::shaker_sort
+		sf_quick_sort,              // eastl::quick_sort
+		sf_tim_sort,                // eastl::tim_sort
+		sf_insertion_sort,          // eastl::insertion_sort
+		sf_std_sort,                // std::sort
+		sf_radix_sort,              // eastl::radix_sort (unconventional sort)
+		sf_count                    // 
 	};
 
 	const char* GetSortFunctionName(int sortFunctionType)
@@ -219,9 +218,6 @@ namespace
 			case sf_std_sort:
 				return "std::sort";
 
-			case sf_std_stable_sort:
-				return "std::stable_sort";
-
 			default:
 				return "unknown";
 		}
@@ -230,10 +226,10 @@ namespace
 
 	enum RandomizationType
 	{
-		kRandom,        // Completely random data.
+		kRandom,                    // Completely random data.
 		kRandomSorted,  // Random values already sorted.
-		kOrdered,       // Already sorted.
-		kMostlyOrdered, // Partly sorted already.
+		kOrdered,                   // Already sorted.
+		kMostlyOrdered,             // Partly sorted already.
 		kRandomizationTypeCount
 	};
 
@@ -285,26 +281,21 @@ namespace
 
 			case kOrdered:
 			{
-				for (eastl_size_t i = 0; i < v.size(); ++i)
-					v[i] = value_type((value_type)i); // Note that value_type may be a struct and not an integer. Thus
-					                                  // the casting and construction here.
+				for(eastl_size_t i = 0; i < v.size(); ++i)
+					v[i] = value_type((value_type)i);   // Note that value_type may be a struct and not an integer. Thus the casting and construction here.
 				break;
 			}
 
 			case kMostlyOrdered:
 			{
-				for (eastl_size_t i = 0; i < v.size(); ++i)
-					v[i] = value_type((value_type)i); // Note that value_type may be a struct and not an integer. Thus
-					                                  // the casting and construction here.
+				for(eastl_size_t i = 0; i < v.size(); ++i)
+					v[i] = value_type((value_type)i);   // Note that value_type may be a struct and not an integer. Thus the casting and construction here.
 
 				// We order random segments.
 				// The algorithm below in practice will make slightly more than kPercentOrdered be ordered.
-				const eastl_size_t kPercentOrdered =
-				    80; // In actuality, due to statistics, the actual ordered percent will be about 82-85%.
+				const eastl_size_t kPercentOrdered = 80; // In actuality, due to statistics, the actual ordered percent will be about 82-85%.
 
-				for (eastl_size_t n = 0, s = v.size(),
-				                  nEnd = ((s < (100 - kPercentOrdered)) ? 1 : (s / (100 - kPercentOrdered)));
-				     n < nEnd; n++)
+				for(eastl_size_t n = 0, s = v.size(), nEnd = ((s < (100 - kPercentOrdered)) ? 1 : (s / (100 - kPercentOrdered))); n < nEnd; n++)
 				{
 					eastl_size_t i = rng.mRand.RandLimit((uint32_t)s);
 					eastl_size_t j = rng.mRand.RandLimit((uint32_t)s);
@@ -333,43 +324,26 @@ namespace
 		static int nAssignCount;
 
 		SlowAssign()
-		{
-			x = 0;
-			memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1));
-		}
+			{ x = 0; memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1)); }
 
 		SlowAssign(const SlowAssign& sa)
-		{
-			++nAssignCount;
-			x = sa.x;
-			memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1));
-		}
+			{ ++nAssignCount; x = sa.x; memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1)); }
 
 		SlowAssign& operator=(const SlowAssign& sa)
-		{
-			++nAssignCount;
-			x = sa.x;
-			memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1));
-			return *this;
-		}
+			{ ++nAssignCount; x = sa.x; memcpy(gSlowAssignBuffer1, gSlowAssignBuffer2, sizeof(gSlowAssignBuffer1)); return *this; }
 
 		SlowAssign& operator=(int a)
-		{
-			x = (T)a;
-			return *this;
-		}
+			{ x = (T)a; return *this; }
 
-		static void Reset() { nAssignCount = 0; }
+		static void Reset()
+			{ nAssignCount = 0; }
 	};
 
-	template <>
-	int SlowAssign<uint32_t>::nAssignCount = 0;
+	template<> int SlowAssign<uint32_t>::nAssignCount = 0;
 
 	template <typename T>
-	bool operator<(const SlowAssign<T>& a, const SlowAssign<T>& b)
-	{
-		return a.x < b.x;
-	}
+	bool operator <(const SlowAssign<T>& a, const SlowAssign<T>& b)
+		{ return a.x < b.x; }
 
 
 	// SlowCompare
@@ -425,8 +399,9 @@ namespace
 		++SlowCompare<int32_t>::nCompareCount;
 
 		// This code is similar in performance to the C++ SlowCompare template functor above.
-		if ((gSlowAssignBuffer1[0] == 0) && (gSlowAssignBuffer1[1] == 0) && (gSlowAssignBuffer1[1] == 0) &&
-		    (gSlowAssignBuffer1[2] == 0) && (gSlowAssignBuffer1[4] == 0) && (gSlowAssignBuffer1[5] == 0))
+		if((gSlowAssignBuffer1[0] == 0) && (gSlowAssignBuffer1[1] == 0) &&
+		   (gSlowAssignBuffer1[1] == 0) && (gSlowAssignBuffer1[2] == 0) &&
+		   (gSlowAssignBuffer1[4] == 0) && (gSlowAssignBuffer1[5] == 0))
 		{
 			if (*(const int32_t*)a < *(const int32_t*)b)
 				return -1;
@@ -485,14 +460,14 @@ int CompareSortPerformance()
 	EA::UnitTest::ReportVerbosity(2, "Random seed = %u\n", (unsigned)EA::UnitTest::GetRandSeed());
 
 	EA::UnitTest::RandGenT<int32_t> rng(EA::UnitTest::GetRandSeed());
-	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsCPUCycles);
-	EA::StdC::Stopwatch stopwatchGlobal(EA::StdC::Stopwatch::kUnitsSeconds);
+	EA::StdC::Stopwatch             stopwatch(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::StdC::Stopwatch             stopwatchGlobal(EA::StdC::Stopwatch::kUnitsSeconds);
 	const eastl_size_t kArraySizeMax = *eastl::max_element(eastl::begin(kSizes), eastl::end(kSizes));
-	const int kRunCount = 4;
+	const int                       kRunCount = 4;
 
-#if !defined(EA_DEBUG)
-	EA::UnitTest::SetHighThreadPriority();
-#endif
+	#if !defined(EA_DEBUG)
+		EA::UnitTest::SetHighThreadPriority();
+	#endif
 
 	eastl::vector<SortFunctionType> allSortFunctions;
 	for (int i = 0; i < sf_count; i++)
@@ -508,8 +483,8 @@ int CompareSortPerformance()
 		// This is probably the most common type of comparison.
 		EA::UnitTest::ReportVerbosity(2, "Sort comparison: Regular speed test\n");
 
-		typedef uint32_t ElementType;
-		typedef eastl::less<ElementType> CompareFunction;
+		typedef uint32_t                      ElementType;
+		typedef eastl::less<ElementType>      CompareFunction;
 
 		eastl::string sOutput;
 		sOutput.set_capacity(100000);
@@ -568,8 +543,7 @@ int CompareSortPerformance()
 
 							case sf_merge_sort:
 								stopwatch.Restart();
-								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL),
-								                  CompareFunction());
+								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL), CompareFunction());
 								stopwatch.Stop();
 								break;
 
@@ -605,9 +579,7 @@ int CompareSortPerformance()
 
 							case sf_radix_sort:
 								stopwatch.Restart();
-								eastl::radix_sort<ElementType*,
-									identity_extract_radix_key<ElementType> >(
-								    v.begin(), v.end(), pBuffer);
+								eastl::radix_sort<ElementType*, identity_extract_radix_key<ElementType>>(v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
 								break;
 
@@ -620,12 +592,6 @@ int CompareSortPerformance()
 							case sf_std_sort:
 								stopwatch.Restart();
 								std::sort(v.data(), v.data() + v.size(), std::less<ElementType>());
-								stopwatch.Stop();
-								break;
-
-							case sf_std_stable_sort:
-								stopwatch.Restart();
-								std::stable_sort(v.data(), v.data() + v.size(), std::less<ElementType>());
 								stopwatch.Stop();
 								break;
 
@@ -749,8 +715,7 @@ int CompareSortPerformance()
 
 							case sf_merge_sort:
 								stopwatch.Restart();
-								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL),
-								                  CompareFunction());
+								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL), CompareFunction());
 								stopwatch.Stop();
 								break;
 
@@ -793,12 +758,6 @@ int CompareSortPerformance()
 							case sf_std_sort:
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), CompareFunction());
-								stopwatch.Stop();
-								break;
-
-							case sf_std_stable_sort:
-								stopwatch.Restart();
-								std::stable_sort(v.begin(), v.end(), CompareFunction());
 								stopwatch.Stop();
 								break;
 
@@ -926,8 +885,7 @@ int CompareSortPerformance()
 
 							case sf_merge_sort:
 								stopwatch.Restart();
-								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL),
-								                  CompareFunction());
+								eastl::merge_sort(v.begin(), v.end(), *get_default_allocator((EASTLAllocatorType*)NULL), CompareFunction());
 								stopwatch.Stop();
 								break;
 
@@ -963,21 +921,13 @@ int CompareSortPerformance()
 
 							case sf_radix_sort:
 								stopwatch.Restart();
-								eastl::radix_sort<ElementType*,
-									slow_assign_extract_radix_key<ElementType> >(
-										v.begin(), v.end(), pBuffer);
+								eastl::radix_sort<ElementType*, slow_assign_extract_radix_key<ElementType>>(v.begin(), v.end(), pBuffer);
 								stopwatch.Stop();
 								break;
 
 							case sf_std_sort:
 								stopwatch.Restart();
 								std::sort(v.begin(), v.end(), std::less<ElementType>());
-								stopwatch.Stop();
-								break;
-
-							case sf_std_stable_sort:
-								stopwatch.Restart();
-								std::stable_sort(v.begin(), v.end(), std::less<ElementType>());
 								stopwatch.Stop();
 								break;
 
@@ -1031,9 +981,9 @@ int CompareSortPerformance()
 		EA::UnitTest::ReportVerbosity(2, "%s\n", sOutput.c_str());
 	}
 
-#if !defined(EA_DEBUG)
-	EA::UnitTest::SetNormalThreadPriority();
-#endif
+	#if !defined(EA_DEBUG)
+		EA::UnitTest::SetNormalThreadPriority();
+	#endif
 
 	return nErrorCount;
 }
@@ -1043,10 +993,9 @@ void BenchmarkSort()
 {
 	EASTLTest_Printf("Sort\n");
 
-	EA::UnitTest::RandGenT<uint32_t> rng(12345678); // For debugging sort code we should use 12345678, for normal
-	                                                // testing use EA::UnitTest::GetRandSeed().
-	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
-	EA::StdC::Stopwatch stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::UnitTest::RandGenT<uint32_t> rng(12345678); // For debugging sort code we should use 12345678, for normal testing use EA::UnitTest::GetRandSeed().
+	EA::StdC::Stopwatch              stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::StdC::Stopwatch              stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
 
 	if (EA::UnitTest::GetVerbosity() >= 3)
 		CompareSortPerformance();
@@ -1082,19 +1031,18 @@ void BenchmarkSort()
 			}
 
 			TestQuickSortStdVP(stopwatch1, stdVectorVP);
-			TestQuickSortEaVP(stopwatch2, eaVectorVP);
+			TestQuickSortEaVP (stopwatch2,  eaVectorVP);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<ValuePair>", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/vector<ValuePair>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			// Benchmark the sorting of something that is already sorted.
 			TestQuickSortStdVP(stopwatch1, stdVectorVP);
-			TestQuickSortEaVP(stopwatch2, eaVectorVP);
+			TestQuickSortEaVP (stopwatch2,  eaVectorVP);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<ValuePair>/sorted", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/vector<ValuePair>/sorted", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
 
 
 			///////////////////////////////
@@ -1102,28 +1050,27 @@ void BenchmarkSort()
 			///////////////////////////////
 
 			StdVectorInt stdVectorInt(intVector.size());
-			EaVectorInt eaVectorInt(intVector.size());
+			EaVectorInt  eaVectorInt (intVector.size());
 
-			for (eastl_size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
+			for(eastl_size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
 			{
 				stdVectorInt[j] = intVector[j];
-				eaVectorInt[j] = intVector[j];
+				eaVectorInt[j]  = intVector[j];
 			}
 
 			TestQuickSortStdInt(stopwatch1, stdVectorInt);
-			TestQuickSortEaInt(stopwatch2, eaVectorInt);
+			TestQuickSortEaInt (stopwatch2,  eaVectorInt);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<uint32>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(),
-				                     stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/vector<uint32>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			// Benchmark the sorting of something that is already sorted.
 			TestQuickSortStdInt(stopwatch1, stdVectorInt);
-			TestQuickSortEaInt(stopwatch2, eaVectorInt);
+			TestQuickSortEaInt (stopwatch2,  eaVectorInt);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<uint32>/sorted", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/vector<uint32>/sorted", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
 
 
 			///////////////////////////////
@@ -1143,16 +1090,15 @@ void BenchmarkSort()
 			TestQuickSortEaTO(stopwatch2, eaVectorTO);
 
 			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<TestObject>", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("sort/q_sort/vector<TestObject>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			// Benchmark the sorting of something that is already sorted.
 			TestQuickSortStdTO(stopwatch1, stdVectorTO);
 			TestQuickSortEaTO(stopwatch2, eaVectorTO);
 
 			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/vector<TestObject>/sorted", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("sort/q_sort/vector<TestObject>/sorted", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
 
 
 			///////////////////////////////
@@ -1160,26 +1106,29 @@ void BenchmarkSort()
 			///////////////////////////////
 
 			// Reset the values back to the unsorted state.
-			for (eastl_size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
+			for(eastl_size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
 			{
 				stdVectorTO[j] = TestObject(intVector[j]);
-				eaVectorTO[j] = TestObject(intVector[j]);
+				eaVectorTO[j]  = TestObject(intVector[j]);
 			}
 
 			TestQuickSortStdTO(stopwatch1, stdVectorTO);
-			TestQuickSortEaTO(stopwatch2, eaVectorTO);
+			TestQuickSortEaTO (stopwatch2,  eaVectorTO);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/TestObject[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(),
-				                     stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/TestObject[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			// Benchmark the sorting of something that is already sorted.
 			TestQuickSortStdTO(stopwatch1, stdVectorTO);
-			TestQuickSortEaTO(stopwatch2, eaVectorTO);
+			TestQuickSortEaTO (stopwatch2,  eaVectorTO);
 
-			if (i == 1)
-				Benchmark::AddResult("sort/q_sort/TestObject[]/sorted", stopwatch1.GetUnits(),
-				                     stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("sort/q_sort/TestObject[]/sorted", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 		}
 	}
 }
+
+
+
+
+

@@ -53,6 +53,7 @@ struct HasAddressOfOperator
 {
 	// problematic 'addressof' operator that doesn't return a pointer type
     AddressOfOperatorResult operator&() const { return {}; }
+	bool operator==(const HasAddressOfOperator&) const { return false; }
 };
 template class eastl::vector<HasAddressOfOperator>;  // force compile all functions of vector
 
@@ -638,6 +639,10 @@ int TestVector()
 		// iterator erase(iterator position);
 		// iterator erase(iterator first, iterator last);
 		// iterator erase_unsorted(iterator position);
+		// iterator erase_first(const T& pos);
+		// iterator erase_first_unsorted(const T& pos);
+		// iterator erase_last(const T& pos);
+		// iterator erase_last_unsorted(const T& pos);
 		// void     clear();
 
 		vector<int> intArray(20);
@@ -724,6 +729,143 @@ int TestVector()
 		EATEST_VERIFY(intArray[0] == 19);
 		EATEST_VERIFY(intArray[10] == 18);
 		EATEST_VERIFY(intArray[16] == 16);
+
+		// iterator erase_first(iterator position);
+		intArray.resize(20);
+		for (i = 0; i < 20; i++)
+			intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
+
+		intArray.erase_first(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 19);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 2);
+		EATEST_VERIFY(intArray[2] == 0);
+		EATEST_VERIFY(intArray[3] == 1);
+		EATEST_VERIFY(intArray[18] == 1);
+
+		intArray.erase_first(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 18);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 2);
+		EATEST_VERIFY(intArray[2] == 0);
+		EATEST_VERIFY(intArray[3] == 2);
+		EATEST_VERIFY(intArray[17] == 1);
+
+		intArray.erase_first(0);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 17);
+		EATEST_VERIFY(intArray[0] == 2);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 2);
+		EATEST_VERIFY(intArray[3] == 0);
+		EATEST_VERIFY(intArray[16] == 1);
+
+		// iterator erase_first_unsorted(const T& val);
+		intArray.resize(20);
+		for (i = 0; i < 20; i++)
+			intArray[i] = (int) i/2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
+
+		intArray.erase_first_unsorted(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 19);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 9);
+		EATEST_VERIFY(intArray[3] == 1);
+		EATEST_VERIFY(intArray[18] == 9);
+
+		intArray.erase_first_unsorted(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 18);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 9);
+		EATEST_VERIFY(intArray[3] == 9);
+		EATEST_VERIFY(intArray[17] == 8);
+
+		intArray.erase_first_unsorted(0);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 17);
+		EATEST_VERIFY(intArray[0] == 8);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 9);
+		EATEST_VERIFY(intArray[3] == 9);
+		EATEST_VERIFY(intArray[16] == 8);
+
+		// iterator erase_last(const T& val);
+		intArray.resize(20);
+		for (i = 0; i < 20; i++)
+			intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
+
+		intArray.erase_last(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 19);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 1);
+		EATEST_VERIFY(intArray[2] == 2);
+		EATEST_VERIFY(intArray[3] == 0);
+		EATEST_VERIFY(intArray[15] == 0);
+		EATEST_VERIFY(intArray[16] == 1);
+		EATEST_VERIFY(intArray[17] == 2);
+		EATEST_VERIFY(intArray[18] == 0);
+
+		intArray.erase_last(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 18);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 1);
+		EATEST_VERIFY(intArray[2] == 2);
+		EATEST_VERIFY(intArray[3] == 0);
+		EATEST_VERIFY(intArray[14] == 2);
+		EATEST_VERIFY(intArray[15] == 0);
+		EATEST_VERIFY(intArray[16] == 2);
+		EATEST_VERIFY(intArray[17] == 0);
+
+		intArray.erase_last(0);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 17);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 1);
+		EATEST_VERIFY(intArray[2] == 2);
+		EATEST_VERIFY(intArray[3] == 0);
+		EATEST_VERIFY(intArray[13] == 1);
+		EATEST_VERIFY(intArray[14] == 2);
+		EATEST_VERIFY(intArray[15] == 0);
+		EATEST_VERIFY(intArray[16] == 2);
+
+		// iterator erase_last_unsorted(const T& val);
+		intArray.resize(20);
+		for (i = 0; i < 20; i++)
+			intArray[i] = (int)i / 2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
+
+		intArray.erase_last_unsorted(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 19);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 1);
+		EATEST_VERIFY(intArray[3] == 9);
+		EATEST_VERIFY(intArray[18] == 9);
+
+		intArray.erase_last_unsorted(1);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 18);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 0);
+		EATEST_VERIFY(intArray[2] == 9);
+		EATEST_VERIFY(intArray[3] == 9);
+		EATEST_VERIFY(intArray[17] == 8);
+
+		intArray.erase_last_unsorted(0);
+		EATEST_VERIFY(intArray.validate());
+		EATEST_VERIFY(intArray.size() == 17);
+		EATEST_VERIFY(intArray[0] == 0);
+		EATEST_VERIFY(intArray[1] == 8);
+		EATEST_VERIFY(intArray[2] == 9);
+		EATEST_VERIFY(intArray[3] == 9);
+		EATEST_VERIFY(intArray[16] == 8);
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());

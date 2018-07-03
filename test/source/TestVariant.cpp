@@ -107,6 +107,54 @@ int TestVariantBasic()
 
 	{ variant<monostate> v;                                                   EA_UNUSED(v); }
 	{ variant<monostate, NotDefaultConstructible> v;                          EA_UNUSED(v); }
+	{ variant<int, NotDefaultConstructible> v;                                EA_UNUSED(v); }
+
+	{
+		struct MyObj
+		{
+			MyObj() : i(1337) {}
+			~MyObj() {}
+
+			int i;
+		};
+
+		struct MyObj2
+		{
+			MyObj2(int& ii) : i(ii) {}
+			~MyObj2() {}
+
+			MyObj2& operator=(const MyObj2&) = delete;
+
+			int& i;
+		};
+
+		static_assert(!eastl::is_trivially_destructible_v<MyObj>, "MyObj can't be trivially destructible");
+		static_assert(!eastl::is_trivially_destructible_v<MyObj2>, "MyObj2 can't be trivially destructible");
+
+		{
+			eastl::variant<MyObj, MyObj2> myVar;
+			VERIFY(get<MyObj>(myVar).i == 1337);
+		}
+
+		{
+			eastl::variant<MyObj, MyObj2> myVar = MyObj();
+			VERIFY(get<MyObj>(myVar).i == 1337);
+		}
+
+		{
+			int i = 42;
+			eastl::variant<MyObj, MyObj2> myVar = MyObj2(i);
+			VERIFY(get<MyObj2>(myVar).i == 42);
+		}
+
+		{
+			auto m = MyObj();
+			m.i = 2000;
+
+			eastl::variant<MyObj, MyObj2> myVar = m;
+			VERIFY(get<MyObj>(myVar).i == 2000);
+		}
+	}
 
 	{ variant<int, int> v;                                                    EA_UNUSED(v); }
 	{ variant<const short, volatile short, const volatile short> v;           EA_UNUSED(v); }
@@ -123,6 +171,17 @@ int TestVariantBasic()
 		}
 		VERIFY(TestObject::IsClear());
 		TestObject::Reset();
+	}
+
+	{
+		variant<string> v;
+		VERIFY(*(get_if<string>(&v)) == "");
+		VERIFY(get_if<string>(&v)->empty());
+		VERIFY(get_if<string>(&v)->length() == 0);
+		VERIFY(get_if<string>(&v)->size() == 0);
+
+		*(get_if<string>(&v)) += 'a';
+		VERIFY(*(get_if<string>(&v)) == "a");
 	}
 
 	return nErrorCount;
@@ -172,6 +231,17 @@ int TestVariantGet()
 			 VERIFY(!holds_alternative<int>(v));
 			 VERIFY( holds_alternative<string>(v));
 		}
+		{
+			 v_t v;
+			 v = strValue;
+			 VERIFY(v.index() == 1);
+			 VERIFY(*get_if<1>(&v) == strValue);
+			 VERIFY(get_if<0>(&v) == nullptr);
+		}
+		{
+			 VERIFY(get_if<0>((v_t*)nullptr) == nullptr);
+			 VERIFY(get_if<1>((v_t*)nullptr) == nullptr);
+		}
 	}
 
 	return nErrorCount;
@@ -184,17 +254,27 @@ int TestVariantHoldsAlternative()
 
 	{
 		{
-			using v_t = variant<int, short>;
+			using v_t = variant<int, short>;  // default construct first type
 			v_t v;
 
 			VERIFY(!holds_alternative<long>(v));   // Verify that a query for a T not in the variant typelist returns false.
 			VERIFY(!holds_alternative<string>(v)); // Verify that a query for a T not in the variant typelist returns false.
-			VERIFY(!holds_alternative<int>(v));    // variant does not hold an int
+			VERIFY( holds_alternative<int>(v));    // variant does hold an int, because its a default constructible first parameter
 			VERIFY(!holds_alternative<short>(v));  // variant does not hold a short
 		}
 
 		{
-			using v_t = variant<int>;
+			using v_t = variant<monostate, int, short>;  // default construct monostate
+			v_t v;
+
+			VERIFY(!holds_alternative<long>(v));   // Verify that a query for a T not in the variant typelist returns false.
+			VERIFY(!holds_alternative<string>(v)); // Verify that a query for a T not in the variant typelist returns false.
+			VERIFY(!holds_alternative<int>(v));    // variant does not hold an int 
+			VERIFY(!holds_alternative<short>(v));  // variant does not hold a short
+		}
+
+		{
+			using v_t = variant<monostate, int>;
 
 			{
 				v_t v;
@@ -231,32 +311,80 @@ int TestVariantValuelessByException()
 	{
 		{
 			using v_t = variant<int, short>;
+			static_assert(eastl::is_default_constructible_v<v_t>, "valueless_by_exception error");
+
 			v_t v;
-			VERIFY(v.valueless_by_exception());
+			VERIFY(!v.valueless_by_exception());
 
 			v = 42;
 			VERIFY(!v.valueless_by_exception());
 		}
 
 		{
-			using v_t = variant<int>;
+			using v_t = variant<monostate, int>;
+			static_assert(eastl::is_default_constructible_v<v_t>, "valueless_by_exception error");
 
 			v_t v1, v2;
-			VERIFY(v1.valueless_by_exception());
-			VERIFY(v2.valueless_by_exception());
+			VERIFY(!v1.valueless_by_exception());
+			VERIFY(!v2.valueless_by_exception());
 
 			v1 = 42;
 			VERIFY(!v1.valueless_by_exception());
-			VERIFY(v2.valueless_by_exception());
+			VERIFY(!v2.valueless_by_exception());
 
 			eastl::swap(v1, v2);
-			VERIFY( v1.valueless_by_exception());
+			VERIFY(!v1.valueless_by_exception());
 			VERIFY(!v2.valueless_by_exception());
 
 			v1 = v2;
 			VERIFY(!v1.valueless_by_exception());
 			VERIFY(!v2.valueless_by_exception());
 		}
+
+		{
+			struct NotDefaultConstructibleButHasConversionCtor
+			{
+				NotDefaultConstructibleButHasConversionCtor() = delete;
+				NotDefaultConstructibleButHasConversionCtor(int) {}
+			};
+			static_assert(!eastl::is_default_constructible<NotDefaultConstructibleButHasConversionCtor>::value, "valueless_by_exception error");
+
+			using v_t = variant<NotDefaultConstructibleButHasConversionCtor>;
+			v_t v(42);
+			static_assert(!eastl::is_default_constructible_v<v_t>, "valueless_by_exception error");
+			VERIFY(!v.valueless_by_exception());
+		}
+
+		// TODO(rparolin):  review exception safety for variant types 
+		//
+		// {
+		// #if EASTL_EXCEPTIONS_ENABLED
+		//     struct DefaultConstructibleButThrows
+		//     {
+		//         DefaultConstructibleButThrows() {}
+		//         ~DefaultConstructibleButThrows() {}
+		//
+		//         DefaultConstructibleButThrows(DefaultConstructibleButThrows&&) { throw 42; }
+		//         DefaultConstructibleButThrows(const DefaultConstructibleButThrows&) { throw 42; }
+		//         DefaultConstructibleButThrows& operator=(const DefaultConstructibleButThrows&) { throw 42; }
+		//         DefaultConstructibleButThrows& operator=(DefaultConstructibleButThrows&&) { throw 42; }
+		//     };
+		//
+		//     using v_t = variant<DefaultConstructibleButThrows>;
+		//
+		//     v_t v1;
+		//     VERIFY(!v1.valueless_by_exception());
+		//
+		//     try
+		//     {
+		//         v1 = DefaultConstructibleButThrows();
+		//     }
+		//     catch (...)
+		//     {
+		//         VERIFY(v1.valueless_by_exception());
+		//     }
+		// #endif
+		// }
 	}
 
 	return nErrorCount;

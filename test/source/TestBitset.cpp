@@ -1276,6 +1276,34 @@ int TestBitset()
 		EATEST_VERIFY(i == 137);
 	}
 
+	// test BITSET_WORD_COUNT macro
+	{
+		{
+			typedef eastl::bitset<32, char> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+		{
+			typedef eastl::bitset<32, int> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+		{
+			typedef eastl::bitset<32, int16_t> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+		{
+			typedef eastl::bitset<32, int32_t> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+		{
+			typedef eastl::bitset<128, int64_t> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+		{
+			typedef eastl::bitset<256, int64_t> bitset_t;
+			static_assert(bitset_t::kWordCount == BITSET_WORD_COUNT(bitset_t::kSize, bitset_t::word_type), "bitset failure");
+		}
+	}
+
 	return nErrorCount;
 }
 

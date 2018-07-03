@@ -7,7 +7,7 @@
 
 #ifdef EA_COMPILER_CPP14_ENABLED
 #include "ConceptImpls.h"
-#include <EASTL/internal/meta.h>
+#include <EASTL/meta.h>
 
 
 int TestGetTypeIndex()

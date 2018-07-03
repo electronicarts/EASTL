@@ -8,6 +8,7 @@
 #include <EASTL/vector.h>
 #include <EASTL/string.h>
 #include <EASTL/optional.h>
+#include <EASTL/unique_ptr.h>
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -48,6 +49,23 @@ struct move_test
 
 bool move_test::was_moved = false;
 
+/////////////////////////////////////////////////////////////////////////////
+template <typename T>
+class forwarding_test
+{
+	eastl::optional<T> m_optional;
+
+public:
+	forwarding_test() : m_optional() {}
+	forwarding_test(T&& t) : m_optional(t) {}
+	~forwarding_test() { m_optional.reset(); }
+
+	template <typename U>
+	T GetValueOrDefault(U&& def) const
+	{
+		return m_optional.value_or(eastl::forward<U>(def));
+	}
+};
 
 /////////////////////////////////////////////////////////////////////////////
 // TestOptional
@@ -139,11 +157,58 @@ int TestOptional()
 		}
 
 		{
+			int a = 42;
+			auto o = make_optional(a);
+			VERIFY((is_same<decltype(o)::value_type, int>::value));
+			VERIFY(o.value() == 42);
+		}
+
+		{
 			// test make_optional stripping refs/cv-qualifers
 			int a = 42;
 			const volatile int& intRef = a;
 			auto o = make_optional(intRef);
 			VERIFY((is_same<decltype(o)::value_type, int>::value));
+			VERIFY(o.value() == 42);
+		}
+
+		{
+			int a = 10;
+			const volatile int& aRef = a;
+			auto o = eastl::make_optional(aRef);
+			VERIFY(o.value() == 10);
+		}
+
+		{
+			{
+				struct local { int payload1; };
+				auto o = eastl::make_optional<local>(42);
+				VERIFY(o.value().payload1 == 42);
+			}
+			{
+				struct local { int payload1; int payload2; };
+				auto o = eastl::make_optional<local>(42, 43);
+				VERIFY(o.value().payload1 == 42);
+				VERIFY(o.value().payload2 == 43);
+			}
+
+			{
+				struct local
+				{
+					local(std::initializer_list<int> ilist)
+					{
+						payload1 = ilist.begin()[0];
+						payload2 = ilist.begin()[1];
+					}
+
+					int payload1;
+					int payload2;
+				};
+
+				auto o = eastl::make_optional<local>({42, 43});
+				VERIFY(o.value().payload1 == 42);
+				VERIFY(o.value().payload2 == 43);
+			}
 		}
 
 		{
@@ -198,6 +263,12 @@ int TestOptional()
         optional<move_test> o(eastl::move(t));
         VERIFY(move_test::was_moved);
     }
+
+	{
+        forwarding_test<float>ft(1.f);
+        float val = ft.GetValueOrDefault(0.f);
+        VERIFY(val == 1.f);
+	}
 
 	#if EASTL_VARIADIC_TEMPLATES_ENABLED 
 	{
@@ -378,6 +449,60 @@ int TestOptional()
 		static_assert(alignof(optional<Align16>) == alignof(Align16), "optional alignment failure");
 		static_assert(alignof(optional<Align32>) == alignof(Align32), "optional alignment failure");
 		static_assert(alignof(optional<Align64>) == alignof(Align64), "optional alignment failure");
+	}
+
+	{
+		// user reported regression that failed to compile
+		struct local_struct
+		{
+			local_struct() {}
+			~local_struct() {}
+		};
+		static_assert(!eastl::is_trivially_destructible_v<local_struct>, "");
+
+		{
+			local_struct ls;
+			eastl::optional<local_struct> o{ls};
+		}
+		{
+			const local_struct ls;
+			eastl::optional<local_struct> o{ls};
+		}
+	}
+
+	{
+		{
+			// user regression
+			eastl::optional<eastl::string> o = eastl::string("Hello World");
+			eastl::optional<eastl::string> co;
+
+			co = o; // force copy-assignment
+
+			VERIFY( o.value().data() != co.value().data());
+			VERIFY( o.value().data() == eastl::string("Hello World"));
+			VERIFY(co.value().data() == eastl::string("Hello World"));
+		}
+		{
+			// user regression
+			struct local
+			{
+				eastl::unique_ptr<int> ptr;
+
+				local(const local&) = delete;
+				local(local&&) = default;
+				local& operator=(const local&) = delete;
+				local& operator=(local&&) = default;
+			};
+
+			eastl::optional<local> o1 = local{eastl::make_unique<int>(42)};
+			eastl::optional<local> o2;
+
+			o2 = eastl::move(o1);
+
+			VERIFY(!!o1 == false);
+			VERIFY(!!o2 == true);
+			VERIFY(o2->ptr.get() != nullptr);
+		}
 	}
 
     #endif // EASTL_OPTIONAL_ENABLED

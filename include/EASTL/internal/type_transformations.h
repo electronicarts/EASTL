@@ -263,6 +263,10 @@ namespace eastl
 	template<typename T> struct remove_pointer<T* volatile>       { typedef T type; };
 	template<typename T> struct remove_pointer<T* const volatile> { typedef T type; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		using remove_pointer_t = typename remove_pointer<T>::type;
+    #endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -302,6 +306,10 @@ namespace eastl
 	template<class T>           struct remove_extent<T[]>  { typedef T type; };
 	template<class T, size_t N> struct remove_extent<T[N]> { typedef T type; };
 
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <typename T>
+		using remove_extent_t = typename remove_extent<T>::type;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -319,6 +327,11 @@ namespace eastl
 	template<typename T>           struct remove_all_extents       { typedef T type; };
 	template<typename T, size_t N> struct remove_all_extents<T[N]> { typedef typename eastl::remove_all_extents<T>::type type; };
 	template<typename T>           struct remove_all_extents<T[]>  { typedef typename eastl::remove_all_extents<T>::type type; };
+
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <typename T>
+		using remove_all_extents_t = typename remove_all_extents<T>::type;
+	#endif
 
 
 

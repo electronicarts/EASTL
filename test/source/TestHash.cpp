@@ -1332,12 +1332,13 @@ int TestHash()
 		EA_DISABLE_VC_WARNING(4626)
 		struct Key
 		{
-				Key() {}
-				Key(Key && o) {}
-				Key(const Key && o) {}
-				bool operator==(const Key& other) const { return true; }
-			private:
-			    Key(const Key& o) {}
+			Key() {}
+			Key(Key&& o) {}
+			Key(const Key&& o) {}
+			bool operator==(const Key& other) const { return true; }
+
+		private:
+			Key(const Key& o) {}
 		};
 		EA_RESTORE_VC_WARNING()
 
@@ -1346,18 +1347,11 @@ int TestHash()
 			std::size_t operator()(const Key& k) const { return 0; }
 		};
 
-		struct Tester
-		{
-			int test()
-			{
-				Key key;
-				eastl::hash_map<Key, int, Hash> hm;
-				return hm[eastl::move(key)] = 12345;
-			}
-		};
+		Key key1, key2;
+		eastl::hash_map<Key, int, Hash> hm;
+		hm[eastl::move(key1)] = 12345;
 
-		Tester tester;
-		EATEST_VERIFY(tester.test() == 12345);
+		EATEST_VERIFY(hm[eastl::move(key2)] == 12345);
 	}
 	#endif
 

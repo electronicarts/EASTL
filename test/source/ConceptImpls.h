@@ -61,7 +61,7 @@ struct NotDefaultConstructible
 {
 	NotDefaultConstructible() = delete;
 };
-static_assert(!eastl::is_default_constructible<NotDefaultConstructible>::value, "eastl::is_default_constructible<NotDefaultConstructible>::value");
+static_assert(!eastl::is_default_constructible<NotDefaultConstructible>::value, "'NotDefaultConstructible' is default constructible.");
 
 
 class CopyConstructible
