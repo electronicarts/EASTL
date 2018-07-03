@@ -86,6 +86,40 @@ Performance comparisons/discussion
 			This is more-or-less expected, though. More work to touch same amount of memory, after all.
 		-So know what you're doing!
 
+
+from Core i7 3770K @ 3.5GHz, w/ DDR3 1600 memory
+		
+tuple_vector<AutoRefCount>/erase            |       1741814    1.7 ms |       1744732    1.7 ms |       1.00
+
+tuple_vector<MovableType>/erase             |     104555232  104.6 ms |     106312216  106.3 ms |       0.98
+tuple_vector<MovableType>/reallocate        |       1294327    1.3 ms |       1684347    1.7 ms |       0.77         -
+
+tuple_vector<uint64,Padding>/erase          |      34672924   34.7 ms |      32875392   32.9 ms |       1.05
+tuple_vector<uint64,Padding>/insert         |      40956116   41.0 ms |      32625980   32.6 ms |       1.26
+tuple_vector<uint64,Padding>/iteration      |        247081  247.1 us |         80512   80.5 us |       3.07         +
+tuple_vector<uint64,Padding>/operator[]     |        695733  695.7 us |         81096   81.1 us |       8.58         +
+tuple_vector<uint64,Padding>/push_back      |      10029944   10.0 ms |       5993812    6.0 ms |       1.67         +
+tuple_vector<uint64,Padding>/sort           |       8150441    8.2 ms |      10071075   10.1 ms |       0.81
+
+tuple_vector<uint64>/erase                  |       3380071    3.4 ms |       3452124    3.5 ms |       0.98
+tuple_vector<uint64>/insert                 |       3385613    3.4 ms |       3413910    3.4 ms |       0.99
+tuple_vector<uint64>/iteration              |         56300   56.3 us |         81388   81.4 us |       0.69         -
+tuple_vector<uint64>/operator[]             |         67386   67.4 us |         61843   61.8 us |       1.09
+tuple_vector<uint64>/push_back              |       1253780    1.3 ms |        818253  818.3 us |       1.53         +
+tuple_vector<uint64>/sort                   |       5840372    5.8 ms |       7269471    7.3 ms |       0.80
+
+vector<AutoRefCount>/erase                  |       1270991    1.3 ms |       1207980    1.2 ms |       1.05
+
+vector<MovableType>/erase                   |     104378752  104.4 ms |     109444040  109.4 ms |       0.95
+vector<MovableType>/reallocate              |       1461187    1.5 ms |       1541991    1.5 ms |       0.95
+
+vector<uint64>/erase                        |       4273877    4.3 ms |       3553348    3.6 ms |       1.20
+vector<uint64>/insert                       |       4827255    4.8 ms |       4788166    4.8 ms |       1.01
+vector<uint64>/iteration                    |         71469   71.5 us |         77304   77.3 us |       0.92
+vector<uint64>/operator[]                   |         90722   90.7 us |         87221   87.2 us |       1.04
+vector<uint64>/push_back                    |       1641465    1.6 ms |       1186102    1.2 ms |       1.38         +
+vector<uint64>/sort                         |       7703830    7.7 ms |       8241748    8.2 ms |       0.93
+		
 Other drawbacks
 	-No symbolic reference to members!! Strongest suggestion is to make enumerated values to refer to members.
 	
