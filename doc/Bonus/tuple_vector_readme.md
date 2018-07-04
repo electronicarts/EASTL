@@ -112,7 +112,7 @@ For example, the following functions have the following differences:
 
 The following functions can be used to access the data:
 
-vector:
+#### vector:
 ```
 Entity& operator[](size_type)
 Entity& at(size_type)
@@ -120,7 +120,7 @@ Entity& iterator::operator*()
 Entity&& move_iterator::operator*()
 Entity* data()
 ```
-tuple_vector:
+#### tuple_vector:
 ```
 tuple<bool&, float&, Vec3&> operator[](size_type)
 tuple<bool&, float&, Vec3&> at(size_type)
@@ -140,9 +140,10 @@ template<typename T>
 T* get<T>()
 // e.g. bool* get<bool>(), float* get<float>(), and Vec3* get<Vec3>()
 ```
-insert has the following overloads:
 
-vector:
+And insert(...) has the following overloads:
+
+#### vector:
 ```
 // insert a value before pos' location, and copy-construct it
 iterator insert(const_iterator pos, const Entity&)
@@ -159,8 +160,9 @@ iterator insert(const_iterator pos, std::initializer_list<Entity>)
 // insert elements from the range [first, last) before pos' location
 template <typename InputIterator>
 iterator insert(const_iterator pos, InputIterator first, InputIterator last)
-		
-	tuple_vector:
+```		
+#### tuple_vector:
+```
 // insert a value before pos' location in every tuple element,
 // and copy-construct each one from the provided arguments
 iterator insert(const_iterator pos, const bool&, const float&, const Vec3&)
@@ -175,8 +177,7 @@ iterator insert(const_iterator pos, size_type n, const bool&, const float&, cons
 
 // insert n values before pos' location in every tuple element,
 // and copy-construct each one from the provided tuple's elements
-iterator insert(const_iterator pos, size_type n,
-	tuple<const bool&, const float&, const Vec3&>)
+iterator insert(const_iterator pos, size_type n, tuple<const bool&, const float&, const Vec3&>)
 
 // insert a value before pos' location in every tuple element,
 // and move-construct each one from the provided arguments
@@ -189,15 +190,15 @@ iterator insert(const_iterator pos, tuple<bool&&, float&&, Vec3&&>)
 // insert elements from the range [first, last) before pos' location
 iterator insert(const_iterator pos, const_iterator first, const_iterator last)
 ```
-push_back has the following overloads, with similar relation to insert(...)
+And push_back(...) has the following overloads, with similar rules for copy/move-construct:
 
-vector:
+#### vector:
 ```
 Entity& push_back()
 push_back(const Entity&)
 push_back(Entity&&)
 ```
-tuple_vector:
+#### tuple_vector:
 ```
 tuple<bool&, float&, Vec3&> push_back()
 push_back(const bool&, const float&, const Vec3&)
@@ -225,8 +226,8 @@ most ways and manners that vector was previously used with few structural
 differences.
 
 However, even if not using it strictly as a replacement for vector, it is
-still useful as a tool for simplifying management of an otherwise "raw" or 
-"naked" usage of a structure of arrays.
+still useful as a tool for simplifying management of an otherwise raw usage
+of a structure of arrays.
 
 For example, it may be desirable to use tuple_vector just to perform a single
 large memory allocation instead of a series of smaller memory allocations,
@@ -281,9 +282,9 @@ for (int i = 0; i < NumElements; ++i)
 simple(vin, vfactors, vout, NumElements);
 ```
 		
-simpleData here, only has a single memory allocation instead of the three in
-the first example, and also automatically releases the memory when it falls
-out of scope.
+simpleData here only has a single memory allocation during its construction,
+instead of the three in the first example, and also automatically releases the
+memory when it falls out of scope.
 
 However, it is possible to also skip a memory allocation entirely, if desired.
 eastl::vector<typename T> has a counterpart which allows for an object with an
@@ -369,7 +370,9 @@ two elements: one for uint64 and one for 56 bytes of padding. The erase,
 insert, push_back, and sort cases all perform at a similar relative rate as
 they did in the tuple_vector<uint64> tests - demonstrating that operations
 that have to touch all of elements do not have a significant change in
-performance. However, iteration and operator[] are very different, because
+performance.
+
+However, iteration and operator[] are very different, because
 those only access the uint64 member of both vector and tuple_vector to run
 some operation. The iteration test now runs 3x fsster whereas before it ran
 0.7x as fast, and operator[] runs 8.5x faster, instead of 1.1x. This
