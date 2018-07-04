@@ -108,19 +108,8 @@ featureset as vector, except where vector would accept or return a single
 value, it instead accepts or returns a tuple of values or unstructured series
 of equivalent arguments.
 
-For example, the following functions have the following differences:
+For example, the following functions can be used to access the data, either by fetching a tuple of references to a series of specific values, or the data pointers to the tuple elements 
 
-The following functions can be used to access the data:
-
-#### vector:
-```
-Entity& operator[](size_type)
-Entity& at(size_type)
-Entity& iterator::operator*()
-Entity&& move_iterator::operator*()
-Entity* data()
-```
-#### tuple_vector:
 ```
 tuple<bool&, float&, Vec3&> operator[](size_type)
 tuple<bool&, float&, Vec3&> at(size_type)
@@ -141,64 +130,8 @@ T* get<T>()
 // e.g. bool* get<bool>(), float* get<float>(), and Vec3* get<Vec3>()
 ```
 
-And insert(...) has the following overloads:
+And push_back(...) has the following overloads, accepting either values or tuples as needed.
 
-#### vector:
-```
-// insert a value before pos' location, and copy-construct it
-iterator insert(const_iterator pos, const Entity&)
-
-// insert n values before pos' location, and copy-construct them
-iterator insert(const_iterator pos, size_type n, const Entity&)
-
-// insert a value before pos' location, and move-construct it
-iterator insert(const_iterator pos, Entity&&)
-
-// insert elements from the init_list before pos' location
-iterator insert(const_iterator pos, std::initializer_list<Entity>)
-
-// insert elements from the range [first, last) before pos' location
-template <typename InputIterator>
-iterator insert(const_iterator pos, InputIterator first, InputIterator last)
-```		
-#### tuple_vector:
-```
-// insert a value before pos' location in every tuple element,
-// and copy-construct each one from the provided arguments
-iterator insert(const_iterator pos, const bool&, const float&, const Vec3&)
-
-// insert a value before pos' location in every tuple element,
-// and copy-construct each one from the provided tuple's elements
-iterator insert(const_iterator pos, tuple<const bool&, const float&, const Vec3&>)
-
-// insert n values before pos' location in every tuple element,
-// and copy-construct each one from the provided arguments
-iterator insert(const_iterator pos, size_type n, const bool&, const float&, const Vec3&)
-
-// insert n values before pos' location in every tuple element,
-// and copy-construct each one from the provided tuple's elements
-iterator insert(const_iterator pos, size_type n, tuple<const bool&, const float&, const Vec3&>)
-
-// insert a value before pos' location in every tuple element,
-// and move-construct each one from the provided arguments
-iterator insert(const_iterator pos, bool&&, float&&, Vec3&&)
-
-// insert a value before pos' location in every tuple element,
-// and move-construct each one from the provided tuple's elements
-iterator insert(const_iterator pos, tuple<bool&&, float&&, Vec3&&>)
-
-// insert elements from the range [first, last) before pos' location
-iterator insert(const_iterator pos, const_iterator first, const_iterator last)
-```
-And push_back(...) has the following overloads, with similar rules for copy/move-construct:
-
-#### vector:
-```
-Entity& push_back()
-push_back(const Entity&)
-push_back(Entity&&)
-```
-#### tuple_vector:
 ```
 tuple<bool&, float&, Vec3&> push_back()
 push_back(const bool&, const float&, const Vec3&)
@@ -206,8 +139,7 @@ push_back(tuple<const bool&, const float&,const  Vec3&>)
 push_back(bool&&, float&&, Vec3&&)
 push_back(tuple<bool&&, float&&, Vec3&&>)		
 ```
-...and so on, and so forth, for others like the constructor, emplace(...),
-emplace_back(...), assign(...), resize(...), front(), and back().
+...and so on, and so forth, for others like the constructor, insert(...), emplace(...), emplace_back(...), assign(...), resize(...), front(), and back().
 
 As well, note that the tuple types that are accepted or returned for 
 tuple_vector<Ts...> have typedefs available in the case of not wanting to use
