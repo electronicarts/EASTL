@@ -1,12 +1,12 @@
 ## Introduction to tuple_vector
 
-tuple_vector is a data container that is designed to abstract and simplify
+`tuple_vector` is a data container that is designed to abstract and simplify
 the handling of a "structure of arrays" layout of data in memory. In
-particular, it mimics the interface of vector, including functionality to do
+particular, it mimics the interface of `vector`, including functionality to do
 inserts, erases, push_backs, and random-access. It also provides a
-RandomAccessIterator and corresponding functionality, making it compatible
-with most STL (and STL-esque) algorithms such as ranged-for loops, find_if,
-remove_if, or sort.
+`RandomAccessIterator` and corresponding functionality, making it compatible
+with most STL (and STL-esque) algorithms such as ranged-for loops, `find_if`,
+`remove_if`, or `sort`.
 
 When used or applied properly, this container can improve performance of
 some algorithms through cache-coherent data accesses or allowing for
@@ -42,41 +42,41 @@ https://ispc.github.io/perfguide.html
 
 ## How TupleVecImpl works
 
-tuple_vector and fixed_tuple_vector both inherit from TupleVecImpl, which
+`tuple_vector` inherits from `TupleVecImpl`, which
 provides the bulk of the functionality for those data containers. It manages
 the memory allocated, marshals data members to each array of memory, generates
 the necessary iterators, and so on. 
 
-When a tuple_vector is declared, it is alongside a list of types, or "tuple
+When a `tuple_vector` is declared, it is alongside a list of types, or "tuple
 elements", indicating what data to store in the container, similar to tuple.
-TupleVecImpl then inherits from a series of TupleVecLeaf structures - one for
+`TupleVecImpl` then inherits from a series of `TupleVecLeaf` structures - one for
 each tuple element - each of which has a pointer to its own block of memory.
 When dereferencing the container, to fetch a tuple of references or otherwise
-fetching pointers to the memory the tuple_vector handles, it is these pointers
+fetching pointers to the memory the `tuple_vector` handles, it is these pointers
 that are utilized or fetched. 
 
-While each TupleVecLeaf contains a pointer to its own block of memory, they
-are not individual memory allocations. When TupleVecImpl needs to grow its
+While each `TupleVecLeaf` contains a pointer to its own block of memory, they
+are not individual memory allocations. When `TupleVecImpl` needs to grow its
 capacity, it calculates the total size needed for a single allocation, given
 the target number of objects to manage and the alignment requirements for each
 tuple element's type, as well as pointers into the memory allocation for each
-tuple element. Each TupleVecLeaf is then provided with these pointers. From
-there, many of the interactions with TupleVecImpl, to modify or access members
-of the container, then reference each TupleVecLeaf's data pointer in series,
-using parameter packs to repeat each operation for each parent TupleVecLeaf.
+tuple element. Each `TupleVecLeaf` is then provided with these pointers. From
+there, many of the interactions with `TupleVecImpl`, to modify or access members
+of the container, then reference each `TupleVecLeaf`'s data pointer in series,
+using parameter packs to repeat each operation for each parent `TupleVecLeaf`.
 
 ## How tuple_vector's iterator works
 
-TupleVecImpl provides a definition to an iterator type, TupleVecIter, as well
-was a move_iterator customization for it. As mentioned above, TupleVecIter
-provides all of the functionality to operate as a RandomAccessIterator.
+`TupleVecImpl` provides a definition to an iterator type, `TupleVecIter`, as well
+was a move_iterator customization for it. As mentioned above, `TupleVecIter`
+provides all of the functionality to operate as a `RandomAccessIterator`.
 However, when it is dereferenced, it provides a tuple of references, similar
-to at() or operator[] on TupleVecImpl, as opposed to a reference of some other
-type. Similarly, there is a customization of move_iterator for TupleVecIter,
+to `at()` or `operator[]` on `TupleVecImpl`, as opposed to a reference of some other
+type. Similarly, there is a customization of `move_iterator` for `TupleVecIter`,
 which will return a tuple of rvalue-references.
 
-The way that TupleVecIter operates internally is to track an index into the
-container, as well as a copy of all of the TupleVecImpl's TupleVecLeaf
+The way that `TupleVecIter` operates internally is to track an index into the
+container, as well as a copy of all of the `TupleVecImpl`'s `TupleVecLeaf`
 pointers at the time of the iterator's construction. Modifying the iterator,
 then, involves just changing the index, and dereferencing the iterator into
 the tuple of references involves deferencing each pointer with an offset
@@ -84,7 +84,7 @@ specified by that index.
 
 ## How to work with tuple_vector, and where to use it
 	
-Simply, tuple_vector can be used as a replacement for vector. For example,
+Simply, `tuple_vector` can be used as a replacement for `vector`. For example,
 instead of declaring a structure and vector as:
 
 ```
@@ -97,14 +97,14 @@ struct Entity
 vector<Entity> entityVec;
 ```
 
-...the tuple_vector equivalent of this can be defined as:
+...the `tuple_vector` equivalent of this can be defined as:
 
 ```
 tuple_vector<bool, float, Vec3> entityVec;
 ```
 
-In terms of how tuple_vector is modified and accessed, it has a similar
-featureset as vector, except where vector would accept or return a single
+In terms of how `tuple_vector` is modified and accessed, it has a similar
+featureset as `vector`, except where `vector` would accept or return a single
 value, it instead accepts or returns a tuple of values or unstructured series
 of equivalent arguments.
 
@@ -153,17 +153,17 @@ typedef eastl::tuple<const Ts*...> const_ptr_tuple;
 typedef eastl::tuple<Ts&&...> rvalue_tuple;
 ```
 So with this, and the fact that the iterator type satisfies
-the RandomAccessIterator requirements, it is possible to use tuple_vector in
-most ways and manners that vector was previously used with few structural
+the `RandomAccessIterator` requirements, it is possible to use `tuple_vector` in
+most ways and manners that `vector` was previously used with few structural
 differences.
 
-However, even if not using it strictly as a replacement for vector, it is
+However, even if not using it strictly as a replacement for `vector`, it is
 still useful as a tool for simplifying management of an otherwise raw usage
 of a structure of arrays.
 
-For example, it may be desirable to use tuple_vector just to perform a single
+For example, it may be desirable to use `tuple_vector` just to perform a single
 large memory allocation instead of a series of smaller memory allocations,
-by sizing the tuple_vector as needed, fetching the necessary pointers with
+by sizing the `tuple_vector` as needed, fetching the necessary pointers with
 data() or get<...>(), and carrying on normally.
 
 One example where this can be utilized is to with ISPC integration. Given the
@@ -219,46 +219,51 @@ instead of the three in the first example, and also automatically releases the
 memory when it falls out of scope.
 
 However, it is possible to also skip a memory allocation entirely, if desired.
-eastl::vector<typename T> has a counterpart which allows for an object with an
+`eastl::vector<typename T>` has a counterpart which allows for an object with an
 inlined buffer of memory:
 
 	eastl::fixed_vector<typename T, size_type nodeCount, bool enableOverflow = true>
 
 This buffer allows for enough space to hold a nodeCount number of T objects,
 skipping any memory allocation at all, until the requested size becomes
-greater than nodeCount - assuming enableOverflow is True. Similarly, there is
-a counterpart to eastl::tuple_vector<typename... Ts>:
+greater than `nodeCount` - assuming `enableOverflow` is True. Similarly, there is
+a counterpart to `eastl::tuple_vector<typename... Ts>`:
 
 	eastl::fixed_tuple_vector<size_type nodeCount, bool enableOverflow, typename... Ts>
 
 This does the similar legwork in creating an inlined buffer, and all of the
-functionality of tuple_vector otherwise is supported. Note the slight
-difference in declaration, though: nodeCount and enableOverflow are defined
-first, and enableOverflow is not a default parameter. This change arises out
+functionality of `tuple_vector` otherwise is supported. Note the slight
+difference in declaration, though: `nodeCount` and `enableOverflow` are defined
+first, and `enableOverflow` is not a default parameter. This change arises out
 of restrictions surrounding variadic templates, in that they must be declared
 last, and cannot be mixed with default template parameters.
 
-Similarly, eastl::vector also supports custom Memory Allocator types, through
+Similarly, `eastl::vector` also supports custom Memory Allocator types, through
 it's template parameters, as its full declaration is actually more like:
 
 	eastl::vector<typename T, typename AllocatorType = EASTLAllocatorType>
 
 However, because such a default template parameter cannot be used with
-variadic templates, a separate type for tuple_vector is required for such a
+variadic templates, a separate type for `tuple_vector` is required for such a
 definition:
 
 	eastl::tuple_vector_alloc<typename AllocatorType, typename... Ts>
 
-Note that tuple_vector uses EASTLAllocatorType as the allocator in
-TupleVecImpl.
+Note that `tuple_vector` uses EASTLAllocatorType as the allocator in
+`TupleVecImpl`.
 
 ## Performance comparisons/discussion
 
-A small benchmark suite for tuple_vector is included when running the
+A small benchmark suite for `tuple_vector` is included when running the
 EASTLBenchmarks project. It provides the following output on a Core i7 3770k
 (Skylake) at 3.5GHz, with DDR3-1600 memory.
 
-The tuple_vector benchmark cases compare total execution time of similar algorithms run against eastl::tuple_vector and std::vector, such as erasing or inserting elements, iterating through the array to find a specific element, sum all of the elements together via operator[] access, or just running eastl::sort on the data containers. More information about the EASTLBenchmarks suite can be found in EASTL/doc/EASTL Benchmarks.html
+The `tuple_vector` benchmark cases compare total execution time of similar
+algorithms run against `eastl::tuple_vector` and `std::vector`, such as
+erasing or inserting elements, iterating through the array to find a specific
+element, sum all of the elements together via operator[] access, or just
+running `eastl::sort` on the data containers. More information about the
+EASTLBenchmarks suite can be found in EASTL/doc/EASTL Benchmarks.html
 	
 Benchmark | STD execution time | EASTL execution time | Ratio
 --------- | -------- | ---------- | -----
@@ -287,10 +292,10 @@ Benchmark | STD execution time | EASTL execution time | Ratio
 `vector<uint64>/push_back               ` |   1.6 ms |   1.2 ms | 1.38  +
 `vector<uint64>/sort                    ` |   7.7 ms |   8.2 ms | 0.93 
 		
-First off, tuple_vector<uint64>'s performance versus std::vector<uint64> is
-comparable, as expected, as the tuple_vector's memory management for one type
+First off, `tuple_vector<uint64>`'s performance versus `std::vector<uint64>` is
+comparable, as expected, as the `tuple_vector`'s management for one type
 becomes very similar to just a regular vector. The major notable exception is
-the iteration case, which runs eastl::find_if from algorithm.h. This
+the iteration case, which runs `eastl::find_if`. This
 performance differences is a consequence of the iterator design, and how
 it works with indices, not pointers, so the code generation suffers slightly
 in this compute-bound scenario. This is worth noting as a demonstration of a
@@ -298,39 +303,39 @@ case where falling back to pointer-based iteration by fetching the begin and
 end pointers of that tuple element may be preferable, instead of using the
 iterator constructs.
 
-The set of tuple_vector<uint64,Padding> tests are more interesting. 
-This is a comparison between a single std::vector with a
-structure containing a uint64 and 56 bytes of padding, and a tuple_vector with
-two elements: one for uint64 and one for 56 bytes of padding. The erase,
+The set of `tuple_vector<uint64,Padding>` tests are more interesting. 
+This is a comparison between a single `std::vector` with a
+structure containing a `uint64` and 56 bytes of padding, and a `tuple_vector` with
+two elements: one for `uint64` and one for 56 bytes of padding. The erase,
 insert, push_back, and sort cases all perform at a similar relative rate as
-they did in the tuple_vector<uint64> tests - demonstrating that operations
+they did in the `tuple_vector<uint64>` tests - demonstrating that operations
 that have to touch all of elements do not have a significant change in
 performance.
 
 However, iteration and operator[] are very different, because
-those only access the uint64 member of both vector and tuple_vector to run
+those only access the `uint64` member of both `vector` and `tuple_vector` to run
 some operation. The iteration test now runs 3x fsster whereas before it ran
 0.7x as fast, and operator[] runs 8.5x faster, instead of 1.1x. This
-demonstrates some of the utility of tuple_vector, in that these algorithms end
+demonstrates some of the utility of `tuple_vector`, in that these algorithms end
 up being limited by the CPU's compute capabilities, as opposed to being
 limited by how fast they can load memory in from DRAM. 
 		
-In a series of other tests, generally speaking, tuple_vector tends to perform
+In a series of other tests, generally speaking, `tuple_vector` tends to perform
 on par with manual management of multiple arrays in many algorithms and
 operations, often generating the same code. As well, significant degress of
 inlining and optimization are required to get the most out of it. Compared to
-accessing a series of arrays or vectors, tuple_vector does perform a multitude
+accessing a series of arrays or vectors, `tuple_vector` does perform a multitude
 of extra function calls internally in order to manage the various elements, or
-interact with eastl::tuple through its standard interface, so running in debug
+interact with `eastl::tuple` through its standard interface, so running in debug
 configurations can run significantly slower in some cases, i.e. sometimes
 running at 0.2x the speed compared to vector.
 		
 ## The problem of referencing tuple elements
 
-This will be experienced shortly after using tuple_vector in most capacities,
+This will be experienced shortly after using `tuple_vector` in most capacities,
 but it should be noted that the most significant drawback is that there is no
-way to symbolically reference every tuple element of the tuple_vector - much
-in the same way as tuple. For example, if translating a struct such as...
+way to symbolically reference every tuple element of the `tuple_vector` - much
+in the same way as `tuple`. For example, if translating a struct such as...
 
 ```
 struct Entity
@@ -339,14 +344,14 @@ struct Entity
 	float lifetime;
 };
 ```
-...to tuple_vector, it will exist as:
+...to `tuple_vector`, it will exist as:
 
 ```
 tuple_vector<float, float, float, float> entityVec;
 ```
 
-...and can only be accessed in a manner like entityVec.get<3>() to refer to
-the lifetime. With existing tools, the only good alternatives is to
+...and can only be accessed in a manner like `entityVec.get<3>()` to refer to
+the `lifetime` member. With existing tools, the only good alternatives is to
 encapsulate each float as a separate struct to give it unique typenames...
 
 ```
@@ -358,7 +363,7 @@ struct entityLifetime { float val; };
 tuple_vector<entityX, entityY, entityZ, entityLifetime> entityVec;
 ```
 ...and then access each tuple element by typename like
-entityVec.get<entityLifetime>(). Or, creating an enumerated value to replace
+`entityVec.get<entityLifetime>()`. Or, creating an enumerated value to replace
 the indices...
 
 ```
@@ -374,7 +379,7 @@ tuple_vector<float, float, float, float> entityVec;
 ```
 
 ...and then access each tuple element by the enumerated value:
-entityVec.get<lifetime>().
+`entityVec.get<lifetime>()`.
 
 Either way, there is a fairly significant maintenance and readability issue
 around this, arguably more severe than with the existing tuple functionality
@@ -389,6 +394,6 @@ tuple_vector<float x, float y, float z, float lifetime> entityVec;
 ```
 
 and even more than accessing elements by a symbol, like
-entityVec.get<lifetime>(), it may be interesting if the necessary get
+`entityVec.get<lifetime>()`, it may be interesting if the necessary get
 functions could be even automatically generated through a reflection system,
-e.g. entityVec.get_lifetime(), but that remains a pipe dream for now.
+e.g. `entityVec.get_lifetime()`, but that remains a pipe dream for now.
