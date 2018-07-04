@@ -258,7 +258,7 @@ A small benchmark suite for tuple_vector is included when running the
 EASTLBenchmarks project. It provides the following output on a Core i7 3770k
 (Skylake) at 3.5GHz, with DDR3-1600 memory.
 
-The tuple_vector benchmark cases compare total execution time of similar algorithms run against eastl::tuple_vector and std::vector, such as erasing or inserting elements, or iterating through the array to find a specific element or sum all of the elements together, or just running eastl::sort on them. More information about the EASTLBenchmarks suite can be found in EASTL/doc/EASTL Benchmarks.html
+The tuple_vector benchmark cases compare total execution time of similar algorithms run against eastl::tuple_vector and std::vector, such as erasing or inserting elements, iterating through the array to find a specific element, sum all of the elements together via operator[] access, or just running eastl::sort on the data containers. More information about the EASTLBenchmarks suite can be found in EASTL/doc/EASTL Benchmarks.html
 	
 Benchmark | STD execution time | EASTL execution time | Ratio
 --------- | -------- | ---------- | -----
