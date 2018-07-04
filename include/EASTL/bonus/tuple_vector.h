@@ -2,7 +2,6 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // tuple_vector is a data container that is designed to abstract and simplify
 // the handling of a "structure of arrays" layout of data in memory. In
@@ -18,7 +17,7 @@
 // container, to permit a developer to continue to use existing algorithms in
 // STL and the like.
 //
-// Consult tuple_vector_readme.txt for more information.
+// Consult doc/Bonus/tuple_vector_readme.md for more information.
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_TUPLEVECTOR_H
