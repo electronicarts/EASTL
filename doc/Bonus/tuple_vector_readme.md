@@ -1,6 +1,4 @@
-
-
-Introduction to tuple_vector
+## Introduction to tuple_vector
 
 tuple_vector is a data container that is designed to abstract and simplify
 the handling of a "structure of arrays" layout of data in memory. In
@@ -16,9 +14,7 @@ sensible SIMD programming, while keeping the structure of a single
 container, to permit a developer to continue to use existing algorithms in
 STL and the like.
 
-
-
-Review of "Structure of arrays" data layouts
+## Review of "Structure of arrays" data layouts
 
 When trying to improve the performance of some code, it can sometimes be
 desirable to transform how some data is stored in memory to be laid out not as
@@ -44,9 +40,7 @@ http://www.gdcvault.com/play/1022249/SIMD-at-Insomniac-Games-How
 ...and as well in the ISPC performance guide when writing ISPC kernels:
 https://ispc.github.io/perfguide.html
 
-
-
-How TupleVecImpl works
+## How TupleVecImpl works
 
 tuple_vector and fixed_tuple_vector both inherit from TupleVecImpl, which
 provides the bulk of the functionality for those data containers. It manages
@@ -71,9 +65,7 @@ there, many of the interactions with TupleVecImpl, to modify or access members
 of the container, then reference each TupleVecLeaf's data pointer in series,
 using parameter packs to repeat each operation for each parent TupleVecLeaf.
 
-
-
-How tuple_vector's iterator works
+## How tuple_vector's iterator works
 
 TupleVecImpl provides a definition to an iterator type, TupleVecIter, as well
 was a move_iterator customization for it. As mentioned above, TupleVecIter
@@ -90,24 +82,26 @@ then, involves just changing the index, and dereferencing the iterator into
 the tuple of references involves deferencing each pointer with an offset
 specified by that index.
 
-
-
-How to work with tuple_vector, and where to use it
+## How to work with tuple_vector, and where to use it
 	
 Simply, tuple_vector can be used as a replacement for vector. For example,
 instead of declaring a structure and vector as:
 
-	struct Entity
-	{
-		bool active;
-		float lifetime;
-		Vec3 position;
-	}
-	vector<Entity> entityVec;
+```
+struct Entity
+{
+	bool active;
+	float lifetime;
+	Vec3 position;
+}
+vector<Entity> entityVec;
+```
 
 ...the tuple_vector equivalent of this can be defined as:
 
-	tuple_vector<bool, float, Vec3> entityVec;
+```
+tuple_vector<bool, float, Vec3> entityVec;
+```
 
 In terms of how tuple_vector is modified and accessed, it has a similar
 featureset as vector, except where vector would accept or return a single
@@ -118,113 +112,113 @@ For example, the following functions have the following differences:
 
 The following functions can be used to access the data:
 
-	vector:
-		Entity& operator[](size_type)
-		Entity& at(size_type)
-		Entity& iterator::operator*()
-		Entity&& move_iterator::operator*()
-		Entity* data()
+vector:
+```
+Entity& operator[](size_type)
+Entity& at(size_type)
+Entity& iterator::operator*()
+Entity&& move_iterator::operator*()
+Entity* data()
+```
+tuple_vector:
+```
+tuple<bool&, float&, Vec3&> operator[](size_type)
+tuple<bool&, float&, Vec3&> at(size_type)
+tuple<bool&, float&, Vec3&> iterator::operator*()
+tuple<bool&&, float&&, Vec3&&> move_iterator::operator*()
+tuple<bool*, float*, Vec3*> data()
 
-	tuple_vector:
-		tuple<bool&, float&, Vec3&> operator[](size_type)
-		tuple<bool&, float&, Vec3&> at(size_type)
-		tuple<bool&, float&, Vec3&> iterator::operator*()
-		tuple<bool&&, float&&, Vec3&&> move_iterator::operator*()
-		tuple<bool*, float*, Vec3*> data()
+// extract the Ith tuple element pointer from the tuple_vector
+template<size_type I>
+T* get<I>()
+// e.g. bool* get<0>(), float* get<1>(), and Vec3* get<2>()
 
-		// extract the Ith tuple element pointer from the tuple_vector
-		template<size_type I>
-		T* get<I>()
-		// e.g. bool* get<0>(), float* get<1>(), and Vec3* get<2>()
-		
-		// extract the tuple element pointer of type T from the tuple_vector
-		// note that this function can only be used if there is one instance
-		// of type T in the tuple_vector's elements
-		template<typename T>
-		T* get<T>()
-		// e.g. bool* get<bool>(), float* get<float>(), and Vec3* get<Vec3>()
-		
+// extract the tuple element pointer of type T from the tuple_vector
+// note that this function can only be used if there is one instance
+// of type T in the tuple_vector's elements
+template<typename T>
+T* get<T>()
+// e.g. bool* get<bool>(), float* get<float>(), and Vec3* get<Vec3>()
+```
 insert has the following overloads:
 
-	vector:
-		// insert a value before pos' location, and copy-construct it
-		iterator insert(const_iterator pos, const Entity&)
-		
-		// insert n values before pos' location, and copy-construct them
-		iterator insert(const_iterator pos, size_type n, const Entity&)
-		
-		// insert a value before pos' location, and move-construct it
-		iterator insert(const_iterator pos, Entity&&)
-		
-		// insert elements from the init_list before pos' location
-		iterator insert(const_iterator pos, std::initializer_list<Entity>)
-		
-		// insert elements from the range [first, last) before pos' location
-		template <typename InputIterator>
-		iterator insert(const_iterator pos, InputIterator first,
-			InputIterator last)
+vector:
+```
+// insert a value before pos' location, and copy-construct it
+iterator insert(const_iterator pos, const Entity&)
+
+// insert n values before pos' location, and copy-construct them
+iterator insert(const_iterator pos, size_type n, const Entity&)
+
+// insert a value before pos' location, and move-construct it
+iterator insert(const_iterator pos, Entity&&)
+
+// insert elements from the init_list before pos' location
+iterator insert(const_iterator pos, std::initializer_list<Entity>)
+
+// insert elements from the range [first, last) before pos' location
+template <typename InputIterator>
+iterator insert(const_iterator pos, InputIterator first, InputIterator last)
 		
 	tuple_vector:
-		// insert a value before pos' location in every tuple element,
-		// and copy-construct each one from the provided arguments
-		iterator insert(const_iterator pos, const bool&, const float&,
-			const Vec3&)
+// insert a value before pos' location in every tuple element,
+// and copy-construct each one from the provided arguments
+iterator insert(const_iterator pos, const bool&, const float&, const Vec3&)
 
-		// insert a value before pos' location in every tuple element,
-		// and copy-construct each one from the provided tuple's elements
-		iterator insert(const_iterator pos, tuple<const bool&, const float&,
-			const Vec3&>)
-	
-		// insert n values before pos' location in every tuple element,
-		// and copy-construct each one from the provided arguments
-		iterator insert(const_iterator pos, size_type n, const bool&,
-			const float&, const Vec3&)
-		
-		// insert n values before pos' location in every tuple element,
-		// and copy-construct each one from the provided tuple's elements
-		iterator insert(const_iterator pos, size_type n,
-			tuple<const bool&, const float&, const Vec3&>)
-		
-		// insert a value before pos' location in every tuple element,
-		// and move-construct each one from the provided arguments
-		iterator insert(const_iterator pos, bool&&, float&&, Vec3&&)
-		
-		// insert a value before pos' location in every tuple element,
-		// and move-construct each one from the provided tuple's elements
-		iterator insert(const_iterator pos, tuple<bool&&, float&&, Vec3&&>)
-		
-		// insert elements from the range [first, last) before pos' location
-		iterator insert(const_iterator pos, const_iterator first,
-			const_iterator last)
+// insert a value before pos' location in every tuple element,
+// and copy-construct each one from the provided tuple's elements
+iterator insert(const_iterator pos, tuple<const bool&, const float&, const Vec3&>)
 
+// insert n values before pos' location in every tuple element,
+// and copy-construct each one from the provided arguments
+iterator insert(const_iterator pos, size_type n, const bool&, const float&, const Vec3&)
+
+// insert n values before pos' location in every tuple element,
+// and copy-construct each one from the provided tuple's elements
+iterator insert(const_iterator pos, size_type n,
+	tuple<const bool&, const float&, const Vec3&>)
+
+// insert a value before pos' location in every tuple element,
+// and move-construct each one from the provided arguments
+iterator insert(const_iterator pos, bool&&, float&&, Vec3&&)
+
+// insert a value before pos' location in every tuple element,
+// and move-construct each one from the provided tuple's elements
+iterator insert(const_iterator pos, tuple<bool&&, float&&, Vec3&&>)
+
+// insert elements from the range [first, last) before pos' location
+iterator insert(const_iterator pos, const_iterator first, const_iterator last)
+```
 push_back has the following overloads, with similar relation to insert(...)
 
-	vector:
-		Entity& push_back()
-		push_back(const Entity&)
-		push_back(Entity&&)
-		
-	tuple_vector:
-		tuple<bool&, float&, Vec3&> push_back()
-		push_back(const bool&, const float&, const Vec3&)
-		push_back(tuple<const bool&, const float&,const  Vec3&>)
-		push_back(bool&&, float&&, Vec3&&)
-		push_back(tuple<bool&&, float&&, Vec3&&>)		
-
+vector:
+```
+Entity& push_back()
+push_back(const Entity&)
+push_back(Entity&&)
+```
+tuple_vector:
+```
+tuple<bool&, float&, Vec3&> push_back()
+push_back(const bool&, const float&, const Vec3&)
+push_back(tuple<const bool&, const float&,const  Vec3&>)
+push_back(bool&&, float&&, Vec3&&)
+push_back(tuple<bool&&, float&&, Vec3&&>)		
+```
 ...and so on, and so forth, for others like the constructor, emplace(...),
 emplace_back(...), assign(...), resize(...), front(), and back().
 
 As well, note that the tuple types that are accepted or returned for 
 tuple_vector<Ts...> have typedefs available in the case of not wanting to use
 automatic type deduction:
-
-	typedef eastl::tuple<Ts...> value_tuple;
-	typedef eastl::tuple<Ts&...> reference_tuple;
-	typedef eastl::tuple<const Ts&...> const_reference_tuple;
-	typedef eastl::tuple<Ts*...> ptr_tuple;
-	typedef eastl::tuple<const Ts*...> const_ptr_tuple;
-	typedef eastl::tuple<Ts&&...> rvalue_tuple;
-		
+```
+typedef eastl::tuple<Ts...> value_tuple;
+typedef eastl::tuple<Ts&...> reference_tuple;
+typedef eastl::tuple<const Ts&...> const_reference_tuple;
+typedef eastl::tuple<Ts*...> ptr_tuple;
+typedef eastl::tuple<const Ts*...> const_ptr_tuple;
+typedef eastl::tuple<Ts&&...> rvalue_tuple;
+```
 So with this, and the fact that the iterator type satisfies
 the RandomAccessIterator requirements, it is possible to use tuple_vector in
 most ways and manners that vector was previously used with few structural
@@ -242,54 +236,50 @@ data() or get<...>(), and carrying on normally.
 One example where this can be utilized is to with ISPC integration. Given the
 following ISPC function definition:
 
-	export void simple(uniform float vin[], uniform float vfactors[],
-		uniform float vout[], uniform int size);
+	export void simple(uniform float vin[], uniform float vfactors[], uniform float vout[], uniform int size);
 
 ...which generates the following function prototype/glue for C/C++ usage:
 
-	extern void simple(float* vin, float* vfactors, float* vout,
-		int32_t size);
+	extern void simple(float* vin, float* vfactors, float* vout, int32_t size);
 		
 ...this can be utilized with some raw float arrays:
+```
+float* vin = new float[NumElements];
+float* vfactors = new float[NumElements];
+float* vout = new float[NumElements];
 
- 	{
-		float* vin = new float[NumElements];
-		float* vfactors = new float[NumElements];
-		float* vout = new float[NumElements];
-	 
-		// Initialize input buffer
-		for (int i = 0; i < NumElements; ++i)
-		{
-			vin[i] = (float)i;
-			vfactors[i] = (float)i / 2.0f;
-		}
-	 
-		// Call simple() function from simple.ispc file
-		simple(vin, vfactors, vout, NumElements);
-		
-		delete vin;
-		delete vfactors;
-		delete vout;
-	}
+// Initialize input buffer
+for (int i = 0; i < NumElements; ++i)
+{
+	vin[i] = (float)i;
+	vfactors[i] = (float)i / 2.0f;
+}
 
+// Call simple() function from simple.ispc file
+simple(vin, vfactors, vout, NumElements);
+
+delete vin;
+delete vfactors;
+delete vout;
+```
 or, with tuple_vector:
 
-	{
-		tuple_vector<float, float, float> simpleData(NumElements);
-		float* vin = simpleData.get<0>();
-		float* vfactors = simpleData.get<1>();
-		float* vout = simpleData.get<2>();
-		
-		// Initialize input buffer
-		for (int i = 0; i < NumElements; ++i)
-		{
-			vin[i] = (float)i;
-			vfactors[i] = (float)i / 2.0f;
-		}
-	 
-		// Call simple() function from simple.ispc file
-		simple(vin, vfactors, vout, NumElements);
-	}
+```
+tuple_vector<float, float, float> simpleData(NumElements);
+float* vin = simpleData.get<0>();
+float* vfactors = simpleData.get<1>();
+float* vout = simpleData.get<2>();
+
+// Initialize input buffer
+for (int i = 0; i < NumElements; ++i)
+{
+	vin[i] = (float)i;
+	vfactors[i] = (float)i / 2.0f;
+}
+
+// Call simple() function from simple.ispc file
+simple(vin, vfactors, vout, NumElements);
+```
 		
 simpleData here, only has a single memory allocation instead of the three in
 the first example, and also automatically releases the memory when it falls
@@ -299,16 +289,14 @@ However, it is possible to also skip a memory allocation entirely, if desired.
 eastl::vector<typename T> has a counterpart which allows for an object with an
 inlined buffer of memory:
 
-	eastl::fixed_vector<typename T, size_type nodeCount,
-		bool enableOverflow = true>
+	eastl::fixed_vector<typename T, size_type nodeCount, bool enableOverflow = true>
 
 This buffer allows for enough space to hold a nodeCount number of T objects,
 skipping any memory allocation at all, until the requested size becomes
 greater than nodeCount - assuming enableOverflow is True. Similarly, there is
 a counterpart to eastl::tuple_vector<typename... Ts>:
 
-	eastl::fixed_tuple_vector<size_type nodeCount, bool enableOverflow,
-		typename... Ts>
+	eastl::fixed_tuple_vector<size_type nodeCount, bool enableOverflow, typename... Ts>
 
 This does the similar legwork in creating an inlined buffer, and all of the
 functionality of tuple_vector otherwise is supported. Note the slight
@@ -331,44 +319,38 @@ definition:
 Note that tuple_vector uses EASTLAllocatorType as the allocator in
 TupleVecImpl.
 
-
-		
-Performance comparisons/discussion
+## Performance comparisons/discussion
 
 A small benchmark suite for tuple_vector is included when running the
 EASTLBenchmarks project. It provides the following output on a Core i7 3770k
 (Skylake) at 3.5GHz, with DDR3-1600 memory.
 	
-tuple_vector<AutoRefCount>/erase        |   1.7 ms |   1.7 ms | 1.00 
-                                                                     
-tuple_vector<MovableType>/erase         | 104.6 ms | 106.3 ms | 0.98 
-tuple_vector<MovableType>/reallocate    |   1.3 ms |   1.7 ms | 0.77  -
-                                                                     
-tuple_vector<uint64>/erase              |   3.4 ms |   3.5 ms | 0.98 
-tuple_vector<uint64>/insert             |   3.4 ms |   3.4 ms | 0.99 
-tuple_vector<uint64>/iteration          |  56.3 us |  81.4 us | 0.69  -
-tuple_vector<uint64>/operator[]         |  67.4 us |  61.8 us | 1.09 
-tuple_vector<uint64>/push_back          |   1.3 ms | 818.3 us | 1.53  +
-tuple_vector<uint64>/sort               |   5.8 ms |   7.3 ms | 0.80 
-                                                                     
-tuple_vector<uint64,Padding>/erase      |  34.7 ms |  32.9 ms | 1.05 
-tuple_vector<uint64,Padding>/insert     |  41.0 ms |  32.6 ms | 1.26 
-tuple_vector<uint64,Padding>/iteration  | 247.1 us |  80.5 us | 3.07  +
-tuple_vector<uint64,Padding>/operator[] | 695.7 us |  81.1 us | 8.58  +
-tuple_vector<uint64,Padding>/push_back  |  10.0 ms |   6.0 ms | 1.67  +
-tuple_vector<uint64,Padding>/sort       |   8.2 ms |  10.1 ms | 0.81 
-                                                                     
-vector<AutoRefCount>/erase              |   1.3 ms |   1.2 ms | 1.05 
-                                                                     
-vector<MovableType>/erase               | 104.4 ms | 109.4 ms | 0.95 
-vector<MovableType>/reallocate          |   1.5 ms |   1.5 ms | 0.95 
-                                                                     
-vector<uint64>/erase                    |   4.3 ms |   3.6 ms | 1.20 
-vector<uint64>/insert                   |   4.8 ms |   4.8 ms | 1.01 
-vector<uint64>/iteration                |  71.5 us |  77.3 us | 0.92 
-vector<uint64>/operator[]               |  90.7 us |  87.2 us | 1.04 
-vector<uint64>/push_back                |   1.6 ms |   1.2 ms | 1.38  +
-vector<uint64>/sort                     |   7.7 ms |   8.2 ms | 0.93 
+Benchmark | STD time | EASTL time | Ratio
+--------- | -------- | ---------- | -----
+`tuple_vector<AutoRefCount>/erase       ` |   1.7 ms |   1.7 ms | 1.00 
+`tuple_vector<MovableType>/erase        ` | 104.6 ms | 106.3 ms | 0.98 
+`tuple_vector<MovableType>/reallocate   ` |   1.3 ms |   1.7 ms | 0.77  -
+`tuple_vector<uint64>/erase             ` |   3.4 ms |   3.5 ms | 0.98 
+`tuple_vector<uint64>/insert            ` |   3.4 ms |   3.4 ms | 0.99 
+`tuple_vector<uint64>/iteration         ` |  56.3 us |  81.4 us | 0.69  -
+`tuple_vector<uint64>/operator[]        ` |  67.4 us |  61.8 us | 1.09 
+`tuple_vector<uint64>/push_back         ` |   1.3 ms | 818.3 us | 1.53  +
+`tuple_vector<uint64>/sort              ` |   5.8 ms |   7.3 ms | 0.80 
+`tuple_vector<uint64,Padding>/erase     ` |  34.7 ms |  32.9 ms | 1.05 
+`tuple_vector<uint64,Padding>/insert    ` |  41.0 ms |  32.6 ms | 1.26 
+`tuple_vector<uint64,Padding>/iteration ` | 247.1 us |  80.5 us | 3.07  +
+`tuple_vector<uint64,Padding>/operator[]` | 695.7 us |  81.1 us | 8.58  +
+`tuple_vector<uint64,Padding>/push_back ` |  10.0 ms |   6.0 ms | 1.67  +
+`tuple_vector<uint64,Padding>/sort      ` |   8.2 ms |  10.1 ms | 0.81 
+`vector<AutoRefCount>/erase             ` |   1.3 ms |   1.2 ms | 1.05 
+`vector<MovableType>/erase              ` | 104.4 ms | 109.4 ms | 0.95 
+`vector<MovableType>/reallocate         ` |   1.5 ms |   1.5 ms | 0.95 
+`vector<uint64>/erase                   ` |   4.3 ms |   3.6 ms | 1.20 
+`vector<uint64>/insert                  ` |   4.8 ms |   4.8 ms | 1.01 
+`vector<uint64>/iteration               ` |  71.5 us |  77.3 us | 0.92 
+`vector<uint64>/operator[]              ` |  90.7 us |  87.2 us | 1.04 
+`vector<uint64>/push_back               ` |   1.6 ms |   1.2 ms | 1.38  +
+`vector<uint64>/sort                    ` |   7.7 ms |   8.2 ms | 0.93 
 		
 First off, tuple_vector's behaviour on single types - which is compared
 against std::vector behaviour - is comparable, as expected. For a single type,
@@ -405,40 +387,43 @@ interact with eastl::tuple through its standard interface, so running in debug
 configurations can run significantly slower in some cases, i.e. sometimes
 running at 0.2x the speed compared to vector.
 		
-		
-		
-Other notes and drawbacks
+## Other notes and drawbacks
 
 This will be experienced shortly after using tuple_vector in most capacities,
 but it should be noted that the most significant drawback is that there is no
 way to symbolically reference every tuple element of the tuple_vector - much
 in the same way as tuple. For example, if translating a struct such as...
 
+```
 struct Entity
 {
 	float x, y, z;
 	float lifetime;
 };
-
+```
 ...to tuple_vector, it will exist as:
 
+```
 tuple_vector<float, float, float, float> entityVec;
+```
 
 ...and can only be accessed in a manner like entityVec.get<3>() to refer to
 the lifetime. With existing tools, the only good alternatives is to
 encapsulate each float as a separate struct to give it unique typenames...
 
+```
 struct entityX { float val; };
 struct entityY { float val; };
 struct entityZ { float val; };
 struct entityLifetime { float val; };
 
 tuple_vector<entityX, entityY, entityZ, entityLifetime> entityVec;
-
+```
 ...and then access each tuple element by typename like
 entityVec.get<entityLifetime>(). Or, creating an enumerated value to replace
 the indices...
 
+```
 enum EntityTypeEnum
 {
 	x = 0,
@@ -448,6 +433,7 @@ enum EntityTypeEnum
 };
 
 tuple_vector<float, float, float, float> entityVec;
+```
 
 ...and then access each tuple element by the enumerated value:
 entityVec.get<lifetime>().
@@ -458,9 +444,11 @@ because that is generally not intended for structures with long lifetime.
 
 Ideally, if the language could be mutated to accomodate such a thing, it would
 be good to have some combination or mix of typenames and symbolic names in the
-declaration, e.g. someting like
+declaration, e.g. something like
 
+```
 tuple_vector<float x, float y, float z, float lifetime> entityVec;
+```
 
 and even more than accessing elements by a symbol, like
 entityVec.get<lifetime>(), it may be interesting if the necessary get
