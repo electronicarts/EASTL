@@ -325,7 +325,7 @@ interact with eastl::tuple through its standard interface, so running in debug
 configurations can run significantly slower in some cases, i.e. sometimes
 running at 0.2x the speed compared to vector.
 		
-## Other notes and drawbacks
+## The problem of referencing tuple elements
 
 This will be experienced shortly after using tuple_vector in most capacities,
 but it should be noted that the most significant drawback is that there is no
