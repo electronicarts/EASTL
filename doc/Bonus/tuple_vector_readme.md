@@ -372,17 +372,17 @@ the indices...
 ```
 enum EntityTypeEnum
 {
-	x = 0,
-	y = 1,
-	z = 2,
-	lifetime = 3
+	entityX = 0,
+	entityY = 1,
+	entityZ = 2,
+	entityLifetime = 3
 };
 
 tuple_vector<float, float, float, float> entityVec;
 ```
 
 ...and then access each tuple element by the enumerated value:
-`entityVec.get<lifetime>()`.
+`entityVec.get<entityLifetime>()`.
 
 Either way, there is a fairly significant maintenance and readability issue
 around this, arguably more severe than with the existing tuple functionality
