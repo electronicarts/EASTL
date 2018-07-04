@@ -198,7 +198,7 @@ delete vin;
 delete vfactors;
 delete vout;
 ```
-or, with tuple_vector:
+or, with `tuple_vector`:
 
 ```
 tuple_vector<float, float, float> simpleData(NumElements);
@@ -217,7 +217,7 @@ for (int i = 0; i < NumElements; ++i)
 simple(vin, vfactors, vout, NumElements);
 ```
 		
-simpleData here only has a single memory allocation during its construction,
+`simpleData` here only has a single memory allocation during its construction,
 instead of the three in the first example, and also automatically releases the
 memory when it falls out of scope.
 
@@ -227,7 +227,7 @@ inlined buffer of memory:
 
 	eastl::fixed_vector<typename T, size_type nodeCount, bool enableOverflow = true>
 
-This buffer allows for enough space to hold a nodeCount number of T objects,
+This buffer allows for enough space to hold a `nodeCount` number of `T` objects,
 skipping any memory allocation at all, until the requested size becomes
 greater than `nodeCount` - assuming `enableOverflow` is True. Similarly, there is
 a counterpart to `eastl::tuple_vector<typename... Ts>`:
