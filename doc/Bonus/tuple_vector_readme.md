@@ -257,8 +257,10 @@ TupleVecImpl.
 A small benchmark suite for tuple_vector is included when running the
 EASTLBenchmarks project. It provides the following output on a Core i7 3770k
 (Skylake) at 3.5GHz, with DDR3-1600 memory.
+
+The tuple_vector benchmark cases compare total execution time of similar algorithms run against eastl::tuple_vector and std::vector, such as erasing or inserting elements, or iterating through the array to find a specific element or sum all of the elements together, or just running eastl::sort on them. More information about the EASTLBenchmarks suite can be found in EASTL/doc/EASTL Benchmarks.html
 	
-Benchmark | STD time | EASTL time | Ratio
+Benchmark | STD execution time | EASTL execution time | Ratio
 --------- | -------- | ---------- | -----
 `tuple_vector<AutoRefCount>/erase       ` |   1.7 ms |   1.7 ms | 1.00 
 `tuple_vector<MovableType>/erase        ` | 104.6 ms | 106.3 ms | 0.98 
@@ -285,18 +287,19 @@ Benchmark | STD time | EASTL time | Ratio
 `vector<uint64>/push_back               ` |   1.6 ms |   1.2 ms | 1.38  +
 `vector<uint64>/sort                    ` |   7.7 ms |   8.2 ms | 0.93 
 		
-First off, tuple_vector's behaviour on single types - which is compared
-against std::vector behaviour - is comparable, as expected. For a single type,
-it behaves very smiilarly to eastl::vector, with the major notable exception
-being the iteration case. This is a consequence of the iterator design, where
-it works with indices, not pointers, so the code generation suffered slightly,
-in this compute-bound scenarion. This is worth noting as a demonstration of a
+First off, tuple_vector<uint64>'s performance versus std::vector<uint64> is
+comparable, as expected, as the tuple_vector's memory management for one type
+becomes very similar to just a regular vector. The major notable exception is
+the iteration case, which runs eastl::find_if from algorithm.h. This
+performance differences is a consequence of the iterator design, and how
+it works with indices, not pointers, so the code generation suffers slightly
+in this compute-bound scenario. This is worth noting as a demonstration of a
 case where falling back to pointer-based iteration by fetching the begin and
 end pointers of that tuple element may be preferable, instead of using the
 iterator constructs.
 
-The bracket of "tuple_vector<uint64,Padding>" tests are where things get more
-interesting, though. This is a comparison between a single std::vector with a
+The set of tuple_vector<uint64,Padding> tests are more interesting. 
+This is a comparison between a single std::vector with a
 structure containing a uint64 and 56 bytes of padding, and a tuple_vector with
 two elements: one for uint64 and one for 56 bytes of padding. The erase,
 insert, push_back, and sort cases all perform at a similar relative rate as
