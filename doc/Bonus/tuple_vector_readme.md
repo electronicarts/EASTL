@@ -108,7 +108,9 @@ featureset as `vector`, except where `vector` would accept or return a single
 value, it instead accepts or returns a tuple of values or unstructured series
 of equivalent arguments.
 
-For example, the following functions can be used to access the data, either by fetching a tuple of references to a series of specific values, or the data pointers to the tuple elements 
+For example, the following functions can be used to access the data, either by
+fetching a tuple of references to a series of specific values, or the data
+pointers to the tuple elements:
 
 ```
 tuple<bool&, float&, Vec3&> operator[](size_type)
@@ -139,10 +141,11 @@ push_back(tuple<const bool&, const float&,const  Vec3&>)
 push_back(bool&&, float&&, Vec3&&)
 push_back(tuple<bool&&, float&&, Vec3&&>)		
 ```
-...and so on, and so forth, for others like the constructor, insert(...), emplace(...), emplace_back(...), assign(...), resize(...), front(), and back().
+...and so on, and so forth, for others like the constructor, `insert(...)`,
+`emplace(...)`, `emplace_back(...)`, `assign(...)`, and `resize(...)`.
 
 As well, note that the tuple types that are accepted or returned for 
-tuple_vector<Ts...> have typedefs available in the case of not wanting to use
+`tuple_vector<Ts...>` have typedefs available in the case of not wanting to use
 automatic type deduction:
 ```
 typedef eastl::tuple<Ts...> value_tuple;
@@ -164,7 +167,7 @@ of a structure of arrays.
 For example, it may be desirable to use `tuple_vector` just to perform a single
 large memory allocation instead of a series of smaller memory allocations,
 by sizing the `tuple_vector` as needed, fetching the necessary pointers with
-data() or get<...>(), and carrying on normally.
+`data()` or `get<...>()`, and carrying on normally.
 
 One example where this can be utilized is to with ISPC integration. Given the
 following ISPC function definition:
