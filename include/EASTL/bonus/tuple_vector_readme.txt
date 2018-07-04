@@ -243,7 +243,7 @@ One example where this can be utilized is to with ISPC integration. Given the
 following ISPC function definition:
 
 	export void simple(uniform float vin[], uniform float vfactors[],
-					uniform float vout[], uniform int size);
+		uniform float vout[], uniform int size);
 
 ...which generates the following function prototype/glue for C/C++ usage:
 
