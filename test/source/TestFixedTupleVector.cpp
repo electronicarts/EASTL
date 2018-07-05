@@ -31,29 +31,47 @@ int TestFixedTupleVectorVariant()
 		EATEST_VERIFY(singleElementVec.validate());
 
 		fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, bool> complexVec;
-		complexVec.push_back(3, 2.0f, true);
+		complexVec.reserve(5);
+		{
+			// need to call an overload of push_back that specifically grabs lvalue candidates - providing constants tend to prefer rvalue path
+			int intArg = 3;
+			float floatArg = 2.0f;
+			bool boolArg = true;
+			complexVec.push_back(intArg, floatArg, boolArg);
+		}
 		complexVec.push_back(1, 4.0f, false);
 		complexVec.push_back(2, 1.0f, true);
-		complexVec.push_back(4, 3.0f, false);
+		{
+			tuple<int, float, bool> complexTup(4, 3.0f, false);
+			complexVec.push_back(complexTup);
+		}
+		complexVec.push_back();
+		EATEST_VERIFY((!complexVec.has_overflowed() && complexVec.capacity() == nodeCount) || complexVec.capacity() == 5);
 		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
 		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
 		EATEST_VERIFY(complexVec.get<2>()[2] == complexVec.get<bool>()[2]);
 		EATEST_VERIFY(complexVec.validate());
 
+		tuple<int, float, bool> defaultComplexTup;
+		EATEST_VERIFY(complexVec.at(4) == defaultComplexTup);
+		
 		tuple<int*, float*, bool*> complexPtrTuple = complexVec.data();
 		EATEST_VERIFY(get<0>(complexPtrTuple) != nullptr);
 		EATEST_VERIFY(get<2>(complexPtrTuple)[2] == complexVec.get<2>()[2]);
 
 		tuple<int&, float&, bool&> complexRefTuple = complexVec.at(2);
+		tuple<int&, float&, bool&> complexRefTupleBracket = complexVec[2];
+		tuple<int&, float&, bool&> complexRefTupleFront = complexVec.front();
+		tuple<int&, float&, bool&> complexRefTupleBack = complexVec.back();
 		EATEST_VERIFY(get<2>(complexRefTuple) == complexVec.get<2>()[2]);
-		EATEST_VERIFY(get<1>(complexVec[2]) == 1.0f);
-		EATEST_VERIFY(get<1>(complexVec.front()) == 2.0f);
-		EATEST_VERIFY(get<1>(complexVec.back()) == 3.0f);
+		EATEST_VERIFY(get<1>(complexRefTupleBracket) == 1.0f);
+		EATEST_VERIFY(get<1>(complexRefTupleFront) == 2.0f);
+		EATEST_VERIFY(get<1>(complexRefTupleBack) == 0.0f);
 
 		// verify the equivalent accessors for the const container exist/compile
 		{
 			const fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, bool>& constVec = complexVec;
-			EATEST_VERIFY(constVec.size() == 4);
+			EATEST_VERIFY(constVec.size() == 5);
 			EATEST_VERIFY(constVec.capacity() >= constVec.size());
 			EATEST_VERIFY(constVec.empty() == false);
 			EATEST_VERIFY(constVec.get<1>() == constVec.get<float>());
@@ -63,16 +81,22 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(get<2>(constPtrTuple)[2] == constVec.get<2>()[2]);
 
 			tuple<const int&, const float&, const bool&> constRefTuple = constVec.at(2);
+			tuple<const int&, const float&, const bool&> constRefTupleBracket = constVec[2];
+			tuple<const int&, const float&, const bool&> constRefTupleFront = constVec.front();
+			tuple<const int&, const float&, const bool&> constRefTupleBack = constVec.back();
 			EATEST_VERIFY(get<2>(constRefTuple) == constVec.get<2>()[2]);
-			EATEST_VERIFY(get<1>(constVec[2]) == 1.0f);
-			EATEST_VERIFY(get<1>(constVec.front()) == 2.0f);
-			EATEST_VERIFY(get<1>(constVec.back()) == 3.0f);
+			EATEST_VERIFY(get<1>(constRefTupleBracket) == 1.0f);
+			EATEST_VERIFY(get<1>(constRefTupleFront) == 2.0f);
+			EATEST_VERIFY(get<1>(constRefTupleBack) == 0.0f);
 		}
+	}
 
+	// test the memory layouts work for aligned structures
+	{
 		__declspec(align(16)) struct AlignTestVec4
 		{
 			float a[4];
-			AlignTestVec4() : a{1.0f, 2.0f, 3.0f, 4.0f} {}
+			AlignTestVec4() :a{ 1.0f, 2.0f, 3.0f, 4.0f } {}
 		};
 
 		struct AlignTestByte3
@@ -92,6 +116,11 @@ int TestFixedTupleVectorVariant()
 		alignElementVec.push_back();
 		alignElementVec.push_back();
 		alignElementVec.push_back();
+		alignElementVec.push_back();
+
+		auto alignDataPtrs = alignElementVec.data();
+		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestVec4>() % 16 == 0);
+		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestFourByte>() % 8 == 0);
 	}
 
 	// Test various modifications
@@ -99,21 +128,36 @@ int TestFixedTupleVectorVariant()
 		TestObject::Reset();
 
 		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> testVec;
+		testVec.reserve(10);
 		for (int i = 0; i < 10; ++i)
 		{
 			testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
 		}
 		testVec.pop_back();
 		EATEST_VERIFY(testVec.size() == 9);
+
+		// test resize that does destruction of objects
 		testVec.resize(5);
 		EATEST_VERIFY(testVec.size() == 5);
+		EATEST_VERIFY(TestObject::sTOCount == 5);
+		EATEST_VERIFY((!testVec.has_overflowed() && testVec.capacity() == nodeCount) || testVec.capacity() == 10);
+
+		// test resize that does default construction of objects
 		testVec.resize(10);
 		EATEST_VERIFY(testVec.size() == 10);
+		EATEST_VERIFY(TestObject::sTOCount == 10);
 
-		testVec.resize(15, true, TestObject(5), 5.0f);
-		EATEST_VERIFY(testVec.size() == 15);
+		// test resize with args that does destruction of objects
+		testVec.resize(5, true, TestObject(5), 5.0f);
+		EATEST_VERIFY(testVec.size() == 5);
+		EATEST_VERIFY(TestObject::sTOCount == 5);
+
+		// test resize with args that does construction of objects
+		testVec.resize(10, true, TestObject(5), 5.0f);
+		EATEST_VERIFY(testVec.size() == 10);
+		EATEST_VERIFY(TestObject::sTOCount == 10);
 		EATEST_VERIFY(testVec.validate());
-		for (unsigned int i = 10; i < 15; ++i)
+		for (unsigned int i = 5; i < 10; ++i)
 		{
 			EATEST_VERIFY(testVec.get<0>()[i] == true);
 			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
@@ -122,44 +166,59 @@ int TestFixedTupleVectorVariant()
 
 		{
 			tuple<bool, TestObject, float> resizeTup(true, TestObject(10), 10.0f);
-			testVec.resize(20, resizeTup);
-		}
-		EATEST_VERIFY(testVec.size() == 20);
-		for (unsigned int i = 10; i < 15; ++i)
-		{
-			EATEST_VERIFY(testVec.get<0>()[i] == true);
-			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
-			EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
-		}
-		for (unsigned int i = 15; i < 20; ++i)
-		{
-			EATEST_VERIFY(testVec.get<0>()[i] == true);
-			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(10));
-			EATEST_VERIFY(testVec.get<2>()[i] == 10.0f);
+			// test resize with tuple that does destruction of objects
+			testVec.resize(10, resizeTup);
+			EATEST_VERIFY(testVec.size() == 10);
+			EATEST_VERIFY(TestObject::sTOCount == 10 + 1);
+
+			// test resize with tuple that does construction of objects
+			testVec.resize(15, resizeTup);
+			EATEST_VERIFY(testVec.size() == 15);
+			EATEST_VERIFY(TestObject::sTOCount == 15 + 1);
+
+			EATEST_VERIFY(testVec.validate());
+			for (unsigned int i = 5; i < 10; ++i)
+			{
+				EATEST_VERIFY(testVec.get<0>()[i] == true);
+				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
+			}
+			for (unsigned int i = 10; i < 15; ++i)
+			{
+				EATEST_VERIFY(testVec.get<0>()[i] == get<0>(resizeTup));
+				EATEST_VERIFY(testVec.get<1>()[i] == get<1>(resizeTup));
+				EATEST_VERIFY(testVec.get<2>()[i] == get<2>(resizeTup));
+			}
 		}
 
-		testVec.push_back();
+		// test other modifiers
 		testVec.pop_back();
-		EATEST_VERIFY(testVec.capacity() != 20);
-
+		EATEST_VERIFY(testVec.size() == 14);
+		EATEST_VERIFY(TestObject::sTOCount == 14); // down 2 from last sTOCount check - resizeTup dtor and pop_back
+		
 		if (testVec.can_overflow())
 		{
 			testVec.shrink_to_fit();
-			EATEST_VERIFY(testVec.capacity() == 20);
+			EATEST_VERIFY(testVec.capacity() == testVec.size());
 		}
+		EATEST_VERIFY(testVec.validate());
 
 		testVec.clear();
 		EATEST_VERIFY(testVec.empty());
 		EATEST_VERIFY(testVec.validate());
 		EATEST_VERIFY(TestObject::IsClear());
-		TestObject::Reset();
 
 		if (testVec.has_overflowed())
 		{
 			testVec.shrink_to_fit();
 			EATEST_VERIFY(testVec.capacity() == 0);
-			EATEST_VERIFY(testVec.validate());
 		}
+		EATEST_VERIFY(testVec.validate());
+		TestObject::Reset();
+	}
+
+	{
+		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> testVec;
 
 		// convoluted inserts to get "0, 1, 2, 3, 4, 5, 6" on the floats/testobject's
 		auto testVecIter = testVec.insert(testVec.begin(), true, TestObject(5), 5.0f);
