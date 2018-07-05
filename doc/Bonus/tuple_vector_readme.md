@@ -132,7 +132,7 @@ T* get<T>()
 // e.g. bool* get<bool>(), float* get<float>(), and Vec3* get<Vec3>()
 ```
 
-And push_back(...) has the following overloads, accepting either values or tuples as needed.
+And `push_back(...)` has the following overloads, accepting either values or tuples as needed.
 
 ```
 tuple<bool&, float&, Vec3&> push_back()
