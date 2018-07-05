@@ -1885,12 +1885,14 @@ int TestTypeTraits()
 	
 	// is_final
 
-	static_assert(std::is_final<FinalStruct>::value == is_final<FinalStruct>::value, "final struct not correctly detected");
-	static_assert(std::is_final<FinalClass>::value == is_final<FinalClass>::value, "final class not correctly detected");
-	static_assert(std::is_final<Enum>::value == is_final<Enum>::value, "enum not correctly detected");
-	static_assert(std::is_final<int>::value == is_final<int>::value, "int not correctly detected");
-	static_assert(std::is_final<Struct>::value == is_final<Struct>::value, "non-final struct not correctly detected");
-	static_assert(std::is_final<Class>::value == is_final<Class>::value, "non-final class not correctly detected");
+	#if (EA_COMPILER_HAS_FEATURE(is_final))
+		static_assert(std::is_final<FinalStruct>::value == eastl::is_final<FinalStruct>::value, "final struct not correctly detected");
+		static_assert(std::is_final<FinalClass>::value == eastl::is_final<FinalClass>::value, "final class not correctly detected");
+		static_assert(std::is_final<Enum>::value == eastl::is_final<Enum>::value, "enum not correctly detected");
+		static_assert(std::is_final<int>::value == eastl::is_final<int>::value, "int not correctly detected");
+		static_assert(std::is_final<Struct>::value == eastl::is_final<Struct>::value, "non-final struct not correctly detected");
+		static_assert(std::is_final<Class>::value == eastl::is_final<Class>::value, "non-final class not correctly detected");
+	#endif
 
 	return nErrorCount;
 }
