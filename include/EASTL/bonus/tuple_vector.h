@@ -950,7 +950,6 @@ public:
 		{
 			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + n,
 					           TupleVecLeaf<Indices, Ts>::mpData + oldNumElements)...);
-
 		}
 	}
 
@@ -1109,7 +1108,7 @@ public:
 		return at(size() - 1); 
 	}
 
-	template<size_t I>
+	template <size_t I>
 	tuplevec_element_t<I, Ts...>* get() 
 	{
 		typedef tuplevec_element_t<I, Ts...> Element;
@@ -1122,7 +1121,7 @@ public:
 		return TupleVecLeaf<I, Element>::mpData;
 	}
 
-	template<typename T>
+	template <typename T>
 	T* get() 
 	{ 
 		typedef tuplevec_index<T, TupleTypes<Ts...>> Index;
