@@ -274,14 +274,16 @@ int TestTupleVector()
 			// test insert on empty vector that doesn't cause growth
 			toArg = TestObject(3);
 			floatArg = 3.0f;
-			testVec.insert(testVec.begin(), 3, boolArg, toArg, floatArg);
+			auto insertIter = testVec.insert(testVec.begin(), 3, boolArg, toArg, floatArg);
 			EATEST_VERIFY(testVec.size() == 3);
+			EATEST_VERIFY(insertIter == testVec.begin());
 
 			// test insert to end of vector that doesn't cause growth
 			toArg = TestObject(5);
 			floatArg = 5.0f;
-			testVec.insert(testVec.end(), 3, boolArg, toArg, floatArg);
+			insertIter = testVec.insert(testVec.end(), 3, boolArg, toArg, floatArg);
 			EATEST_VERIFY(testVec.size() == 6);
+			EATEST_VERIFY(insertIter == testVec.begin() + 3);
 
 			// test insert to middle of vector that doesn't cause growth
 			toArg = TestObject(4);
@@ -527,71 +529,175 @@ int TestTupleVector()
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
 	}
 
+	// Test assign
+	{
+		{
+			tuple_vector<bool, TestObject, float> testVec;
 
-	//{
-	//	// eliminate 0, 2, 4, 6 from the above list to get 1, 3, 5
-	//	testVecIter = testVec.erase(testVec.begin());
-	//	testVecIter = testVec.erase(testVecIter + 1); 
-	//	testVec.erase(testVecIter + 1);
-	//	testVec.erase(testVec.end() - 1);
-	//	for (unsigned int i = 0; i < testVec.size(); ++i)
-	//	{
-	//		EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i * 2 + 1));
-	//	}
-	//	EATEST_VERIFY(TestObject::sTOCount == testVec.size());
-	//	
-	//	// remove 1, 3 from the list and make sure 5 is present, then remove the rest of the list
-	//	testVec.erase(testVec.begin(), testVec.begin() + 2);
-	//	EATEST_VERIFY(testVec.size() == 1);
-	//	EATEST_VERIFY(testVec.get<1>()[0] == TestObject(5));
-	//	testVec.erase(testVec.begin(), testVec.end());
-	//	EATEST_VERIFY(testVec.empty());
-	//	EATEST_VERIFY(testVec.validate());
+			// test assign that grows the capacity
+			testVec.assign(20, true, TestObject(1), 1.0f);
+			EATEST_VERIFY(testVec.size() == 20);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(1), 1.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 20);
 
-	//	EATEST_VERIFY(TestObject::IsClear());
+			// test assign that shrinks the vector
+			testVec.assign(10, true, TestObject(2), 2.0f);
+			EATEST_VERIFY(testVec.size() == 10);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(2), 2.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 10);
 
-	//	// erase_unsorted test
-	//	for (int i = 0; i < 10; ++i)
-	//	{
-	//		testVec.push_back(i % 3 == 0, TestObject(i), (float)i);
-	//	}
+			// test assign for when there's enough capacity
+			testVec.assign(15, true, TestObject(3), 3.0f);
+			EATEST_VERIFY(testVec.size() == 15);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(3), 3.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 15);
+		}
 
-	//	testVec.erase_unsorted(testVec.begin() + 0);
-	//	EATEST_VERIFY(testVec.size() == 9);
-	//	EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
-	//	EATEST_VERIFY(testVec.get<1>()[1] == TestObject(1));
-	//	EATEST_VERIFY(testVec.get<1>()[8] == TestObject(8));
+		{
+			tuple<bool, TestObject, float> srcTup;
+			tuple_vector<bool, TestObject, float> testVec;
 
-	//	testVec.erase_unsorted(testVec.begin() + 5);
-	//	EATEST_VERIFY(testVec.size() == 8);
-	//	EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
-	//	EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
-	//	EATEST_VERIFY(testVec.get<1>()[7] == TestObject(7));
+			// test assign from tuple that grows the capacity
+			srcTup = make_tuple(true, TestObject(1), 1.0f);
+			testVec.assign(20, srcTup);
+			EATEST_VERIFY(testVec.size() == 20);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcTup);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 20 + 1);
 
-	//	testVec.erase_unsorted(testVec.begin() + 7);
-	//	EATEST_VERIFY(testVec.size() == 7);
-	//	EATEST_VERIFY(testVec.get<1>()[0] == TestObject(9));
-	//	EATEST_VERIFY(testVec.get<1>()[5] == TestObject(8));
-	//	EATEST_VERIFY(testVec.get<1>()[6] == TestObject(6));
-	//	EATEST_VERIFY(testVec.validate());
+			// test assign from tuple that shrinks the vector
+			srcTup = make_tuple(true, TestObject(2), 2.0f);
+			testVec.assign(10, srcTup);
+			EATEST_VERIFY(testVec.size() == 10);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcTup);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 10 + 1);
 
-	//	testVec.erase(testVec.begin(), testVec.end());
-	//	EATEST_VERIFY(TestObject::IsClear());
+			// test assign from tuple for when there's enough capacity
+			srcTup = make_tuple(true, TestObject(3), 3.0f);
+			testVec.assign(15, srcTup);
+			EATEST_VERIFY(testVec.size() == 15);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcTup);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 15 + 1);
+		}
 
-	//	// test tuple_vector dtor
-	//	{
-	//		tuple_vector<bool, TestObject, float> dtorCheck;
-	//		for (int i = 0; i < 10; ++i)
-	//		{
-	//			dtorCheck.push_back(i % 3 == 0, TestObject(i), (float)i);
-	//		}
-	//	}
-	//	EATEST_VERIFY(TestObject::IsClear());
+		{
+			tuple_vector<bool, TestObject, float> srcVec;
+			for (unsigned int i = 0; i < 20; ++i)
+			{
+				srcVec.push_back(true, TestObject(i), (float)i);
+			}
+			tuple_vector<bool, TestObject, float> testVec;
 
-	//	TestObject::Reset();
-	//}
+			// test assign from iter range that grows the capacity
+			testVec.assign(srcVec.begin() + 5, srcVec.begin() + 15);
+			EATEST_VERIFY(testVec.size() == 10);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcVec[i+5]);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 10 + 20);
+
+			// test assign from iter range that shrinks the vector
+			testVec.assign(srcVec.begin() + 2, srcVec.begin() + 7);
+			EATEST_VERIFY(testVec.size() == 5);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcVec[i + 2]);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 5 + 20);
+
+			// test assign from iter range for when there's enough capacity
+			testVec.assign(srcVec.begin() + 5, srcVec.begin() + 15);
+			EATEST_VERIFY(testVec.size() == 10);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == srcVec[i + 5]);
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 10 + 20);
+		}
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+
+	// Test erase functions
+	{
+		{
+			tuple_vector<bool, TestObject, float> srcVec;
+			for (unsigned int i = 0; i < 20; ++i)
+			{
+				srcVec.push_back(true, TestObject(i), (float)i);
+			}
+			tuple_vector<bool, TestObject, float> testVec;
+
+			// test erase on an iter range
+			testVec.assign(srcVec.begin(), srcVec.end());
+			auto eraseIter = testVec.erase(testVec.begin() + 5, testVec.begin() + 10);
+			EATEST_VERIFY(eraseIter == testVec.begin() + 5);
+			EATEST_VERIFY(testVec.size() == 15);
+			EATEST_VERIFY(testVec.validate());
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				if (i < 5)
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i), (float)i));
+				else
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i + 5), (float)(i + 5)));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 15 + 20);
+
+			// test erase on one position
+			testVec.assign(srcVec.begin(), srcVec.end());
+			eraseIter = testVec.erase(testVec.begin() + 5);
+			EATEST_VERIFY(eraseIter == testVec.begin() + 5);
+			EATEST_VERIFY(testVec.size() == 19);
+			EATEST_VERIFY(testVec.validate());
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				if (i < 5)
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i), (float)i));
+				else
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i + 1), (float)(i + 1)));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 19 + 20);
+
+			// test erase_unsorted
+			testVec.assign(srcVec.begin(), srcVec.end());
+			eraseIter = testVec.erase_unsorted(testVec.begin() + 5);
+			EATEST_VERIFY(eraseIter == testVec.begin() + 5);
+			EATEST_VERIFY(testVec.size() == 19);
+			EATEST_VERIFY(testVec.validate());
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				if (i != 5)
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i), (float)i));
+				else
+					EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(19), (float)(19)));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 19 + 20);
+		}
+		EATEST_VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
 
 	// Test multitude of constructors
 	{
