@@ -763,6 +763,7 @@ int TestTupleVector()
 			srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
 		}
 
+		// copy entire tuple_vector in ctor
 		{
 			tuple_vector<bool, TestObject, float> ctorFromConstRef(srcVec);
 			EATEST_VERIFY(ctorFromConstRef.size() == 10);
@@ -775,6 +776,7 @@ int TestTupleVector()
 			}
 		}
 
+		// copy entire tuple_vector via assignment
 		{
 			tuple_vector<bool, TestObject, float> ctorFromAssignment;
 			ctorFromAssignment = srcVec;
@@ -788,6 +790,7 @@ int TestTupleVector()
 			}
 		}
 
+		// ctor tuple_vector with iterator range
 		{
 			tuple_vector<bool, TestObject, float> ctorFromIters(srcVec.begin() + 2, srcVec.begin() + 7);
 			EATEST_VERIFY(ctorFromIters.size() == 5);
@@ -800,6 +803,7 @@ int TestTupleVector()
 			}
 		}
 
+		// ctor tuple_vector with initial size
 		{
 			tuple_vector<bool, TestObject, float> ctorFromFill(10);
 			EATEST_VERIFY(ctorFromFill.size() == 10);
@@ -812,6 +816,7 @@ int TestTupleVector()
 			}
 		}
 
+		// ctor tuple_vector with initial size and args
 		{
 			tuple_vector<bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f);
 			EATEST_VERIFY(ctorFromFillArgs.size() == 10);
@@ -824,6 +829,7 @@ int TestTupleVector()
 			}
 		}
 
+		// ctor tuple_vector with initial size and tuple
 		{
 			tuple<bool, TestObject, float> tup(true, TestObject(5), 5.0f);
 			tuple_vector<bool, TestObject, float> ctorFromFillTup(10, tup);
@@ -836,6 +842,47 @@ int TestTupleVector()
 				EATEST_VERIFY(ctorFromFillTup.get<2>()[i] == 5.0f);
 			}
 		}
+
+		// ctor tuple_Vector with custom mallocator
+		MallocAllocator ma;
+		{
+			tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorWithAlloc(ma);
+			tuple_vector<bool, TestObject, float> ctorDefault;
+
+			ctorWithAlloc.push_back();
+			ctorDefault.push_back();
+
+			EATEST_VERIFY(ctorWithAlloc == ctorDefault);
+			EATEST_VERIFY(ctorWithAlloc.validate());
+		}
+
+		// ctor tuple_vector_alloc with copy (from diff. allocator)
+		{
+			tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorFromConstRef(srcVec, ma);
+			EATEST_VERIFY(ctorFromConstRef.size() == 10);
+			EATEST_VERIFY(ctorFromConstRef.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+			}
+			EATEST_VERIFY(ctorFromConstRef.validate());
+		}
+
+		// ctor tuple_vector with initial size and args
+		{
+			tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f, ma);
+			EATEST_VERIFY(ctorFromFillArgs.size() == 10);
+			EATEST_VERIFY(ctorFromFillArgs.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+			}
+		}
+
 		srcVec.clear();
 		EATEST_VERIFY(TestObject::IsClear());
 
