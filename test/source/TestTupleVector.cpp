@@ -7,9 +7,25 @@
 #include "EASTLTest.h"
 
 #include <EASTL/bonus/tuple_vector.h>
-#include <EASTL/unique_ptr.h>
 
 using namespace eastl;
+
+struct MoveOnlyType
+{
+	MoveOnlyType() = delete;
+	MoveOnlyType(int val) : mVal(val) {}
+	MoveOnlyType(const MoveOnlyType&) = delete;
+	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
+	MoveOnlyType& operator=(const MoveOnlyType&) = delete;
+	MoveOnlyType& operator=(MoveOnlyType&& x)
+	{
+		mVal = x.mVal;
+		x.mVal = 0;
+		return *this;
+	}
+
+	int mVal;
+};
 
 int TestTupleVector()
 {
@@ -655,21 +671,20 @@ int TestTupleVector()
 	{
 		TestObject::Reset();
 		{
-			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v1;
-			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v2;
-			int testValues[] = {42, 43, 44, 45, 46, 47};
+			tuple_vector<int, MoveOnlyType, TestObject> v1;
+			tuple_vector<int, MoveOnlyType, TestObject> v2;
 
 			// add some data in the vector so we can move it to the other vector.
 			v1.reserve(5);
 			for (int i = 0; i < 3; ++i)
 			{
-				auto emplacedTup = v1.emplace_back(i * 2 + 1, eastl::make_unique<int>(testValues[i * 2]), TestObject(i * 2 + 1));
+				auto emplacedTup = v1.emplace_back(i * 2 + 1, MoveOnlyType(i * 2 + 1), TestObject(i * 2 + 1));
 			}
-			v1.emplace(v1.end(), 6, eastl::make_unique<int>(testValues[5]), TestObject(6));
-			v1.emplace(v1.begin() + 1, 2, eastl::make_unique<int>(testValues[1]), TestObject(2));
-			v1.emplace(v1.begin() + 3, 4, eastl::make_unique<int>(testValues[3]), TestObject(4));
+			v1.emplace(v1.end(), 6, MoveOnlyType(6), TestObject(6));
+			v1.emplace(v1.begin() + 1, 2, MoveOnlyType(2), TestObject(2));
+			v1.emplace(v1.begin() + 3, 4, MoveOnlyType(4), TestObject(4));
 
-			tuple<int&, eastl::unique_ptr<int>&, TestObject&> movedTup = v1.at(0);
+			tuple<int&, MoveOnlyType&, TestObject&> movedTup = v1.at(0);
 			EATEST_VERIFY(v1.validate());
 			EATEST_VERIFY(get<0>(movedTup) == 1);
 			EATEST_VERIFY(get<0>(*v1.begin()) == 1);
@@ -694,8 +709,8 @@ int TestTupleVector()
 			EATEST_VERIFY(v1.size() == 6);
 			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
 			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
-			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+			EATEST_VERIFY(v1.get<1>()[0].mVal == 0);
+			EATEST_VERIFY(v2.get<1>()[0].mVal == 1);
 
 			v1.shrink_to_fit();
 			v2.shrink_to_fit();
@@ -705,16 +720,16 @@ int TestTupleVector()
 			EATEST_VERIFY(v1.size() == 6);
 			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
 			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(v1.get<1>()[0].get() == nullptr);
-			EATEST_VERIFY(*v2.get<1>()[0].get() == testValues[0]);
+			EATEST_VERIFY(v1.get<1>()[0].mVal == 0);
+			EATEST_VERIFY(v2.get<1>()[0].mVal == 1);
 
-			tuple_vector<int, eastl::unique_ptr<int>, TestObject> v3(eastl::move(v2));
+			tuple_vector<int, MoveOnlyType, TestObject> v3(eastl::move(v2));
 			EATEST_VERIFY(v2.validate());
 			EATEST_VERIFY(v3.validate());
 			EATEST_VERIFY(v2.size() == 0);
 			EATEST_VERIFY(v3.size() == 1);
 			EATEST_VERIFY(v3.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(*v3.get<1>()[0].get() == testValues[0]);
+			EATEST_VERIFY(v3.get<1>()[0].mVal == 1);
 		}
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
