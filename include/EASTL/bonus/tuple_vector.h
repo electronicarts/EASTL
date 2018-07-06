@@ -901,7 +901,7 @@ public:
 			size_type firstIdx = first - cbegin();
 			size_type lastIdx = last - cbegin();
 			size_type oldNumElements = mNumElements;
-			size_type newNumElements = mNumElements - (lastIdx - firstIdx);
+			size_type newNumElements = oldNumElements - (lastIdx - firstIdx);
 			mNumElements = newNumElements;
 			swallow(DoMove(TupleVecLeaf<Indices, Ts>::mpData + lastIdx,
 					       TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
@@ -909,7 +909,7 @@ public:
 			swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements,
 					           TupleVecLeaf<Indices, Ts>::mpData + oldNumElements)...);
 		}
-		return first;
+		return begin() + first.mIndex;
 	}
 	
 	iterator erase_unsorted(const_iterator pos)
@@ -919,14 +919,14 @@ public:
 			EASTL_FAIL_MSG("tuple_vector::erase_unsorted -- invalid iterator");
 #endif
 		size_type oldNumElements = mNumElements;
-		size_type newNumElements = mNumElements - 1;
+		size_type newNumElements = oldNumElements - 1;
 		mNumElements = newNumElements;
 		swallow(DoMove(TupleVecLeaf<Indices, Ts>::mpData + newNumElements,
 				       TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
 				       TupleVecLeaf<Indices, Ts>::mpData + (pos - begin()))...);
 		swallow(DoDestruct(TupleVecLeaf<Indices, Ts>::mpData + newNumElements,
 				           TupleVecLeaf<Indices, Ts>::mpData + oldNumElements)...);
-		return pos;
+		return begin() + pos.mIndex;
 	}
 
 	void resize(size_type n)
