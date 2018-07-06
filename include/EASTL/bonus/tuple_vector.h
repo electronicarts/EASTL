@@ -1015,8 +1015,8 @@ public:
 	void push_back(const_reference_tuple tup) { push_back(eastl::get<Indices>(tup)...); }
 	void push_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))...); }
 
-	void emplace_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))..); }
-	void emplace(const_iterator pos, rvalue_tuple tup) { emplace(pos, eastl::move(eastl::get<Indices>(tup))..); }
+	void emplace_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))...); }
+	void emplace(const_iterator pos, rvalue_tuple tup) { emplace(pos, eastl::move(eastl::get<Indices>(tup))...); }
 
 	iterator insert(const_iterator pos, const Ts&... args) { return insert(pos, 1, args...); }
 	iterator insert(const_iterator pos, Ts&&... args) { return emplace(pos, eastl::move(args)...); }
