@@ -1322,7 +1322,7 @@ namespace eastl
 				// If this is the last merge, just do it.
 				if((stack_curr == 2) && ((run_stack[0].length + run_stack[1].length) == size))
 				{
-					tim_sort_merge(first, run_stack, stack_curr, pBuffer, compare);
+					tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, compare);
 					run_stack[0].length += run_stack[1].length;
 					stack_curr--;
 
@@ -1335,7 +1335,7 @@ namespace eastl
 				// Check if the invariant is off for a run_stack of 2 elements.
 				else if((stack_curr == 2) && (run_stack[0].length <= run_stack[1].length))
 				{
-					tim_sort_merge(first, run_stack, stack_curr, pBuffer, compare);
+					tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, compare);
 					run_stack[0].length += run_stack[1].length;
 					stack_curr--;
 
@@ -1356,7 +1356,7 @@ namespace eastl
 				{
 					if(A < C)
 					{
-						tim_sort_merge(first, run_stack, stack_curr - 1, pBuffer, compare);
+						tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr - 1, pBuffer, compare);
 
 						stack_curr--;
 						run_stack[stack_curr - 2].length += run_stack[stack_curr - 1].length;   // Merge A and B.
@@ -1370,7 +1370,7 @@ namespace eastl
 					}
 					else
 					{
-						tim_sort_merge(first, run_stack, stack_curr, pBuffer, compare);                  // Merge B and C.
+						tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, compare);                  // Merge B and C.
 
 						stack_curr--;
 						run_stack[stack_curr - 1].length += run_stack[stack_curr].length;
@@ -1383,7 +1383,7 @@ namespace eastl
 				}
 				else if(B <= C) // Check second invariant
 				{
-					tim_sort_merge(first, run_stack, stack_curr, pBuffer, compare);
+					tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, compare);
 
 					stack_curr--;
 					run_stack[stack_curr - 1].length += run_stack[stack_curr].length;       // Merge B and C.
@@ -1409,7 +1409,7 @@ namespace eastl
 		bool tim_sort_add_run(tim_sort_run* run_stack, RandomAccessIterator first, T* pBuffer, const intptr_t size, const intptr_t minrun, 
 							  intptr_t& len, intptr_t& run, intptr_t& curr, intptr_t& stack_curr, StrictWeakOrdering compare)
 		{
-			len = tim_sort_count_run(first, curr, size, compare); // This will count the length of the run and reverse the run if it is backwards.
+			len = tim_sort_count_run<RandomAccessIterator, StrictWeakOrdering>(first, curr, size, compare); // This will count the length of the run and reverse the run if it is backwards.
 			run = minrun;
 
 			if(run < minrun)            // Always make runs be of minrun length (we'll sort the additional data as needed below)
@@ -1420,7 +1420,7 @@ namespace eastl
 
 			if(run > len)               // If there is any additional data we want to sort to bring up the run length to minrun.
 			{
-				insertion_sort_already_started(first + curr, first + curr + run, first + curr + len, compare);
+				insertion_sort_already_started<RandomAccessIterator, StrictWeakOrdering>(first + curr, first + curr + run, first + curr + len, compare);
 				len = run;
 			}
 
@@ -1440,7 +1440,7 @@ namespace eastl
 			{
 				while(stack_curr > 1) // If there is any more than one run... (else all the data is sorted)
 				{
-					tim_sort_merge(first, run_stack, stack_curr, pBuffer, compare);
+					tim_sort_merge<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, compare);
 
 					run_stack[stack_curr - 2].length += run_stack[stack_curr - 1].length;
 					stack_curr--;
@@ -1517,20 +1517,20 @@ namespace eastl
 				memset(run_stack, 0, sizeof(run_stack));
 			#endif
 
-			if(tim_sort_add_run(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
+			if(tim_sort_add_run<RandomAccessIterator, T, StrictWeakOrdering>(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
 				return;
-			if(tim_sort_add_run(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
+			if(tim_sort_add_run<RandomAccessIterator, T, StrictWeakOrdering>(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
 				return;
-			if(tim_sort_add_run(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
+			if(tim_sort_add_run<RandomAccessIterator, T, StrictWeakOrdering>(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
 				return;
 
 			for(;;)
 			{
 				if(timsort_check_invariant(run_stack, stack_curr))
-					stack_curr = tim_sort_collapse(first, run_stack, stack_curr, pBuffer, size, compare);
+					stack_curr = tim_sort_collapse<RandomAccessIterator, T, StrictWeakOrdering>(first, run_stack, stack_curr, pBuffer, size, compare);
 				else
 				{
-					if(tim_sort_add_run(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
+					if(tim_sort_add_run<RandomAccessIterator, T, StrictWeakOrdering>(run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))
 						break;
 				}
 			}
@@ -1639,7 +1639,7 @@ namespace eastl
 
 				// If a single bucket contains all of the elements, then don't bother redistributing all elements to the
 				// same bucket.
-				if (bucketSize[((extractKey(*srcFirst) >> j) & bucketMask)] == last - srcFirst)
+				if (bucketSize[((extractKey(*srcFirst) >> j) & bucketMask)] == uint32_t(last - srcFirst))
 				{
 					// Set flag to ensure histogram is computed for next digit position.
 					doSeparateHistogramCalculation = true;
@@ -1658,7 +1658,6 @@ namespace eastl
 							bucketPosition[i + 1] = bucketPosition[i] + bucketSize[i];
 						}
 
-						uint32_t jNext = j + DigitBits;
 						for (temp = srcFirst; temp != last; ++temp)
 						{
 							IntegerType key = extractKey(*temp);

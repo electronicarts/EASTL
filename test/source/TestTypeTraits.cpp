@@ -454,12 +454,15 @@ typedef void (*FunctionVoidVoidPtr)();
 namespace
 {
 	const eastl::string gEmptyStringInstance("");
+
 	const eastl::integral_constant<int*, nullptr> gIntNullptrConstant;
+	static_assert(gIntNullptrConstant() == nullptr, "");
 }
 
 int TestTypeTraits()
 {
 	int nErrorCount = 0;
+
 
 	// static_min / static_max
 	#if EASTL_TYPE_TRAIT_static_min_CONFORMANCE
@@ -520,6 +523,24 @@ int TestTypeTraits()
 
 	static_assert(is_integral<float>::value == false, "is_integral failure");
 	EATEST_VERIFY(GetType(is_integral<float>()) == false);
+
+	static_assert(is_integral<bool>::value,               "is_integral failure");
+	static_assert(is_integral<char16_t>::value,           "is_integral failure");
+	static_assert(is_integral<char32_t>::value,           "is_integral failure");
+	static_assert(is_integral<char>::value,               "is_integral failure");
+	static_assert(is_integral<int>::value,                "is_integral failure");
+	static_assert(is_integral<long long>::value,          "is_integral failure");
+	static_assert(is_integral<long>::value,               "is_integral failure");
+	static_assert(is_integral<short>::value,              "is_integral failure");
+	static_assert(is_integral<signed char>::value,        "is_integral failure");
+	static_assert(is_integral<unsigned char>::value,      "is_integral failure");
+	static_assert(is_integral<unsigned int>::value,       "is_integral failure");
+	static_assert(is_integral<unsigned long long>::value, "is_integral failure");
+	static_assert(is_integral<unsigned long>::value,      "is_integral failure");
+	static_assert(is_integral<unsigned short>::value,     "is_integral failure");
+#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled...
+	static_assert(is_integral<wchar_t>::value,            "is_integral failure");
+#endif
 
 
 	// is_floating_point
@@ -1822,7 +1843,37 @@ int TestTypeTraits()
 		#endif
 	}
 
-	static_assert(gIntNullptrConstant == nullptr, "integral constant with value of nullptr failure");
+	// has_unique_object_representations
+	{
+		static_assert( has_unique_object_representations<bool>::value,               "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<char16_t>::value,           "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<char32_t>::value,           "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<char>::value,               "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<int>::value,                "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<long long>::value,          "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<long>::value,               "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<short>::value,              "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<signed char>::value,        "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<unsigned char>::value,      "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<unsigned int>::value,       "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<unsigned long long>::value, "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<unsigned long>::value,      "has_unique_object_representations failure");
+		static_assert( has_unique_object_representations<unsigned short>::value,     "has_unique_object_representations failure");
+		static_assert(!has_unique_object_representations<void>::value,               "has_unique_object_representations failure");
+#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled...
+		static_assert( has_unique_object_representations<wchar_t>::value,            "has_unique_object_representations failure");
+#endif
+
+	#if EASTL_TYPE_TRAIT_has_unique_object_representations_CONFORMANCE
+		{
+			struct packed_type { int a; };
+			static_assert( has_unique_object_representations<packed_type>::value, "has_unique_object_representations failure");
+
+			struct padded_type { int a; char b; int c; };
+			static_assert(!has_unique_object_representations<padded_type>::value, "has_unique_object_representations failure");
+		}
+	#endif
+	}
 
 	return nErrorCount;
 }

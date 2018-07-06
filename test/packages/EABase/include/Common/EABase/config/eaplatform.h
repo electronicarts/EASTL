@@ -639,9 +639,11 @@
 // implementation will return. This should be used when writing custom
 // allocators to ensure that the alignment matches that of malloc
 #ifndef EA_PLATFORM_MIN_MALLOC_ALIGNMENT
-	#if defined EA_PLATFORM_APPLE
+	#if defined(EA_PLATFORM_APPLE)
 		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT 16
-	#elif defined EA_PLATFORM_ANDROID
+	#elif defined(EA_PLATFORM_ANDROID) && defined(EA_PROCESSOR_ARM)
+		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT 8
+	#elif defined(EA_PLATFORM_ANDROID) && defined(EA_PROCESSOR_X86_64)
 		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT 8
 	#else
 		#define EA_PLATFORM_MIN_MALLOC_ALIGNMENT (EA_PLATFORM_PTR_SIZE * 2)
@@ -657,7 +659,7 @@
 //    2 - supported and fast.
 //
 #ifndef EA_MISALIGNED_SUPPORT_LEVEL
-	#if defined(EA_PROCESSOR_X64) || defined(EA_PROCESSOR_X86_64)
+	#if defined(EA_PROCESSOR_X86_64)
 		#define EA_MISALIGNED_SUPPORT_LEVEL 2
 	#else
 		#define EA_MISALIGNED_SUPPORT_LEVEL 0

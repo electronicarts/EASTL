@@ -1090,153 +1090,77 @@ namespace eastl
 	#endif
 
 	#if EASTL_BEGIN_END_ENABLED
-		#if defined(EA_COMPILER_NO_DECLTYPE) // C++11 decltype
+		template <typename Container>
+		inline auto begin(Container& container) -> decltype(container.begin())
+		{    
+			return container.begin();
+		}
 
-			template <typename Container> 
-			inline typename Container::iterator begin(Container& container)
-			{    
-				return container.begin();
-			}
+		template <typename Container>
+		inline auto begin(const Container& container) -> decltype(container.begin())
+		{    
+			return container.begin();
+		}
 
-			template <typename Container>
-			inline typename Container::const_iterator begin(const Container& container)
-			{    
-				return container.begin();
-			}
+		template <typename Container>
+		inline auto cbegin(const Container& container) -> decltype(container.begin())
+		{    
+			return container.begin();
+		}
 
-			template <typename Container>
-			inline typename Container::const_iterator cbegin(const Container& container)
-			{    
-				return container.begin();
-			}
+		template <typename Container>
+		inline auto end(Container& container) -> decltype(container.end())
+		{
+			return container.end();
+		}
 
-			template <typename Container>
-			inline typename Container::iterator end(Container& container)
-			{
-				return container.end();
-			}
+		template <typename Container>
+		inline auto end(const Container& container) -> decltype(container.end())
+		{
+			return container.end();
+		}
 
-			template <typename Container>
-			inline typename Container::const_iterator end(const Container& container)
-			{
-				return container.end();
-			}
+		template <typename Container>
+		inline auto cend(const Container& container) -> decltype(container.end())
+		{
+			return container.end();
+		}
 
-			template <typename Container>
-			inline typename Container::const_iterator cend(const Container& container)
-			{
-				return container.end();
-			}
+		template <typename Container>
+		inline auto rbegin(Container& container) -> decltype(container.rbegin())
+		{
+			return container.rbegin();
+		}
 
-			template <typename Container>
-			inline typename Container::reverse_iterator rbegin(Container& container)
-			{
-				return container.rbegin();
-			}
+		template <typename Container>
+		inline auto rbegin(const Container& container) -> decltype(container.rbegin())
+		{
+			return container.rbegin();
+		}
 
-			template <typename Container>
-			inline typename Container::reverse_iterator rbegin(const Container& container)
-			{
-				return container.rbegin();
-			}
+		template <typename Container>
+		inline auto rend(Container& container) -> decltype(container.rend())
+		{
+			return container.rend();
+		}
 
-			template <typename Container>
-			inline typename Container::reverse_iterator rend(Container& container)
-			{
-				return container.rend();
-			}
+		template <typename Container>
+		inline auto rend(const Container& container) -> decltype(container.rend())
+		{
+			return container.rend();
+		}
 
-			template <typename Container>
-			inline typename Container::reverse_iterator rend(const Container& container)
-			{
-				return container.rend();
-			}
+		template <typename Container>
+		inline auto crbegin(const Container& container) -> decltype(eastl::rbegin(container))
+		{
+			return container.rbegin();
+		}
 
-			template <typename Container>
-			inline typename Container::const_reverse_iterator crbegin(const Container& container)
-			{
-				return container.rbegin();
-			}
-
-			template <typename Container>
-			inline typename Container::const_reverse_iterator crend(const Container& container)
-			{
-				return container.rend();
-			}
-		#else
-			template <typename Container>
-			inline auto begin(Container& container) -> decltype(container.begin())
-			{    
-				return container.begin();
-			}
-
-			template <typename Container>
-			inline auto begin(const Container& container) -> decltype(container.begin())
-			{    
-				return container.begin();
-			}
-
-			template <typename Container>
-			inline auto cbegin(const Container& container) -> decltype(container.begin())
-			{    
-				return container.begin();
-			}
-
-			template <typename Container>
-			inline auto end(Container& container) -> decltype(container.end())
-			{
-				return container.end();
-			}
-
-			template <typename Container>
-			inline auto end(const Container& container) -> decltype(container.end())
-			{
-				return container.end();
-			}
-
-			template <typename Container>
-			inline auto cend(const Container& container) -> decltype(container.end())
-			{
-				return container.end();
-			}
-
-			template <typename Container>
-			inline auto rbegin(Container& container) -> decltype(container.rbegin())
-			{
-				return container.rbegin();
-			}
-
-			template <typename Container>
-			inline auto rbegin(const Container& container) -> decltype(container.rbegin())
-			{
-				return container.rbegin();
-			}
-
-			template <typename Container>
-			inline auto rend(Container& container) -> decltype(container.rend())
-			{
-				return container.rend();
-			}
-
-			template <typename Container>
-			inline auto rend(const Container& container) -> decltype(container.rend())
-			{
-				return container.rend();
-			}
-
-			template <typename Container>
-			inline auto crbegin(const Container& container) -> decltype(eastl::rbegin(container))
-			{
-				return container.rbegin();
-			}
-
-			template <typename Container>
-			inline auto crend(const Container& container) -> decltype(eastl::rend(container))
-			{
-				return container.rend();
-			}
-
-		#endif
+		template <typename Container>
+		inline auto crend(const Container& container) -> decltype(eastl::rend(container))
+		{
+			return container.rend();
+		}
 
 		template<typename T, size_t arraySize>
 		inline T* begin(T (&arrayObject)[arraySize])

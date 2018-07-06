@@ -124,6 +124,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Set",					TestSet);
 	testSuite.AddTest("SmartPtr",				TestSmartPtr);
 	testSuite.AddTest("Sort",					TestSort);
+	testSuite.AddTest("Span",				    TestSpan);
 	testSuite.AddTest("SparseMatrix",			TestSparseMatrix);
 	testSuite.AddTest("String",					TestString);
 	testSuite.AddTest("StringMap",				TestStringMap);

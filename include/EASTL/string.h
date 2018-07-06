@@ -31,6 +31,8 @@
 //    - basic_string has a force_size() function, which unilaterally moves the string
 //      end position (mpEnd) to the given location. Useful for when the user writes
 //      into the string via some extenal means such as C strcpy or sprintf.
+//    - basic_string substr() deviates from the standard and returns a string with
+//		a copy of this->get_allocator()
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,17 +143,6 @@ EA_RESTORE_ALL_VC_WARNINGS()
 #else
 	#define EASTL_STRING_EXPLICIT
 #endif
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_STRING_INITIAL_CAPACITY
-//
-// As of this writing, this must be > 0. Note that an initially empty string
-// has a capacity of zero (it allocates no memory).
-//
-const eastl_size_t EASTL_STRING_INITIAL_CAPACITY = 8;
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -273,6 +264,7 @@ namespace eastl
 	{
 	public:
 		typedef basic_string<T, Allocator>                      this_type;
+		typedef basic_string_view<T>                            view_type;
 		typedef T                                               value_type;
 		typedef T*                                              pointer;
 		typedef const T*                                        const_pointer;
@@ -340,22 +332,22 @@ namespace eastl
 		{
 			// template specialization to remove the padding structure to avoid warnings on zero length arrays
 			// also, this allows us to take advantage of the empty-base-class optimization.
-		}; 
+		};
 
 		// The view of memory when the string data is able to store the string data locally (without a heap allocation).
 		struct SSOLayout
 		{
-			enum { SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type) };
+			enum : size_type { SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type) };
 
 			// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
 			// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.
 			struct SSOSize : SSOPadding<value_type>
 			{
-				char mnSize;
+				char mnRemainingSize;
 			};
 
 			value_type mData[SSO_CAPACITY]; // Local buffer for string data.
-			SSOSize mSizeField;
+			SSOSize mRemainingSizeField;
 		};
 
 		// This view of memory is a utility structure for easy copying of the string data.
@@ -381,27 +373,26 @@ namespace eastl
 				RawLayout raw;
 			};
 
-			// start as SSO by default
-			Layout() { ResetToSSO(); SetSSOSize(0); }
+			Layout()                                                  { ResetToSSO(); SetSSOSize(0); } // start as SSO by default
 			Layout(const Layout& other)                               { Copy(*this, other); }
 			Layout(Layout&& other)                                    { Move(*this, other); }
 			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
 			Layout& operator=(Layout&& other)                         { Move(*this, other); return *this; }
 
 			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
-			inline bool IsHeap() const EA_NOEXCEPT                    { return !!(sso.mSizeField.mnSize & kSSOMask); }
+			inline bool IsHeap() const EA_NOEXCEPT                    { return !!(sso.mRemainingSizeField.mnRemainingSize & kSSOMask); }
 			inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
 			inline value_type* SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
 			inline const value_type* SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
 
-			// Largest value for SSO.mnSize == 23, which has two LSB bits set, but on big-endian (BE) 
+			// Largest value for SSO.mnSize == 23, which has two LSB bits set, but on big-endian (BE)
 			// use least significant bit (LSB) to denote heap so shift.
 			inline size_type GetSSOSize() const EA_NOEXCEPT
 			{
 				#ifdef EA_SYSTEM_BIG_ENDIAN
-					return SSOLayout::SSO_CAPACITY - (sso.mSizeField.mnSize >> 2);
+					return SSOLayout::SSO_CAPACITY - (sso.mRemainingSizeField.mnRemainingSize >> 2);
 				#else
-					return (SSOLayout::SSO_CAPACITY - sso.mSizeField.mnSize);
+					return (SSOLayout::SSO_CAPACITY - sso.mRemainingSizeField.mnRemainingSize);
 				#endif
 			}
 			inline size_type GetHeapSize() const EA_NOEXCEPT { return heap.mnSize; }
@@ -410,9 +401,9 @@ namespace eastl
 			inline void SetSSOSize(size_type size) EA_NOEXCEPT
 			{
 				#ifdef EA_SYSTEM_BIG_ENDIAN
-					sso.mSizeField.mnSize = (char)((SSOLayout::SSO_CAPACITY - size) << 2);
+					sso.mRemainingSizeField.mnRemainingSize = (char)((SSOLayout::SSO_CAPACITY - size) << 2);
 				#else
-					sso.mSizeField.mnSize = (char)(SSOLayout::SSO_CAPACITY - size);
+					sso.mRemainingSizeField.mnRemainingSize = (char)(SSOLayout::SSO_CAPACITY - size);
 				#endif
 			}
 
@@ -437,7 +428,7 @@ namespace eastl
 			inline const value_type* SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
 
 			// Points to end of character stream, *ptr == '0'
-			inline value_type* EndPtr() EA_NOEXCEPT                      { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); } 
+			inline value_type* EndPtr() EA_NOEXCEPT                      { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
 			inline const value_type* EndPtr() const EA_NOEXCEPT          { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
 
 			inline value_type* HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
@@ -447,7 +438,7 @@ namespace eastl
 			inline const value_type* SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- not true for SSO
-			inline value_type* CapacityPtr() EA_NOEXCEPT                 { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); } 
+			inline value_type* CapacityPtr() EA_NOEXCEPT                 { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
 			inline const value_type* CapacityPtr() const EA_NOEXCEPT     { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
 
 			inline void SetHeapBeginPtr(value_type* pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
@@ -486,7 +477,7 @@ namespace eastl
 
 	public:
 		// Constructor, destructor
-		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()));
+		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR));
 		explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -501,6 +492,19 @@ namespace eastl
 
 		basic_string(this_type&& x) EA_NOEXCEPT;
 		basic_string(this_type&& x, const allocator_type& allocator);
+
+		explicit basic_string(const view_type& sv, const allocator_type& alloc = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR)
+		    : basic_string(sv.data(), sv.size(), alloc)
+		{
+		}
+
+		basic_string(const view_type& sv,
+		             size_type pos,
+		             size_type n,
+		             const allocator_type& alloc = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR)
+		    : basic_string(sv.substr(pos, n), n, alloc)
+		{
+		}
 
 		template <typename OtherCharType>
 		basic_string(CtorConvert, const OtherCharType* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -518,14 +522,15 @@ namespace eastl
 		allocator_type&       get_allocator() EA_NOEXCEPT;
 		void                  set_allocator(const allocator_type& allocator);
 
-		// implicit conversion operator
+		// Implicit conversion operator
 		operator basic_string_view<T>() const EA_NOEXCEPT;
 
-		// Operator =
+		// Operator=
 		this_type& operator=(const this_type& x);
 		this_type& operator=(const value_type* p);
 		this_type& operator=(value_type c);
 		this_type& operator=(std::initializer_list<value_type> ilist);
+		this_type& operator=(view_type v);
 		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 
 		#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
@@ -747,8 +752,7 @@ namespace eastl
 		void        RangeInitialize(const value_type* pBegin);
 		void        SizeInitialize(size_type n, value_type c);
 
-		// SSO related functions
-		bool IsSSO() const EA_NOEXCEPT;
+		bool        IsSSO() const EA_NOEXCEPT; 
 
 		void        ThrowLengthException() const;
 		void        ThrowRangeException() const;
@@ -783,7 +787,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(allocator_type()))
+	inline basic_string<T, Allocator>::basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR))
 	    : mPair(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))
 	{
 		AllocateSelf();
@@ -939,7 +943,6 @@ namespace eastl
 		: mPair(x.get_allocator())
 	{
 		internalLayout() = eastl::move(x.internalLayout());
-
 		x.AllocateSelf();
 	}
 
@@ -1279,6 +1282,13 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
 	{
 		return assign(ilist.begin(), ilist.end());
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(view_type v)
+	{
+		return assign(v.data(), static_cast<this_type::size_type>(v.size()));
 	}
 
 
@@ -1729,7 +1739,54 @@ namespace eastl
 		// null character, or a negative value if an encoding error occurred.
 		// Thus, the null-terminated output has been completely written if and only
 		// if the returned value is nonnegative and less than n.
+
+		// https://www.freebsd.org/cgi/man.cgi?query=vswprintf&sektion=3&manpath=freebsd-release-ports
+		// https://www.freebsd.org/cgi/man.cgi?query=snprintf&manpath=SuSE+Linux/i386+11.3
+		// Well its time to go on an adventure...
+		// C99 vsnprintf states that a buffer size of zero returns the number of characters that would
+		// be written to the buffer irrelevant of whether the buffer is a nullptr
+		// But C99 vswprintf for wchar_t changes the behaviour of the return to instead say that it
+		// "will fail if n or more wide characters were requested to be written", so
+		// calling vswprintf with a buffer size of zero always returns -1
+		// unless... you are MSVC where they deviate from the std and say if the buffer is NULL
+		// and the size is zero it will return the number of characters written or if we are using
+		// EAStdC which also does the sane behaviour.
+
+#if !EASTL_OPENSOURCE || defined(EA_PLATFORM_MICROSOFT)
 		size_type nInitialSize = internalLayout().GetSize();
+		int nReturnValue;
+
+		#if EASTL_VA_COPY_ENABLED
+			va_list argumentsSaved;
+			va_copy(argumentsSaved, arguments);
+		#endif
+
+		nReturnValue = eastl::Vsnprintf(nullptr, 0, pFormat, arguments);
+
+		if (nReturnValue > 0)
+		{
+			resize(nReturnValue + nInitialSize);
+
+		#if EASTL_VA_COPY_ENABLED
+			va_end(arguments);
+			va_copy(arguments, argumentsSaved);
+		#endif
+
+			nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1),
+											pFormat, arguments);
+		}
+
+		if (nReturnValue >= 0)
+			internalLayout().SetSize(nInitialSize + nReturnValue);
+
+		#if EASTL_VA_COPY_ENABLED
+			// va_end for arguments will be called by the caller.
+			va_end(argumentsSaved);
+		#endif
+
+#else
+		size_type nInitialSize = internalLayout().GetSize();
+		size_type nInitialRemainingCapacity = internalLayout().GetRemainingCapacity();
 		int       nReturnValue;
 
 		#if EASTL_VA_COPY_ENABLED
@@ -1737,40 +1794,40 @@ namespace eastl
 			va_copy(argumentsSaved, arguments);
 		#endif
 
-		nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)internalLayout().GetRemainingCapacity() + 1, pFormat, arguments);
+		nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)nInitialRemainingCapacity + 1,
+										pFormat, arguments);
 
-		if(nReturnValue > (int)internalLayout().GetRemainingCapacity())  // If there wasn't enough capacity...
+		if(nReturnValue >= (int)(nInitialRemainingCapacity + 1))  // If there wasn't enough capacity...
 		{
 			// In this case we definitely have C99 Vsnprintf behaviour.
+		#if EASTL_VA_COPY_ENABLED
+			va_end(arguments);
+			va_copy(arguments, argumentsSaved);
+		#endif
+			resize(nInitialSize + nReturnValue);
+			nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1),
+											pFormat, arguments);
+		}
+		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard
+		{
+			// In this case we either have C89 extension behaviour or C99 behaviour.
+			size_type n = eastl::max_alt((size_type)(SSOLayout::SSO_CAPACITY - 1), (size_type)(nInitialSize * 2)); 
+
+			for(; (nReturnValue < 0) && (n < 1000000); n *= 2)
+			{
 			#if EASTL_VA_COPY_ENABLED
 				va_end(arguments);
 				va_copy(arguments, argumentsSaved);
 			#endif
-			// We must reset the size back to where we were incase we overrun the SSO buffer and '0' gets written into sso.mnSize. Then our size would have changed, which will affect .EndPtr() calcs
-			internalLayout().SetSize(nInitialSize);
-			reserve(nInitialSize + nReturnValue);
-			nReturnValue = eastl::Vsnprintf(internalLayout().EndPtr(), (size_t)internalLayout().GetRemainingCapacity() + 1, pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
-		}
-		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard (e.g. it is VC++ _vsnprintf)...
-		{
-			// In this case we either have C89 extension behaviour or C99 behaviour.
-			size_type n = eastl::max_alt((size_type)(EASTL_STRING_INITIAL_CAPACITY - 1), (size_type)(size() * 2)); // '-1' because the resize call below will add one for NULL terminator and we want to keep allocations on fixed block sizes.
-
-			for(; (nReturnValue < 0) && (n < 1000000); n *= 2)
-			{
-				#if EASTL_VA_COPY_ENABLED
-					va_end(arguments);
-					va_copy(arguments, argumentsSaved);
-				#endif
 				resize(n);
 
-				const size_t nCapacity = (size_t)((n + 1) - nInitialSize);
-				nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity, pFormat, arguments); // '+1' because vsnprintf wants to know the size of the buffer including the terminating zero.
+				const size_t nCapacity = (size_t)(n - nInitialSize);
+				nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 1, pFormat, arguments);
 
 				if(nReturnValue == (int)(unsigned)nCapacity)
 				{
 					resize(++n);
-					nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 1, pFormat, arguments);
+					nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 2, pFormat, arguments);
 				}
 			}
 		}
@@ -1782,6 +1839,8 @@ namespace eastl
 			// va_end for arguments will be called by the caller.
 			va_end(argumentsSaved);
 		#endif
+
+#endif // EASTL_OPENSOURCE
 
 		return *this;
 	}
@@ -2153,7 +2212,7 @@ namespace eastl
 				// guarantee 0 or 1 allocation depending if we need to realloc
 				// We don't do this for Heap strings as then this path may do 1 or 2 allocations instead of
 				// only 1 allocation when we fall through to the last else case below
-				const this_type stackTemp(pBegin, pEnd, allocator_type());
+				const this_type stackTemp(pBegin, pEnd, get_allocator());
 				return insert(p, stackTemp.data(), stackTemp.data() + stackTemp.size());
 			}
 
@@ -2877,10 +2936,10 @@ namespace eastl
 		#endif
 
 			// C++ std says the return string allocator must be default constructed, not a copy of this->get_allocator()
-		    return basic_string(
-		        internalLayout().BeginPtr() + position,
-		        internalLayout().BeginPtr() + position +
-					eastl::min_alt(n, internalLayout().GetSize() - position), allocator_type());
+			return basic_string(
+				internalLayout().BeginPtr() + position,
+				internalLayout().BeginPtr() + position +
+					eastl::min_alt(n, internalLayout().GetSize() - position), get_allocator());
 	}
 
 
@@ -3010,8 +3069,9 @@ namespace eastl
 		const size_type nLength = length();
 		if(n < nLength)
 			return substr(0, n);
-		// C++ std says that substr must return default constructed allocated, so do the same here
-		return basic_string(*this, allocator_type());
+		// C++ std says that substr must return default constructed allocated, but we do not.
+		// Instead it is much more practical to provide the copy of the current allocator
+		return basic_string(*this, get_allocator());
 	}
 
 
@@ -3021,8 +3081,9 @@ namespace eastl
 		const size_type nLength = length();
 		if(n < nLength)
 			return substr(nLength - n, n);
-		// C++ std says that substr must return default constructed allocated, so do the same here
-		return basic_string(*this, allocator_type());
+		// C++ std says that substr must return default constructed allocated, but we do not.
+		// Instead it is much more practical to provide the copy of the current allocator
+		return basic_string(*this, get_allocator());
 	}
 
 
@@ -3187,7 +3248,7 @@ namespace eastl
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::GetNewCapacity(size_type currentCapacity) // This needs to return a value of at least currentCapacity and at least 1.
 	{
-		return (currentCapacity > EASTL_STRING_INITIAL_CAPACITY) ? (2 * currentCapacity) : EASTL_STRING_INITIAL_CAPACITY;
+		return (currentCapacity <= SSOLayout::SSO_CAPACITY) ? SSOLayout::SSO_CAPACITY : (2 * currentCapacity);
 	}
 
 
@@ -3570,14 +3631,14 @@ namespace eastl
 	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, basic_string<T, Allocator>&& b)
 	{
 		a.append(b); // Using an rvalue by name results in it becoming an lvalue.
-		return a;
+		return eastl::move(a);
 	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const basic_string<T, Allocator>& b)
 	{
 		a.append(b);
-		return a;
+		return eastl::move(a);
 	}
 
 	template <typename T, typename Allocator>
@@ -3591,14 +3652,14 @@ namespace eastl
 	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const typename basic_string<T, Allocator>::value_type* p)
 	{
 		a.append(p);
-		return a;
+		return eastl::move(a);
 	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::value_type c)
 	{
 		a.push_back(c);
-		return a;
+		return eastl::move(a);
 	}
 
 
@@ -3936,7 +3997,7 @@ namespace eastl
 				inline wstring operator"" s(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
 		    }
 	    }
-		EA_RESTORE_VC_WARNING() // warning: 4455
+		EA_RESTORE_VC_WARNING()  // warning: 4455
 	#endif
 
 } // namespace eastl

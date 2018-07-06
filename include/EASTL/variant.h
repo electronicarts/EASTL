@@ -59,14 +59,16 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/type_pod.h>
 #include <EASTL/internal/in_place_t.h>
-#include <EASTL/internal/meta.h>
 #include <EASTL/internal/integer_sequence.h>
+#include <EASTL/meta.h>
 #include <EASTL/utility.h>
 #include <EASTL/functional.h> 
 #include <EASTL/initializer_list.h>
 #include <EASTL/tuple.h>
 
-EA_ONCE()
+#if defined(EA_PRAGMA_ONCE_SUPPORTED)
+	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
+#endif
 
 #ifndef EA_COMPILER_CPP14_ENABLED
 	static_assert(false, "eastl::variant requires a C++14 compatible compiler (at least) ");
@@ -76,6 +78,30 @@ EA_DISABLE_VC_WARNING(4625) // copy constructor was implicitly defined as delete
 
 namespace eastl
 {
+	///////////////////////////////////////////////////////////////////////////
+	// default_construct_util<T>::default_construct
+	//
+	// Utility class to remove default constructor calls for types that 
+	// do not support default construction.
+	//
+	template<typename T, bool = eastl::is_default_constructible_v<T>>
+	struct default_construct_if_supported
+	{
+		static void call(T* pThis)
+		{
+			new (pThis) T();
+		}
+	};
+
+	template<typename T>
+	struct default_construct_if_supported<T, false>
+	{
+		static void call(T* pThis)
+		{
+			// intentionally blank
+		}
+	};
+
 
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.3, variant_npos
@@ -156,6 +182,7 @@ namespace eastl
 	{
 		enum class StorageOp
 		{
+			DEFAULT_CONSTRUCT,
 			DESTROY,
 			COPY,
 			MOVE
@@ -171,7 +198,7 @@ namespace eastl
 		template<typename VariantStorageT>
 		inline void DoOp(StorageOp op, VariantStorageT&& other)  // bind to both rvalue and lvalues
 		{
-			if (!mpHandler && other.mpHandler)
+			if (other.mpHandler)
 				mpHandler = other.mpHandler;
 
 			if(mpHandler)
@@ -189,6 +216,12 @@ namespace eastl
 		{
 			switch (op)
 			{
+				case StorageOp::DEFAULT_CONSTRUCT:
+				{
+					default_construct_if_supported<T>::call(pThis);
+				}
+				break;
+
 				case StorageOp::DESTROY:
 				{
 					pThis->~T();
@@ -212,7 +245,10 @@ namespace eastl
 		}
 
 	public:
-		variant_storage() = default;
+		variant_storage()
+		{
+			DoOp(StorageOp::DEFAULT_CONSTRUCT); 
+		}
 
 		~variant_storage()
 		{
@@ -426,7 +462,7 @@ namespace eastl
 		static_assert(I < sizeof...(Types), "get_if is ill-formed if I is not a valid index in the variant typelist");
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return (!pv && pv->index() == I) ? nullptr : pv->mStorage.template get_as<return_type>();
+		return (!pv || pv->index() != I) ? nullptr : pv->mStorage.template get_as<return_type>();
 	}
 
 	template <size_t I, class... Types>
@@ -435,7 +471,7 @@ namespace eastl
 		static_assert(I < sizeof...(Types), "get_if is ill-formed if I is not a valid index in the variant typelist");
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return (!pv && pv->index() == I) ? nullptr : pv->mStorage.template get_as<return_type>();
+		return (!pv || pv->index() != I) ? nullptr : pv->mStorage.template get_as<return_type>();
 	}
 
 	template <class T, class... Types, size_t I = meta::get_type_index_v<T, Types...>>
@@ -561,9 +597,11 @@ namespace eastl
 		//
 
 		// Only participates in overload resolution when the first alternative is default constructible
-		template <typename = enable_if_t<is_default_constructible_v<T_0>>>
+		template <typename TT0 = T_0, typename = enable_if_t<is_default_constructible_v<TT0>>>
 		EA_CONSTEXPR variant() EA_NOEXCEPT : mIndex(variant_npos), mStorage()
 		{
+			mIndex = static_cast<variant_index_t>(0);
+			mStorage.template set_as<T_0>();
 		}
 
 		// Only participates in overload resolution if is_copy_constructible_v<T_i> is true for all T_i in Types....

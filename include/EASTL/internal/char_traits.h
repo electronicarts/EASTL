@@ -18,6 +18,10 @@ EA_ONCE()
 
 #include <EASTL/internal/config.h>
 
+EA_DISABLE_ALL_VC_WARNINGS()
+#include <ctype.h>              // toupper, etc.
+EA_RESTORE_ALL_VC_WARNINGS()
+
 namespace eastl
 {
 	///////////////////////////////////////////////////////////////////////////////

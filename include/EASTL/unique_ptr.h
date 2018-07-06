@@ -132,66 +132,56 @@ namespace eastl
 		unique_ptr(pointer pValue, typename eastl::conditional<eastl::is_reference<deleter_type>::value, deleter_type, typename eastl::add_lvalue_reference<const deleter_type>::type>::type deleter) EA_NOEXCEPT
 			: mPair(pValue, deleter) {}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			/// unique_ptr
-			/// Constructs a unique_ptr with the owned pointer and deleter specified (rvalue)
-			/// Example usage:
-			///     unique_ptr<int> ptr(new int(3), eastl::smart_ptr_deleter<int>());
-			unique_ptr(pointer pValue, typename eastl::remove_reference<deleter_type>::type&& deleter) EA_NOEXCEPT
-				: mPair(pValue, eastl::move(deleter))
-			{
-				static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
-			}
+		/// unique_ptr
+		/// Constructs a unique_ptr with the owned pointer and deleter specified (rvalue)
+		/// Example usage:
+		///     unique_ptr<int> ptr(new int(3), eastl::smart_ptr_deleter<int>());
+		unique_ptr(pointer pValue, typename eastl::remove_reference<deleter_type>::type&& deleter) EA_NOEXCEPT
+			: mPair(pValue, eastl::move(deleter))
+		{
+			static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
+		}
 
-			/// unique_ptr
-			/// Move constructor
-			/// Example usage:
-			///     unique_ptr<int> ptr(new int(3));
-			///     unique_ptr<int> newPtr = eastl::move(ptr);
-			unique_ptr(this_type&& x) EA_NOEXCEPT
-				: mPair(x.release(), eastl::forward<deleter_type>(x.get_deleter())) {}
+		/// unique_ptr
+		/// Move constructor
+		/// Example usage:
+		///     unique_ptr<int> ptr(new int(3));
+		///     unique_ptr<int> newPtr = eastl::move(ptr);
+		unique_ptr(this_type&& x) EA_NOEXCEPT
+			: mPair(x.release(), eastl::forward<deleter_type>(x.get_deleter())) {}
 
-			/// unique_ptr
-			/// Move constructor
-			/// Example usage:
-			///     unique_ptr<int> ptr(new int(3));
-			///     unique_ptr<int> newPtr = eastl::move(ptr);
-			template <typename U, typename E>
-			unique_ptr(unique_ptr<U, E>&& u, typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_convertible<E, deleter_type>::value && (is_same<deleter_type, E>::value || !is_reference<deleter_type>::value)>::type* = 0) EA_NOEXCEPT
-				: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
+		/// unique_ptr
+		/// Move constructor
+		/// Example usage:
+		///     unique_ptr<int> ptr(new int(3));
+		///     unique_ptr<int> newPtr = eastl::move(ptr);
+		template <typename U, typename E>
+		unique_ptr(unique_ptr<U, E>&& u, typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_convertible<E, deleter_type>::value && (is_same<deleter_type, E>::value || !is_reference<deleter_type>::value)>::type* = 0) EA_NOEXCEPT
+			: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
 
-			/// unique_ptr
-			/// Move assignment
-			/// Example usage:
-			///     unique_ptr<int> ptr(new int(3));
-			///     unique_ptr<int> newPtr(new int(4));
-			///     ptr = eastl::move(newPtr);  // Deletes int(3) and assigns mpValue to int(4)
-			this_type& operator=(this_type&& x) EA_NOEXCEPT
-			{
-				reset(x.release());
-				mPair.second() = eastl::move(eastl::forward<deleter_type>(x.get_deleter()));
-				return *this;
-			}
+		/// unique_ptr
+		/// Move assignment
+		/// Example usage:
+		///     unique_ptr<int> ptr(new int(3));
+		///     unique_ptr<int> newPtr(new int(4));
+		///     ptr = eastl::move(newPtr);  // Deletes int(3) and assigns mpValue to int(4)
+		this_type& operator=(this_type&& x) EA_NOEXCEPT
+		{
+			reset(x.release());
+			mPair.second() = eastl::move(eastl::forward<deleter_type>(x.get_deleter()));
+			return *this;
+		}
 
-			/// unique_ptr
-			/// Move assignment
-			template <typename U, typename E>
-			typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_assignable<deleter_type&, E&&>::value, this_type&>::type
-			operator=(unique_ptr<U, E>&& u) EA_NOEXCEPT
-			{
-				reset(u.release());
-				mPair.second() = eastl::move(eastl::forward<E>(u.get_deleter()));
-				return *this;
-			}
-		#else
-			template <typename U, typename E>
-			this_type& operator=(unique_ptr<U, E> u) EA_NOEXCEPT  // Pass by value.
-			{
-				reset(u.release());
-				mPair.second() = eastl::forward<deleter_type>(u.get_deleter());
-				return *this;
-			}
-		#endif
+		/// unique_ptr
+		/// Move assignment
+		template <typename U, typename E>
+		typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_assignable<deleter_type&, E&&>::value, this_type&>::type
+		operator=(unique_ptr<U, E>&& u) EA_NOEXCEPT
+		{
+			reset(u.release());
+			mPair.second() = eastl::move(eastl::forward<E>(u.get_deleter()));
+			return *this;
+		}
 
 		/// operator=(nullptr_t)
 		this_type& operator=(std::nullptr_t) EA_NOEXCEPT
@@ -336,9 +326,9 @@ namespace eastl
 		eastl::compressed_pair<pointer, deleter_type> mPair;
 
 		/// These functions are private in order to prevent copying, for safety.
-		unique_ptr(const this_type&);
-		unique_ptr& operator=(const this_type&);
-		unique_ptr& operator=(pointer pValue);
+		unique_ptr(const this_type&) = delete;
+		unique_ptr& operator=(const this_type&) = delete;
+		unique_ptr& operator=(pointer pValue) = delete;
 
 	}; // class unique_ptr
 
@@ -395,47 +385,37 @@ namespace eastl
 														typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
 			: mPair(pArray, deleter) {}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename P>
-			unique_ptr(P pArray, typename eastl::remove_reference<deleter_type>::type&& deleter, typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
-				: mPair(pArray, eastl::move(deleter))
-			{
-				static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
-			}
+		template <typename P>
+		unique_ptr(P pArray, typename eastl::remove_reference<deleter_type>::type&& deleter, typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
+			: mPair(pArray, eastl::move(deleter))
+		{
+			static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
+		}
 
-			unique_ptr(this_type&& x) EA_NOEXCEPT
-				: mPair(x.release(), eastl::forward<deleter_type>(x.get_deleter())) {}
+		unique_ptr(this_type&& x) EA_NOEXCEPT
+			: mPair(x.release(), eastl::forward<deleter_type>(x.get_deleter())) {}
 
-			template <typename U, typename E>
-			unique_ptr(unique_ptr<U, E>&& u, typename enable_if<Internal::is_safe_array_conversion<T, pointer, U, typename unique_ptr<U, E>::pointer>::value && 
-																eastl::is_convertible<E, deleter_type>::value &&
-															   (!eastl::is_reference<deleter_type>::value || eastl::is_same<E, deleter_type>::value)>::type* = 0) EA_NOEXCEPT
-				: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
+		template <typename U, typename E>
+		unique_ptr(unique_ptr<U, E>&& u, typename enable_if<Internal::is_safe_array_conversion<T, pointer, U, typename unique_ptr<U, E>::pointer>::value && 
+															eastl::is_convertible<E, deleter_type>::value &&
+														   (!eastl::is_reference<deleter_type>::value || eastl::is_same<E, deleter_type>::value)>::type* = 0) EA_NOEXCEPT
+			: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
 
-			this_type& operator=(this_type&& x) EA_NOEXCEPT
-			{
-				reset(x.release());
-				mPair.second() = eastl::move(eastl::forward<deleter_type>(x.get_deleter()));
-				return *this;
-			}
+		this_type& operator=(this_type&& x) EA_NOEXCEPT
+		{
+			reset(x.release());
+			mPair.second() = eastl::move(eastl::forward<deleter_type>(x.get_deleter()));
+			return *this;
+		}
 
-			template <typename U, typename E>
-			typename enable_if<Internal::is_safe_array_conversion<T, pointer, U, typename unique_ptr<U, E>::pointer>::value && is_assignable<deleter_type&, E&&>::value, this_type&>::type
-			operator=(unique_ptr<U, E>&& u) EA_NOEXCEPT
-			{
-				reset(u.release());
-				mPair.second() = eastl::move(eastl::forward<E>(u.get_deleter()));
-				return *this;
-			}
-		#else
-			template <typename U, typename E>
-			this_type& operator=(unique_ptr<U, E> u) EA_NOEXCEPT  // Pass by value.
-			{
-				reset(u.release());
-				mPair.second() = eastl::forward<deleter_type>(u.get_deleter());
-				return *this;
-			}
-		#endif
+		template <typename U, typename E>
+		typename enable_if<Internal::is_safe_array_conversion<T, pointer, U, typename unique_ptr<U, E>::pointer>::value && is_assignable<deleter_type&, E&&>::value, this_type&>::type
+		operator=(unique_ptr<U, E>&& u) EA_NOEXCEPT
+		{
+			reset(u.release());
+			mPair.second() = eastl::move(eastl::forward<E>(u.get_deleter()));
+			return *this;
+		}
 
 		this_type& operator=(std::nullptr_t) EA_NOEXCEPT
 		{
@@ -567,68 +547,22 @@ namespace eastl
 			{ typedef void            unique_type_bounded_array; };
 	}
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		#if EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <typename T, typename... Args>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique(Args&&... args)
-				{ return unique_ptr<T>(new T(eastl::forward<Args>(args)...)); }
+	template <typename T, typename... Args>
+	inline typename Internal::unique_type<T>::unique_type_single make_unique(Args&&... args)
+		{ return unique_ptr<T>(new T(eastl::forward<Args>(args)...)); }
 
-			template <typename T>
-			inline typename Internal::unique_type<T>::unique_type_unbounded_array make_unique(size_t n)
-			{
-				typedef typename eastl::remove_extent<T>::type TBase;
-				return unique_ptr<T>(new TBase[n]);
-			}
+	template <typename T>
+	inline typename Internal::unique_type<T>::unique_type_unbounded_array make_unique(size_t n)
+	{
+		typedef typename eastl::remove_extent<T>::type TBase;
+		return unique_ptr<T>(new TBase[n]);
+	}
 
-			// It's not possible to create a unique_ptr for arrays of a known bound (e.g. int[4] as opposed to int[]).
-			#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
-				template <typename T, typename... Args>
-				typename Internal::unique_type<T>::unique_type_bounded_array
-				make_unique(Args&&...) = delete;
-			#endif
+	// It's not possible to create a unique_ptr for arrays of a known bound (e.g. int[4] as opposed to int[]).
+	template <typename T, typename... Args>
+	typename Internal::unique_type<T>::unique_type_bounded_array
+	make_unique(Args&&...) = delete;
 
-		#else
-
-			// Reduced version that is more limited than the varargs version.
-			template <typename T>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique()
-				{ return unique_ptr<T>(new T); }
-
-			template <typename T, typename A1>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique(A1&& a1)
-				{ return unique_ptr<T>(new T(eastl::forward<A1>(a1))); }
-
-			template <typename T, typename A1, typename A2>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique(A1&& a1, A2&& a2)
-				{ return unique_ptr<T>(new T(eastl::forward<A1>(a1), eastl::forward<A2>(a2))); }
-
-			template <typename T, typename A1, typename A2, typename A3>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique(A1&& a1, A2&& a2, A3&& a3)
-				{ return unique_ptr<T>(new T(eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3))); }
-
-			template <typename T, typename A1, typename A2, typename A3, typename A4>
-			inline typename Internal::unique_type<T>::unique_type_single make_unique(A1&& a1, A2&& a2, A3&& a3, A4&& a4)
-				{ return unique_ptr<T>(new T(eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3), eastl::forward<A4>(a4))); }
-
-
-			template <typename T>
-			inline typename Internal::unique_type<T>::unique_type_unbounded_array make_unique(size_t n)
-			{
-				typedef typename eastl::remove_extent<T>::type TBase;
-				return unique_ptr<T>(new TBase[n]);
-			}
-
-			// It's not possible to create a unique_ptr for arrays of a known bound (e.g. int[4] as opposed to int[]).
-			#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
-				template <typename T>
-				typename Internal::unique_type<T>::unique_type_bounded_array
-				make_unique() = delete;
-			#endif
-		#endif
-	#else
-		// It's not possible to implement make_unique because unique_ptr can be constructed 
-		// only via a raw pointer or via an rvalue move from another unique_ptr.
-	#endif
 
 
 

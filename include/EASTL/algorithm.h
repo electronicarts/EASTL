@@ -1871,6 +1871,31 @@ namespace eastl
 		return function;
 	}
 
+	/// for_each_n
+	///
+	/// Calls the Function function for each value in the range [first, first + n).
+	/// Function takes a single parameter: the current value.
+	/// 
+	/// Effects: Applies function to the result of dereferencing every iterator in 
+	/// the range [first, first + n), starting from first and proceeding to last 1.
+	///
+	/// Returns: first + n.
+	///
+	/// Complexity: Applies function exactly 'first + n' times.
+	///
+	/// Note: 
+	////  * If function returns a result, the result is ignored.
+	////  * If n < 0, behaviour is undefined.
+	///
+	template <typename InputIterator, typename Size, typename Function>
+	EA_CPP14_CONSTEXPR inline InputIterator 
+	for_each_n(InputIterator first, Size n, Function function)
+	{
+		for (Size i = 0; i < n; ++first, i++)
+			function(*first);
+		return first;
+	}
+
 
 	/// generate
 	///

@@ -10,14 +10,30 @@
 
      You don't need to restart Visual Studio to use it, you just need to restart the debug 
      session. You can have multiple .natvis files and they will all be used.
+
+	 VS2017 natvis documentation:
+	https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects
 -->
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-<Type Name="eastl::shared_ptr&lt;*&gt;">
-	<DisplayString>{mpValue}</DisplayString>
+<Type Name="eastl::unique_ptr&lt;*&gt;">
+	<DisplayString Condition="mPair.mFirst != nullptr">({(void*)mPair.mFirst} = {*mPair.mFirst})</DisplayString>
+	<DisplayString Condition="mPair.mFirst == nullptr">({nullptr})</DisplayString>
 	<Expand>
-		<ExpandedItem>mpValue</ExpandedItem>
+		<Item Name="[pointer]">(void*)mPair.mFirst</Item>
+		<Item Name="[value]">*mPair.mFirst</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::shared_ptr&lt;*&gt;">
+	<DisplayString Condition="mpValue != nullptr">({(void*)mpValue} = {*mpValue})</DisplayString>
+	<DisplayString Condition="mpValue == nullptr">({nullptr})</DisplayString>
+	<Expand>
+		<Item Name="[pointer]">(void*)mpValue</Item>
+		<Item Name="[value]">*mpValue</Item>
+		<Item Name="[reference count]">mpRefCount->mRefCount</Item>
+		<Item Name="[weak reference count]">mpRefCount->mWeakRefCount</Item>
 	</Expand>
 </Type>
 
@@ -46,35 +62,19 @@
     </Expand>
 </Type>
 
-<Type Name="eastl::basic_string&lt;char,*&gt;">
-	<DisplayString>{mPair.mFirst.heap.mpBegin,s}</DisplayString>
+<Type Name="eastl::basic_string&lt;*&gt;">
+	<DisplayString Condition="!!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">"{mPair.mFirst.heap.mpBegin,sb}"</DisplayString>
+	<DisplayString Condition="!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">"{mPair.mFirst.sso.mData,sb}"</DisplayString>
 	<Expand>
-		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
-		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
-		&amp; ~kHeapMask)</Item>
-		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
+		<Item Name="[length]"   Condition="!!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="[capacity]" Condition="!!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity &amp; ~kHeapMask)</Item>
+		<Item Name="[value]"    Condition="!!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
 
-		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
-		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
-		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
+		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mSizeField.mnSize</Item>
+		<Item Name="[capacity]" Condition="!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="[value]"    Condition="!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
 
-		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
-	</Expand>
-</Type>
-
-<Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
-	<DisplayString>{mPair.mFirst.heap.mpBegin,su}</DisplayString>
-	<Expand>
-		<Item Name="length"   Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
-		<Item Name="capacity" Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity
-		&amp; ~kHeapMask)</Item>
-		<Item Name="value"    Condition="!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
-
-		<Item Name="length"   Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mnSize</Item>
-		<Item Name="capacity" Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
-		<Item Name="value"    Condition="!(mPair.mFirst.sso.mnSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
-
-		<Item Name="uses heap">!!(mPair.mFirst.sso.mnSize &amp; kSSOMask)</Item>
+		<Item Name="[uses heap]">!!(mPair.mFirst.sso.mSizeField.mnSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
@@ -444,5 +444,15 @@
 	<DisplayString>{mpBegin,[mnCount]}</DisplayString>
 	<StringView>mpBegin,[mnCount]</StringView>
 </Type>
+
+<Type Name="eastl::compressed_pair_imp&lt;*&gt;">
+	<DisplayString Condition="($T3) == 0" Optional="true">({mFirst}, {mSecond})</DisplayString>
+	<DisplayString Condition="($T3) == 1" Optional="true">({mSecond})</DisplayString>
+	<DisplayString Condition="($T3) == 2" Optional="true">({mFirst})</DisplayString>
+	<DisplayString Condition="($T3) == 3" Optional="true">(empty)</DisplayString>
+	<DisplayString Condition="($T3) == 4" Optional="true">(empty)</DisplayString>
+	<DisplayString Condition="($T3) == 5" Optional="true">({mFirst}, {mSecond})</DisplayString>
+</Type>
+
 
 </AutoVisualizer>

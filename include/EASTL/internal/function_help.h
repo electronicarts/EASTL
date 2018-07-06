@@ -89,12 +89,12 @@ namespace eastl
 			struct local_empty_struct {}; // a type that no user function will use as a return type
 
 			template <typename U>
-			static decltype(to_functor(eastl::declval<U>())(eastl::declval<Arguments>()...)) check(U*);
+			static decltype(to_functor(eastl::declval<U>())(eastl::declval<Arguments>()...)) local_check(U*);
 
 			template <typename>
-			static local_empty_struct check(...);
+			static local_empty_struct local_check(...);
 
-			static const bool value = eastl::is_convertible<decltype(check<T>(0)), Result>::value;
+			static const bool value = eastl::is_convertible<decltype(local_check<T>(0)), Result>::value;
 		};
 	} // namespace internal
 } // namespace eastl

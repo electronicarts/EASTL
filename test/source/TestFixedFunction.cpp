@@ -9,6 +9,79 @@
 #include <EASTL/fixed_function.h>
 #include <EASTL/numeric.h>
 
+
+///////////////////////////////////////////////////////////////////////////////
+// TestFixedFunctionDtor
+//
+int TestFixedFunctionDtor()
+{
+	using namespace eastl;
+
+	int nErrorCount = 0;
+
+	{
+		TestObject to;
+		TestObject::Reset();
+		{
+			eastl::fixed_function<sizeof(TestObject), void(void)> ff = [to] {};
+			ff();
+		}
+		VERIFY(TestObject::IsClear());
+	}
+
+	return nErrorCount;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TestFixedFunctionExistingClosure
+//
+int TestFixedFunctionExistingClosure()
+{
+	using namespace eastl;
+
+	int nErrorCount = 0;
+
+	{
+		TestObject to;
+		{
+			using ff_t = eastl::fixed_function<sizeof(TestObject), void(void)>;
+			{
+				ff_t ff1 = [to] {};
+				ff_t ff3 = [to] {};
+				TestObject::Reset();
+				{
+					ff_t ff2 = ff1;
+					ff2 = ff3;  // copy over function that holds existing closure state
+				}
+				VERIFY(TestObject::IsClear());
+			}
+			{
+				ff_t ff1 = [to] {};
+				ff_t ff3 = [to] {};
+				TestObject::Reset();
+				{
+					ff_t ff2 = ff1;
+					ff2 = eastl::move(ff3);  // copy over function that holds existing closure state
+				}
+				VERIFY(TestObject::IsClear());
+			}
+			{
+				ff_t ff1 = [to] {};
+				TestObject::Reset();
+				{
+					ff_t ff2 = ff1;
+					ff2 = nullptr;
+				}
+				VERIFY(TestObject::IsClear());
+			}
+		}
+	}
+
+	return nErrorCount;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestFixedFunctionCaptureless
 //
@@ -34,39 +107,13 @@ int TestFixedFunctionCaptureless()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// TestFunctional
+// TestFixedFunctionBasic
 //
-int TestFixedFunction()
+int TestFixedFunctionBasic()
 {
 	using namespace eastl;
 
 	int nErrorCount = 0;
-
-	{
-		using ff_0 = eastl::fixed_function<0, int(int)>;
-		using ff_1 = eastl::fixed_function<1, int(int)>;
-		using ff_4 = eastl::fixed_function<4, int(int)>;
-		using ff_8 = eastl::fixed_function<8, int(int)>;
-		using ff_64 = eastl::fixed_function<64, int(int)>;
-		using ff_128 = eastl::fixed_function<128, int(int)>;
-		using ff_4096 = eastl::fixed_function<4096, int(int)>;
-
-		static_assert(sizeof(ff_0) >= sizeof(void*), "error");
-		static_assert(sizeof(ff_1) >= sizeof(void*), "error");
-		static_assert(sizeof(ff_4) >= sizeof(void*), "error");
-		static_assert(sizeof(ff_8) >= 8, "error");
-		static_assert(sizeof(ff_64) >= 64, "error");
-		static_assert(sizeof(ff_128) >= 128, "error");
-		static_assert(sizeof(ff_4096) >= 4096, "error");
-
-		nErrorCount += TestFixedFunctionCaptureless<ff_0>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_1>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_4>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_8>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_64>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_128>();
-		nErrorCount += TestFixedFunctionCaptureless<ff_4096>();
-	}
 
 	{
 		struct Functor { int operator()() { return 42; } };
@@ -150,6 +197,48 @@ int TestFixedFunction()
 			EATEST_VERIFY(result == 21);
 		}
 	}
+
+	{
+		using ff_0 = eastl::fixed_function<0, int(int)>;
+		using ff_1 = eastl::fixed_function<1, int(int)>;
+		using ff_4 = eastl::fixed_function<4, int(int)>;
+		using ff_8 = eastl::fixed_function<8, int(int)>;
+		using ff_64 = eastl::fixed_function<64, int(int)>;
+		using ff_128 = eastl::fixed_function<128, int(int)>;
+		using ff_4096 = eastl::fixed_function<4096, int(int)>;
+
+		static_assert(sizeof(ff_0) >= sizeof(void*), "error");
+		static_assert(sizeof(ff_1) >= sizeof(void*), "error");
+		static_assert(sizeof(ff_4) >= sizeof(void*), "error");
+		static_assert(sizeof(ff_8) >= 8, "error");
+		static_assert(sizeof(ff_64) >= 64, "error");
+		static_assert(sizeof(ff_128) >= 128, "error");
+		static_assert(sizeof(ff_4096) >= 4096, "error");
+
+		nErrorCount += TestFixedFunctionCaptureless<ff_0>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_1>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_4>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_8>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_64>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_128>();
+		nErrorCount += TestFixedFunctionCaptureless<ff_4096>();
+	}
+
+	return nErrorCount;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// TestFunctional
+//
+int TestFixedFunction()
+{
+	using namespace eastl;
+
+	int nErrorCount = 0;
+
+	nErrorCount += TestFixedFunctionBasic();
+	nErrorCount += TestFixedFunctionDtor();
+	nErrorCount += TestFixedFunctionExistingClosure();
 
 	return nErrorCount;
 }

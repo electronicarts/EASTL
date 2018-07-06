@@ -21,7 +21,6 @@ int TestDuration()
 {
 	int nErrorCount = 0;
 
-#if !(defined(_MSC_VER) && (_MSC_VER < 1900))  // all platforms except VS2013 and below...
 	{
 		hours h{1}; // 1 hour
 		milliseconds ms{3}; // 3 milliseconds
@@ -31,12 +30,12 @@ int TestDuration()
 		microseconds us = ms; 
 		duration<double, milli> ms2 = us; // 3.0 milliseconds
 
+		EA_UNUSED(h);
 		EA_UNUSED(ms2);
 		EA_UNUSED(ks);
 		EA_UNUSED(hz30);
 		EA_UNUSED(us);
 	}
-#endif
 
 	{
 		typedef duration<double, ratio<1, 30>> dur_t;

@@ -1090,8 +1090,8 @@ size_t TestCollection::EnumerateTests(Test* pTestArray[], size_t nTestArrayCapac
 // TestSuite
 ///////////////////////////////////////////////////////////////////////////////
 
-TestSuite::TestSuite(const char8_t* pTestName)
-  : Test(pTestName),
+TestSuite::TestSuite(const char8_t* pTestName, EA::EAMain::ReportFunction pReportFunction)
+  : Test(pTestName, pReportFunction),
     TestCollection(),
     mnTestResult(kTestResultNone),
     mResults()

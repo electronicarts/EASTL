@@ -1293,6 +1293,25 @@ int TestAlgorithm()
 		EATEST_VERIFY(i == 1000);
 	}
 
+	// for_each_n
+	{
+		{
+			vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			for_each_n(v.begin(), 5, [](auto& e) { e += 10; });
+
+			vector<int> expected = {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
+			EATEST_VERIFY(v == expected);
+		}
+
+		// verify lambda can return a result that is ignored.
+		{
+			vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			for_each_n(v.begin(), 5, [](auto& e) { e += 10; return 42; });
+
+			vector<int> expected = {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
+			EATEST_VERIFY(v == expected);
+		}
+	}
 
 	{
 		// void generate(ForwardIterator first, ForwardIterator last, Generator generator)

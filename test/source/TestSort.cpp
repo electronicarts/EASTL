@@ -283,6 +283,11 @@ int TestSort()
 				intArray = intArraySaved;
 				quick_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+
+				intArray = intArraySaved;
+				buffer.resize(intArray.size()/2);
+				tim_sort_buffer(intArray.begin(), intArray.end(), buffer.data());
+				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
 			}
 		}
 	}
@@ -347,6 +352,11 @@ int TestSort()
 
 				toArray = toArraySaved;
 				quick_sort(toArray.begin(), toArray.end());
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end()));
+
+				toArray = toArraySaved;
+				vector<TestObject> buffer(toArray.size()/2);
+				tim_sort_buffer(toArray.begin(), toArray.end(), buffer.data());
 				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end()));
 			}
 		}
@@ -632,6 +642,12 @@ int TestSort()
 		StatefulCompare::Reset();
 		intDeque = intDequeSaved;
 		quick_sort<IntDequeIterator, StatefulCompare&>(intDeque.begin(), intDeque.end(), compare);
+		EATEST_VERIFY((StatefulCompare::nCtorCount == 0) && (StatefulCompare::nDtorCount == 0) && (StatefulCompare::nCopyCount == 0));
+
+		StatefulCompare::Reset();
+		vector<int> buffer(intDeque.size()/2);
+		intDeque = intDequeSaved;
+		tim_sort_buffer<IntDequeIterator, int, StatefulCompare&>(intDeque.begin(), intDeque.end(), buffer.data(), compare);
 		EATEST_VERIFY((StatefulCompare::nCtorCount == 0) && (StatefulCompare::nDtorCount == 0) && (StatefulCompare::nCopyCount == 0));
 	}
 

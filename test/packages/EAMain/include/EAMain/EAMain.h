@@ -11,7 +11,7 @@ namespace EA
     {
 		namespace Internal
 		{
-			extern unsigned gVerbosityLevel;
+			static unsigned gVerbosityLevel = 0;	
 		};
 
         typedef void (*ReportFunction)(const char8_t*);
@@ -23,6 +23,11 @@ namespace EA
 		{ 
 			return static_cast<ReportFunction>([](const char8_t* pOutput)
 				{ printf("%s", pOutput); }); 
+		}
+
+		inline ReportFunction GetReportFunction()
+		{
+			return GetDefaultReportFunction();
 		}
 
         inline void VReport(const char8_t* pFormat, va_list arguments) 

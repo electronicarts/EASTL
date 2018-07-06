@@ -41,10 +41,48 @@ namespace eastl
 		struct underlying_type{ typedef int type; };    // This is of course wrong, but we emulate libstdc++ and typedef it as int.
 	#endif
 
-
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <typename T>
+		using underlying_type_t = typename underlying_type<T>::type;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
+	// has_unique_object_representations 
+	//
+	// If T is TriviallyCopyable and if any two objects of type T with the same
+	// value have the same object representation, value is true. For any other
+	// type, value is false.
+	// 
+	// http://en.cppreference.com/w/cpp/types/has_unique_object_representations
+	///////////////////////////////////////////////////////////////////////
+	#if EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE
+		#define EASTL_TYPE_TRAIT_has_unique_object_representations_CONFORMANCE 1
+
+		template <typename T>
+		struct has_unique_object_representations
+			: public integral_constant<bool, __has_unique_object_representations(remove_cv_t<remove_all_extents_t<T>>)>
+		{
+		};
+
+	#else
+		#define EASTL_TYPE_TRAIT_has_unique_object_representations_CONFORMANCE 0
+
+		template <typename T>
+		struct has_unique_object_representations
+			: public integral_constant<bool, is_integral_v<remove_cv_t<remove_all_extents_t<T>>>> // only integral types (floating point types excluded).
+		{
+		};
+
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR auto has_unique_object_representations_v = has_unique_object_representations<T>::value;
+	#endif
+
+
+    ///////////////////////////////////////////////////////////////////////
 	// is_signed
 	//
 	// is_signed<T>::value == true if and only if T is one of the following types:
@@ -274,30 +312,43 @@ namespace eastl
 	// result_of
 	//
 	///////////////////////////////////////////////////////////////////////
+	#define EASTL_TYPE_TRAIT_result_of_CONFORMANCE 1    // result_of is conforming.
 
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES) || defined(EA_COMPILER_NO_DECLTYPE)
-		//  To do: come up with the best possible alternative.
-		#define EASTL_TYPE_TRAIT_result_of_CONFORMANCE 0
+	template<typename> struct result_of;
+
+	template<typename F, typename... ArgTypes>
+	struct result_of<F(ArgTypes...)>
+		{ typedef decltype(eastl::declval<F>()(eastl::declval<ArgTypes>()...)) type; };
+
+
+	// result_of_t is the C++14 using typedef for typename result_of<T>::type.
+	// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
+	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		#define EASTL_RESULT_OF_T(T) typename result_of<T>::type
 	#else
-		#define EASTL_TYPE_TRAIT_result_of_CONFORMANCE 1    // result_of is conforming.
-
-		template<typename> struct result_of;
- 
-		template<typename F, typename... ArgTypes>
-		struct result_of<F(ArgTypes...)>
-			{ typedef decltype(eastl::declval<F>()(eastl::declval<ArgTypes>()...)) type; };
+		template <typename T>
+		using result_of_t = typename result_of<T>::type;
+		#define EASTL_RESULT_OF_T(T) result_of_t<T>
+	#endif
 
 
-		// result_of_t is the C++14 using typedef for typename result_of<T>::type.
-		// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
-	   #if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-			#define EASTL_RESULT_OF_T(T) typename result_of<T>::type
-		#else
-			template <typename T>
-			using result_of_t = typename result_of<T>::type;
-			#define EASTL_RESULT_OF_T(T) result_of_t<T>
-		#endif
+	///////////////////////////////////////////////////////////////////////
+	// has_equality
+	//
+	// Determines if the specified type can be tested for equality.
+	//
+	///////////////////////////////////////////////////////////////////////
+	template <typename, typename = eastl::void_t<>>
+	struct has_equality : eastl::false_type {};
 
+	template <typename T>
+	struct has_equality<T, eastl::void_t<decltype(eastl::declval<T>() == eastl::declval<T>())>> : eastl::true_type
+	{
+	};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR auto has_equality_v = has_equality<T>::value;
 	#endif
 
 } // namespace eastl
