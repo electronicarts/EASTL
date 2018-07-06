@@ -318,6 +318,7 @@ int TestTupleVector()
 			{
 				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i / 3 + 1));
 			}
+			EATEST_VERIFY(testVec.validate());
 		}
 
 		// test insert with lvalue args
@@ -375,6 +376,7 @@ int TestTupleVector()
 			{
 				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i + 1));
 			}
+			EATEST_VERIFY(testVec.validate());
 		}
 
 		// test insert with n and tuple
@@ -424,6 +426,7 @@ int TestTupleVector()
 			{
 				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i / 3 + 1));
 			}
+			EATEST_VERIFY(testVec.validate());
 		}
 
 		// test insert with tuple
@@ -473,6 +476,56 @@ int TestTupleVector()
 			{
 				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i + 1));
 			}
+			EATEST_VERIFY(testVec.validate());
+		}
+
+		// test insert with iterator range 
+		{
+			tuple_vector<bool, TestObject, float> srcVec;
+			for (unsigned int i = 0; i < 20; ++i)
+			{
+				srcVec.push_back(true, TestObject(i), (float)i);
+			}
+
+			tuple_vector<bool, TestObject, float> testVec;
+			testVec.reserve(10);
+
+			// test insert on empty vector that doesn't cause growth
+			testVec.insert(testVec.begin(), srcVec.begin() + 6, srcVec.begin() + 9);
+			EATEST_VERIFY(testVec.size() == 3);
+
+			// test insert to end of vector that doesn't cause growth
+			testVec.insert(testVec.end(), srcVec.begin() + 12, srcVec.begin() + 15);
+			EATEST_VERIFY(testVec.size() == 6);
+
+			// test insert to middle of vector that doesn't cause growth
+			testVec.insert(testVec.begin() + 3, srcVec.begin() + 9, srcVec.begin() + 12);
+			EATEST_VERIFY(testVec.size() == 9);
+			EATEST_VERIFY(testVec.capacity() == 10);
+
+			// test insert to end of vector that causes growth
+			testVec.insert(testVec.end(), srcVec.begin() + 15, srcVec.begin() + 18);
+			EATEST_VERIFY(testVec.size() == 12);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 12);
+
+			// test insert to beginning of vector that causes growth
+			testVec.insert(testVec.begin(), srcVec.begin(), srcVec.begin() + 3);
+			EATEST_VERIFY(testVec.size() == 15);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 15);
+
+			// test insert to middle of vector that causes growth
+			testVec.insert(testVec.begin() + 3, srcVec.begin() + 3, srcVec.begin() + 6);
+			EATEST_VERIFY(testVec.size() == 18);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 18);
+
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i), (float)i));
+			}
+			EATEST_VERIFY(testVec.validate());
 		}
 	}
 
