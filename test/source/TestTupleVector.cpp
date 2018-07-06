@@ -27,6 +27,8 @@ struct MoveOnlyType
 	int mVal;
 };
 
+bool operator==(const MoveOnlyType& a, const MoveOnlyType& b) { return a.mVal == b.mVal; }
+
 int TestTupleVector()
 {
 	int nErrorCount = 0;
@@ -1049,7 +1051,7 @@ int TestTupleVector()
 		}
 	}
 
-	// Test move operations (esp. with unique_ptr)
+	// Test move operations
 	{
 		TestObject::Reset();
 		{
@@ -1058,13 +1060,13 @@ int TestTupleVector()
 
 			// add some data in the vector so we can move it to the other vector.
 			v1.reserve(5);
-			for (int i = 0; i < 3; ++i)
-			{
-				auto emplacedTup = v1.emplace_back(i * 2 + 1, MoveOnlyType(i * 2 + 1), TestObject(i * 2 + 1));
-			}
-			v1.emplace(v1.end(), 6, MoveOnlyType(6), TestObject(6));
+			auto emplacedTup = v1.emplace_back(1, MoveOnlyType(1), TestObject(1));
+			EATEST_VERIFY(emplacedTup == v1.back());
+			v1.push_back(3, MoveOnlyType(3), TestObject(3));
+			v1.emplace_back(forward_as_tuple(5, MoveOnlyType(5), TestObject(5)));
+			v1.push_back(forward_as_tuple(6, MoveOnlyType(6), TestObject(6)));
 			v1.emplace(v1.begin() + 1, 2, MoveOnlyType(2), TestObject(2));
-			v1.emplace(v1.begin() + 3, 4, MoveOnlyType(4), TestObject(4));
+			v1.emplace(v1.begin() + 3, make_tuple(4, MoveOnlyType(4), TestObject(4)));
 
 			tuple<int&, MoveOnlyType&, TestObject&> movedTup = v1.at(0);
 			EATEST_VERIFY(v1.validate());
@@ -1119,6 +1121,7 @@ int TestTupleVector()
 
 	// Test comparisons
 	{
+		MallocAllocator ma;
 		tuple_vector<bool, TestObject, float> equalsVec1, equalsVec2;
 		for (int i = 0; i < 10; ++i)
 		{
@@ -1129,7 +1132,7 @@ int TestTupleVector()
 
 		tuple_vector<bool, TestObject, float> smallSizeVec(5);
 		tuple_vector<bool, TestObject, float> lessThanVec(10);
-		tuple_vector<bool, TestObject, float> greaterThanVec(10);
+		tuple_vector_alloc<MallocAllocator, bool, TestObject, float> greaterThanVec(10, ma);
 		for (int i = 0; i < 10; ++i)
 		{
 			lessThanVec.push_back(i % 3 == 0, TestObject(i), (float)i);
