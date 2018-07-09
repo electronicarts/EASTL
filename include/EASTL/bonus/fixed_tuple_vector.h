@@ -65,14 +65,15 @@ public:
 	fixed_tuple_vector(this_type&& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		mAllocator.copy_overflow_allocator(x.mAllocator);
-		swap(x);
+		// rewrite
+		//EA_ASSERT(false);
 	}
 
 	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		swap(x);
+		//EA_ASSERT(false);
+		// rewrite
 	}
 
 	fixed_tuple_vector(const this_type& x)
@@ -91,7 +92,6 @@ public:
 	template <typename MoveIterBase>
 	fixed_tuple_vector(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
-
 	{
 		DoInitFromIterator(begin, end);
 	}
@@ -137,7 +137,8 @@ public:
 
 	this_type& operator=(this_type&& other)
 	{
-		(base_type&)(*this) = (base_type&&)(eastl::forward(other));
+	//	EA_ASSERT(false);
+		// rewrite
 		return *this;
 	}
 

@@ -894,7 +894,8 @@ int TestFixedTupleVectorVariant()
 
 	// Test multitude of constructors
 	{
-		MallocAllocator ma;
+		EASTLAllocatorType ma;
+		EASTLAllocatorType otherMa;
 		TestObject::Reset();
 		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> srcVec;
 		for (int i = 0; i < 10; ++i)
@@ -983,106 +984,100 @@ int TestFixedTupleVectorVariant()
 			}
 		}
 
-		// todo uncomment after figuring out plan for custom mallocators
 		// ctor tuple_Vector with custom mallocator
 		{
-			//fixed_tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorWithAlloc(ma);
-			//fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorDefault;
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorWithAlloc(ma);
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorDefault;
 
-			//ctorWithAlloc.push_back();
-			//ctorDefault.push_back();
+			ctorWithAlloc.push_back();
+			ctorDefault.push_back();
 
-			//EATEST_VERIFY(ctorWithAlloc == ctorDefault);
-			//EATEST_VERIFY(ctorWithAlloc.validate());
+			EATEST_VERIFY(ctorWithAlloc == ctorDefault);
+			EATEST_VERIFY(ctorWithAlloc.validate());
 		}
 
-		// todo uncomment after figuring out plan for custom mallocators
 		// ctor fixed_tuple_vector_alloc with copy (from diff. allocator)
 		{
-			//fixed_tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorFromConstRef(srcVec, ma);
-			//EATEST_VERIFY(ctorFromConstRef.size() == 10);
-			//EATEST_VERIFY(ctorFromConstRef.validate());
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
-			//	EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
-			//	EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
-			//}
-			//EATEST_VERIFY(ctorFromConstRef.validate());
+			fixed_tuple_vector<nodeCount, bEnableOverflow,bool, TestObject, float> ctorFromConstRef(srcVec, ma);
+			EATEST_VERIFY(ctorFromConstRef.size() == 10);
+			EATEST_VERIFY(ctorFromConstRef.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+			}
+			EATEST_VERIFY(ctorFromConstRef.validate());
 		}
 
-		// todo uncomment after figuring out plan for custom mallocators
 		// ctor tuple_vector with initial size and args
 		{
-			//fixed_tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f, ma);
-			//EATEST_VERIFY(ctorFromFillArgs.size() == 10);
-			//EATEST_VERIFY(ctorFromFillArgs.validate());
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
-			//	EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
-			//	EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
-			//}
+			fixed_tuple_vector<nodeCount, bEnableOverflow,bool, TestObject, float> ctorFromFillArgs(10, true, TestObject(5), 5.0f, ma);
+			EATEST_VERIFY(ctorFromFillArgs.size() == 10);
+			EATEST_VERIFY(ctorFromFillArgs.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+			}
 		}
 	
-		// todo uncomment after move-ctors are fixed
 		// ctor tuple_vector via move
 		{
-			//fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> srcMoveVec;
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
-			//}
+			fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> srcMoveVec;
+			for (int i = 0; i < 10; ++i)
+			{
+				srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
+			}
 
-			//fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec));
+			fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec));
 
-			//EATEST_VERIFY(ctorFromMove.size() == 10);
-			//EATEST_VERIFY(ctorFromMove.validate());
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
-			//	EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
-			//	EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
-			//}
-			//EATEST_VERIFY(srcMoveVec.size() == 0);
-			//EATEST_VERIFY(srcMoveVec.validate());
+			EATEST_VERIFY(ctorFromMove.size() == 10);
+			EATEST_VERIFY(ctorFromMove.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(srcMoveVec.size() == 0);
+			EATEST_VERIFY(srcMoveVec.validate());
 		}
 
-		// todo uncomment after move-ctors are fixed and  after figuring out plan for custom mallocators
 		// ctor tuple_vector via move (from diff. allocator)
 		{
-			//fixed_tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> srcMoveVec;
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
-			//}
+			fixed_tuple_vector<nodeCount, bEnableOverflow,int, MoveOnlyType, TestObject> srcMoveVec;
+			for (int i = 0; i < 10; ++i)
+			{
+				srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
+			}
 
-			//MallocAllocator otherMa;
-			//fixed_tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec), otherMa);
+			fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec), otherMa);
 
-			//EATEST_VERIFY(ctorFromMove.size() == 10);
-			//EATEST_VERIFY(ctorFromMove.validate());
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
-			//	EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
-			//	EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
-			//}
-			//EATEST_VERIFY(srcMoveVec.size() == 0);
-			//EATEST_VERIFY(srcMoveVec.validate());
+			EATEST_VERIFY(ctorFromMove.size() == 10);
+			EATEST_VERIFY(ctorFromMove.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(srcMoveVec.size() == 0);
+			EATEST_VERIFY(srcMoveVec.validate());
 
-			//// bonus test for specifying a custom allocator, but using the same one as above
-			//fixed_tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> ctorFromMoveSameAlloc(move(ctorFromMove), otherMa);
-			//EATEST_VERIFY(ctorFromMoveSameAlloc.size() == 10);
-			//EATEST_VERIFY(ctorFromMoveSameAlloc.validate());
-			//for (int i = 0; i < 10; ++i)
-			//{
-			//	EATEST_VERIFY(ctorFromMoveSameAlloc.get<0>()[i] == i);
-			//	EATEST_VERIFY(ctorFromMoveSameAlloc.get<1>()[i] == MoveOnlyType(i));
-			//	EATEST_VERIFY(ctorFromMoveSameAlloc.get<2>()[i] == TestObject(i));
-			//}
-			//EATEST_VERIFY(ctorFromMove.size() == 0);
-			//EATEST_VERIFY(ctorFromMove.validate());
+			// bonus test for specifying a custom allocator, but using the same one as above
+			fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> ctorFromMoveSameAlloc(move(ctorFromMove), otherMa);
+			EATEST_VERIFY(ctorFromMoveSameAlloc.size() == 10);
+			EATEST_VERIFY(ctorFromMoveSameAlloc.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(ctorFromMove.size() == 0);
+			EATEST_VERIFY(ctorFromMove.validate());
 		}
 
 		// ctor tuple_vector via move-iters
@@ -1373,14 +1368,13 @@ int TestFixedTupleVectorVariant()
 				EATEST_VERIFY(v1.get<0>()[i] == i + 1);
 			}
 			EATEST_VERIFY(!v1.empty() && v2.empty());
-			// todo uncomment after fixing moves
-			//v2 = eastl::move(v1);
-			//EATEST_VERIFY(v2.validate());
-			//EATEST_VERIFY(v1.empty() && !v2.empty());
-			//v1.swap(v2);
-			//EATEST_VERIFY(v1.validate());
-			//EATEST_VERIFY(v2.validate());
-			//EATEST_VERIFY(!v1.empty() && v2.empty());
+			v2 = eastl::move(v1);
+			EATEST_VERIFY(v2.validate());
+			EATEST_VERIFY(v1.empty() && !v2.empty());
+			v1.swap(v2);
+			EATEST_VERIFY(v1.validate());
+			EATEST_VERIFY(v2.validate());
+			EATEST_VERIFY(!v1.empty() && v2.empty());
 		}
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
