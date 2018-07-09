@@ -1590,9 +1590,9 @@ namespace eastl
 	public:
 		static void swap(Container& a, Container& b)
 		{
-			Container temp(move(a)); // Can't use global swap because that could
-			a = move(b);             // itself call this swap function in return.
-			b = move(temp);
+			Container temp(EASTL_MOVE(a)); // Can't use global swap because that could
+			a = EASTL_MOVE(b);             // itself call this swap function in return.
+			b = EASTL_MOVE(temp);
 		}
 	};
 
@@ -1608,9 +1608,9 @@ namespace eastl
 
 			if(pMemory)
 			{
-				Container* pTemp = ::new(pMemory) Container(move(a));
-				a = move(b);
-				b = move(*pTemp);
+				Container* pTemp = ::new(pMemory) Container(EASTL_MOVE(a));
+				a = EASTL_MOVE(b);
+				b = EASTL_MOVE(*pTemp);
 
 				pTemp->~Container();
 				allocator.deallocate(pMemory, sizeof(a));
