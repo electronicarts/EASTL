@@ -23,11 +23,11 @@ struct MoveOnlyType
 		x.mVal = 0;
 		return *this;
 	}
+	bool operator==(const MoveOnlyType& o) const { return mVal == o.mVal; }
 
 	int mVal;
 };
 
-bool operator==(const MoveOnlyType& a, const MoveOnlyType& b) { return a.mVal == b.mVal; }
 
 int TestTupleVector()
 {
