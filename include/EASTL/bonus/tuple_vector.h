@@ -1314,43 +1314,43 @@ protected:
 }  // namespace TupleVecInternal
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
 }
 
 template <typename AllocatorA, typename AllocatorB,  typename... Ts>
-inline bool operator!=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator!=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
 }
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator<(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator<(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 }
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator>(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator>(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return b < a;
 }
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator<=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator<=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return !(b < a);
 }
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator>=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...> a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...> b)
+inline bool operator>=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
 {
 	return !(a < b);
 }
