@@ -317,6 +317,9 @@ inline int DoUninitializedDefaultFillN(ForwardIterator first, Count n) { eastl::
 template <typename T>
 inline int DoUninitializedFillPtr(T* first, T* last, const T& value) { eastl::uninitialized_fill_ptr(first, last, value); return 0; }
 
+template <typename First, typename Last, typename Result>
+inline int DoUninitializedMovePtr(First first, Last last, Result result) { eastl::uninitialized_move_ptr(first, last, result); return 0; }
+
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
 template <typename... Ts>
 void swallow(Ts&&...) { }
@@ -566,11 +569,18 @@ public:
 		swap(x);
 	}
 
-	template <typename OtherAllocator>
-	TupleVecImpl(TupleVecImpl<OtherAllocator, index_sequence_type, Ts...>&& x, const Allocator& allocator) 
+	TupleVecImpl(this_type&& x, const Allocator& allocator) 
 		: mAllocator(allocator)
 	{
-		swap(x);
+		if (mAllocator == x.mAllocator) // If allocators are equivalent, then we can safely swap member-by-member
+		{
+			swap(x);
+		}
+		else
+		{
+			this_type temp(eastl::move(*this));
+			temp.swap(x);
+		}
 	}
 
 	TupleVecImpl(const this_type& x) 
@@ -1229,7 +1239,7 @@ protected:
 		size_type endIdx = end.base().mIndex;
 		DoConditionalReallocate(0, mNumCapacity, newNumElements);
 		mNumElements = newNumElements;
-		swallow(DoUninitializedCopyPtr(eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
+		swallow(DoUninitializedMovePtr(eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
 				                       eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + endIdx),
 				                       TupleVecLeaf<Indices, Ts>::mpData)...);
 	}
