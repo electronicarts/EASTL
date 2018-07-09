@@ -108,6 +108,19 @@ int TestTupleVector()
 			EATEST_VERIFY(get<1>(constRefTupleBracket) == 1.0f);
 			EATEST_VERIFY(get<1>(constRefTupleFront) == 2.0f);
 			EATEST_VERIFY(get<1>(constRefTupleBack) == 0.0f);
+
+			// check that return types of const-version of begin and cbegin (etc) match
+			static_assert(eastl::is_same<decltype(constVec.begin()), decltype(constVec.cbegin())>::value, "error");
+			static_assert(eastl::is_same<decltype(constVec.end()), decltype(constVec.cend())>::value, "error");
+			static_assert(eastl::is_same<decltype(constVec.rbegin()), decltype(constVec.crbegin())>::value, "error");
+			static_assert(eastl::is_same<decltype(constVec.rend()), decltype(constVec.crend())>::value, "error");
+
+			// check that return type of non-const version of begin and cbegin (etc) do _not_ match
+			static_assert(!eastl::is_same<decltype(complexVec.begin()), decltype(complexVec.cbegin())>::value, "error");
+			static_assert(!eastl::is_same<decltype(complexVec.end()), decltype(complexVec.cend())>::value, "error");
+			static_assert(!eastl::is_same<decltype(complexVec.rbegin()), decltype(complexVec.crbegin())>::value, "error");
+			static_assert(!eastl::is_same<decltype(complexVec.rend()), decltype(complexVec.crend())>::value, "error");
+
 		}
 	}
 
