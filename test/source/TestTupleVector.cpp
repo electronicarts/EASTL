@@ -496,6 +496,92 @@ int TestTupleVector()
 			EATEST_VERIFY(testVec.validate());
 		}
 
+		// test insert with rvalue args
+		{
+			tuple_vector<int, MoveOnlyType, TestObject> testVec;
+			testVec.reserve(3);
+
+			// test insert on empty vector that doesn't cause growth
+			testVec.insert(testVec.begin(), 3, MoveOnlyType(3), TestObject(3));
+			EATEST_VERIFY(testVec.size() == 1);
+
+			// test insert to end of vector that doesn't cause growth
+			testVec.insert(testVec.end(), 5, MoveOnlyType(5), TestObject(5));
+			EATEST_VERIFY(testVec.size() == 2);
+
+			// test insert to middle of vector that doesn't cause growth
+			testVec.insert(testVec.begin() + 1, 4, MoveOnlyType(4), TestObject(4));
+			EATEST_VERIFY(testVec.size() == 3);
+			EATEST_VERIFY(testVec.capacity() == 3);
+
+			// test insert to end of vector that causes growth
+			testVec.insert(testVec.end(), 6, MoveOnlyType(6), TestObject(6));
+			EATEST_VERIFY(testVec.size() == 4);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 4);
+
+			// test insert to beginning of vector that causes growth
+			testVec.insert(testVec.begin(), 1, MoveOnlyType(1), TestObject(1));
+			EATEST_VERIFY(testVec.size() == 5);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 5);
+
+			// test insert to middle of vector that causes growth
+			testVec.insert(testVec.begin() + 1, 2, MoveOnlyType(2), TestObject(2));
+			EATEST_VERIFY(testVec.size() == 6);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 6);
+
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+			}
+			EATEST_VERIFY(testVec.validate());
+		}
+
+		// test insert with rvalue tuple
+		{
+			tuple_vector<int, MoveOnlyType, TestObject> testVec;
+			testVec.reserve(3);
+
+			// test insert on empty vector that doesn't cause growth
+			testVec.insert(testVec.begin(), forward_as_tuple(3, MoveOnlyType(3), TestObject(3)));
+			EATEST_VERIFY(testVec.size() == 1);
+
+			// test insert to end of vector that doesn't cause growth
+			testVec.insert(testVec.end(), forward_as_tuple(5, MoveOnlyType(5), TestObject(5)));
+			EATEST_VERIFY(testVec.size() == 2);
+
+			// test insert to middle of vector that doesn't cause growth
+			testVec.insert(testVec.begin() + 1, forward_as_tuple(4, MoveOnlyType(4), TestObject(4)));
+			EATEST_VERIFY(testVec.size() == 3);
+			EATEST_VERIFY(testVec.capacity() == 3);
+
+			// test insert to end of vector that causes growth
+			testVec.insert(testVec.end(), forward_as_tuple(6, MoveOnlyType(6), TestObject(6)));
+			EATEST_VERIFY(testVec.size() == 4);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 4);
+
+			// test insert to beginning of vector that causes growth
+			testVec.insert(testVec.begin(), forward_as_tuple(1, MoveOnlyType(1), TestObject(1)));
+			EATEST_VERIFY(testVec.size() == 5);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 5);
+
+			// test insert to middle of vector that causes growth
+			testVec.insert(testVec.begin() + 1, forward_as_tuple(2, MoveOnlyType(2), TestObject(2)));
+			EATEST_VERIFY(testVec.size() == 6);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 6);
+
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+			}
+			EATEST_VERIFY(testVec.validate());
+		}
+
 		// test insert with iterator range 
 		{
 			tuple_vector<bool, TestObject, float> srcVec;
@@ -771,6 +857,7 @@ int TestTupleVector()
 
 	// Test multitude of constructors
 	{
+		MallocAllocator ma;
 		TestObject::Reset();
 		tuple_vector<bool, TestObject, float> srcVec;
 		for (int i = 0; i < 10; ++i)
@@ -859,7 +946,6 @@ int TestTupleVector()
 		}
 
 		// ctor tuple_Vector with custom mallocator
-		MallocAllocator ma;
 		{
 			tuple_vector_alloc<MallocAllocator, bool, TestObject, float> ctorWithAlloc(ma);
 			tuple_vector<bool, TestObject, float> ctorDefault;
@@ -895,6 +981,104 @@ int TestTupleVector()
 				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
 				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
 				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+			}
+		}
+
+		// ctor tuple_vector via move
+		{
+			tuple_vector<int, MoveOnlyType, TestObject> srcMoveVec;
+			for (int i = 0; i < 10; ++i)
+			{
+				srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
+			}
+
+			tuple_vector<int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec));
+
+			EATEST_VERIFY(ctorFromMove.size() == 10);
+			EATEST_VERIFY(ctorFromMove.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(srcMoveVec.size() == 0);
+			EATEST_VERIFY(srcMoveVec.validate());
+		}
+
+		// ctor tuple_vector via move (from diff. allocator)
+		{
+			tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> srcMoveVec;
+			for (int i = 0; i < 10; ++i)
+			{
+				srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
+			}
+
+			MallocAllocator otherMa;
+			tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> ctorFromMove(move(srcMoveVec), otherMa);
+
+			EATEST_VERIFY(ctorFromMove.size() == 10);
+			EATEST_VERIFY(ctorFromMove.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(srcMoveVec.size() == 0);
+			EATEST_VERIFY(srcMoveVec.validate());
+			
+			// bonus test for specifying a custom allocator, but using the same one as above
+			tuple_vector_alloc<MallocAllocator, int, MoveOnlyType, TestObject> ctorFromMoveSameAlloc(move(ctorFromMove), otherMa);
+			EATEST_VERIFY(ctorFromMoveSameAlloc.size() == 10);
+			EATEST_VERIFY(ctorFromMoveSameAlloc.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMoveSameAlloc.get<2>()[i] == TestObject(i));
+			}
+			EATEST_VERIFY(ctorFromMove.size() == 0);
+			EATEST_VERIFY(ctorFromMove.validate());
+		}
+
+		// ctor tuple_vector via move-iters
+		{
+			tuple_vector<int, MoveOnlyType, TestObject> srcMoveVec;
+			for (int i = 0; i < 10; ++i)
+			{
+				srcMoveVec.emplace_back(move(i), MoveOnlyType(i), TestObject(i));
+			}
+
+			tuple_vector<int, MoveOnlyType, TestObject> ctorFromMove(make_move_iterator(srcMoveVec.begin() + 2), make_move_iterator(srcMoveVec.begin() + 7));
+
+			EATEST_VERIFY(ctorFromMove.size() == 5);
+			EATEST_VERIFY(ctorFromMove.validate());
+			for (int i = 2; i < 7; ++i)
+			{
+				EATEST_VERIFY(ctorFromMove.get<0>()[i-2] == i);
+				EATEST_VERIFY(ctorFromMove.get<1>()[i-2] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.get<2>()[i-2] == TestObject(i));
+			}
+			EATEST_VERIFY(srcMoveVec.size() == 10);
+			EATEST_VERIFY(srcMoveVec.validate());
+			for (int i = 0; i < 2; ++i)
+			{
+				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i);
+				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(i));
+			}
+			for (int i = 2; i < 7; ++i)
+			{
+				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i); // int's just get copied because they're POD
+				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(0));
+				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(0));
+			}
+			for (int i = 7; i < 10; ++i)
+			{
+				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i);
+				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(i));
 			}
 		}
 
@@ -1067,10 +1251,56 @@ int TestTupleVector()
 	// Test move operations
 	{
 		TestObject::Reset();
+
+		// test emplace 
+		{
+			tuple_vector<int, MoveOnlyType, TestObject> testVec;
+			testVec.reserve(3);
+
+			// test emplace on empty vector that doesn't cause growth
+			testVec.emplace(testVec.begin(), 3, MoveOnlyType(3), TestObject(3));
+			EATEST_VERIFY(testVec.size() == 1);
+
+			// test emplace to end of vector that doesn't cause growth
+			testVec.emplace(testVec.end(), 5, MoveOnlyType(5), TestObject(5));
+			EATEST_VERIFY(testVec.size() == 2);
+
+			// test emplace to middle of vector that doesn't cause growth
+			testVec.emplace(testVec.begin() + 1, 4, MoveOnlyType(4), TestObject(4));
+			EATEST_VERIFY(testVec.size() == 3);
+			EATEST_VERIFY(testVec.capacity() == 3);
+
+			// test emplace to end of vector that causes growth
+			testVec.emplace(testVec.end(), 6, MoveOnlyType(6), TestObject(6));
+			EATEST_VERIFY(testVec.size() == 4);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 4);
+
+			// test emplace to beginning of vector that causes growth
+			testVec.emplace(testVec.begin(), 1, MoveOnlyType(1), TestObject(1));
+			EATEST_VERIFY(testVec.size() == 5);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 5);
+
+			// test emplace to middle of vector that causes growth
+			testVec.emplace(testVec.begin() + 1, 2, MoveOnlyType(2), TestObject(2));
+			EATEST_VERIFY(testVec.size() == 6);
+			testVec.shrink_to_fit();
+			EATEST_VERIFY(testVec.capacity() == 6);
+
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+			}
+			EATEST_VERIFY(testVec.validate());
+		}
+	
+		// test some other miscellania around rvalues, including...
+		// push_back with rvalue args, push_back with rvalue tuple,
+		// emplace_back with args, and emplace_back with tup
 		{
 			tuple_vector<int, MoveOnlyType, TestObject> v1;
 			tuple_vector<int, MoveOnlyType, TestObject> v2;
-
 			// add some data in the vector so we can move it to the other vector.
 			v1.reserve(5);
 			auto emplacedTup = v1.emplace_back(1, MoveOnlyType(1), TestObject(1));
@@ -1098,35 +1328,6 @@ int TestTupleVector()
 			EATEST_VERIFY(v1.validate());
 			EATEST_VERIFY(v2.validate());
 			EATEST_VERIFY(!v1.empty() && v2.empty());
-
-			v2.insert(v2.begin(), *make_move_iterator(v1.begin()));
-			EATEST_VERIFY(v1.validate());
-			EATEST_VERIFY(v2.validate());
-			EATEST_VERIFY(v2.size() == 1);
-			EATEST_VERIFY(v1.size() == 6);
-			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
-			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(v1.get<1>()[0].mVal == 0);
-			EATEST_VERIFY(v2.get<1>()[0].mVal == 1);
-
-			v1.shrink_to_fit();
-			v2.shrink_to_fit();
-			EATEST_VERIFY(v1.validate());
-			EATEST_VERIFY(v2.validate());
-			EATEST_VERIFY(v2.size() == 1);
-			EATEST_VERIFY(v1.size() == 6);
-			EATEST_VERIFY(v1.get<2>()[0] == TestObject(0));
-			EATEST_VERIFY(v2.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(v1.get<1>()[0].mVal == 0);
-			EATEST_VERIFY(v2.get<1>()[0].mVal == 1);
-
-			tuple_vector<int, MoveOnlyType, TestObject> v3(eastl::move(v2));
-			EATEST_VERIFY(v2.validate());
-			EATEST_VERIFY(v3.validate());
-			EATEST_VERIFY(v2.size() == 0);
-			EATEST_VERIFY(v3.size() == 1);
-			EATEST_VERIFY(v3.get<2>()[0] == TestObject(1));
-			EATEST_VERIFY(v3.get<1>()[0].mVal == 1);
 		}
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
