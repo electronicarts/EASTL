@@ -65,15 +65,16 @@ public:
 	fixed_tuple_vector(this_type&& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		// rewrite
-		//EA_ASSERT(false);
+		mAllocator.copy_overflow_allocator(x.mAllocator);
+		DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		x.clear();
 	}
 
 	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		//EA_ASSERT(false);
-		// rewrite
+		DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		x.clear();
 	}
 
 	fixed_tuple_vector(const this_type& x)
@@ -137,8 +138,10 @@ public:
 
 	this_type& operator=(this_type&& other)
 	{
-	//	EA_ASSERT(false);
-		// rewrite
+		clear();
+		// OK to call DoInitFromIterator in a non-ctor scenario because clear() reset everything, more-or-less
+		DoInitFromIterator(make_move_iterator(other.begin()), make_move_iterator(other.end()));
+		other.clear();
 		return *this;
 	}
 
