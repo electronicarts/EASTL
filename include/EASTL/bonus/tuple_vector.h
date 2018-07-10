@@ -275,7 +275,7 @@ struct TupleVecLeaf
 		eastl::uninitialized_move_ptr(pDataEnd - 1, pDataEnd, pDataEnd);
 		eastl::move_backward(pDest, pDataEnd - 1, pDataEnd); // We need move_backward because of potential overlap issues.
 		eastl::destruct(pDest);
-		::new (pDest) T(eastl::move(arg));
+		::new (pDest) T(eastl::forward<T>(arg));
 
 		return 0;
 	}
@@ -291,7 +291,7 @@ template <typename T>
 inline int DoConstruction(T* ptr, const T& arg) { ::new (ptr) T(arg); return 0; }
 
 template <typename T>
-inline int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::move(arg)); return 0; }
+inline int DoConstruction(T* ptr, T&& arg) { ::new (ptr) T(eastl::forward<T>(arg)); return 0; }
 
 template <typename InputIterator, typename OutputIterator>
 inline int DoCopy(InputIterator first, InputIterator last, OutputIterator result) { eastl::copy(first, last, result); return 0; }
@@ -745,7 +745,7 @@ public:
 		size_type oldNumCapacity = mNumCapacity;
 		mNumElements = newNumElements;
 		DoGrow(oldNumElements, oldNumCapacity, newNumElements);
-		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::move(args))...);
+		swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::forward<Ts>(args))...);
 		return back();
 	}
 
@@ -774,7 +774,7 @@ public:
 					0, firstIdx, (Ts*)ppNewLeaf[Indices])...);
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
 					firstIdx, oldNumElements, (Ts*)ppNewLeaf[Indices] + firstIdx + 1)...);
-				swallow(DoConstruction((Ts*)ppNewLeaf[Indices] + firstIdx, eastl::move(args))...);
+				swallow(DoConstruction((Ts*)ppNewLeaf[Indices] + firstIdx, eastl::forward<Ts>(args))...);
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
 
 				EASTLFree(mAllocator, mpData, mDataSize);
@@ -784,12 +784,12 @@ public:
 			}
 			else
 			{
-				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValue(firstIdx, oldNumElements, eastl::move(args))...);
+				swallow(TupleVecLeaf<Indices, Ts>::DoInsertValue(firstIdx, oldNumElements, eastl::forward<Ts>(args))...);
 			}
 		}
 		else
 		{
-			swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::move(args))...);
+			swallow(DoConstruction(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::forward<Ts>(args))...);
 		}
 		return begin() + firstIdx;
 	}
@@ -1021,16 +1021,16 @@ public:
 
 	void assign(size_type n, const_reference_tuple tup) { assign(n, eastl::get<Indices>(tup)...); }
 
-	void push_back(Ts&&... args) { emplace_back(eastl::move(args)...); }
+	void push_back(Ts&&... args) { emplace_back(eastl::forward<Ts>(args)...); }
 	void push_back(const_reference_tuple tup) { push_back(eastl::get<Indices>(tup)...); }
-	void push_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))...); }
+	void push_back(rvalue_tuple tup) { emplace_back(eastl::forward<Ts>(eastl::get<Indices>(tup))...); }
 
-	void emplace_back(rvalue_tuple tup) { emplace_back(eastl::move(eastl::get<Indices>(tup))...); }
-	void emplace(const_iterator pos, rvalue_tuple tup) { emplace(pos, eastl::move(eastl::get<Indices>(tup))...); }
+	void emplace_back(rvalue_tuple tup) { emplace_back(eastl::forward<Ts>(eastl::get<Indices>(tup))...); }
+	void emplace(const_iterator pos, rvalue_tuple tup) { emplace(pos, eastl::forward<Ts>(eastl::get<Indices>(tup))...); }
 
 	iterator insert(const_iterator pos, const Ts&... args) { return insert(pos, 1, args...); }
-	iterator insert(const_iterator pos, Ts&&... args) { return emplace(pos, eastl::move(args)...); }
-	iterator insert(const_iterator pos, rvalue_tuple tup) { return emplace(pos, eastl::move(eastl::get<Indices>(tup))...); }
+	iterator insert(const_iterator pos, Ts&&... args) { return emplace(pos, eastl::forward<Ts>(args)...); }
+	iterator insert(const_iterator pos, rvalue_tuple tup) { return emplace(pos, eastl::forward<Ts>(eastl::get<Indices>(tup))...); }
 	iterator insert(const_iterator pos, const_reference_tuple tup) { return insert(pos, eastl::get<Indices>(tup)...); }
 	iterator insert(const_iterator pos, size_type n, const_reference_tuple tup) { return insert(pos, n, eastl::get<Indices>(tup)...); }
 
