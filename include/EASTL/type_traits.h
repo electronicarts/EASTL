@@ -1071,6 +1071,24 @@ namespace eastl
 	struct static_max<I0, I1, in...>
 		{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
 
+	///////////////////////////////////////////////////////////////////////
+	/// This enum class is useful for detecting whether a system is little
+	/// or big endian. Mixed or middle endian is not modeled here as described
+	/// by the C++20 spec.
+	///////////////////////////////////////////////////////////////////////
+	enum class endian
+	{
+		#ifdef EA_SYSTEM_LITTLE_ENDIAN
+			little = 1,
+			big = 0,
+			native = little
+		#else
+			little = 0,
+			big = 1,
+			native = big
+		#endif
+	};
+
 } // namespace eastl
 
 
