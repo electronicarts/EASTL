@@ -502,7 +502,7 @@ namespace eastl
 		             size_type pos,
 		             size_type n,
 		             const allocator_type& alloc = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR)
-		    : basic_string(sv.substr(pos, n), n, alloc)
+		    : basic_string(sv.substr(pos, n), alloc)
 		{
 		}
 
