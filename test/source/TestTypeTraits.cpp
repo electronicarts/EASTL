@@ -1875,6 +1875,21 @@ int TestTypeTraits()
 	#endif
 	}
 
+	// endian (big-endian and little; no mixed-endian/middle-endian)
+	static_assert(eastl::endian::big != eastl::endian::little, "little-endian and big-endian are not the same");
+	static_assert(eastl::endian::native == eastl::endian::big || eastl::endian::native == eastl::endian::little
+		, "native may be little endian or big endian");
+	static_assert(!(eastl::endian::native == eastl::endian::big && eastl::endian::native == eastl::endian::little)
+		, "native cannot be both big and little endian");
+
+	#ifdef EA_SYSTEM_LITTLE_ENDIAN
+		static_assert(eastl::endian::native == eastl::endian::little, "must be little endian");
+		static_assert(eastl::endian::native != eastl::endian::big, "must not be big endian");
+	#else
+		static_assert(eastl::endian::native != eastl::endian::little, "must not be little endian");
+		static_assert(eastl::endian::native == eastl::endian::big, "must be big endian");
+	#endif
+
 	return nErrorCount;
 }
 
