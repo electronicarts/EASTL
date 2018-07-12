@@ -181,34 +181,36 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 
 	static EA_CONSTEXPR size_type GetTotalAllocationSize(size_type capacity, size_type offset)
 	{
-		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, CalculateAllocationOffsetRange(offset, capacity).second);
+		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, CalculateAllocationSize(offset, capacity));
 	}
 
 	template<typename Allocator, size_type I, typename Indices, typename... VecTypes>
 	static pair<void*, size_type> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** ppNewLeaf, size_type capacity, size_type offset)
 	{
-		pair<size_type, size_type> offsetRange = CalculateAllocationOffsetRange(offset, capacity);
+		size_t allocationOffset = CalculatAllocationOffset(offset);
+		size_t allocationSize = CalculateAllocationSize(offset, capacity);
 		pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<Allocator, I + 1, Indices, VecTypes...>(
-			vec, ppNewLeaf, capacity, offsetRange.second);
-		ppNewLeaf[I] = (void*)((uintptr_t)(allocation.first) + offsetRange.first);
+			vec, ppNewLeaf, capacity, allocationSize);
+		ppNewLeaf[I] = (void*)((uintptr_t)(allocation.first) + allocationOffset);
 		return allocation;
 	}
 
 	template<typename TupleVecImplType, size_type I>
 	static void SetNewData(TupleVecImplType &vec, void* pData, size_type capacity, size_type offset)
 	{
-		pair<size_type, size_type> offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		vec.TupleVecLeaf<I, T>::mpData = (T*)((uintptr_t)pData + offsetRange.first);
-		TupleRecurser<Ts...>::template SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
+		size_t allocationOffset = CalculatAllocationOffset(offset);
+		size_t allocationSize = CalculateAllocationSize(offset, capacity);
+		vec.TupleVecLeaf<I, T>::mpData = (T*)((uintptr_t)pData + allocationOffset);
+		TupleRecurser<Ts...>::template SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, allocationSize);
 	}
 
 private:
-	static EA_CONSTEXPR pair<size_type, size_type> CalculateAllocationOffsetRange(size_type offset, size_type capacity)
+	static EA_CONSTEXPR size_type CalculateAllocationSize(size_type offset, size_type capacity)
 	{
-		return pair<size_type, size_type>(CalculatOffsetBegin(offset), CalculatOffsetBegin(offset) + sizeof(T) * capacity);
+		return CalculatAllocationOffset(offset) + sizeof(T) * capacity;
 	}
 
-	static EA_CONSTEXPR size_t CalculatOffsetBegin(size_t offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
+	static EA_CONSTEXPR size_t CalculatAllocationOffset(size_t offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
 };
 
 template <size_t I, typename T>
