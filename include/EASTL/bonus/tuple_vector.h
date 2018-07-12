@@ -72,6 +72,9 @@ struct TupleRecurser;
 template <size_t I, typename... Ts>
 struct TupleIndexRecurser;
 
+template <size_t I, typename T>
+struct TupleVecLeaf;
+
 template <typename Indices, typename... Ts>
 struct TupleVecIter;
 
@@ -141,12 +144,12 @@ struct TupleRecurser<>
 	// and provide some other utilities
 	TupleRecurser() = delete;
 		
-	static constexpr size_type GetTotalAlignment()
+	static EA_CONSTEXPR size_type GetTotalAlignment()
 	{
 		return 0;
 	}
 
-	static constexpr size_type GetTotalAllocationSize(size_type capacity, size_type offset)
+	static EA_CONSTEXPR size_type GetTotalAllocationSize(size_type capacity, size_type offset)
 	{
 		return offset;
 	}
@@ -171,22 +174,21 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 {
 	typedef eastl_size_t size_type;
 	
-	static constexpr size_type GetTotalAlignment()
+	static EA_CONSTEXPR size_type GetTotalAlignment()
 	{
 		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
 	}
 
-	static constexpr size_type GetTotalAllocationSize(size_type capacity, size_type offset)
+	static EA_CONSTEXPR size_type GetTotalAllocationSize(size_type capacity, size_type offset)
 	{
-		pair<size_type, size_type> offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, offsetRange.second);
+		return TupleRecurser<Ts...>::GetTotalAllocationSize(capacity, CalculateAllocationOffsetRange(offset, capacity).second);
 	}
 
 	template<typename Allocator, size_type I, typename Indices, typename... VecTypes>
 	static pair<void*, size_type> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** ppNewLeaf, size_type capacity, size_type offset)
 	{
 		pair<size_type, size_type> offsetRange = CalculateAllocationOffsetRange(offset, capacity);
-		pair<void*, size_type> allocation = TupleRecurser<Ts...>::DoAllocate<Allocator, I + 1, Indices, VecTypes...>(
+		pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<Allocator, I + 1, Indices, VecTypes...>(
 			vec, ppNewLeaf, capacity, offsetRange.second);
 		ppNewLeaf[I] = (void*)((uintptr_t)(allocation.first) + offsetRange.first);
 		return allocation;
@@ -197,17 +199,16 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	{
 		pair<size_type, size_type> offsetRange = CalculateAllocationOffsetRange(offset, capacity);
 		vec.TupleVecLeaf<I, T>::mpData = (T*)((uintptr_t)pData + offsetRange.first);
-		TupleRecurser<Ts...>::SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
+		TupleRecurser<Ts...>::template SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, offsetRange.second);
 	}
 
 private:
-	static constexpr pair<size_type, size_type> CalculateAllocationOffsetRange(size_type offset, size_type capacity)
+	static EA_CONSTEXPR pair<size_type, size_type> CalculateAllocationOffsetRange(size_type offset, size_type capacity)
 	{
-		size_type alignment = alignof(T);
-		size_type offsetBegin = (offset + alignment - 1) & (~alignment + 1);
-		size_type offsetEnd = offsetBegin + sizeof(T) * capacity;
-		return pair<size_type, size_type>(offsetBegin, offsetEnd);
+		return pair<size_type, size_type>(CalculatOffsetBegin(offset), CalculatOffsetBegin(offset) + sizeof(T) * capacity);
 	}
+
+	static EA_CONSTEXPR size_t CalculatOffsetBegin(size_t offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
 };
 
 template <size_t I, typename T>
@@ -362,15 +363,23 @@ private:
 	typedef TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> this_type;
 	typedef eastl_size_t size_type;
 
+	typedef iterator<random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>> iter_type;
+
 	template<typename U, typename... Us> 
 	friend struct TupleVecIter;
 
-	template<typename U, typename V, typename... Ts>
+	template<typename U, typename V, typename... Us>
 	friend class TupleVecImpl;
 
 	template<typename U>
 	friend class move_iterator;
 public:
+	typedef typename iter_type::iterator_category iterator_category;
+	typedef typename iter_type::value_type value_type;
+	typedef typename iter_type::difference_type difference_type;
+	typedef typename iter_type::pointer pointer;
+	typedef typename iter_type::reference reference;
+
 	TupleVecIter() = default;
 
 	template<typename VecImplType>
@@ -461,76 +470,6 @@ private:
 
 	size_type mIndex = 0;
 	const void* mpData[sizeof...(Ts)];
-};
-
-// Move_iterator specialization for TupleVecIter.
-// An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
-// what we actually want is "tuple<Ts&&...>". This specialization gives us that.
-template <size_t... Indices, typename... Ts>
-class move_iterator<TupleVecIter<integer_sequence<size_t, Indices...>, Ts...>>
-{
-public:
-	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> iterator_type;
-	typedef iterator_type wrapped_iterator_type; // This is not in the C++ Standard; it's used by use to identify it as
-												 // a wrapping iterator type.
-	typedef iterator_traits<iterator_type> traits_type;
-	typedef typename traits_type::iterator_category iterator_category;
-	typedef typename traits_type::value_type value_type;
-	typedef typename traits_type::difference_type difference_type;
-	typedef typename traits_type::pointer pointer;
-	typedef tuple<Ts&&...> reference;
-	typedef move_iterator<iterator_type> this_type;
-
-protected:
-	iterator_type mIterator;
-
-public:
-	move_iterator() : mIterator() {}
-	explicit move_iterator(iterator_type mi) : mIterator(mi) {}
-
-	template <typename U>
-	move_iterator(const move_iterator<U>& mi) : mIterator(mi.base()) {}
-
-	iterator_type base() const { return mIterator; }
-	reference operator*() const { return eastl::move(MakeReference()); }
-	pointer operator->() const { return mIterator; }
-
-	this_type& operator++() { ++mIterator; return *this; }
-	this_type operator++(int) {
-		this_type tempMoveIterator = *this;
-		++mIterator;
-		return tempMoveIterator;
-	}
-
-	this_type& operator--() { --mIterator; return *this; }
-	this_type operator--(int)
-	{
-		this_type tempMoveIterator = *this;
-		--mIterator;
-		return tempMoveIterator;
-	}
-
-	this_type operator+(difference_type n) const { return move_iterator(mIterator + n); }
-	this_type& operator+=(difference_type n)
-	{
-		mIterator += n;
-		return *this;
-	}
-
-	this_type operator-(difference_type n) const { return move_iterator(mIterator - n); }
-	this_type& operator-=(difference_type n)
-	{
-		mIterator -= n;
-		return *this;
-	}
-
-	reference operator[](difference_type n) const { return *(*this + n); }
-
-private:
-	reference MakeReference() const 
-	{
-		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
-	}
 };
 
 // TupleVecImpl
@@ -638,7 +577,7 @@ protected:
 	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity, size_type dataSize)
 		: mAllocator(allocator), mpData(pData), mNumCapacity(capacity), mDataSize(dataSize)
 	{
-		TupleRecurser<Ts...>::SetNewData<this_type, 0>(*this, mpData, mNumCapacity, 0);
+		TupleRecurser<Ts...>::template SetNewData<this_type, 0>(*this, mpData, mNumCapacity, 0);
 	}
 
 public:
@@ -767,7 +706,7 @@ public:
 				const size_type newCapacity = max(GetNewCapacity(oldNumCapacity), newNumElements);
 
 				void* ppNewLeaf[sizeof...(Ts)];
-				pair<void*, size_type> allocation =	TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
+				pair<void*, size_type> allocation =	TupleRecurser<Ts...>::template DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
 					*this, ppNewLeaf, newCapacity, 0);
 
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
@@ -813,7 +752,7 @@ public:
 				const size_type newCapacity = max(GetNewCapacity(oldNumCapacity), newNumElements);
 
 				void* ppNewLeaf[sizeof...(Ts)];
-				pair<void*, size_type> allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
+				pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
 						*this, ppNewLeaf, newCapacity, 0);
 
 				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
@@ -865,7 +804,7 @@ public:
  				const size_type newCapacity = max(GetNewCapacity(oldNumCapacity), newNumElements);
  
  				void* ppNewLeaf[sizeof...(Ts)];
-				pair<void*, size_type> allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
+				pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
  						*this, ppNewLeaf, newCapacity, 0);
  
  				swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
@@ -1223,7 +1162,7 @@ protected:
 	size_type mNumCapacity = 0;
 
 	friend struct TupleRecurser<>;
-	template<typename... Ts>
+	template<typename... Us>
 	friend struct TupleRecurser;
 
 	template <typename MoveIterBase>
@@ -1294,7 +1233,7 @@ protected:
 	void DoReallocate(size_type oldNumElements, size_type requiredCapacity)
 	{
 		void* ppNewLeaf[sizeof...(Ts)];
-		pair<void*, size_type> allocation = TupleRecurser<Ts...>::DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
+		pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
 			*this, ppNewLeaf, requiredCapacity, 0);
 		swallow(TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(0, oldNumElements, (Ts*)ppNewLeaf[Indices])...);
 		swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
@@ -1312,6 +1251,77 @@ protected:
 };
 
 }  // namespace TupleVecInternal
+
+
+// Move_iterator specialization for TupleVecIter.
+// An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
+// what we actually want is "tuple<Ts&&...>". This specialization gives us that.
+template <size_t... Indices, typename... Ts>
+class move_iterator<TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...>>
+{
+public:
+	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> iterator_type;
+	typedef iterator_type wrapped_iterator_type; // This is not in the C++ Standard; it's used by use to identify it as
+												 // a wrapping iterator type.
+	typedef iterator_traits<iterator_type> traits_type;
+	typedef typename traits_type::iterator_category iterator_category;
+	typedef typename traits_type::value_type value_type;
+	typedef typename traits_type::difference_type difference_type;
+	typedef typename traits_type::pointer pointer;
+	typedef tuple<Ts&&...> reference;
+	typedef move_iterator<iterator_type> this_type;
+
+protected:
+	iterator_type mIterator;
+
+public:
+	move_iterator() : mIterator() {}
+	explicit move_iterator(iterator_type mi) : mIterator(mi) {}
+
+	template <typename U>
+	move_iterator(const move_iterator<U>& mi) : mIterator(mi.base()) {}
+
+	iterator_type base() const { return mIterator; }
+	reference operator*() const { return eastl::move(MakeReference()); }
+	pointer operator->() const { return mIterator; }
+
+	this_type& operator++() { ++mIterator; return *this; }
+	this_type operator++(int) {
+		this_type tempMoveIterator = *this;
+		++mIterator;
+		return tempMoveIterator;
+	}
+
+	this_type& operator--() { --mIterator; return *this; }
+	this_type operator--(int)
+	{
+		this_type tempMoveIterator = *this;
+		--mIterator;
+		return tempMoveIterator;
+	}
+
+	this_type operator+(difference_type n) const { return move_iterator(mIterator + n); }
+	this_type& operator+=(difference_type n)
+	{
+		mIterator += n;
+		return *this;
+	}
+
+	this_type operator-(difference_type n) const { return move_iterator(mIterator - n); }
+	this_type& operator-=(difference_type n)
+	{
+		mIterator -= n;
+		return *this;
+	}
+
+	reference operator[](difference_type n) const { return *(*this + n); }
+
+private:
+	reference MakeReference() const 
+	{
+		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
+	}
+};
 
 template <typename AllocatorA, typename AllocatorB, typename... Ts>
 inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,

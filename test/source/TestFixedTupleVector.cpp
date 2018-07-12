@@ -43,8 +43,8 @@ int TestFixedTupleVectorVariant()
 		singleElementVec.push_back_uninitialized();
 		singleElementVec.push_back(5);
 		EATEST_VERIFY(singleElementVec.size() == 2);
-		EATEST_VERIFY(singleElementVec.get<0>()[1] == 5);
-		EATEST_VERIFY(singleElementVec.get<int>()[1] == 5);
+		EATEST_VERIFY(singleElementVec.template get<0>()[1] == 5);
+		EATEST_VERIFY(singleElementVec.template get<int>()[1] == 5);
 		EATEST_VERIFY(singleElementVec.empty() == false);
 		EATEST_VERIFY(singleElementVec.validate());
 
@@ -65,9 +65,9 @@ int TestFixedTupleVectorVariant()
 		}
 		complexVec.push_back();
 		EATEST_VERIFY((!complexVec.has_overflowed() && complexVec.capacity() == nodeCount) || complexVec.capacity() == 5);
-		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
-		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
-		EATEST_VERIFY(complexVec.get<2>()[2] == complexVec.get<bool>()[2]);
+		EATEST_VERIFY(*(complexVec.template get<0>()) == 3);
+		EATEST_VERIFY(complexVec.template get<float>()[1] == 4.0f);
+		EATEST_VERIFY(complexVec.template get<2>()[2] == complexVec.template get<bool>()[2]);
 		EATEST_VERIFY(complexVec.validate());
 
 		tuple<int, float, bool> defaultComplexTup;
@@ -75,13 +75,13 @@ int TestFixedTupleVectorVariant()
 		
 		tuple<int*, float*, bool*> complexPtrTuple = complexVec.data();
 		EATEST_VERIFY(get<0>(complexPtrTuple) != nullptr);
-		EATEST_VERIFY(get<2>(complexPtrTuple)[2] == complexVec.get<2>()[2]);
+		EATEST_VERIFY(get<2>(complexPtrTuple)[2] == complexVec.template get<2>()[2]);
 
 		tuple<int&, float&, bool&> complexRefTuple = complexVec.at(2);
 		tuple<int&, float&, bool&> complexRefTupleBracket = complexVec[2];
 		tuple<int&, float&, bool&> complexRefTupleFront = complexVec.front();
 		tuple<int&, float&, bool&> complexRefTupleBack = complexVec.back();
-		EATEST_VERIFY(get<2>(complexRefTuple) == complexVec.get<2>()[2]);
+		EATEST_VERIFY(get<2>(complexRefTuple) == complexVec.template get<2>()[2]);
 		EATEST_VERIFY(get<1>(complexRefTupleBracket) == 1.0f);
 		EATEST_VERIFY(get<1>(complexRefTupleFront) == 2.0f);
 		EATEST_VERIFY(get<1>(complexRefTupleBack) == 0.0f);
@@ -93,17 +93,17 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(constVec.size() == 5);
 			EATEST_VERIFY(constVec.capacity() >= constVec.size());
 			EATEST_VERIFY(constVec.empty() == false);
-			EATEST_VERIFY(constVec.get<1>() == constVec.get<float>());
+			EATEST_VERIFY(constVec.template get<1>() == constVec.template get<float>());
 
 			tuple<const int*, const float*, const bool*> constPtrTuple = constVec.data();
 			EATEST_VERIFY(get<0>(constPtrTuple) != nullptr);
-			EATEST_VERIFY(get<2>(constPtrTuple)[2] == constVec.get<2>()[2]);
+			EATEST_VERIFY(get<2>(constPtrTuple)[2] == constVec.template get<2>()[2]);
 
 			tuple<const int&, const float&, const bool&> constRefTuple = constVec.at(2);
 			tuple<const int&, const float&, const bool&> constRefTupleBracket = constVec[2];
 			tuple<const int&, const float&, const bool&> constRefTupleFront = constVec.front();
 			tuple<const int&, const float&, const bool&> constRefTupleBack = constVec.back();
-			EATEST_VERIFY(get<2>(constRefTuple) == constVec.get<2>()[2]);
+			EATEST_VERIFY(get<2>(constRefTuple) == constVec.template get<2>()[2]);
 			EATEST_VERIFY(get<1>(constRefTupleBracket) == 1.0f);
 			EATEST_VERIFY(get<1>(constRefTupleFront) == 2.0f);
 			EATEST_VERIFY(get<1>(constRefTupleBack) == 0.0f);
@@ -124,7 +124,7 @@ int TestFixedTupleVectorVariant()
 
 	// test the memory layouts work for aligned structures
 	{
-		__declspec(align(16)) struct AlignTestVec4
+		struct EA_ALIGN(16) AlignTestVec4
 		{
 			float a[4];
 			AlignTestVec4() :a{ 1.0f, 2.0f, 3.0f, 4.0f } {}
@@ -136,7 +136,7 @@ int TestFixedTupleVectorVariant()
 			AlignTestByte3() : a{1, 2, 3} {}
 		};
 
-		__declspec(align(8)) struct AlignTestFourByte
+		struct EA_ALIGN(8) AlignTestFourByte
 		{
 			int a[5];
 			AlignTestFourByte() : a{-1, -2, -3, -4, -5} {}
@@ -150,8 +150,8 @@ int TestFixedTupleVectorVariant()
 		alignElementVec.push_back();
 
 		auto alignDataPtrs = alignElementVec.data();
-		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestVec4>() % 16 == 0);
-		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestFourByte>() % 8 == 0);
+		EATEST_VERIFY((uintptr_t)alignElementVec.template get<AlignTestVec4>() % 16 == 0);
+		EATEST_VERIFY((uintptr_t)alignElementVec.template get<AlignTestFourByte>() % 8 == 0);
 	}
 
 	// Test various modifications
@@ -190,9 +190,9 @@ int TestFixedTupleVectorVariant()
 		EATEST_VERIFY(testVec.validate());
 		for (unsigned int i = 5; i < 10; ++i)
 		{
-			EATEST_VERIFY(testVec.get<0>()[i] == true);
-			EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
-			EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
+			EATEST_VERIFY(testVec.template get<0>()[i] == true);
+			EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(5));
+			EATEST_VERIFY(testVec.template get<2>()[i] == 5.0f);
 		}
 
 		{
@@ -210,15 +210,15 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(testVec.validate());
 			for (unsigned int i = 5; i < 10; ++i)
 			{
-				EATEST_VERIFY(testVec.get<0>()[i] == true);
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(5));
-				EATEST_VERIFY(testVec.get<2>()[i] == 5.0f);
+				EATEST_VERIFY(testVec.template get<0>()[i] == true);
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(testVec.template get<2>()[i] == 5.0f);
 			}
 			for (unsigned int i = 10; i < 15; ++i)
 			{
-				EATEST_VERIFY(testVec.get<0>()[i] == get<0>(resizeTup));
-				EATEST_VERIFY(testVec.get<1>()[i] == get<1>(resizeTup));
-				EATEST_VERIFY(testVec.get<2>()[i] == get<2>(resizeTup));
+				EATEST_VERIFY(testVec.template get<0>()[i] == get<0>(resizeTup));
+				EATEST_VERIFY(testVec.template get<1>()[i] == get<1>(resizeTup));
+				EATEST_VERIFY(testVec.template get<2>()[i] == get<2>(resizeTup));
 			}
 		}
 
@@ -316,7 +316,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i / 3 + 1));
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i / 3 + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -383,7 +383,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i + 1));
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -442,7 +442,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i / 3 + 1));
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i / 3 + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -501,7 +501,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i + 1));
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -553,7 +553,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+				EATEST_VERIFY(testVec.template get<2>()[i] == TestObject(i + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -605,7 +605,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+				EATEST_VERIFY(testVec.template get<2>()[i] == TestObject(i + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -911,9 +911,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromConstRef.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
-				EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
-				EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+				EATEST_VERIFY(ctorFromConstRef.template get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromConstRef.template get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromConstRef.template get<2>()[i] == (float)i);
 			}
 		}
 
@@ -925,9 +925,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromAssignment.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromAssignment.get<0>()[i] == (i % 3 == 0));
-				EATEST_VERIFY(ctorFromAssignment.get<1>()[i] == TestObject(i));
-				EATEST_VERIFY(ctorFromAssignment.get<2>()[i] == (float)i);
+				EATEST_VERIFY(ctorFromAssignment.template get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromAssignment.template get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromAssignment.template get<2>()[i] == (float)i);
 			}
 		}
 
@@ -938,9 +938,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromIters.validate());
 			for (int i = 2; i < 7; ++i)
 			{
-				EATEST_VERIFY(ctorFromIters.get<0>()[i - 2] == (i % 3 == 0));
-				EATEST_VERIFY(ctorFromIters.get<1>()[i - 2] == TestObject(i));
-				EATEST_VERIFY(ctorFromIters.get<2>()[i - 2] == (float)i);
+				EATEST_VERIFY(ctorFromIters.template get<0>()[i - 2] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromIters.template get<1>()[i - 2] == TestObject(i));
+				EATEST_VERIFY(ctorFromIters.template get<2>()[i - 2] == (float)i);
 			}
 		}
 
@@ -951,9 +951,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromFill.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromFill.get<0>()[i] == false);
-				EATEST_VERIFY(ctorFromFill.get<1>()[i] == TestObject());
-				EATEST_VERIFY(ctorFromFill.get<2>()[i] == 0.0f);
+				EATEST_VERIFY(ctorFromFill.template get<0>()[i] == false);
+				EATEST_VERIFY(ctorFromFill.template get<1>()[i] == TestObject());
+				EATEST_VERIFY(ctorFromFill.template get<2>()[i] == 0.0f);
 			}
 		}
 
@@ -964,9 +964,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromFillArgs.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
-				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
-				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+				EATEST_VERIFY(ctorFromFillArgs.template get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillArgs.template get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillArgs.template get<2>()[i] == 5.0f);
 			}
 		}
 
@@ -978,9 +978,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromFillTup.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromFillTup.get<0>()[i] == true);
-				EATEST_VERIFY(ctorFromFillTup.get<1>()[i] == TestObject(5));
-				EATEST_VERIFY(ctorFromFillTup.get<2>()[i] == 5.0f);
+				EATEST_VERIFY(ctorFromFillTup.template get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillTup.template get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillTup.template get<2>()[i] == 5.0f);
 			}
 		}
 
@@ -1003,9 +1003,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromConstRef.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromConstRef.get<0>()[i] == (i % 3 == 0));
-				EATEST_VERIFY(ctorFromConstRef.get<1>()[i] == TestObject(i));
-				EATEST_VERIFY(ctorFromConstRef.get<2>()[i] == (float)i);
+				EATEST_VERIFY(ctorFromConstRef.template get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromConstRef.template get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromConstRef.template get<2>()[i] == (float)i);
 			}
 			EATEST_VERIFY(ctorFromConstRef.validate());
 		}
@@ -1017,9 +1017,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromFillArgs.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromFillArgs.get<0>()[i] == true);
-				EATEST_VERIFY(ctorFromFillArgs.get<1>()[i] == TestObject(5));
-				EATEST_VERIFY(ctorFromFillArgs.get<2>()[i] == 5.0f);
+				EATEST_VERIFY(ctorFromFillArgs.template get<0>()[i] == true);
+				EATEST_VERIFY(ctorFromFillArgs.template get<1>()[i] == TestObject(5));
+				EATEST_VERIFY(ctorFromFillArgs.template get<2>()[i] == 5.0f);
 			}
 		}
 	
@@ -1037,9 +1037,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromMove.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
-				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
-				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromMove.template get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.template get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.template get<2>()[i] == TestObject(i));
 			}
 			EATEST_VERIFY(srcMoveVec.size() == 0);
 			EATEST_VERIFY(srcMoveVec.validate());
@@ -1059,9 +1059,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromMove.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromMove.get<0>()[i] == i);
-				EATEST_VERIFY(ctorFromMove.get<1>()[i] == MoveOnlyType(i));
-				EATEST_VERIFY(ctorFromMove.get<2>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromMove.template get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMove.template get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.template get<2>()[i] == TestObject(i));
 			}
 			EATEST_VERIFY(srcMoveVec.size() == 0);
 			EATEST_VERIFY(srcMoveVec.validate());
@@ -1072,9 +1072,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromMoveSameAlloc.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromMoveSameAlloc.get<0>()[i] == i);
-				EATEST_VERIFY(ctorFromMoveSameAlloc.get<1>()[i] == MoveOnlyType(i));
-				EATEST_VERIFY(ctorFromMoveSameAlloc.get<2>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromMoveSameAlloc.template get<0>()[i] == i);
+				EATEST_VERIFY(ctorFromMoveSameAlloc.template get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMoveSameAlloc.template get<2>()[i] == TestObject(i));
 			}
 			EATEST_VERIFY(ctorFromMove.size() == 0);
 			EATEST_VERIFY(ctorFromMove.validate());
@@ -1094,29 +1094,29 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromMove.validate());
 			for (int i = 2; i < 7; ++i)
 			{
-				EATEST_VERIFY(ctorFromMove.get<0>()[i-2] == i);
-				EATEST_VERIFY(ctorFromMove.get<1>()[i-2] == MoveOnlyType(i));
-				EATEST_VERIFY(ctorFromMove.get<2>()[i-2] == TestObject(i));
+				EATEST_VERIFY(ctorFromMove.template get<0>()[i-2] == i);
+				EATEST_VERIFY(ctorFromMove.template get<1>()[i-2] == MoveOnlyType(i));
+				EATEST_VERIFY(ctorFromMove.template get<2>()[i-2] == TestObject(i));
 			}
 			EATEST_VERIFY(srcMoveVec.size() == 10);
 			EATEST_VERIFY(srcMoveVec.validate());
 			for (int i = 0; i < 2; ++i)
 			{
-				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i);
-				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(i));
-				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(i));
+				EATEST_VERIFY(srcMoveVec.template get<0>()[i] == i);
+				EATEST_VERIFY(srcMoveVec.template get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(srcMoveVec.template get<2>()[i] == TestObject(i));
 			}
 			for (int i = 2; i < 7; ++i)
 			{
-				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i); // int's just get copied because they're POD
-				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(0));
-				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(0));
+				EATEST_VERIFY(srcMoveVec.template get<0>()[i] == i); // int's just get copied because they're POD
+				EATEST_VERIFY(srcMoveVec.template get<1>()[i] == MoveOnlyType(0));
+				EATEST_VERIFY(srcMoveVec.template get<2>()[i] == TestObject(0));
 			}
 			for (int i = 7; i < 10; ++i)
 			{
-				EATEST_VERIFY(srcMoveVec.get<0>()[i] == i);
-				EATEST_VERIFY(srcMoveVec.get<1>()[i] == MoveOnlyType(i));
-				EATEST_VERIFY(srcMoveVec.get<2>()[i] == TestObject(i));
+				EATEST_VERIFY(srcMoveVec.template get<0>()[i] == i);
+				EATEST_VERIFY(srcMoveVec.template get<1>()[i] == MoveOnlyType(i));
+				EATEST_VERIFY(srcMoveVec.template get<2>()[i] == TestObject(i));
 			}
 		}
 
@@ -1140,18 +1140,18 @@ int TestFixedTupleVectorVariant()
 		EATEST_VERIFY(complexVec.size() == 0);
 		EATEST_VERIFY(complexVec.validate());
 		EATEST_VERIFY(otherComplexVec.validate());
-		EATEST_VERIFY(otherComplexVec.get<0>()[0] == 3);
-		EATEST_VERIFY(otherComplexVec.get<float>()[1] == 4.0f);
+		EATEST_VERIFY(otherComplexVec.template get<0>()[0] == 3);
+		EATEST_VERIFY(otherComplexVec.template get<float>()[1] == 4.0f);
 
 		complexVec.push_back(10, 10.0f, true);
 		swap(complexVec, otherComplexVec);
 
 		EATEST_VERIFY(complexVec.validate());
-		EATEST_VERIFY(*(complexVec.get<0>()) == 3);
-		EATEST_VERIFY(complexVec.get<float>()[1] == 4.0f);
+		EATEST_VERIFY(*(complexVec.template get<0>()) == 3);
+		EATEST_VERIFY(complexVec.template get<float>()[1] == 4.0f);
 
 		EATEST_VERIFY(otherComplexVec.validate());
-		EATEST_VERIFY(otherComplexVec.get<float>()[0] == 10.0f);
+		EATEST_VERIFY(otherComplexVec.template get<float>()[0] == 10.0f);
 		EATEST_VERIFY(otherComplexVec.size() == 1);
 
 	}
@@ -1169,7 +1169,7 @@ int TestFixedTupleVectorVariant()
 
 		// test copyConstructible, copyAssignable, swappable, prefix inc, !=, reference convertible to value_type (InputIterator!)
 		{
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
 			++iter;
 			auto copiedIter(iter);
 			EATEST_VERIFY(get<2>(*copiedIter) == 7);
@@ -1199,10 +1199,10 @@ int TestFixedTupleVectorVariant()
 
 		// test postfix increment, default constructible (ForwardIterator)
 		{
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
 			auto prefixIter = ++iter;
 
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator postfixIter;
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator postfixIter;
 			postfixIter = iter++;
 			EATEST_VERIFY(prefixIter == postfixIter);
 			EATEST_VERIFY(get<2>(*prefixIter) == 7);
@@ -1214,10 +1214,10 @@ int TestFixedTupleVectorVariant()
 
 		// test prefix decrement and postfix decrement (BidirectionalIterator)
 		{
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.end();
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.end();
 			auto prefixIter = --iter;
 
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator postfixIter;
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator postfixIter;
 			postfixIter = iter--;
 			EATEST_VERIFY(prefixIter == postfixIter);
 			EATEST_VERIFY(get<2>(*prefixIter) == 10);
@@ -1229,7 +1229,7 @@ int TestFixedTupleVectorVariant()
 
 		// test many arithmetic operations (RandomAccessIterator)
 		{
-			fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
+			typename fixed_tuple_vector<nodeCount, bEnableOverflow, int, float, int>::iterator iter = tripleElementVec.begin();
 			auto symmetryOne = iter + 2;
 			auto symmetryTwo = 2 + iter;
 			iter += 2;
@@ -1261,9 +1261,9 @@ int TestFixedTupleVectorVariant()
 		{
 			float i = 0;
 			int j = 0;
-			EATEST_VERIFY(&get<0>(*tripleElementVec.begin()) == tripleElementVec.get<0>());
-			EATEST_VERIFY(&get<1>(*tripleElementVec.begin()) == tripleElementVec.get<1>());
-			for (auto& iter : tripleElementVec)
+			EATEST_VERIFY(&get<0>(*tripleElementVec.begin()) == tripleElementVec.template get<0>());
+			EATEST_VERIFY(&get<1>(*tripleElementVec.begin()) == tripleElementVec.template get<1>());
+			for (auto iter : tripleElementVec)
 			{
 				i += get<1>(iter);
 				j += get<2>(iter);
@@ -1337,7 +1337,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<2>()[i] == TestObject(i + 1));
+				EATEST_VERIFY(testVec.template get<2>()[i] == TestObject(i + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -1365,7 +1365,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < v1.size(); ++i)
 			{
-				EATEST_VERIFY(v1.get<0>()[i] == i + 1);
+				EATEST_VERIFY(v1.template get<0>()[i] == i + 1);
 			}
 			EATEST_VERIFY(!v1.empty() && v2.empty());
 			v2 = eastl::move(v1);

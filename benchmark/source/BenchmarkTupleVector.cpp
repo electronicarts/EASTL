@@ -31,7 +31,7 @@ typedef eastl::tuple_vector<uint64_t>   EaTupleVectorUint64;
 
  struct PaddingStruct
 {
-	char padding[56];
+	char padding[56] = { 0 };
 };
 static const PaddingStruct DefaultPadding;
 typedef eastl::tuple<uint64_t, PaddingStruct> PaddedTuple;

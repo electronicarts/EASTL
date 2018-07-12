@@ -65,61 +65,61 @@ public:
 	fixed_tuple_vector(this_type&& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		mAllocator.copy_overflow_allocator(x.mAllocator);
-		DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		base_type::mAllocator.copy_overflow_allocator(x.mAllocator);
+		base_type::DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
 		x.clear();
 	}
 
 	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		base_type::DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
 		x.clear();
 	}
 
 	fixed_tuple_vector(const this_type& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		mAllocator.copy_overflow_allocator(x.mAllocator);
-		DoInitFromIterator(x.begin(), x.end());
+		base_type::mAllocator.copy_overflow_allocator(x.mAllocator);
+		base_type::DoInitFromIterator(x.begin(), x.end());
 	}
 
 	fixed_tuple_vector(const this_type& x, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFromIterator(x.begin(), x.end());
+		base_type::DoInitFromIterator(x.begin(), x.end());
 	}
 
 	template <typename MoveIterBase>
 	fixed_tuple_vector(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFromIterator(begin, end);
+		base_type::DoInitFromIterator(begin, end);
 	}
 
 	template <typename Iterator>
 	fixed_tuple_vector(Iterator begin, Iterator end, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFromIterator(begin, end);
+		base_type::DoInitFromIterator(begin, end);
 	}
 
 	fixed_tuple_vector(size_type n, const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitDefaultFill(n);
+		base_type::DoInitDefaultFill(n);
 	}
 
 	fixed_tuple_vector(size_type n, const Ts&... args)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFillArgs(n, args...);
+		base_type::DoInitFillArgs(n, args...);
 	}
 
 	fixed_tuple_vector(size_type n, const Ts&... args, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFillArgs(n, args...);
+		base_type::DoInitFillArgs(n, args...);
 	}
 
 	fixed_tuple_vector(size_type n,
@@ -127,7 +127,7 @@ public:
 				const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		DoInitFillTuple(n, tup);
+		base_type::DoInitFillTuple(n, tup);
 	}
 
 	this_type& operator=(const this_type& other)
@@ -138,9 +138,9 @@ public:
 
 	this_type& operator=(this_type&& other)
 	{
-		clear();
+		base_type::clear();
 		// OK to call DoInitFromIterator in a non-ctor scenario because clear() reset everything, more-or-less
-		DoInitFromIterator(make_move_iterator(other.begin()), make_move_iterator(other.end()));
+		base_type::DoInitFromIterator(make_move_iterator(other.begin()), make_move_iterator(other.end()));
 		other.clear();
 		return *this;
 	}
@@ -165,14 +165,14 @@ public:
 	// Returns true if the fixed space has been fully allocated. Note that if overflow is enabled,
 	// the container size can be greater than nodeCount but full() could return true because the
 	// fixed space may have a recently freed slot.
-	bool full() const { return (mNumElements >= nodeCount) || ((void*)mpData != (void*)mBuffer.buffer);	}
+	bool full() const { return (base_type::mNumElements >= nodeCount) || ((void*)base_type::mpData != (void*)mBuffer.buffer);	}
 	// Returns true if the allocations spilled over into the overflow allocator. Meaningful
 	// only if overflow is enabled.
-	bool has_overflowed() const { return ((void*)mpData != (void*)mBuffer.buffer); }
+	bool has_overflowed() const { return ((void*)base_type::mpData != (void*)mBuffer.buffer); }
 	// Returns the value of the bEnableOverflow template parameter.
 	bool can_overflow() const { return bEnableOverflow; }
 
-	const overflow_allocator_type& get_overflow_allocator() const { return mAllocator.get_overflow_allocator(); }
+	const overflow_allocator_type& get_overflow_allocator() const { return base_type::mAllocator.get_overflow_allocator(); }
 };
 
 
