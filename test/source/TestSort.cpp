@@ -20,6 +20,7 @@
 #include <EASTL/deque.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/allocator.h>
+#include <EASTL/numeric.h>
 #include <EASTL/random.h>
 #include <EABase/eahave.h>
 #include <cmath>
@@ -179,7 +180,6 @@ namespace eastl
 
 } // namespace eastl
 
-
 int TestSort()
 {
 	using namespace eastl;
@@ -238,6 +238,7 @@ int TestSort()
 						intArraySaved.push_back(n);
 				}
 			}
+			const int64_t expectedSum = eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0));
 
 			for(int j = 0; j < 300 + (gEASTL_TestLevel * 50); j++)
 			{
@@ -246,43 +247,59 @@ int TestSort()
 				intArray = intArraySaved;
 				bubble_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				shaker_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				insertion_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				selection_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				shell_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				comb_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				heap_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				merge_sort(intArray.begin(), intArray.end(), *get_default_allocator((EASTLAllocatorType*)NULL));
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				vector<int64_t> buffer(intArray.size());
 				merge_sort_buffer(intArray.begin(), intArray.end(), &buffer[0]);
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
 				intArray = intArraySaved;
 				quick_sort(intArray.begin(), intArray.end());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
+
+				intArray = intArraySaved;
+				buffer.resize(intArray.size()/2);
+				tim_sort_buffer(intArray.begin(), intArray.end(), buffer.data());
+				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 			}
 		}
 	}
@@ -348,10 +365,115 @@ int TestSort()
 				toArray = toArraySaved;
 				quick_sort(toArray.begin(), toArray.end());
 				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end()));
+
+				toArray = toArraySaved;
+				vector<TestObject> buffer(toArray.size()/2);
+				tim_sort_buffer(toArray.begin(), toArray.end(), buffer.data());
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end()));
 			}
 		}
 	}
 
+	// Test that stable sorting algorithms are actually stable
+	{
+		struct StableSortTestObj
+		{
+			StableSortTestObj()
+			{
+			}
+
+			StableSortTestObj(int value)
+				:value(value)
+				,initialPositionIndex(0)
+			{
+			}
+
+			int value;
+			size_t initialPositionIndex;
+		};
+
+		// During the test this comparison is used to sort elements based on value.
+		struct StableSortCompare
+		{
+			bool operator()(const StableSortTestObj& a, const StableSortTestObj& b)
+			{
+				return a.value < b.value;
+			}
+		};
+
+		// During the test this comparison is used to verify the sort was a stable sort.  i.e. if values are the same then
+		// their relative position should be maintained.
+		struct StableSortCompareForStability
+		{
+			bool operator()(const StableSortTestObj& a, const StableSortTestObj& b)
+			{
+				if (a.value != b.value)
+				{
+					return a.value < b.value;
+				}
+				else
+				{
+					return a.initialPositionIndex < b.initialPositionIndex;
+				}
+			}
+		};
+
+		vector<StableSortTestObj> toArray, toArraySaved;
+		StableSortCompare compare;
+		StableSortCompareForStability compareForStability;
+
+		for (int i = 0; i < (150 + (gEASTL_TestLevel * 200)); i += (i < 5) ? 1 : 37) // array sizes of 0 to 300 - 2100, depending on test level.
+		{
+			for (int n = 0; n < i; n++)
+			{
+				toArraySaved.push_back(StableSortTestObj(n));
+
+				if (rng.RandLimit(10) == 0)
+				{
+					toArraySaved.push_back(StableSortTestObj(n));
+
+					if (rng.RandLimit(5) == 0)
+						toArraySaved.push_back(StableSortTestObj(n));
+				}
+			}
+			vector<StableSortTestObj> tempBuffer;
+			tempBuffer.resize(toArraySaved.size());
+
+			for (int j = 0; j < 300 + (gEASTL_TestLevel * 50); j++)
+			{
+				eastl::random_shuffle(toArraySaved.begin(), toArraySaved.end(), rng);
+				// Store the intial position of each element in the array before sorting.  This position can then be used to verify that the sorting operation is stable.
+				for (size_t i = 0; i < toArraySaved.size(); i++)
+				{
+					toArraySaved[i].initialPositionIndex = i;
+				}
+
+				toArray = toArraySaved;
+				bubble_sort(toArray.begin(), toArray.end(), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+
+				toArray = toArraySaved;
+				shaker_sort(toArray.begin(), toArray.end(), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+
+				toArray = toArraySaved;
+				insertion_sort(toArray.begin(), toArray.end(), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+
+				toArray = toArraySaved;
+				tim_sort_buffer(toArray.begin(), toArray.end(), tempBuffer.data(), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+
+				toArray = toArraySaved;
+				merge_sort(toArray.begin(), toArray.end(), *get_default_allocator((EASTLAllocatorType*)NULL), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+
+				toArray = toArraySaved;
+				merge_sort_buffer(toArray.begin(), toArray.end(), tempBuffer.data(), compare);
+				EATEST_VERIFY(is_sorted(toArray.begin(), toArray.end(), compareForStability));
+			}
+		}
+	}
 
 	{
 		// OutputIterator merge(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result)
@@ -632,6 +754,12 @@ int TestSort()
 		StatefulCompare::Reset();
 		intDeque = intDequeSaved;
 		quick_sort<IntDequeIterator, StatefulCompare&>(intDeque.begin(), intDeque.end(), compare);
+		EATEST_VERIFY((StatefulCompare::nCtorCount == 0) && (StatefulCompare::nDtorCount == 0) && (StatefulCompare::nCopyCount == 0));
+
+		StatefulCompare::Reset();
+		vector<int> buffer(intDeque.size()/2);
+		intDeque = intDequeSaved;
+		tim_sort_buffer<IntDequeIterator, int, StatefulCompare&>(intDeque.begin(), intDeque.end(), buffer.data(), compare);
 		EATEST_VERIFY((StatefulCompare::nCtorCount == 0) && (StatefulCompare::nDtorCount == 0) && (StatefulCompare::nCopyCount == 0));
 	}
 

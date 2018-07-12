@@ -29,8 +29,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EABASE_VERSION
-	#define EABASE_VERSION   "2.08.03"
-	#define EABASE_VERSION_N  20803
+	#define EABASE_VERSION   "2.08.04"
+	#define EABASE_VERSION_N  20804
 #endif
 
 #endif

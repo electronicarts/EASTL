@@ -239,8 +239,8 @@ namespace ff_detail
 		template <typename T, typename TotalStorageType>
 		static void templated_call_move_and_destroy(void* in_lhs, void* in_rhs)
 		{
-			TotalStorageType& lhs = (TotalStorageType&)(*(TotalStorageType*)in_lhs);
-			TotalStorageType&& rhs = (TotalStorageType&&)(*(TotalStorageType*)in_rhs);
+			TotalStorageType& lhs = *(TotalStorageType*)in_lhs;
+			TotalStorageType& rhs = *(TotalStorageType*)in_rhs;
 
 			typedef function_table_inplace_specialization<TotalStorageType::SIZE_IN_BYTES, T> specialization;
 			specialization::move_functor(lhs, EASTL_MOVE(rhs));
@@ -251,8 +251,8 @@ namespace ff_detail
 		template <typename T, typename TotalStorageType>
 		static void templated_call_copy(void* in_lhs, const void* in_rhs)
 		{
-			TotalStorageType& lhs = (TotalStorageType&)*(TotalStorageType*)in_lhs;
-			const TotalStorageType& rhs = (const TotalStorageType&)*(const TotalStorageType*)in_rhs;
+			TotalStorageType& lhs = *(TotalStorageType*)in_lhs;
+			const TotalStorageType& rhs = *(const TotalStorageType*)in_rhs;
 
 			typedef function_table_inplace_specialization<TotalStorageType::SIZE_IN_BYTES, T> specialization;
 			init_function_table<T>(lhs);
@@ -262,7 +262,7 @@ namespace ff_detail
 		template <typename T, typename TotalStorageType>
 		static void templated_call_destroy(void* in_self)
 		{
-			TotalStorageType& self = (TotalStorageType&)in_self;
+			TotalStorageType& self = *(TotalStorageType*)in_self;
 
 			typedef function_table_inplace_specialization<TotalStorageType::SIZE_IN_BYTES, T> specialization;
 			specialization::destroy_functor(self);
@@ -271,8 +271,8 @@ namespace ff_detail
 		template <typename T, typename TotalStorageType>
 		static void templated_call_copy_functor_only(void* in_lhs, void* in_rhs)
 		{
-			TotalStorageType& lhs = (TotalStorageType&)in_lhs;
-			const TotalStorageType& rhs = (const TotalStorageType&)in_rhs;
+			TotalStorageType& lhs = *(TotalStorageType*)in_lhs;
+			const TotalStorageType& rhs = *(const TotalStorageType*)in_rhs;
 
 			typedef function_table_inplace_specialization<TotalStorageType::SIZE_IN_BYTES, T> specialization;
 			specialization::store_functor(lhs, specialization::get_functor_ref(rhs));
@@ -288,7 +288,7 @@ namespace ff_detail
 			template <typename T, typename TotalStorageType>
 			static void* templated_call_target(void* in_self, const std::type_info& type)
 			{
-				TotalStorageType& self = (TotalStorageType&)in_self;
+				TotalStorageType& self = *(TotalStorageType*)in_self;
 
 				typedef function_table_inplace_specialization<T> specialization;
 				if (type == typeid(T))
@@ -359,6 +359,8 @@ public:
 
 	fixed_function& operator=(const fixed_function& other) EA_NOEXCEPT
 	{
+		storage.function_table_ptr->call_destroy(eastl::addressof(storage));
+
 		call = other.call;
 		other.storage.function_table_ptr->call_copy(eastl::addressof(storage), eastl::addressof(other.storage));
 		return *this;
@@ -373,6 +375,9 @@ public:
 
 	fixed_function& operator=(std::nullptr_t)
 	{
+		if(call != nullptr)
+			storage.function_table_ptr->call_destroy(eastl::addressof(storage));
+
 		initialize_empty();
 		return *this;
 	}
@@ -433,7 +438,7 @@ private:
 	Result (*call)(const ff_detail::functor_storage_type<SIZE_IN_BYTES>&, Arguments...);
 
 	template<typename T>
-	void initialize(T functor)
+	void initialize(T&& functor)
 	{
 		static_assert(sizeof(T) <= sizeof(typename total_storage_type_with_size::functor_storage_type_with_size), "fixed_function local buffer is not large enough to hold the callable.");
 

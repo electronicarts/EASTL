@@ -27,29 +27,18 @@ namespace eastl
 		// Example usage:
 		//     typedef typename unique_pointer_type<int, SomeDeleter>::type pointer
 		//
-		#if defined(EA_COMPILER_NO_DECLTYPE)
-			// To consider: find a way to achieve this with compilers that don't 
-			// support decltype? It's not likely to be needed by many or any users.
-			template <typename T, typename Deleter>
-			class unique_pointer_type
-			{
-			public:
-				typedef T* type;
-			};
-		#else
-			template <typename T, typename Deleter>
-			class unique_pointer_type
-			{
-				template <typename U>
-				static typename U::pointer test(typename U::pointer*);
+		template <typename T, typename Deleter>
+		class unique_pointer_type
+		{
+			template <typename U>
+			static typename U::pointer test(typename U::pointer*);
 
-				template <typename U>
-				static T* test(...);
+			template <typename U>
+			static T* test(...);
 
-			public:
-				typedef decltype(test<typename eastl::remove_reference<Deleter>::type>(0)) type;
-			};
-		#endif
+		public:
+			typedef decltype(test<typename eastl::remove_reference<Deleter>::type>(0)) type;
+		};
 
 
 		///////////////////////////////////////////////////////////////////////
@@ -163,9 +152,7 @@ namespace eastl
 	template <typename T>
 	struct default_delete
 	{
-		#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
-			EA_CONSTEXPR default_delete() EA_NOEXCEPT {}
-		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
 			EA_CONSTEXPR default_delete() = default;
 		#else
 			EA_CONSTEXPR default_delete() EA_NOEXCEPT = default;
@@ -182,9 +169,7 @@ namespace eastl
 	template <typename T>
 	struct default_delete<T[]> // Specialization for arrays.
 	{
-		#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
-			EA_CONSTEXPR default_delete() EA_NOEXCEPT {}
-		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
 			EA_CONSTEXPR default_delete() = default;
 		#else
 			EA_CONSTEXPR default_delete() EA_NOEXCEPT = default;

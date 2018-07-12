@@ -74,6 +74,11 @@ namespace eastl
 	template<typename T, size_t N>
 	struct is_array<T[N]> : public eastl::true_type {};
 
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template<typename T>
+		EA_CONSTEXPR bool is_array_v = is_array<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_array_of_known_bounds
@@ -710,6 +715,14 @@ namespace eastl
 
 	#endif
 
+	#if EA_COMPILER_HAS_FEATURE(is_final)
+		template <typename T>
+		struct is_final : public integral_constant<bool, __is_final(T)> {};
+	#else
+		// there's no compiler support... cannot determine
+		template <typename T>
+		struct is_final : public false_type {};
+	#endif
 } // namespace eastl
 
 

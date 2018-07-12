@@ -621,6 +621,10 @@ namespace eastl
 	template <typename T> struct is_const : public eastl::is_const_value<T*>{};
 	template <typename T> struct is_const<T&> : public eastl::false_type{}; // Note here that T is const, not the reference to T. So is_const is false. See section 8.3.2p1 of the C++ standard.
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_const_v = is_const<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -787,6 +791,10 @@ namespace eastl
 	template <typename T>           struct remove_const<const T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_const<const T[N]> { typedef T type[N]; };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_const_t = typename remove_const<T>::type;
+	#endif
 
 	///////////////////////////////////////////////////////////////////////
 	// remove_volatile
@@ -809,6 +817,11 @@ namespace eastl
 	template <typename T>           struct remove_volatile<volatile T>    { typedef T type;    };
 	template <typename T>           struct remove_volatile<volatile T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_volatile<volatile T[N]> { typedef T type[N]; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		using remove_volatile_t = typename remove_volatile<T>::type;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1057,6 +1070,24 @@ namespace eastl
 	template <size_t I0, size_t I1, size_t ...in>
 	struct static_max<I0, I1, in...>
 		{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
+
+	///////////////////////////////////////////////////////////////////////
+	/// This enum class is useful for detecting whether a system is little
+	/// or big endian. Mixed or middle endian is not modeled here as described
+	/// by the C++20 spec.
+	///////////////////////////////////////////////////////////////////////
+	enum class endian
+	{
+		#ifdef EA_SYSTEM_LITTLE_ENDIAN
+			little = 1,
+			big = 0,
+			native = little
+		#else
+			little = 0,
+			big = 1,
+			native = big
+		#endif
+	};
 
 } // namespace eastl
 

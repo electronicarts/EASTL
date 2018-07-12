@@ -189,7 +189,7 @@ namespace detail
 	struct function_table_inplace_specialization
 	{
 		template<typename Result, typename... Arguments>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Arguments... arguments)
+		static Result call(const functor_storage_type & storage, Arguments... arguments)
 		{
 			// do not call get_functor_ref because I want this function to be fast in debug when nothing gets inlined
 			return const_cast<T &>(reinterpret_cast<const T &>(storage))(EASTL_FORWARD(Arguments, arguments)...);
@@ -247,7 +247,7 @@ namespace detail
 
 
 		template<typename Result, typename... Arguments>
-		EA_FORCE_INLINE static Result call(const functor_storage_type & storage, Arguments... arguments)
+		static Result call(const functor_storage_type & storage, Arguments... arguments)
 		{
 			// do not call get_functor_ptr_ref because I want this function to be fast in debug when nothing gets inlined
 			return (*reinterpret_cast<const FunctorPointer&>(storage))(EASTL_FORWARD(Arguments, arguments)...);

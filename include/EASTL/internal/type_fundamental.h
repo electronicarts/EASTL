@@ -131,6 +131,12 @@ namespace eastl
 
 	template <> struct is_integral_helper<bool>               : public true_type{};
 	template <> struct is_integral_helper<char>               : public true_type{};
+	#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
+		template <> struct is_integral_helper<char16_t>       : public true_type{};
+	#endif
+	#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
+		template <> struct is_integral_helper<char32_t>       : public true_type{};
+	#endif
 	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled above...
 		template <> struct is_integral_helper<wchar_t>        : public true_type{};
 	#endif
@@ -146,6 +152,10 @@ namespace eastl
 		template <> struct is_integral<const volatile T> : public true_type{};    \
 	}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_integral_v = is_integral<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////

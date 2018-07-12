@@ -199,6 +199,14 @@
 
 
 	// ------------------------------------------------------------------------
+	// EA_IDENTITY
+	//
+	#ifndef EA_IDENTITY
+		#define EA_IDENTITY(x) x
+	#endif
+
+
+	// ------------------------------------------------------------------------
 	// EA_COMPILER_MANAGED_CPP
 	// Defined if this is being compiled with Managed C++ extensions
 	#ifdef EA_COMPILER_MSVC
@@ -628,6 +636,39 @@
 
 
 	// ------------------------------------------------------------------------
+	// EA_ENABLE_VC_WARNING_AS_ERROR / EA_DISABLE_VC_WARNING_AS_ERROR
+	//
+	// Disable and re-enable treating a warning as error within code.
+	// This is simply a wrapper for VC++ #pragma warning(error: nnnn) for the
+	// purpose of making code easier to read due to avoiding nested compiler ifdefs
+	// directly in code.
+	//
+	// Example usage:
+	//     EA_ENABLE_VC_WARNING_AS_ERROR(4996)
+	//     <code>
+	//     EA_DISABLE_VC_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_VC_WARNING_AS_ERROR
+		#if defined(_MSC_VER)
+			#define EA_ENABLE_VC_WARNING_AS_ERROR(w) \
+					__pragma(warning(push)) \
+					__pragma(warning(error:w))
+		#else
+			#define EA_ENABLE_VC_WARNING_AS_ERROR(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_VC_WARNING_AS_ERROR
+		#if defined(_MSC_VER)
+			#define EA_DISABLE_VC_WARNING_AS_ERROR() \
+				__pragma(warning(pop))
+		#else
+			#define EA_DISABLE_VC_WARNING_AS_ERROR()
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
 	// EA_DISABLE_GCC_WARNING / EA_RESTORE_GCC_WARNING
 	//
 	// Example usage:
@@ -678,6 +719,46 @@
 
 
 	// ------------------------------------------------------------------------
+	// EA_ENABLE_GCC_WARNING_AS_ERROR / EA_DISABLE_GCC_WARNING_AS_ERROR
+	//
+	// Example usage:
+	//     // Only one warning can be treated as an error per statement, due to how GCC works.
+	//     EA_ENABLE_GCC_WARNING_AS_ERROR(-Wuninitialized)
+	//     EA_ENABLE_GCC_WARNING_AS_ERROR(-Wunused)
+	//     <code>
+	//     EA_DISABLE_GCC_WARNING_AS_ERROR()
+	//     EA_DISABLE_GCC_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_GCC_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_GNUC)
+			#define EAGCCWERRORHELP0(x) #x
+			#define EAGCCWERRORHELP1(x) EAGCCWERRORHELP0(GCC diagnostic error x)
+			#define EAGCCWERRORHELP2(x) EAGCCWERRORHELP1(#x)
+		#endif
+
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006) // Can't test directly for __GNUC__ because some compilers lie.
+			#define EA_ENABLE_GCC_WARNING_AS_ERROR(w)   \
+				_Pragma("GCC diagnostic push")  \
+				_Pragma(EAGCCWERRORHELP2(w))
+		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
+			#define EA_DISABLE_GCC_WARNING(w)   \
+				_Pragma(EAGCCWERRORHELP2(w))
+		#else
+			#define EA_DISABLE_GCC_WARNING(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_GCC_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)
+			#define EA_DISABLE_GCC_WARNING_AS_ERROR()    \
+				_Pragma("GCC diagnostic pop")
+		#else
+			#define EA_DISABLE_GCC_WARNING_AS_ERROR()
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
 	// EA_DISABLE_CLANG_WARNING / EA_RESTORE_CLANG_WARNING
 	//
 	// Example usage:
@@ -717,6 +798,41 @@
 	//
 	// The situation for clang is the same as for GCC. See above.
 	// ------------------------------------------------------------------------
+
+
+	// ------------------------------------------------------------------------
+	// EA_ENABLE_CLANG_WARNING_AS_ERROR / EA_DISABLE_CLANG_WARNING_AS_ERROR
+	//
+	// Example usage:
+	//     // Only one warning can be treated as an error per statement, due to how clang works.
+	//     EA_ENABLE_CLANG_WARNING_AS_ERROR(-Wuninitialized)
+	//     EA_ENABLE_CLANG_WARNING_AS_ERROR(-Wunused)
+	//     <code>
+	//     EA_DISABLE_CLANG_WARNING_AS_ERROR()
+	//     EA_DISABLE_CLANG_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_CLANG_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_CLANG)
+			#define EACLANGWERRORHELP0(x) #x
+			#define EACLANGWERRORHELP1(x) EACLANGWERRORHELP0(clang diagnostic error x)
+			#define EACLANGWERRORHELP2(x) EACLANGWERRORHELP1(#x)
+
+			#define EA_ENABLE_CLANG_WARNING_AS_ERROR(w)   \
+				_Pragma("clang diagnostic push")  \
+				_Pragma(EACLANGWERRORHELP2(w))
+		#else
+			#define EA_DISABLE_CLANG_WARNING(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_CLANG_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_DISABLE_CLANG_WARNING_AS_ERROR()    \
+				_Pragma("clang diagnostic pop")
+		#else
+			#define EA_DISABLE_CLANG_WARNING_AS_ERROR()
+		#endif
+	#endif
 
 
 	// ------------------------------------------------------------------------
@@ -1188,7 +1304,8 @@
 		#if defined(EA_COMPILER_CPP14_ENABLED)
 			#define EA_DEPRECATED_MESSAGE(msg) [[deprecated(#msg)]]
 		#else
-			#define EA_DEPRECATED_MESSAGE(msg) 
+			// Compiler does not support depreaction messages, explicitly drop the msg but still mark the function as deprecated
+			#define EA_DEPRECATED_MESSAGE(msg) EA_DEPRECATED
 		#endif
 	#endif
 
@@ -1479,8 +1596,9 @@
 
 	// EA_FP128 may be used to determine if __float128 is a supported type for use. This type is enabled by a GCC extension (_GLIBCXX_USE_FLOAT128)
 	// but has support by some implementations of clang (__FLOAT128__)
+	// PS4 does not support __float128 as of SDK 5.500 https://ps4.siedev.net/resources/documents/SDK/5.500/CPU_Compiler_ABI-Overview/0003.html
 	#ifndef EA_FP128
-		#if defined __FLOAT128__ || defined _GLIBCXX_USE_FLOAT128
+		#if (defined __FLOAT128__ || defined _GLIBCXX_USE_FLOAT128) && !defined(EA_PLATFORM_KETTLE)
 			#define EA_FP128 1
 		#else
 			#define EA_FP128 0
@@ -1531,6 +1649,24 @@
 			#define EA_BMI2 1
 		#else
 			#define EA_BMI2 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_FMA3
+	// EA_FMA3 may be used to determine if Fused Multiply Add operations are available for the target architecture
+	// __FMA__ is defined only by GCC, Clang, and ICC; MSVC only defines __AVX__ and __AVX2__
+	// FMA3 was introduced alongside AVX2 on Intel Haswell
+	// All AMD processors support FMA3 if AVX2 is also supported
+	//
+	// EA_FMA3 defines the level of FMA3 support:
+	//  0 indicates no FMA3 support
+	//  1 indicates FMA3 is supported
+	#ifndef EA_FMA3
+		#if defined(__FMA__) || EA_AVX2 >= 1
+			#define EA_FMA3 1
+		#else
+			#define EA_FMA3 0
 		#endif
 	#endif
 
@@ -2210,7 +2346,7 @@
 			#define EA_OPTIMIZE_OFF()            \
 				_Pragma("GCC push_options")      \
 				_Pragma("GCC optimize 0")
-        #elif defined(EA_COMPILER_CLANG) &&  !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) && (!defined(EA_PLATFORM_ANDROID) || (EA_COMPILER_VERSION >= 380))
             #define EA_OPTIMIZE_OFF() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize off") \
@@ -2225,7 +2361,7 @@
 			#define EA_OPTIMIZE_ON() __pragma(optimize("", on))
 		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION > 4004) && (defined(__i386__) || defined(__x86_64__)) // GCC 4.4+ - Seems to work only on x86/Linux so far. However, GCC 4.4 itself appears broken and screws up parameter passing conventions.
 			#define EA_OPTIMIZE_ON() _Pragma("GCC pop_options")
-        #elif defined(EA_COMPILER_CLANG) && !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) && (!defined(EA_PLATFORM_ANDROID) || (EA_COMPILER_VERSION >= 380))
             #define EA_OPTIMIZE_ON() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize on") \

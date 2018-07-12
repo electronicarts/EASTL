@@ -27,9 +27,12 @@ int TEST_STRING_NAME()
 		void deallocate(void* p, size_t) { EA_FAIL(); }
 	};
 
-	#if defined(EA_PLATFORM_ANDROID) || defined(EA_PLATFORM_APPLE)
-	EA_DISABLE_CLANG_WARNING(-Winherited-variadic-ctor) // warning: inheriting constructor does not inherit ellipsis 
+	#if defined(EA_PLATFORM_ANDROID)
+		EA_DISABLE_CLANG_WARNING(-Wunknown-warning-option)  // warning: disable unknown warning suppression pragmas
+		EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas)         // warning: disable unknown warning suppression pragmas
+		EA_DISABLE_CLANG_WARNING(-Winherited-variadic-ctor) // warning: inheriting constructor does not inherit ellipsis 
 	#endif
+
 	struct SSOStringType : public StringType
 	{
 		using StringType::StringType;
@@ -42,8 +45,11 @@ int TEST_STRING_NAME()
 		using eastl::basic_string<typename StringType::value_type, Failocator>::basic_string;
 		using eastl::basic_string<typename StringType::value_type, Failocator>::IsSSO;
 	};
-	#if defined(EA_PLATFORM_ANDROID) || defined(EA_PLATFORM_APPLE)
-	EA_RESTORE_CLANG_WARNING()
+
+	#if defined(EA_PLATFORM_ANDROID)
+		EA_RESTORE_CLANG_WARNING()
+		EA_RESTORE_CLANG_WARNING()
+		EA_RESTORE_CLANG_WARNING()
 	#endif
 	
 	// SSO (short string optimization) tests
@@ -1884,6 +1890,34 @@ int TEST_STRING_NAME()
 		{
 			VERIFY(sv.compare(LITERAL("abcdefghijklmnopqrstuvwxyz")) == 0);
 		}(str);
+	}
+
+	// test constructing a eastl::basic_string from an eastl::basic_string_view
+	{
+		using StringViewType = basic_string_view<typename StringType::value_type>;
+		StringViewType sv = LITERAL("abcdefghijklmnopqrstuvwxyz");
+
+		{
+			StringType str(sv);
+			VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		}
+
+		{
+			StringType str(sv, typename StringType::allocator_type("test"));
+			VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		}
+	}
+
+	// test assigning from an eastl::basic_string_view
+	{
+		using StringViewType = basic_string_view<typename StringType::value_type>;
+		StringViewType sv = LITERAL("abcdefghijklmnopqrstuvwxyz");
+
+		{
+			StringType str;
+			str = sv;  // force call to 'operator='
+			VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		}
 	}
 
 	return nErrorCount;

@@ -385,11 +385,6 @@ namespace eastl
 		{
 		}
 	
-		// GCC has a bug with overloading rvalue and lvalue function templates.
-		// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54425
-		//
-		// error: 'eastl::pair<T1, T2>::pair(T1&&) [with T1 = const int&; T2 = const int&]' cannot be overloaded
-		// error: with 'eastl::pair<T1, T2>::pair(const T1&) [with T1 = const int&; T2 = const int&]'
 		#if !defined(EA_COMPILER_GNUC)
 			// To consider: Use type traits to enable this ctor only if T2 (second is_default_constructible<T2>::value == true.)
 			EA_CPP14_CONSTEXPR pair(T1&& x)
