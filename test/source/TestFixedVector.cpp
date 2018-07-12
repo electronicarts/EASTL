@@ -515,10 +515,19 @@ int TestFixedVector()
 		}
 		EATEST_VERIFY(fvmv2.validate());
 		
-		fixed_vector<unique_ptr<unsigned int>, FV_SIZE> fv = eastl::move(fvmv2); // Test move copy constructor
+		swap(fvmv1, fvmv2); // Test swap with move-only objects
 		for (unsigned int i = 0; i < FV_SIZE; ++i)
 		{
+			EATEST_VERIFY(*fvmv1[i] == i);
 			EATEST_VERIFY(!fvmv2[i]);
+		}
+		EATEST_VERIFY(fvmv1.validate());
+		EATEST_VERIFY(fvmv2.validate());
+
+		fixed_vector<unique_ptr<unsigned int>, FV_SIZE> fv = eastl::move(fvmv1); // Test move copy constructor
+		for (unsigned int i = 0; i < FV_SIZE; ++i)
+		{
+			EATEST_VERIFY(!fvmv1[i]);
 			EATEST_VERIFY(*fv[i] == i);
 		}
 		EATEST_VERIFY(fv.validate());
