@@ -715,6 +715,14 @@ namespace eastl
 
 	#endif
 
+	#if EA_COMPILER_HAS_FEATURE(is_final)
+		template <typename T>
+		struct is_final : public integral_constant<bool, __is_final(T)> {};
+	#else
+		// there's no compiler support... cannot determine
+		template <typename T>
+		struct is_final : public false_type {};
+	#endif
 } // namespace eastl
 
 
