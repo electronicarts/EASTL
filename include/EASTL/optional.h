@@ -253,13 +253,13 @@ namespace eastl
 		{
 			engaged = other.engaged;
 
-			auto* pOtherStorage = reinterpret_cast<const base_type*>(eastl::addressof(other.val));
-			base_type::operator=(*pOtherStorage);  
+			auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+			::new (eastl::addressof(val)) value_type(*pOtherValue);
 		}
 
 	    optional(optional&& other)
 		{
-			eastl::swap(engaged, other.engaged);
+			engaged = other.engaged;
 
 			auto* pOtherValue = reinterpret_cast<T*>(eastl::addressof(other.val));
 			::new (eastl::addressof(val)) value_type(eastl::move(*pOtherValue));
@@ -296,11 +296,25 @@ namespace eastl
 
 	    inline optional& operator=(const optional& other) 
 		{
-			engaged = other.engaged;
-
-			auto* pOtherStorage = reinterpret_cast<const base_type*>(eastl::addressof(other.val));
-			base_type::operator=(*pOtherStorage);  
-
+			auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
+			if (engaged == other.engaged)
+			{
+				if (engaged)
+					*get_value_address() = *pOtherValue;
+			}
+			else
+			{
+				if (engaged)
+				{
+					destruct_value();
+					engaged = false;
+				}
+				else
+				{
+					construct_value(*pOtherValue);
+					engaged = true;
+				}
+			}
 			return *this;
 		}
 
@@ -308,11 +322,25 @@ namespace eastl
 	        EA_NOEXCEPT_IF(EA_NOEXCEPT(eastl::is_nothrow_move_assignable<value_type>::value &&
 	                                       eastl::is_nothrow_move_constructible<value_type>::value))
 	    {
-			eastl::swap(engaged, other.engaged);
-
 			auto* pOtherValue = reinterpret_cast<T*>(eastl::addressof(other.val));
-			::new (eastl::addressof(val)) value_type(eastl::move(*pOtherValue));
-
+			if (engaged == other.engaged)
+			{
+				if (engaged)
+					*get_value_address() = eastl::move(*pOtherValue);
+			}
+			else
+			{
+				if (engaged)
+				{
+					destruct_value();
+					engaged = false;
+				}
+				else
+				{
+					construct_value(eastl::move(*pOtherValue));
+					engaged = true;
+				}
+			}
 		    return *this;
 	    }
 

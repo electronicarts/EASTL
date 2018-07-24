@@ -68,6 +68,22 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+struct assignment_test
+{
+	assignment_test()                                  { ++num_objects_inited; }
+	assignment_test(assignment_test&&)                 { ++num_objects_inited; }
+	assignment_test(const assignment_test&)            { ++num_objects_inited; }
+	assignment_test& operator=(assignment_test&&)      { return *this; }
+	assignment_test& operator=(const assignment_test&) { return *this; }
+	~assignment_test()                                 { --num_objects_inited; }
+
+	static int num_objects_inited;
+};
+
+int assignment_test::num_objects_inited = 0;
+
+
+/////////////////////////////////////////////////////////////////////////////
 // TestOptional
 //
 int TestOptional()
@@ -268,6 +284,45 @@ int TestOptional()
         forwarding_test<float>ft(1.f);
         float val = ft.GetValueOrDefault(0.f);
         VERIFY(val == 1.f);
+    }
+
+	{
+		assignment_test::num_objects_inited = 0;
+		{
+			optional<assignment_test> o1;
+			optional<assignment_test> o2 = assignment_test();
+			optional<assignment_test> o3(o2);
+			VERIFY(assignment_test::num_objects_inited == 2);
+			o1 = nullopt;
+			VERIFY(assignment_test::num_objects_inited == 2);
+			o1 = o2;
+			VERIFY(assignment_test::num_objects_inited == 3);
+			o1 = o2;
+			VERIFY(assignment_test::num_objects_inited == 3);
+			o1 = nullopt;
+			VERIFY(assignment_test::num_objects_inited == 2);
+			o2 = o1;
+			VERIFY(assignment_test::num_objects_inited == 1);
+			o1 = o2;
+			VERIFY(assignment_test::num_objects_inited == 1);
+		}
+		VERIFY(assignment_test::num_objects_inited == 0);
+
+		{
+			optional<assignment_test> o1;
+			VERIFY(assignment_test::num_objects_inited == 0);
+			o1 = nullopt;
+			VERIFY(assignment_test::num_objects_inited == 0);
+			o1 = optional<assignment_test>(assignment_test());
+			VERIFY(assignment_test::num_objects_inited == 1);
+			o1 = optional<assignment_test>(assignment_test());
+			VERIFY(assignment_test::num_objects_inited == 1);
+			optional<assignment_test> o2(eastl::move(o1));
+			VERIFY(assignment_test::num_objects_inited == 2);
+			o1 = nullopt;
+			VERIFY(assignment_test::num_objects_inited == 1);
+		}
+		VERIFY(assignment_test::num_objects_inited == 0);
 	}
 
 	#if EASTL_VARIADIC_TEMPLATES_ENABLED 
@@ -499,8 +554,10 @@ int TestOptional()
 
 			o2 = eastl::move(o1);
 
-			VERIFY(!!o1 == false);
+			VERIFY(!!o1 == true);
 			VERIFY(!!o2 == true);
+			VERIFY(!!o1->ptr == false);
+			VERIFY(!!o2->ptr == true);
 			VERIFY(o2->ptr.get() != nullptr);
 		}
 	}
