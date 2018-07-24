@@ -493,18 +493,8 @@ namespace eastl
 		basic_string(this_type&& x) EA_NOEXCEPT;
 		basic_string(this_type&& x, const allocator_type& allocator);
 
-		explicit basic_string(const view_type& sv, const allocator_type& alloc = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR)
-		    : basic_string(sv.data(), sv.size(), alloc)
-		{
-		}
-
-		basic_string(const view_type& sv,
-		             size_type pos,
-		             size_type n,
-		             const allocator_type& alloc = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR)
-		    : basic_string(sv.substr(pos, n), n, alloc)
-		{
-		}
+		explicit basic_string(const view_type& sv, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
+		basic_string(const view_type& sv, size_type position, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 
 		template <typename OtherCharType>
 		basic_string(CtorConvert, const OtherCharType* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -752,7 +742,7 @@ namespace eastl
 		void        RangeInitialize(const value_type* pBegin);
 		void        SizeInitialize(size_type n, value_type c);
 
-		bool        IsSSO() const EA_NOEXCEPT; 
+		bool        IsSSO() const EA_NOEXCEPT;
 
 		void        ThrowLengthException() const;
 		void        ThrowRangeException() const;
@@ -855,6 +845,22 @@ namespace eastl
 		: mPair(allocator)
 	{
 		RangeInitialize(p, p + n);
+	}
+
+
+	template <typename T, typename Allocator>
+    inline basic_string<T, Allocator>::basic_string(const view_type& sv, const allocator_type& allocator)
+		: basic_string(sv.data(), sv.size(), allocator)
+	{
+
+	}
+
+
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>::basic_string(const view_type& sv, size_type position, size_type n, const allocator_type& allocator)
+		: basic_string(sv.substr(position, n), allocator)
+	{
+
 	}
 
 
@@ -1811,7 +1817,7 @@ namespace eastl
 		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard
 		{
 			// In this case we either have C89 extension behaviour or C99 behaviour.
-			size_type n = eastl::max_alt((size_type)(SSOLayout::SSO_CAPACITY - 1), (size_type)(nInitialSize * 2)); 
+			size_type n = eastl::max_alt((size_type)(SSOLayout::SSO_CAPACITY - 1), (size_type)(nInitialSize * 2));
 
 			for(; (nReturnValue < 0) && (n < 1000000); n *= 2)
 			{
