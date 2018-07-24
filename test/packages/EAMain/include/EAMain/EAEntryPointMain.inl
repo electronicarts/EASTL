@@ -11,6 +11,11 @@ namespace EA
 {
     namespace EAMain
     {
+		namespace Internal
+		{
+			unsigned gVerbosityLevel = 0;	
+		}
+
 		void PlatformStartup() {}
 		void PlatformShutdown(int nErrorCount) 
 		{
