@@ -76,7 +76,7 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////////
 		/// optional_storage
 		///
-		template<typename T, bool IsTriviallyDestructible = eastl::is_trivially_destructible_v<T>>
+		template<typename T>
 		struct optional_storage
 		{
 			typedef typename eastl::remove_const<T>::type value_type;
@@ -102,9 +102,11 @@ namespace eastl
 
 			inline ~optional_storage()
 			{
-				if (engaged)
-					destruct_value();
-
+				if(!eastl::is_trivially_destructible_v<T>)
+				{
+					if(engaged)
+						destruct_value();
+				}
 				// engaged = false;  // probably not needed as we are destroying the object
 			}
 
@@ -132,7 +134,11 @@ namespace eastl
 				::new (eastl::addressof(val)) value_type{ilist, eastl::forward<Args>(args)...};
 			}
 
-			inline void destruct_value() { (*(value_type*)eastl::addressof(val)).~value_type(); }
+			inline void destruct_value()
+			{
+				if(!eastl::is_trivially_destructible_v<T>)
+					(*(value_type*)eastl::addressof(val)).~value_type();
+			}
 
 
 			// This union exists to support trivial types that do not require constructors/destructors to be called.
@@ -140,79 +146,6 @@ namespace eastl
 			union
 			{
 				eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>> val;
-				char empty_val;
-			};
-			bool engaged = false;
-		};
-
-
-		/// optional_storage<T, true>
-		///
-		/// Template specialization for trivial types to satisfy the requirement that optional<T> is trivially
-		/// destructible when T is trivially destructible.
-		///
-		template<typename T>
-		struct optional_storage<T, true>
-		{
-			typedef eastl::remove_const_t<T> value_type;
-
-			inline optional_storage() EA_NOEXCEPT : empty_val('\0') {}
-
-			inline optional_storage(const optional_storage& other) : engaged(other.engaged)
-			{
-				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
-				::new (eastl::addressof(val)) value_type(*pOtherValue);
-			}
-
-			inline optional_storage(const value_type& v) : engaged(true)
-			{
-				::new (eastl::addressof(val)) value_type(v);
-			}
-
-			inline optional_storage(value_type&& v) : engaged(true)
-			{
-				::new (eastl::addressof(val)) value_type(eastl::move(v));
-			}
-
-			// Removed to make optional<T> trivially destructible when T is trivially destructible.
-			//
-			// inline ~optional_storage()
-			// {
-			//     if (engaged)
-			//         destruct_value();
-			// }
-
-			inline optional_storage& operator=(const optional_storage& other) 
-			{
-				auto* pOtherValue = reinterpret_cast<const T*>(eastl::addressof(other.val));
-				::new (eastl::addressof(val)) value_type(*pOtherValue);
-				return *this;
-			}
-
-			template <class... Args>
-			inline explicit optional_storage(in_place_t, Args&&... args)
-			    : engaged(true)
-			{
-				new (eastl::addressof(val)) value_type{eastl::forward<Args>(args)...};
-			}
-
-			template <typename U,
-			          typename... Args,
-			          typename = eastl::enable_if_t<eastl::is_constructible_v<T, std::initializer_list<U>&, Args&&...>>>
-			inline explicit optional_storage(in_place_t, std::initializer_list<U> ilist, Args&&... args)
-			    : engaged(true)
-			{
-				new (eastl::addressof(val)) value_type{ilist, eastl::forward<Args>(args)...};
-			}
-
-			inline void destruct_value() {}  // no implementation necessary since T is trivially destructible.
-
-
-			// This union exists to support trivial types that do not require constructors/destructors to be called.
-			// The eastl::optional<T> type will set the empty_val in this case to "initialize" its member data. 
-			union
-			{
-				eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>> val; 
 				char empty_val;
 			};
 			bool engaged = false;
