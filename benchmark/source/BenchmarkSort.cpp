@@ -440,11 +440,6 @@ namespace
 } // namespace
 
 
-// Sizes of arrays to be sorted.
-const eastl_size_t kSizes[] = {10, 100, 1000, 10000};
-const eastl_size_t kSizesCount = EAArrayCount(kSizes);
-
-
 struct BenchmarkResult
 {
 	uint64_t mTime;
@@ -454,10 +449,13 @@ struct BenchmarkResult
 	BenchmarkResult() : mTime(0), mCompareCount(0), mAssignCount(0) {}
 };
 
-BenchmarkResult gResults[kRandomizationTypeCount][kSizesCount][sf_count];
 
 int CompareSortPerformance()
 {
+	// Sizes of arrays to be sorted.
+	const eastl_size_t kSizes[] = { 10, 100, 1000, 10000 };
+	const eastl_size_t kSizesCount = EAArrayCount(kSizes);
+	static BenchmarkResult sResults[kRandomizationTypeCount][kSizesCount][sf_count];
 	int nErrorCount = 0;
 
 	EA::UnitTest::ReportVerbosity(2, "Sort comparison\n");
@@ -494,7 +492,7 @@ int CompareSortPerformance()
 		sOutput.set_capacity(100000);
 		ElementType* pBuffer = new ElementType[kArraySizeMax];
 
-		memset(gResults, 0, sizeof(gResults));
+		memset(sResults, 0, sizeof(sResults));
 
 		stopwatchGlobal.Restart();
 
@@ -614,8 +612,8 @@ int CompareSortPerformance()
 						const uint64_t elapsedTime = (uint64_t)stopwatch.GetElapsedTime();
 
 						// If this result was faster than a previously fastest result, record this one instead.
-						if ((c == 0) || (elapsedTime < gResults[i][sizeType][sortFunction].mTime))
-							gResults[i][sizeType][sortFunction].mTime = elapsedTime;
+						if ((c == 0) || (elapsedTime < sResults[i][sizeType][sortFunction].mTime))
+							sResults[i][sizeType][sortFunction].mTime = elapsedTime;
 
 						VERIFY(eastl::is_sorted(v.begin(), v.end()));
 
@@ -642,8 +640,8 @@ int CompareSortPerformance()
 				{
 					sOutput.append_sprintf("%25s, %14s, Size: %8u, Time: %14I64u ticks %0.2f ticks/elem\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
-					                       (unsigned)size, gResults[i][sizeType][sortFunction].mTime,
-					                       float(gResults[i][sizeType][sortFunction].mTime)/float(size));
+					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
+					                       float(sResults[i][sizeType][sortFunction].mTime)/float(size));
 				}
 				sOutput.append("\n");
 			}
@@ -671,7 +669,7 @@ int CompareSortPerformance()
 		sOutput.set_capacity(100000);
 		ElementType* pBuffer = new ElementType[kArraySizeMax];
 
-		memset(gResults, 0, sizeof(gResults));
+		memset(sResults, 0, sizeof(sResults));
 
 		stopwatchGlobal.Restart();
 
@@ -787,10 +785,11 @@ int CompareSortPerformance()
 						const uint64_t elapsedTime = (uint64_t)stopwatch.GetElapsedTime();
 
 						// If this result was faster than a previously fastest result, record this one instead.
-						if ((c == 0) || (elapsedTime < gResults[i][sizeType][sortFunction].mTime))
-							gResults[i][sizeType][sortFunction].mTime = elapsedTime;
-
-						gResults[i][sizeType][sortFunction].mCompareCount = (uint64_t)CompareFunction::nCompareCount;
+						if ((c == 0) || (elapsedTime < sResults[i][sizeType][sortFunction].mTime))
+						{
+							sResults[i][sizeType][sortFunction].mTime = elapsedTime;
+							sResults[i][sizeType][sortFunction].mCompareCount = (uint64_t)CompareFunction::nCompareCount;
+						}
 
 						VERIFY(eastl::is_sorted(v.begin(), v.end()));
 					} // for each sort function...
@@ -816,8 +815,8 @@ int CompareSortPerformance()
 				{
 					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11I64u ticks, Compares: %11I64u\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
-					                       (unsigned)size, gResults[i][sizeType][sortFunction].mTime,
-					                       gResults[i][sizeType][sortFunction].mCompareCount);
+					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
+					                       sResults[i][sizeType][sortFunction].mCompareCount);
 				}
 
 				sOutput.append("\n");
@@ -848,7 +847,7 @@ int CompareSortPerformance()
 		sOutput.set_capacity(100000);
 		ElementType* pBuffer = new ElementType[kArraySizeMax];
 
-		memset(gResults, 0, sizeof(gResults));
+		memset(sResults, 0, sizeof(sResults));
 
 		stopwatchGlobal.Restart();
 
@@ -963,10 +962,11 @@ int CompareSortPerformance()
 						const uint64_t elapsedTime = (uint64_t)stopwatch.GetElapsedTime();
 
 						// If this result was faster than a previously fastest result, record this one instead.
-						if ((c == 0) || (elapsedTime < gResults[i][sizeType][sortFunction].mTime))
-							gResults[i][sizeType][sortFunction].mTime = elapsedTime;
-
-						gResults[i][sizeType][sortFunction].mAssignCount = (uint64_t)ElementType::nAssignCount;
+						if ((c == 0) || (elapsedTime < sResults[i][sizeType][sortFunction].mTime))
+						{
+							sResults[i][sizeType][sortFunction].mTime = elapsedTime;
+							sResults[i][sizeType][sortFunction].mAssignCount = (uint64_t)ElementType::nAssignCount;
+						}
 
 						VERIFY(eastl::is_sorted(v.begin(), v.end()));
 
@@ -993,8 +993,8 @@ int CompareSortPerformance()
 				{
 					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11I64u ticks, Assignments: %11I64u\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
-					                       (unsigned)size, gResults[i][sizeType][sortFunction].mTime,
-					                       gResults[i][sizeType][sortFunction].mAssignCount);
+					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
+					                       sResults[i][sizeType][sortFunction].mAssignCount);
 				}
 
 				sOutput.append("\n");
@@ -1010,6 +1010,249 @@ int CompareSortPerformance()
 	return nErrorCount;
 }
 
+typedef eastl::function<void(eastl::string &output, const char* sortFunction, const char* randomizationType, size_t size, size_t numSubArrays, const BenchmarkResult &result)> OutputResultCallback;
+typedef eastl::function<void(BenchmarkResult &result)> PostExecuteCallback;
+typedef eastl::function<void()> PreExecuteCallback;
+
+
+template<class ElementType, class CompareFunction>
+static int CompareSmallInputSortPerformanceHelper(eastl::vector<eastl_size_t> &arraySizes, eastl::vector<SortFunctionType> &sortFunctions, const PreExecuteCallback &preExecuteCallback, const PostExecuteCallback &postExecuteCallback, const OutputResultCallback &outputResultCallback)
+{
+	int nErrorCount = 0;
+
+	EA::UnitTest::RandGenT<int32_t> rng(EA::UnitTest::GetRandSeed());
+	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::StdC::Stopwatch stopwatchGlobal(EA::StdC::Stopwatch::kUnitsSeconds);
+	const eastl_size_t kArraySizeMax = *eastl::max_element(eastl::begin(arraySizes), eastl::end(arraySizes));
+	const int kRunCount = 4;
+	const int numSubArrays = 128;
+
+	eastl::string sOutput;
+	sOutput.set_capacity(100000);
+	ElementType* pBuffer = new ElementType[kArraySizeMax];
+
+	stopwatchGlobal.Restart();
+
+	for (int i = 0; i < kRandomizationTypeCount; i++)
+	{
+		for (size_t size : arraySizes)
+		{
+			for (SortFunctionType sortFunction : sortFunctions)
+			{
+				BenchmarkResult bestResult{};
+
+				for (int c = 0; c < kRunCount; c++)
+				{
+					eastl::vector<ElementType> v(size * numSubArrays);
+
+					rng.SetSeed(EA::UnitTest::GetRandSeed());
+					Randomize(v, rng, (RandomizationType)i);
+					preExecuteCallback();
+
+					switch (sortFunction)
+					{
+						case sf_quick_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::quick_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_tim_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::tim_sort_buffer(begin, begin + size, pBuffer, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_insertion_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::insertion_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_shell_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::shell_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_heap_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::heap_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_merge_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::merge_sort(begin, begin + size, *get_default_allocator((EASTLAllocatorType*)NULL), CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_merge_sort_buffer:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::merge_sort_buffer(begin, begin + size, pBuffer, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_comb_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::comb_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_bubble_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::bubble_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_selection_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::selection_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_shaker_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								eastl::shaker_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_std_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								std::sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_std_stable_sort:
+							stopwatch.Restart();
+							for (auto begin = v.begin(); begin != v.end(); begin += size)
+							{
+								std::stable_sort(begin, begin + size, CompareFunction());
+							}
+							stopwatch.Stop();
+							break;
+
+						case sf_count:
+						default:
+							EATEST_VERIFY_F(false, "Missing case statement for sort function %s.", GetSortFunctionName(sortFunction));
+							break;
+					}
+
+					BenchmarkResult result {};
+					result.mTime = (uint64_t)stopwatch.GetElapsedTime();
+					postExecuteCallback(result);
+
+					// If this result was faster than a previously fastest result, record this one instead.
+					if ((c == 0) || (result.mTime < bestResult.mTime))
+						bestResult = result;
+
+					for (auto begin = v.begin(); begin != v.end(); begin += size)
+					{
+						VERIFY(eastl::is_sorted(begin, begin + size));
+					}
+				} // for each run
+
+				outputResultCallback(sOutput, GetSortFunctionName(sortFunction), GetRandomizationTypeName(i), size, numSubArrays, bestResult);
+
+			} // for each sort function...
+			sOutput.append("\n");
+
+		} // for each size type...
+
+	} // for each randomization type...
+
+	EA::UnitTest::ReportVerbosity(2, "Total time: %.2f s\n", stopwatchGlobal.GetElapsedTimeFloat());
+	EA::UnitTest::ReportVerbosity(2, "%s\n", sOutput.c_str());
+
+	delete[] pBuffer;
+	return nErrorCount;
+}
+
+static int CompareSmallInputSortPerformance()
+{
+	int nErrorCount = 0;
+	eastl::vector<eastl_size_t> arraySizes{1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 64, 128, 256};
+	// Test quick sort and merge sort to provide a "base line" for performance.  The other sort algorithms are mostly
+	// O(n^2) and they are benchmarked to determine what sorts are ideal for sorting small arrays or sub-arrays.  (i.e.
+	// this is useful to determine good algorithms to choose as a base case for some of the recursive sorts).
+	eastl::vector<SortFunctionType> sortFunctions{sf_quick_sort,     sf_merge_sort_buffer,     sf_bubble_sort, sf_comb_sort,
+	                                              sf_insertion_sort, sf_selection_sort, sf_shell_sort,  sf_shaker_sort};
+
+	EA::UnitTest::ReportVerbosity(2, "Small Sub-array Sort comparison: Regular speed test\n");
+	nErrorCount += CompareSmallInputSortPerformanceHelper<uint32_t, eastl::less<uint32_t>>(
+	    arraySizes, sortFunctions, PreExecuteCallback([]() {}), PostExecuteCallback([](BenchmarkResult& result) {}),
+	    OutputResultCallback([](eastl::string& output, const char* sortFunction, const char* randomizationType,
+	                            size_t size, size_t numSubArrays, const BenchmarkResult& result) {
+		    output.append_sprintf("%25s, %14s, Size: %8u, Time: %0.1f ticks %0.2f ticks/elem\n", sortFunction,
+		                          randomizationType, (unsigned)size, float(result.mTime) / float(numSubArrays),
+		                          float(result.mTime) / float(size * numSubArrays));
+	    }));
+
+	EA::UnitTest::ReportVerbosity(2, "Small Sub-array Sort comparison: Slow compare speed test\n");
+	nErrorCount += CompareSmallInputSortPerformanceHelper<int32_t, SlowCompare<int32_t>>(
+	    arraySizes, sortFunctions, PreExecuteCallback([]() { SlowCompare<int32_t>::Reset(); }),
+	    PostExecuteCallback(
+	        [](BenchmarkResult& result) { result.mCompareCount = (uint64_t)SlowCompare<int32_t>::nCompareCount; }),
+	    OutputResultCallback([](eastl::string& output, const char* sortFunction, const char* randomizationType,
+	                            size_t size, size_t numSubArrays, const BenchmarkResult& result) {
+		    output.append_sprintf("%25s, %14s, Size: %6u, Time: %0.2f ticks, Compares: %0.2f\n", sortFunction,
+		                          randomizationType, (unsigned)size, float(result.mTime) / float(numSubArrays),
+		                          float(result.mCompareCount) / float(numSubArrays));
+	    }));
+
+	EA::UnitTest::ReportVerbosity(2, "Small Sub-array Sort comparison: Slow assignment speed test\n");
+	nErrorCount += CompareSmallInputSortPerformanceHelper<SlowAssign<uint32_t>, eastl::less<SlowAssign<uint32_t>>>(
+	    arraySizes, sortFunctions, PreExecuteCallback([]() { SlowAssign<uint32_t>::Reset(); }),
+	    PostExecuteCallback([](BenchmarkResult& result) {
+		    result.mCompareCount = (uint64_t)SlowCompare<int32_t>::nCompareCount;
+		    result.mAssignCount = (uint64_t)SlowAssign<uint32_t>::nAssignCount;
+	    }),
+	    OutputResultCallback([](eastl::string& output, const char* sortFunction, const char* randomizationType,
+	                            size_t size, size_t numSubArrays, const BenchmarkResult& result) {
+		    output.append_sprintf("%25s, %14s, Size: %6u, Time: %0.2f ticks, Assignments: %0.2f\n", sortFunction,
+		                          randomizationType, (unsigned)size, float(result.mTime) / float(numSubArrays),
+		                          float(result.mAssignCount) / float(numSubArrays));
+	    }));
+
+	return nErrorCount;
+}
+
 
 void BenchmarkSort()
 {
@@ -1020,7 +1263,10 @@ void BenchmarkSort()
 	EA::StdC::Stopwatch              stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
 
 	if (EA::UnitTest::GetVerbosity() >= 3)
+	{
 		CompareSortPerformance();
+		CompareSmallInputSortPerformance();
+	}
 
 	{ // Exercise some declarations
 		int nErrorCount = 0;
