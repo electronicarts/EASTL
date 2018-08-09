@@ -92,7 +92,11 @@ int TestString()
 	{
 		// CustomAllocator has no data members which reduces the size of an eastl::basic_string via the empty base class optimization.
 		typedef eastl::basic_string<char, CustomAllocator> EboString;
-		static_assert(sizeof(EboString) == 3 * sizeof(void*), "");
+
+		// this must match the eastl::basic_string heap memory layout struct which is a pointer and 2 eastl_size_t.
+		const int expectedSize = sizeof(EboString::pointer) + (2 * sizeof(EboString::size_type));
+
+		static_assert(sizeof(EboString) == expectedSize, "unexpected layout size of basic_string");
 	}
 
 	return nErrorCount;

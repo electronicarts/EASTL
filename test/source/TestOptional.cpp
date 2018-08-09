@@ -284,7 +284,7 @@ int TestOptional()
         forwarding_test<float>ft(1.f);
         float val = ft.GetValueOrDefault(0.f);
         VERIFY(val == 1.f);
-    }
+	}
 
 	{
 		assignment_test::num_objects_inited = 0;
@@ -560,6 +560,16 @@ int TestOptional()
 			VERIFY(!!o2->ptr == true);
 			VERIFY(o2->ptr.get() != nullptr);
 		}
+	}
+
+	{
+		auto testFn = []() -> optional<int>
+		{
+			return eastl::nullopt;
+		};
+
+		auto o = testFn();
+		VERIFY(!!o == false);
 	}
 
     #endif // EASTL_OPTIONAL_ENABLED

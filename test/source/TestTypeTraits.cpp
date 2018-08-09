@@ -94,6 +94,7 @@ struct FinalStruct final
 class FinalClass final
 {
 };
+
 #if !EASTL_TYPE_TRAIT_is_union_CONFORMANCE
 	EASTL_DECLARE_UNION(Union) // We have to do this because is_union simply cannot work without user help.
 #endif
@@ -1884,30 +1885,29 @@ int TestTypeTraits()
 	}
 	
 	// is_final
-
+	{
 	#if (EA_COMPILER_HAS_FEATURE(is_final))
-		static_assert(std::is_final<FinalStruct>::value == eastl::is_final<FinalStruct>::value, "final struct not correctly detected");
-		static_assert(std::is_final<FinalClass>::value == eastl::is_final<FinalClass>::value, "final class not correctly detected");
-		static_assert(std::is_final<Enum>::value == eastl::is_final<Enum>::value, "enum not correctly detected");
-		static_assert(std::is_final<int>::value == eastl::is_final<int>::value, "int not correctly detected");
-		static_assert(std::is_final<Struct>::value == eastl::is_final<Struct>::value, "non-final struct not correctly detected");
-		static_assert(std::is_final<Class>::value == eastl::is_final<Class>::value, "non-final class not correctly detected");
-	#endif
+		static_assert(std::is_final<FinalStruct>::value == eastl::is_final<FinalStruct>::value,  "final struct not correctly detected");
+		static_assert(std::is_final<FinalClass>::value  == eastl::is_final<FinalClass>::value,   "final class not correctly detected");
+		static_assert(std::is_final<Enum>::value        == eastl::is_final<Enum>::value,         "enum not correctly detected");
+		static_assert(std::is_final<int>::value         == eastl::is_final<int>::value,          "int not correctly detected");
+		static_assert(std::is_final<Struct>::value      == eastl::is_final<Struct>::value,       "non-final struct not correctly detected");
+		static_assert(std::is_final<Class>::value       == eastl::is_final<Class>::value,        "non-final class not correctly detected");
+    #endif
 
 	// endian (big-endian and little; no mixed-endian/middle-endian)
 	static_assert(eastl::endian::big != eastl::endian::little, "little-endian and big-endian are not the same");
-	static_assert(eastl::endian::native == eastl::endian::big || eastl::endian::native == eastl::endian::little
-		, "native may be little endian or big endian");
-	static_assert(!(eastl::endian::native == eastl::endian::big && eastl::endian::native == eastl::endian::little)
-		, "native cannot be both big and little endian");
+	static_assert(eastl::endian::native == eastl::endian::big || eastl::endian::native == eastl::endian::little, "native may be little endian or big endian");
+	static_assert(!(eastl::endian::native == eastl::endian::big && eastl::endian::native == eastl::endian::little), "native cannot be both big and little endian");
 
 	#ifdef EA_SYSTEM_LITTLE_ENDIAN
-		static_assert(eastl::endian::native == eastl::endian::little, "must be little endian");
-		static_assert(eastl::endian::native != eastl::endian::big, "must not be big endian");
+		static_assert(eastl::endian::native == eastl::endian::little,  "must be little endian");
+		static_assert(eastl::endian::native != eastl::endian::big,     "must not be big endian");
 	#else
-		static_assert(eastl::endian::native != eastl::endian::little, "must not be little endian");
-		static_assert(eastl::endian::native == eastl::endian::big, "must be big endian");
+		static_assert(eastl::endian::native != eastl::endian::little,  "must not be little endian");
+		static_assert(eastl::endian::native == eastl::endian::big,     "must be big endian");
 	#endif
+	}
 
 	return nErrorCount;
 }

@@ -13,8 +13,21 @@
 #include <EASTL/list.h>
 #include <EAStdC/EAString.h>
 
+EA_DISABLE_ALL_VC_WARNINGS()
+#include <functional>
+EA_RESTORE_ALL_VC_WARNINGS();
+
 namespace
 {
+
+	// Used for eastl::function tests
+	static int TestIntRet(int* p)
+	{
+		int ret = *p;
+		*p += 1;
+		return ret;
+	}
+
 	// Used for str_less tests below.
 	template <typename T>
 	struct Results
@@ -159,7 +172,7 @@ int TestFunctional()
 
 	{
 		// str_less<const char8_t*>
-		Results<char8_t> results8[] = 
+		Results<char8_t> results8[] =
 		{
 			{      "",          "", false },
 			{      "",         "a",  true },
@@ -182,11 +195,11 @@ int TestFunctional()
 
 			// Verify that str_less achieves the expected results.
 			bResult = sl8(results8[i].p1, results8[i].p2);
-			EATEST_VERIFY_F(bResult == results8[i].expectedResult, "str_less test failure, test %zu. Expected \"%s\" to be %sless than \"%s\"", i, results8[i].p1, results8[i].expectedResult ? "" : "not ", results8[i].p2);            
+			EATEST_VERIFY_F(bResult == results8[i].expectedResult, "str_less test failure, test %zu. Expected \"%s\" to be %sless than \"%s\"", i, results8[i].p1, results8[i].expectedResult ? "" : "not ", results8[i].p2);
 		}
 
 		// str_less<const wchar_t*>
-		Results<wchar_t> resultsW[] = 
+		Results<wchar_t> resultsW[] =
 		{
 			{        L"",            L"", false },
 			{        L"",           L"a",  true },
@@ -366,7 +379,7 @@ int TestFunctional()
 		// binary_compose
 		list<int> L;
 
-		eastl::list<int>::iterator in_range = 
+		eastl::list<int>::iterator in_range =
 			 eastl::find_if(L.begin(), L.end(),
 					 eastl::compose2(eastl::logical_and<bool>(),
 							  eastl::bind2nd(eastl::greater_equal<int>(), 1),
@@ -560,7 +573,7 @@ int TestFunctional()
 
 	// eastl::mem_fn
 	{
-		struct AddingStruct 
+		struct AddingStruct
 		{
 			AddingStruct(int inValue) : value(inValue) {}
 			void Add(int addAmount) { value += addAmount; }
@@ -600,7 +613,6 @@ int TestFunctional()
 	}
 #endif
 
-#if EASTL_FUNCTION_ENABLED
 	// eastl::function
 	{
 		{
@@ -609,7 +621,7 @@ int TestFunctional()
 				eastl::function<int(void)> fn = Functor();
 				EATEST_VERIFY(fn() == 42);
 			}
-			
+
 			{
 				struct Functor { int operator()(int in) { return in; } };
 				eastl::function<int(int)> fn = Functor();
@@ -618,18 +630,134 @@ int TestFunctional()
 		}
 
 		{
-			{ 
-				auto lambda = []{};
-				EA_UNUSED(lambda);
-				static_assert(detail::is_inplace_allocated<decltype(lambda), eastl::allocator>::value == true, "lambda equivalent to function pointer does not fit in eastl::function local memory.");
+			int val = 0;
+			auto lambda = [&val] { ++val; };
+			{
+				eastl::function<void(void)> ff = std::bind(lambda);
+				ff();
+				VERIFY(val == 1);
+			}
+			{
+				eastl::function<void(void)> ff = nullptr;
+				ff = std::bind(lambda);
+				ff();
+				VERIFY(val == 2);
+			}
+		}
+
+		{
+			int val = 0;
+			{
+				eastl::function<int(int*)> ff = &TestIntRet;
+				int ret = ff(&val);
+				EATEST_VERIFY(ret == 0);
+				EATEST_VERIFY(val == 1);
+			}
+			{
+				eastl::function<int(int*)> ff;
+				ff = &TestIntRet;
+				int ret = ff(&val);
+				EATEST_VERIFY(ret == 1);
+				EATEST_VERIFY(val == 2);
+			}
+		}
+
+		{
+			struct Test { int x = 1; };
+			Test t;
+			const Test ct;
+
+			{
+				eastl::function<int(const Test&)> ff = &Test::x;
+				int ret = ff(t);
+				EATEST_VERIFY(ret == 1);
+			}
+			{
+				eastl::function<int(const Test&)> ff = &Test::x;
+				int ret = ff(ct);
+				EATEST_VERIFY(ret == 1);
+			}
+			{
+				eastl::function<int(const Test&)> ff;
+				ff = &Test::x;
+				int ret = ff(t);
+				EATEST_VERIFY(ret == 1);
+			}
+			{
+				eastl::function<int(const Test&)> ff;
+				ff = &Test::x;
+				int ret = ff(ct);
+				EATEST_VERIFY(ret == 1);
+			}
+		}
+
+		{
+			struct TestVoidRet
+			{
+				void IncX() const
+				{
+					++x;
+				}
+
+				void IncX()
+				{
+					++x;
+				}
+
+				mutable int x = 0;
+			};
+
+			TestVoidRet voidRet;
+			const TestVoidRet cvoidRet;
+
+			{
+				eastl::function<void(const TestVoidRet&)> ff = static_cast<void(TestVoidRet::*)() const>(&TestVoidRet::IncX);
+				ff(cvoidRet);
+				VERIFY(cvoidRet.x == 1);
+			}
+			{
+				eastl::function<void(const TestVoidRet&)> ff = static_cast<void(TestVoidRet::*)() const>(&TestVoidRet::IncX);
+				ff(voidRet);
+				VERIFY(voidRet.x == 1);
+			}
+			{
+				eastl::function<void(TestVoidRet&)> ff = static_cast<void(TestVoidRet::*)()>(&TestVoidRet::IncX);
+				ff(voidRet);
+				VERIFY(voidRet.x == 2);
+			}
+		}
+
+		{
+			int val = 0;
+			struct Functor { void operator()(int* p) { *p += 1; } };
+			Functor functor;
+			{
+				eastl::function<void(int*)> ff = eastl::reference_wrapper<Functor>(functor);
+				ff(&val);
+				EATEST_VERIFY(val == 1);
 			}
 
 			{
-				eastl::function<void(void)> fn; 
+				eastl::function<void(int*)> ff;
+				ff = eastl::reference_wrapper<Functor>(functor);
+				ff(&val);
+				EATEST_VERIFY(val == 2);
+			}
+		}
+
+		{
+			{
+				auto lambda = []{};
+				EA_UNUSED(lambda);
+				static_assert(internal::is_functor_inplace_allocatable<decltype(lambda), EASTL_FUNCTION_DEFAULT_CAPTURE_SSO_SIZE>::value == true, "lambda equivalent to function pointer does not fit in eastl::function local memory.");
+			}
+
+			{
+				eastl::function<void(void)> fn;
 
 				EATEST_VERIFY(!fn);
 				fn =  [] {};
-				EATEST_VERIFY(fn);
+				EATEST_VERIFY(!!fn);
 			}
 
 			{
@@ -660,7 +788,7 @@ int TestFunctional()
 				EATEST_VERIFY(fn0() == 1 && fn1() == 1);
 			}
 
-			#if !EASTL_NO_RVALUE_REFERENCES 
+			#if !EASTL_NO_RVALUE_REFERENCES
 			{
 				eastl::function<int()> fn0 = ReturnZero;
 				eastl::function<int()> fn1 = ReturnOne;
@@ -690,135 +818,56 @@ int TestFunctional()
 		}
 
 		{
+			struct Functor { void operator()() { return; } };
+			eastl::function<void(void)> fn;
+			eastl::function<void(void)> fn2 = nullptr;
+			EATEST_VERIFY(!fn);
+			EATEST_VERIFY(!fn2);
+			EATEST_VERIFY(fn == nullptr);
+			EATEST_VERIFY(fn2 == nullptr);
+			EATEST_VERIFY(nullptr == fn);
+			EATEST_VERIFY(nullptr == fn2);
+			fn = Functor();
+			fn2 = Functor();
+			EATEST_VERIFY(!!fn);
+			EATEST_VERIFY(!!fn2);
+			EATEST_VERIFY(fn != nullptr);
+			EATEST_VERIFY(fn2 != nullptr);
+			EATEST_VERIFY(nullptr != fn);
+			EATEST_VERIFY(nullptr != fn2);
+			fn = nullptr;
+			fn2 = fn;
+			EATEST_VERIFY(!fn);
+			EATEST_VERIFY(!fn2);
+			EATEST_VERIFY(fn == nullptr);
+			EATEST_VERIFY(fn2 == nullptr);
+			EATEST_VERIFY(nullptr == fn);
+			EATEST_VERIFY(nullptr == fn2);
+		}
+
+		{
+			using eastl::swap;
+			struct Functor { int operator()() { return 5; } };
+			eastl::function<int(void)> fn = Functor();
+			eastl::function<int(void)> fn2;
+			EATEST_VERIFY(fn() == 5);
+			EATEST_VERIFY(!fn2);
+			fn.swap(fn2);
+			EATEST_VERIFY(!fn);
+			EATEST_VERIFY(fn2() == 5);
+			swap(fn, fn2);
+			EATEST_VERIFY(fn() == 5);
+			EATEST_VERIFY(!fn2);
+		}
+
+		{
 			uint64_t a = 1, b = 2, c = 3, d = 4, e = 5, f = 6;
-			eastl::function<uint64_t(void)> fn(eastl::allocator_arg_t(), eastl::allocator(), [=] { return a + b + c + d + e + f; });
+			eastl::function<uint64_t(void)> fn([=] { return a + b + c + d + e + f; });
 
 			auto result = fn();
 			EATEST_VERIFY(result == 21);
 		}
 
-		{
-			int allocatorErrorCount = 0;
-
-			// test a custom partial stateful allocator
-			static const unsigned int kSentinelValue = 0xdeadbeef;
-			struct Mallocator
-			{
-				Mallocator(int *errorCount)
-					: mErrorCount(errorCount)
-					, mSentinel(kSentinelValue) {}
-
-				Mallocator(const Mallocator& other)
-					: mErrorCount(other.mErrorCount)
-					, mSentinel(other.mSentinel) {}
-
-				Mallocator& operator=(const Mallocator &other)
-				{
-					mSentinel = other.mSentinel;
-					mErrorCount = other.mErrorCount;
-					return *this;
-				}
-
-				~Mallocator()
-				{
-					if (mSentinel != kSentinelValue)
-					{
-						(*mErrorCount)++;
-					}
-
-					mSentinel = 0x4B1D;  // clear sentinel to catch illegal uses
-				}
-
-				void* allocate(size_t n)
-				{
-					// Verify the sentinel value
-					if (mSentinel != kSentinelValue)
-					{
-						(*mErrorCount)++;
-					}
-					return malloc(n);
-				}
-
-				void deallocate(void* p, size_t n)
-				{
-					// Verify the sentinel value
-					if (mSentinel != kSentinelValue)
-					{
-						(*mErrorCount)++;
-					}
-
-					memset(p, 0xcd, n);  // memset the memory to catch illegal accesses
-					free(p);
-				}
-
-			private:
-
-				int *mErrorCount;
-				unsigned int mSentinel;
-			} mallocator(&allocatorErrorCount);
-
-			uint64_t a = 1, b = 2, c = 3, d = 4, e = 5, f = 6;
-			eastl::function<uint64_t(void)> fn(eastl::allocator_arg_t(), mallocator, [=] { return a + b + c + d + e + f; });
-
-			auto result = fn();
-			EATEST_VERIFY(result == 21);
-			EATEST_VERIFY(allocatorErrorCount == 0);
-		}
-
-
-		// Ensure no allocations are made in this case
-		{
-			struct Failocator
-			{
-				void* allocate(size_t n) { EA_FAIL(); return malloc(n); }
-				void deallocate(void* p, size_t) { EA_FAIL(); free(p); }
-			} failocator;
-
-			typedef eastl::function<int*(int&)> failocator_function_t;
-
-			eastl::vector<failocator_function_t> funcs;
-			funcs.push_back(failocator_function_t(eastl::allocator_arg_t(), failocator, [](int&){return (int*)42;}));
-		}
-
-
-		// Verify that all allocations made by the user allocator are cleaned up at scope exit
-		{
-			int allocCount = 0;
-			{
-				eastl::function<uint64_t(void)> keeper;
-				{
-					struct LargeStateAllocator
-					{
-						LargeStateAllocator(int* pAllocCount)							{ mpAllocCount = pAllocCount; large_state_block[0] = 0; }  // set an element to make the compiler happy.
-						LargeStateAllocator(const LargeStateAllocator& other)			{ mpAllocCount = other.mpAllocCount; }
-						LargeStateAllocator(LargeStateAllocator&& other)				 { mpAllocCount = other.mpAllocCount; }
-						LargeStateAllocator& operator=(const LargeStateAllocator &other) { mpAllocCount = other.mpAllocCount; return *this;}					
-
-						void* allocate(size_t n)		 { (*mpAllocCount)++; return malloc(n); }
-						void deallocate(void* p, size_t) { (*mpAllocCount)--; free(p); }
-
-						private:
-						char large_state_block[4096];  // forces eastl::function to allocate memory on the heap for the allocator instance
-						int* mpAllocCount;
-					} largeStateAllocator(&allocCount);
-
-
-					auto lambda = [] { };
-					static_assert(detail::is_inplace_allocated<decltype(lambda), LargeStateAllocator>::value == false, "large stateful allocator should not fit into eastl::function local buffers");
-
-					eastl::vector<eastl::function<void(void)>> funcs;				
-					funcs.push_back(eastl::function<void(void)>(eastl::allocator_arg_t(), largeStateAllocator, lambda));
-
-					uint64_t a = 1, b = 2, c = 3, d = 4, e = 5, f = 6;					
-					keeper = eastl::function<uint64_t(void)>(eastl::allocator_arg_t(), largeStateAllocator, [=] { return a + b + c + d + e + f; });
-				}
-
-				// verify we copy the allocator internal to eastl::function
-				uint64_t result = keeper();
-				EATEST_VERIFY(result == 21);
-			}
-			EATEST_VERIFY(allocCount == 0);
-		}
 	}
 
 	// Checking _MSC_EXTENSIONS is required because the Microsoft calling convention classifiers are only available when
@@ -828,7 +877,7 @@ int TestFunctional()
 		// no arguments
 		typedef void(__stdcall * StdCallFunction)();
 		typedef void(__cdecl * CDeclFunction)();
-		
+
 		// only varargs
 		typedef void(__stdcall * StdCallFunctionWithVarargs)(...);
 		typedef void(__cdecl * CDeclFunctionWithVarargs)(...);
@@ -847,7 +896,6 @@ int TestFunctional()
 		static_assert(eastl::is_function<typename eastl::remove_pointer<CDeclFunctionWithVarargsAtEnd>::type>::value, "is_function failure");
 	}
 	#endif
-#endif // EASTL_FUNCTION_ENABLED
 
 	// Test Function Objects
 	#if defined(EA_COMPILER_CPP14_ENABLED)

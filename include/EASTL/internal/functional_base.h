@@ -12,12 +12,13 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/memory_base.h>
+#include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
 
 namespace eastl
 {
 	// foward declaration for swap
-	template <typename T> 
+	template <typename T>
 	inline void swap(T& a, T& b) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value &&
 	eastl::is_nothrow_move_assignable<T>::value);
 
@@ -41,23 +42,23 @@ namespace eastl
 	auto invoke_impl(R C::*func, T&& obj, Args&&... args) ->
 	typename enable_if<
 		is_base_of<C, decay_t<decltype(obj)>>::value,
-		decltype((forward<T>(obj).*func)(forward<Args>(args)...))
+		decltype((eastl::forward<T>(obj).*func)(eastl::forward<Args>(args)...))
 	>::type
 	{
-		return (forward<T>(obj).*func)(forward<Args>(args)...);
+		return (eastl::forward<T>(obj).*func)(eastl::forward<Args>(args)...);
 	}
 
 	template <typename F, typename... Args>
-	auto invoke_impl(F&& func, Args&&... args) -> decltype(forward<F>(func)(forward<Args>(args)...))
+	auto invoke_impl(F&& func, Args&&... args) -> decltype(eastl::forward<F>(func)(eastl::forward<Args>(args)...))
 	{
-		return forward<F>(func)(forward<Args>(args)...);
+		return eastl::forward<F>(func)(eastl::forward<Args>(args)...);
 	}
 
 
 	template <typename R, typename C, typename T, typename... Args>
-	auto invoke_impl(R C::*func, T&& obj, Args&&... args) -> decltype(((*forward<T>(obj)).*func)(forward<Args>(args)...))
+	auto invoke_impl(R C::*func, T&& obj, Args&&... args) -> decltype(((*eastl::forward<T>(obj)).*func)(eastl::forward<Args>(args)...))
 	{
-		return ((*forward<T>(obj)).*func)(forward<Args>(args)...);
+		return ((*eastl::forward<T>(obj)).*func)(eastl::forward<Args>(args)...);
 	}
 
 	template <typename M, typename C, typename T>
@@ -71,65 +72,67 @@ namespace eastl
 	}
 
 	template <typename M, typename C, typename T>
-	auto invoke_impl(M C::*member, T&& obj) -> decltype((*forward<T>(obj)).*member)
+	auto invoke_impl(M C::*member, T&& obj) -> decltype((*eastl::forward<T>(obj)).*member)
 	{
-		return (*forward<T>(obj)).*member;
+		return (*eastl::forward<T>(obj)).*member;
 	}
 
 	template <typename F, typename... Args>
 	inline decltype(auto) invoke(F&& func, Args&&... args)
 	{
-		return invoke_impl(forward<F>(func), forward<Args>(args)...);
+		return invoke_impl(eastl::forward<F>(func), eastl::forward<Args>(args)...);
 	}
 
 	template <typename F, typename = void, typename... Args>
-	struct invoke_result_impl {};
+	struct invoke_result_impl {
+	};
 
 	template <typename F, typename... Args>
-	struct invoke_result_impl<F, void_t<decltype(invoke(declval<F>(), declval<Args>()...))>, Args...>
+	struct invoke_result_impl<F, void_t<decltype(invoke_impl(eastl::declval<decay_t<F>>(), eastl::declval<Args>()...))>, Args...>
 	{
-		typedef decltype(invoke(declval<F>(), declval<Args>()...)) type;
+		typedef decltype(invoke_impl(eastl::declval<decay_t<F>>(), eastl::declval<Args>()...)) type;
 	};
 
 	template <typename F, typename... Args>
 	struct invoke_result : public invoke_result_impl<F, void, Args...> {};
 
-#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-	template <typename F, typename... Args>
-	using invoke_result_t = typename invoke_result<F, Args...>::type;
-#endif
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <typename F, typename... Args>
+		using invoke_result_t = typename invoke_result<F, Args...>::type;
+	#endif
 
 	template <typename F, typename = void, typename... Args>
 	struct is_invocable_impl : public eastl::false_type {};
 
 	template <typename F, typename... Args>
-	struct is_invocable_impl<F, void_t<typename invoke_result<F, Args...>::type>, Args...> : public eastl::true_type {};
+	struct is_invocable_impl<F, void_t<typename eastl::invoke_result<F, Args...>::type>, Args...> : public eastl::true_type {};
 
 	template <typename F, typename... Args>
 	struct is_invocable : public is_invocable_impl<F, void, Args...> {};
 
-	template <typename R, typename F, typename... Args>
-	struct is_invocable_r
-	{
-		static const bool value = is_invocable<F, Args...>::value
-			&& is_convertible<typename invoke_result<F, Args...>::type, R>::value;
-	};
-
-#if EASTL_VARIABLE_TEMPLATES_ENABLED
-#if EASTL_INLINE_VARIABLE_ENABLED
-	template <typename F, typename... Args>
-	inline EA_CONSTEXPR bool is_invocable_v = is_invocable<F, Args...>::value;
+	template <typename R, typename F, typename = void, typename... Args>
+	struct is_invocable_r_impl : public eastl::false_type {};
 
 	template <typename R, typename F, typename... Args>
-	inline EA_CONSTEXPR bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
-#endif
-#endif
+	struct is_invocable_r_impl<R, F, void_t<typename invoke_result<F, Args...>::type>, Args...>
+		: public is_convertible<typename invoke_result<F, Args...>::type, R> {};
+
+	template <typename R, typename F, typename... Args>
+	struct is_invocable_r : public is_invocable_r_impl<R, F, void, Args...> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <typename F, typename... Args>
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool is_invocable_v = is_invocable<F, Args...>::value;
+
+		template <typename R, typename F, typename... Args>
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
+	#endif
 
 	/// allocator_arg_t
 	///
-	/// allocator_arg_t is an empty class type used to disambiguate the overloads of 
-	/// constructors and member functions of allocator-aware objects, including tuple, 
-	/// function, promise, and packaged_task. 
+	/// allocator_arg_t is an empty class type used to disambiguate the overloads of
+	/// constructors and member functions of allocator-aware objects, including tuple,
+	/// function, promise, and packaged_task.
 	/// http://en.cppreference.com/w/cpp/memory/allocator_arg_t
 	///
 	struct allocator_arg_t
@@ -138,9 +141,9 @@ namespace eastl
 
 	/// allocator_arg
 	///
-	/// allocator_arg is a constant of type allocator_arg_t used to disambiguate, at call site, 
-	/// the overloads of the constructors and member functions of allocator-aware objects, 
-	/// such as tuple, function, promise, and packaged_task. 
+	/// allocator_arg is a constant of type allocator_arg_t used to disambiguate, at call site,
+	/// the overloads of the constructors and member functions of allocator-aware objects,
+	/// such as tuple, function, promise, and packaged_task.
 	/// http://en.cppreference.com/w/cpp/memory/allocator_arg
 	///
 	#if !defined(EA_COMPILER_NO_CONSTEXPR)
@@ -244,7 +247,7 @@ namespace eastl
 	template <typename... ArgTypes>
 	typename eastl::result_of<T&(ArgTypes&&...)>::type reference_wrapper<T>::operator() (ArgTypes&&... args) const
 	{
-		return invoke(*val, forward<ArgTypes>(args)...);
+		return eastl::invoke(*val, eastl::forward<ArgTypes>(args)...);
 	}
 
 	// reference_wrapper-specific utilties
@@ -257,10 +260,10 @@ namespace eastl
 	template <typename T>
 	reference_wrapper<T> ref(reference_wrapper<T>t) EA_NOEXCEPT;
 
-	template <typename T> 
+	template <typename T>
 	reference_wrapper<const T> cref(const T& t) EA_NOEXCEPT;
 
-	template <typename T> 
+	template <typename T>
 	void cref(const T&&) = delete;
 
 	template <typename T>
@@ -273,7 +276,7 @@ namespace eastl
 		: public eastl::false_type {};
 
 	template <typename T>
-	struct is_reference_wrapper_helper<eastl::reference_wrapper<T> > 
+	struct is_reference_wrapper_helper<eastl::reference_wrapper<T> >
 		: public eastl::true_type {};
 
 	template <typename T>
@@ -300,9 +303,9 @@ namespace eastl
 	template <typename R, typename C, typename T, typename... Args>
 	auto invoke_impl(R (C::*func)(Args...), T&& obj, Args&&... args) ->
 		typename enable_if<is_reference_wrapper<typename remove_reference<T>::type>::value,
-						   decltype((obj.get().*func)(forward<Args>(args)...))>::type
+						   decltype((obj.get().*func)(eastl::forward<Args>(args)...))>::type
 	{
-		return (obj.get().*func)(forward<Args>(args)...);
+		return (obj.get().*func)(eastl::forward<Args>(args)...);
 	}
 
 	template <typename M, typename C, typename T>
@@ -378,18 +381,3 @@ namespace eastl
 } // namespace eastl
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

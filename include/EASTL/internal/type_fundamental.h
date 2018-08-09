@@ -35,37 +35,31 @@ namespace eastl
 	template <> struct is_void<void volatile>       : public true_type{};
 	template <> struct is_void<void const volatile> : public true_type{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_void_v = is_void<T>::value;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
 	// has_void_arg
 	//
 	// utility which identifies if any of the given template arguments is void.
+	//
+	// TODO(rparolin):  refactor with fold expressions when C++17 compilers are widely available.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+	template <typename ...Args> 
+	struct has_void_arg;
 
-		template <typename A0, typename A1 = int, typename A2 = int, typename A3 = int, typename A4 = int, typename A5 = int> 
-		struct has_void_arg
-			{ static const bool value = eastl::is_void<A0>::value ||    // If we add more arguments then change this 
-										eastl::is_void<A1>::value ||    // to be a recursive template.
-										eastl::is_void<A2>::value ||
-										eastl::is_void<A3>::value ||
-										eastl::is_void<A4>::value ||
-										eastl::is_void<A5>::value;
-			};
-	#else
-		template <typename ...Args> 
-		struct has_void_arg;
+	template <> 
+	struct has_void_arg<> 
+		: public eastl::false_type {};
 
-		template <> 
-		struct has_void_arg<> 
-			: public eastl::false_type {};
-
-		template <typename A0, typename ...Args>
-		struct has_void_arg<A0, Args...>
-			{ static const bool value = (eastl::is_void<A0>::value || eastl::has_void_arg<Args...>::value); };
-	#endif
+	template <typename A0, typename ...Args>
+	struct has_void_arg<A0, Args...>
+		{ static const bool value = (eastl::is_void<A0>::value || eastl::has_void_arg<Args...>::value); };
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -89,6 +83,11 @@ namespace eastl
 
 		template <typename T> 
 		struct is_null_pointer : public eastl::is_same<typename eastl::remove_cv<T>::type, std::nullptr_t> {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_null_pointer_v = is_null_pointer<T>::value;
 	#endif
 
 
@@ -115,7 +114,7 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_integral_CONFORMANCE 1    // is_integral is conforming.
 
-	template <typename T> struct is_integral_helper : public false_type{};
+	template <typename T> struct is_integral_helper           : public false_type{};
 
 	template <> struct is_integral_helper<unsigned char>      : public true_type{};
 	template <> struct is_integral_helper<unsigned short>     : public true_type{};
@@ -170,7 +169,7 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_floating_point_CONFORMANCE 1    // is_floating_point is conforming.
 
-	template <typename T> struct is_floating_point_helper : public false_type{};
+	template <typename T> struct is_floating_point_helper    : public false_type{};
 
 	template <> struct is_floating_point_helper<float>       : public true_type{};
 	template <> struct is_floating_point_helper<double>      : public true_type{};
@@ -187,6 +186,11 @@ namespace eastl
 		template <> struct is_floating_point<const volatile T> : public true_type{};    \
 	}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_floating_point_v = is_floating_point<T>::value;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -200,11 +204,9 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_arithmetic_CONFORMANCE 1    // is_arithmetic is conforming.
 
-	template <typename T> 
-	struct is_arithmetic : public integral_constant<bool,
-		is_integral<T>::value || is_floating_point<T>::value
-	>{};
-
+	template <typename T>
+	struct is_arithmetic 
+		: public integral_constant<bool, is_integral<T>::value || is_floating_point<T>::value> {};
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -219,10 +221,9 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_fundamental_CONFORMANCE 1    // is_fundamental is conforming.
 
-	template <typename T> 
-	struct is_fundamental : public integral_constant<bool,
-		is_void<T>::value || is_integral<T>::value || is_floating_point<T>::value || is_null_pointer<T>::value
-	>{};
+	template <typename T>
+	struct is_fundamental
+		: public bool_constant<is_void_v<T> || is_integral_v<T> || is_floating_point_v<T> || is_null_pointer_v<T>> {};
 
 
 	///////////////////////////////////////////////////////////////////////

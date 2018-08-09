@@ -625,6 +625,7 @@ namespace eastl
 		#define EASTL_DECAY_T(T) decay_t<T>
 	#endif
 
+
 	///////////////////////////////////////////////////////////////////////
 	// common_type
 	// 
@@ -643,83 +644,44 @@ namespace eastl
 	// explicit conversions are desired among the template arguments.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(EA_COMPILER_NO_DECLTYPE)
-		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 0
+	#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 1    // common_type is conforming.
 
-		// Perhaps we can do better. On the other hand, compilers that don't support variadic 
-		// templates and decltype probably won't need the common_type trait anyway.
-		template <typename T, typename U = void, typename V = void>
-		struct common_type
-			{ typedef void type; };
+	template<typename... T>
+	struct common_type;
 
-		template <typename T, typename U>
-		struct common_type<T, U, void>
-			{ typedef void type; };
+	template<typename T>
+	struct common_type<T>
+		{ typedef decay_t<T> type; }; // Question: Should we use T or decay_t<T> here? The C++11 Standard specifically (20.9.7.6,p3) specifies that it be without decay, but libc++ uses decay.
 
-		template <typename T>
-		struct common_type<T, T, void>
-			{ typedef decay_t<T> type; };
+	template<typename T, typename U>
+	struct common_type<T, U>
+	{
+		typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type; // The type of a tertiary expression is set by the compiler to be the common type of the two result types.
+	};
 
-		template <typename T>
-		struct common_type<T, void, void>
-			{ typedef decay_t<T> type; };
+	template<typename T, typename U, typename... V>
+	struct common_type<T, U, V...>
+		{ typedef typename common_type<typename common_type<T, U>::type, V...>::type type; };
 
-	#elif defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
-		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 0
 
-		template <typename T, typename U = void, typename V = void>
-		struct common_type
-			{ typedef typename eastl::common_type<typename eastl::common_type<T, U>::type, V>::type type; };
-
-		template <typename T>
-		struct common_type<T, void, void>
-			{ typedef decay_t<T> type; };
-
-		template <typename T, typename U>
-		class common_type<T, U, void>
-		{
-		public:
-			typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type;
-		};
-
+	// common_type_t is the C++14 using typedef for typename common_type<T...>::type.
+	// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
+	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		#define EASTL_COMMON_TYPE_T(...) typename common_type<__VA_ARGS__>::type
 	#else
-		#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 1    // common_type is conforming.
-
-		template<typename... T>
-		struct common_type;
-
-		template<typename T>
-		struct common_type<T>
-			{ typedef decay_t<T> type; }; // Question: Should we use T or decay_t<T> here? The C++11 Standard specifically (20.9.7.6,p3) specifies that it be without decay, but libc++ uses decay.
-
-		template<typename T, typename U>
-		struct common_type<T, U>
-		{
-			typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type; // The type of a tertiary expression is set by the compiler to be the common type of the two result types.
-		};
-
-		template<typename T, typename U, typename... V>
-		struct common_type<T, U, V...>
-			{ typedef typename common_type<typename common_type<T, U>::type, V...>::type type; };
-
-
-		// common_type_t is the C++14 using typedef for typename common_type<T...>::type.
-		// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
-		#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-			#define EASTL_COMMON_TYPE_T(...) typename common_type<__VA_ARGS__>::type
-		#else
-			template <typename... T>
-			using common_type_t = typename common_type<T...>::type;
-			#define EASTL_COMMON_TYPE_T(...) common_type_t<__VA_ARGS__>
-		#endif
-
+		template <typename... T>
+		using common_type_t = typename common_type<T...>::type;
+		#define EASTL_COMMON_TYPE_T(...) common_type_t<__VA_ARGS__>
 	#endif
 
+	///////////////////////////////////////////////////////////////////////
+	// is_final
+	///////////////////////////////////////////////////////////////////////
 	#if EA_COMPILER_HAS_FEATURE(is_final)
 		template <typename T>
 		struct is_final : public integral_constant<bool, __is_final(T)> {};
 	#else
-		// there's no compiler support... cannot determine
+		// compiler support so we always return false
 		template <typename T>
 		struct is_final : public false_type {};
 	#endif
@@ -727,18 +689,6 @@ namespace eastl
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

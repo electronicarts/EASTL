@@ -204,7 +204,7 @@ namespace eastl
 		using base_type::internalAllocator;
 
 	public:
-		vector() noexcept(noexcept(allocator_type()));
+		vector() noexcept(noexcept(EASTL_VECTOR_DEFAULT_ALLOCATOR));
 		explicit vector(const allocator_type& allocator) noexcept;
 		explicit vector(size_type n, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		vector(size_type n, const value_type& value, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
@@ -502,7 +502,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector() noexcept(noexcept(allocator_type()))
+	inline vector<T, Allocator>::vector() noexcept(noexcept(EASTL_VECTOR_DEFAULT_ALLOCATOR))
 		: base_type()
 	{
 		// Empty
