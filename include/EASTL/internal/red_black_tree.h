@@ -109,12 +109,7 @@ namespace eastl
 		// Potentially we could provide a constructor that would satisfy the compiler and change the code to use this constructor
 		// instead of constructing mValue in place within an unconstructed rbtree_node.
 		#if defined(_MSC_VER)
-			#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
-				rbtree_node(const rbtree_node&) = delete;
-			#else
-				private:
-					rbtree_node(const rbtree_node&);
-			#endif
+			rbtree_node(const rbtree_node&) = delete;
 		#endif
 	};
 
@@ -2008,7 +2003,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(key);
+				::new (eastl::addressof(pNode->mValue)) value_type(pair_first_construct, key);
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			}

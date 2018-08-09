@@ -63,13 +63,10 @@ namespace eastl
 	{
 		#if EASTL_ASSERT_ENABLED
 			#if defined(EA_PLATFORM_MICROSOFT)
+				printf("%s", pExpression); // Write the message to stdout
 				if( ::IsDebuggerPresent())
 				{
 					OutputDebugStringA(pExpression);
-				}
-				else
-				{
-					printf("%s", pExpression); // Write the message to stdout
 				}
 			#elif defined(EA_PLATFORM_ANDROID)
 				__android_log_print(ANDROID_LOG_INFO, "PRINTF", "%s", pExpression);

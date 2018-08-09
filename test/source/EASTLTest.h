@@ -256,6 +256,7 @@ const char* GetStdSTLName();
 /// gEASTLTest_AllocationCount
 ///
 extern int gEASTLTest_AllocationCount; 
+extern int gEASTLTest_TotalAllocationCount; 
 
 
 
@@ -1205,23 +1206,25 @@ inline bool operator!=(const UnequalAllocator&, const UnequalAllocator&) { retur
 ///
 /// Counts allocation events allowing unit tests to validate assumptions.
 ///
-class CountingAllocator
+class CountingAllocator : public eastl::allocator
 {
 public:
+	using base_type = eastl::allocator;
+
 	EASTL_ALLOCATOR_EXPLICIT CountingAllocator(const char* pName = EASTL_NAME_VAL(EASTL_ALLOCATOR_DEFAULT_NAME))
-	    : mAllocator(pName)
+	    : base_type(pName)
 	{
 		totalCtorCount++;
 		defaultCtorCount++;
 	}
 
-	CountingAllocator(const CountingAllocator& x) : mAllocator(x.mAllocator) 
+	CountingAllocator(const CountingAllocator& x) : base_type(x)
 	{
 		totalCtorCount++;
 		copyCtorCount++;
 	}
 
-	CountingAllocator(const CountingAllocator& x, const char* pName) : mAllocator(x.mAllocator)
+	CountingAllocator(const CountingAllocator& x, const char* pName) : base_type(x)
 	{
 		totalCtorCount++;
 		copyCtorCount++;
@@ -1230,27 +1233,27 @@ public:
 
 	CountingAllocator& operator=(const CountingAllocator& x)
 	{
-		mAllocator = x.mAllocator;
+		base_type::operator=(x);
 		assignOpCount++;
 		return *this;
 	}
 
-	void* allocate(size_t n, int flags = 0)
+	virtual void* allocate(size_t n, int flags = 0)
 	{
 		activeAllocCount++;
 		totalAllocCount++;
 		totalAllocatedMemory += n;
 		activeAllocatedMemory += n;
-		return mAllocator.allocate(n, flags);
+		return base_type::allocate(n, flags);
 	}
 
-	void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0)
+	virtual void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0)
 	{
 		activeAllocCount++;
 		totalAllocCount++;
 		totalAllocatedMemory += n;
 		activeAllocatedMemory += n;
-		return mAllocator.allocate(n, alignment, offset, flags);
+		return base_type::allocate(n, alignment, offset, flags);
 	}
 
 	void deallocate(void* p, size_t n)
@@ -1258,15 +1261,16 @@ public:
 		activeAllocCount--;
 		totalDeallocCount--;
 		activeAllocatedMemory -= n;
-		return mAllocator.deallocate(p, n);
+		return base_type::deallocate(p, n);
 	}
 
-	const char* get_name() const          { return mAllocator.get_name(); }
-	void set_name(const char* pName)      { mAllocator.set_name(pName); }
+	const char* get_name() const          { return base_type::get_name(); }
+	void set_name(const char* pName)      { base_type::set_name(pName); }
 
 	static auto getAllocationCount()      { return totalAllocCount; }
 	static auto getTotalAllocationSize()  { return totalAllocatedMemory; }
 	static auto getActiveAllocationSize() { return activeAllocatedMemory; }
+	static auto neverUsed()				  { return totalAllocCount == 0; }
 
 	static void resetCount()
 	{
@@ -1281,8 +1285,6 @@ public:
 		activeAllocatedMemory = 0;
 	}
 
-	eastl::allocator mAllocator;
-
 	static uint64_t activeAllocCount;
 	static uint64_t totalAllocCount;
 	static uint64_t totalDeallocCount;
@@ -1294,8 +1296,10 @@ public:
 	static uint64_t activeAllocatedMemory; // currently allocated memory by allocator
 };
 
-inline bool operator==(const CountingAllocator& rhs, const CountingAllocator& lhs) { return rhs.mAllocator == lhs.mAllocator; }
+inline bool operator==(const CountingAllocator& rhs, const CountingAllocator& lhs) { return operator==(CountingAllocator::base_type(rhs), CountingAllocator::base_type(lhs)); }
 inline bool operator!=(const CountingAllocator& rhs, const CountingAllocator& lhs) { return !(rhs == lhs); }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1544,6 +1548,18 @@ struct ValueInitOf
 	T mV;
 };
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+// Utility RAII class that sets a new default allocator for the scope
+//
+struct AutoDefaultAllocator
+{
+	eastl::allocator* mPrevAllocator = nullptr;
+
+	AutoDefaultAllocator(eastl::allocator* nextAllocator) { mPrevAllocator = SetDefaultAllocator(nextAllocator); }
+	~AutoDefaultAllocator()                               { SetDefaultAllocator(mPrevAllocator); }
+};
 
 
 #endif // Header include guard

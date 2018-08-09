@@ -45,6 +45,11 @@
 	//
 	int gEASTLTest_AllocationCount = 0;
 
+	///////////////////////////////////////////////////////////////////////////////
+	// gEASTLTest_TotalAllocationCount
+	//
+	int gEASTLTest_TotalAllocationCount = 0;
+
 
 	///////////////////////////////////////////////////////////////////////////////
 	// EASTLTest_ValidateHeap
@@ -119,6 +124,7 @@
 	_Ret_maybenull_ _Post_writable_byte_size_(size) void* operator new[](size_t size, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
 
 		#ifdef EA_DEBUG
 			void* const p = EA::Allocator::gGeneralAllocator.MallocDebug(size, 0, 0, gUnattributedNewTag, UNATTRIBUTED_NEW_FILE, UNATTRIBUTED_NEW_LINE);
@@ -142,6 +148,7 @@
 	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new(size_t size) EA_THROW_SPEC_NEW(std::bad_alloc)
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
 
 		// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
 		#if (PPMALLOC_VERSION_N >= 11602)
@@ -179,6 +186,7 @@
 	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new[](size_t size) EA_THROW_SPEC_NEW(std::bad_alloc)
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
 
 		// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
 		#if (PPMALLOC_VERSION_N >= 11602)
@@ -220,6 +228,7 @@
 	#endif
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
 
 		#ifdef EA_DEBUG
 			return EA::Allocator::gGeneralAllocator.MallocDebug(size, flags, debugFlags, name, file, line);
@@ -236,6 +245,7 @@
 	#endif
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
 
 		#ifdef EA_DEBUG
 			return EA::Allocator::gGeneralAllocator.MallocAlignedDebug(size, alignment, alignmentOffset, flags, debugFlags, name, file, line);
@@ -248,6 +258,8 @@
 	void* operator new(size_t size, size_t alignment)
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
+
 		return EA::Allocator::gGeneralAllocator.MallocAligned(size, alignment);
 	}
 
@@ -255,6 +267,8 @@
 	void* operator new(size_t size, size_t alignment, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
+
 		return EA::Allocator::gGeneralAllocator.MallocAligned(size, alignment);
 	}
 
@@ -262,6 +276,8 @@
 	void* operator new[](size_t size, size_t alignment)
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
+
 		return EA::Allocator::gGeneralAllocator.MallocAligned(size, alignment);
 	}
 
@@ -269,6 +285,8 @@
 	void* operator new[](size_t size, size_t alignment, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
 		gEASTLTest_AllocationCount++;
+		gEASTLTest_TotalAllocationCount++;
+
 		return EA::Allocator::gGeneralAllocator.MallocAligned(size, alignment);
 	}
 

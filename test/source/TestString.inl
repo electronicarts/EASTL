@@ -328,9 +328,9 @@ int TEST_STRING_NAME()
 	// basic_string(const view_type& sv, const allocator_type& allocator);
 	// basic_string(const view_type& sv, size_type position, size_type n, const allocator_type& allocator);
 	{
-		{  // test string_view
+		{ // test string_view
 			typename StringType::view_type sv(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-            StringType str(sv);
+			StringType str(sv);
 
 			VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 			VERIFY(!str.empty());
@@ -338,9 +338,10 @@ int TEST_STRING_NAME()
 			VERIFY(str.size() == 26);
 			VERIFY(str.validate());
 		}
+
 		{  // test string_view substring
 			typename StringType::view_type sv(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-            StringType str(sv, 2, 22);
+			StringType str(sv, 2, 22);
 
 			VERIFY(str == LITERAL("cdefghijklmnopqrstuvwx"));
 			VERIFY(!str.empty());

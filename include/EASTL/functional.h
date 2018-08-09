@@ -1203,12 +1203,7 @@ namespace eastl
 
 } // namespace eastl
 
-#if EASTL_FUNCTION_ENABLED
-	EA_DISABLE_VC_WARNING(4510 4512 4610)  // disable warning: function_manager not generating default constructor and default assignment operators.
-	#include <EASTL/internal/function.h>
-	EA_RESTORE_VC_WARNING()
-#endif
-
+#include <EASTL/internal/function.h>
 
 #endif // Header include guard
 

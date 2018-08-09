@@ -16,7 +16,7 @@ namespace eastl
 {
 
 
-template<typename T, typename Hash = hash<string>, typename Predicate = equal_to<string>, typename Allocator = EASTLAllocatorType>
+template<typename T, typename Hash = hash<const char*>, typename Predicate = str_equal_to<const char*>, typename Allocator = EASTLAllocatorType>
 class string_hash_map : public eastl::hash_map<const char*, T, Hash, Predicate, Allocator>
 {
 public:
@@ -151,11 +151,13 @@ template<typename T, typename Hash, typename Predicate, typename Allocator>
 typename string_hash_map<T, Hash, Predicate, Allocator>::mapped_type&
 string_hash_map<T, Hash, Predicate, Allocator>::operator[](const char* key)
 {
+	using base_value_type = typename base::base_type::value_type;
+
 	EASTL_ASSERT(key);
 	iterator i = base::base_type::find(key);
 	if (i != base::base_type::end())
 		return i->second;
-	return base::base_type::insert(strduplicate(key)).first->second;
+	return base::base_type::insert(base_value_type(pair_first_construct, strduplicate(key))).first->second;
 }
 
 template<typename T, typename Hash, typename Predicate, typename Allocator>

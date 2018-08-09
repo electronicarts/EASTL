@@ -849,18 +849,16 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-    inline basic_string<T, Allocator>::basic_string(const view_type& sv, const allocator_type& allocator)
-		: basic_string(sv.data(), sv.size(), allocator)
+	inline basic_string<T, Allocator>::basic_string(const view_type& sv, const allocator_type& allocator)
+	    : basic_string(sv.data(), sv.size(), allocator)
 	{
-
 	}
 
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::basic_string(const view_type& sv, size_type position, size_type n, const allocator_type& allocator)
-		: basic_string(sv.substr(position, n), allocator)
+	    : basic_string(sv.substr(position, n), allocator)
 	{
-
 	}
 
 

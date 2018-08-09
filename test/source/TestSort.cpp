@@ -443,9 +443,9 @@ int TestSort()
 			{
 				eastl::random_shuffle(toArraySaved.begin(), toArraySaved.end(), rng);
 				// Store the intial position of each element in the array before sorting.  This position can then be used to verify that the sorting operation is stable.
-				for (size_t i = 0; i < toArraySaved.size(); i++)
+				for (size_t k = 0; k < toArraySaved.size(); k++)
 				{
-					toArraySaved[i].initialPositionIndex = i;
+					toArraySaved[k].initialPositionIndex = k;
 				}
 
 				toArray = toArraySaved;

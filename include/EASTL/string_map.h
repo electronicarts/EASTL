@@ -16,7 +16,7 @@ namespace eastl
 {
 
 
-template<typename T, typename Predicate = less<string>, typename Allocator = EASTLAllocatorType>
+template<typename T, typename Predicate = str_less<const char*>, typename Allocator = EASTLAllocatorType>
 class string_map : public eastl::map<const char*, T, Predicate, Allocator>
 {
 public:
@@ -49,11 +49,11 @@ private:
 	char*				strduplicate(const char* str);
 
 	// Not implemented right now
-	//insert_return_type	insert(const value_type& value);
-	//iterator			insert(iterator position, const value_type& value);
-    //reverse_iterator	erase(reverse_iterator position);
-    //reverse_iterator	erase(reverse_iterator first, reverse_iterator last);
-    //void				erase(const key_type* first, const key_type* last);
+	// insert_return_type	insert(const value_type& value);
+	// iterator			    insert(iterator position, const value_type& value);
+    // reverse_iterator	    erase(reverse_iterator position);
+    // reverse_iterator	    erase(reverse_iterator first, reverse_iterator last);
+    // void				    erase(const key_type* first, const key_type* last);
 };
 
 
@@ -142,11 +142,13 @@ template<typename T, typename Predicate, typename Allocator>
 typename string_map<T, Predicate, Allocator>::mapped_type&
 string_map<T, Predicate, Allocator>::operator[](const char* key)
 {
+	using base_value_type = typename base::base_type::value_type;
+
 	EASTL_ASSERT(key);
 	iterator i = base::base_type::find(key);
 	if (i != base::base_type::end())
 		return i->second;
-	return base::base_type::insert(strduplicate(key)).first->second;
+	return base::base_type::insert(base_value_type(pair_first_construct, strduplicate(key))).first->second;
 }
 
 template<typename T, typename Predicate, typename Allocator>

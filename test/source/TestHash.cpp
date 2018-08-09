@@ -31,6 +31,16 @@ namespace eastl
 		size_t operator()(const Align32& a32) const 
 			{ return static_cast<size_t>(a32.mX); }
 	};
+
+	// extension to hash an eastl::pair
+	template <typename T1, typename T2>
+	struct hash<pair<T1, T2>>
+	{
+		size_t operator()(const pair<T1, T2>& c) const
+		{
+			return static_cast<size_t>(hash<T1>()(c.first) ^ hash<T2>()(c.second));
+		}
+	};
 }
 
 // For regression code below.
@@ -1397,6 +1407,31 @@ int TestHash()
 
 			myMap.emplace(eastl::move(key), eastl::move(value));
 			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+		}
+	}
+
+	
+	{
+
+		struct name_equals
+		{
+			bool operator()(const eastl::pair<int, const char*>& a, const eastl::pair<int, const char*>& b) const
+			{
+				if (a.first != b.first)
+					return false;
+
+				return strcmp(a.second, b.second) == 0;
+			}
+		};
+
+		{
+			int n = 42;
+			const char* pCStrName = "electronic arts";
+			eastl::hash_map<eastl::pair<int, const char*>, bool, eastl::hash<eastl::pair<int, const char*>>, name_equals, eastl::allocator> m_TempNames;
+			m_TempNames[eastl::make_pair(n, pCStrName)] = true;
+
+			auto isFound = (m_TempNames.find(eastl::make_pair(n, pCStrName)) != m_TempNames.end());
+			VERIFY(isFound);
 		}
 	}
 

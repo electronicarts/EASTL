@@ -241,10 +241,10 @@ namespace eastl
 		static_assert(!eastl::is_same<value_type, in_place_t>::value, "eastl::optional of a in_place_t type is ill-formed");
 		static_assert(!eastl::is_same<value_type, nullopt_t>::value, "eastl::optional of a nullopt_t type is ill-formed");
 
-	    inline optional() EA_NOEXCEPT {}
-	    inline optional(nullopt_t) EA_NOEXCEPT {}
-	    inline optional(const value_type& value) : base_type(value) {}
-		inline optional(value_type&& value) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible_v<T>)
+	    inline EA_CONSTEXPR optional() EA_NOEXCEPT {}
+	    inline EA_CONSTEXPR optional(nullopt_t) EA_NOEXCEPT {}
+	    inline EA_CONSTEXPR optional(const value_type& value) : base_type(value) {}
+		inline EA_CONSTEXPR optional(value_type&& value) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible_v<T>)
 		    : base_type(eastl::move(value))
 		{
 		}
@@ -257,7 +257,7 @@ namespace eastl
 			::new (eastl::addressof(val)) value_type(*pOtherValue);
 		}
 
-	    optional(optional&& other)
+		optional(optional&& other)
 		{
 			engaged = other.engaged;
 
@@ -266,7 +266,7 @@ namespace eastl
 		}
 
 		template <typename... Args>
-		inline explicit optional(in_place_t, Args&&... args)
+		inline EA_CONSTEXPR explicit optional(in_place_t, Args&&... args)
 		    : base_type(in_place, eastl::forward<Args>(args)...)
 		{
 		}

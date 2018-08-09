@@ -20,7 +20,6 @@
 
 namespace eastl
 {
-#if EASTL_FUNCTION_ENABLED
 	namespace Internal
 	{
 		// has_value_type
@@ -35,7 +34,7 @@ namespace eastl
 		};
 
 		template <class Alloc, bool = has_value_type<Alloc>::value>
-		struct value_type 
+		struct value_type
 		{
 			typedef typename Alloc::value_type type;
 		};
@@ -204,7 +203,7 @@ namespace eastl
 		};
 
 
-#if EASTL_VARIADIC_TEMPLATES_ENABLED 
+#if EASTL_VARIADIC_TEMPLATES_ENABLED
 		// has_construct
         template <class Alloc, class T, class... Args>
         decltype(eastl::declval<Alloc>().construct(eastl::declval<T*>(), eastl::declval<Args>()...), eastl::true_type())
@@ -240,7 +239,7 @@ namespace eastl
         };
 #endif
 
-		
+
 		// has_destroy
         template <class Alloc, class Pointer>
         auto has_destroy_test(Alloc&& a, Pointer&& p) -> decltype(a.destroy(p), eastl::true_type());
@@ -273,7 +272,7 @@ namespace eastl
     } // namespace Internal
 
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// allocator_traits
 	//
 	// C++11 Standard section 20.7.8
@@ -285,13 +284,13 @@ namespace eastl
 	//
 	// eastl::allocator_traits supplies a uniform interface to all allocator types.
 	//
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // eastl::allocator_traits is not a standards conforming implementation. Enough of the standard was implemented to
     // make the eastl::function implementation possible.  We must revisit this implementation before rolling out its
     // usage fully in eastl::containers.
-	// 
+	//
 	// NOTE: We do not recommend users directly code against eastl::allocator_traits until we have completed a full standards comforming implementation.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     template <class Alloc>
@@ -299,7 +298,7 @@ namespace eastl
 	{
 	    typedef Alloc allocator_type;
 
-		typedef typename Internal::value_type<allocator_type>::type value_type; 
+		typedef typename Internal::value_type<allocator_type>::type value_type;
 	    typedef typename Internal::pointer_type<value_type, allocator_type>::type pointer;
 	    typedef typename Internal::const_pointer<value_type, pointer, allocator_type>::type const_pointer;
 	    typedef typename Internal::void_pointer<pointer, allocator_type>::type void_pointer;
@@ -318,17 +317,17 @@ namespace eastl
 		// static allocator_type select_on_container_copy_construction(const allocator_type& a);
 
 	    static size_type internal_max_size(true_type, const allocator_type& a) { return a.max_size(); }
-	    static size_type internal_max_size(false_type, const allocator_type&) { return (eastl::numeric_limits<size_type>::max)(); }  // additional parenthesis disables the windows max macro from expanding. 
-	    static size_type max_size(const allocator_type& a) EA_NOEXCEPT 
+	    static size_type internal_max_size(false_type, const allocator_type&) { return (eastl::numeric_limits<size_type>::max)(); }  // additional parenthesis disables the windows max macro from expanding.
+	    static size_type max_size(const allocator_type& a) EA_NOEXCEPT
 	    {
 		    return internal_max_size(Internal::has_max_size<const allocator_type>(), a);
 	    }
 
-	    static pointer allocate(allocator_type& a, size_type n) { return static_cast<pointer>(a.allocate(n)); }  
+	    static pointer allocate(allocator_type& a, size_type n) { return static_cast<pointer>(a.allocate(n)); }
 
 		static pointer allocate(allocator_type& a, size_type n, const_void_pointer)
-		{			
-			// return allocate(a, n, hint, Internal::has_allocate_hint<allocator_type, size_type, const_void_pointer>());			
+		{
+			// return allocate(a, n, hint, Internal::has_allocate_hint<allocator_type, size_type, const_void_pointer>());
 			return allocate(a, n);
 		}
 
@@ -387,6 +386,4 @@ namespace eastl
 			internal_destroy(Internal::has_destroy<allocator_type, T*>(), a, p);
 	    }
     };
-#endif // EASTL_FUNCTION_ENABLED  
 } // namespace eastl
-

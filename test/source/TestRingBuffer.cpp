@@ -937,23 +937,21 @@ int TestRingBuffer()
 		EATEST_VERIFY(rbListString5.back() == "9");
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// ring_buffer(this_type&& x);
-			// ring_buffer(this_type&& x, const allocator_type& allocator);
-			// this_type& operator=(this_type&& x);
+		// ring_buffer(this_type&& x);
+		// ring_buffer(this_type&& x, const allocator_type& allocator);
+		// this_type& operator=(this_type&& x);
 
-			RBListString rbListStringM1(eastl::move(rbListString5));
-			EATEST_VERIFY(rbListStringM1.validate() && rbListString5.validate());
-			EATEST_VERIFY((rbListStringM1.size() == 10) && (rbListString5.size() == 0));
+		RBListString rbListStringM1(eastl::move(rbListString5));
+		EATEST_VERIFY(rbListStringM1.validate() && rbListString5.validate());
+		EATEST_VERIFY((rbListStringM1.size() == 10) && (rbListString5.size() == 0));
 
-			RBListString rbListStringM2(eastl::move(rbListStringM1), RBListString::allocator_type());
-			EATEST_VERIFY(rbListStringM2.validate() && rbListStringM1.validate());
-			EATEST_VERIFY((rbListStringM2.size() == 10) && (rbListStringM1.size() == 0));
+		RBListString rbListStringM2(eastl::move(rbListStringM1), RBListString::allocator_type());
+		EATEST_VERIFY(rbListStringM2.validate() && rbListStringM1.validate());
+		EATEST_VERIFY((rbListStringM2.size() == 10) && (rbListStringM1.size() == 0));
 
-			rbListStringM1 = eastl::move(rbListStringM2);
-			EATEST_VERIFY(rbListStringM1.validate() && rbListStringM2.validate());
-			EATEST_VERIFY((rbListStringM1.size() == 10) && (rbListStringM2.size() == 0));
-		#endif
+		rbListStringM1 = eastl::move(rbListStringM2);
+		EATEST_VERIFY(rbListStringM1.validate() && rbListStringM2.validate());
+		EATEST_VERIFY((rbListStringM1.size() == 10) && (rbListStringM2.size() == 0));
 	}
 
 
@@ -1002,19 +1000,7 @@ int TestRingBuffer()
 	{
 		// Regression for bug with iterator subtraction
 		typedef eastl::ring_buffer<int>		IntBuffer_t;
-#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
 		IntBuffer_t intBuffer = { 0, 1, 2, 3, 4, 5, 6, 7 };
-#else
-		IntBuffer_t intBuffer(8);
-		intBuffer.push_back(0);
-		intBuffer.push_back(1);
-		intBuffer.push_back(2);
-		intBuffer.push_back(3);
-		intBuffer.push_back(4);
-		intBuffer.push_back(5);
-		intBuffer.push_back(6);
-		intBuffer.push_back(7);
-#endif
 		IntBuffer_t::iterator it = intBuffer.begin();
 
 		EATEST_VERIFY(*it == 0);
@@ -1086,6 +1072,46 @@ int TestRingBuffer()
 			EATEST_VERIFY(rb.size() == 3);
 		}
 		#endif
+	}
+
+	{
+		const auto MAX_ELEMENTS = EASTL_MAX_STACK_USAGE;
+
+		// create a container simulating LARGE state that exceeds
+		// our maximum stack size macro. This forces our ring_buffer implementation
+		// to allocate the container in the heap instead of holding it on the stack.
+		// This test ensures that allocation is NOT serviced by the default global heap.  
+		// Instead it is serviced by the allocator of the ring_buffers underlying container.
+		struct PaddedVector : public eastl::vector<int, MallocAllocator>
+		{
+			char mPadding[EASTL_MAX_STACK_USAGE];
+		};
+
+		MallocAllocator::reset_all();
+		CountingAllocator::resetCount();
+
+		{
+			CountingAllocator countingAlloc;
+			AutoDefaultAllocator _(&countingAlloc);
+
+			eastl::ring_buffer<int, PaddedVector> intBuffer(1);  
+			for (int i = 0; i < MAX_ELEMENTS; i++)
+				intBuffer.push_back(i);
+
+		#if !EASTL_OPENSOURCE
+			const auto cacheAllocationCount = gEASTLTest_TotalAllocationCount;
+		#endif
+			const auto cacheMallocatorCount = MallocAllocator::mAllocCountAll;
+			const auto forceReAllocSize = intBuffer.size() * 2;
+
+			intBuffer.resize(forceReAllocSize);
+
+		#if !EASTL_OPENSOURCE
+			VERIFY(cacheAllocationCount == gEASTLTest_TotalAllocationCount);
+		#endif
+			VERIFY(cacheMallocatorCount <  MallocAllocator::mAllocCountAll);
+			VERIFY(CountingAllocator::neverUsed());
+		}
 	}
 
 	return nErrorCount;

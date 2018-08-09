@@ -1026,9 +1026,12 @@ namespace eastl
 		// Ideally we would remove this overload as it deprecated and removed in C++17 but it currently causes
 		// performance regressions for hashtables with complex keys (keys that allocate resources).
 		template <class P,
-		          class = typename eastl::enable_if<
-		              !eastl::is_same<eastl::decay_t<P>, key_type>::value && !eastl::is_literal_type<P>::value && // prevent the single element pair ctor
-		              eastl::is_constructible<value_type, P&&>::value>::type>
+		          class = typename eastl::enable_if_t<
+					#if EASTL_ENABLE_PAIR_FIRST_ELEMENT_CONSTRUCTOR
+		              !eastl::is_same_v<eastl::decay_t<P>, key_type> &&
+					#endif
+		              !eastl::is_literal_type_v<P> &&
+		              eastl::is_constructible_v<value_type, P&&>>>
 		insert_return_type insert(P&& otherValue);
 
 		// Non-standard extension
@@ -1568,7 +1571,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(key);
+				::new(eastl::addressof(pNode->mValue)) value_type(pair_first_construct, key);
 				pNode->mpNext = NULL;
 				return pNode;
 		#if EASTL_EXCEPTIONS_ENABLED
@@ -1594,7 +1597,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(eastl::move(key));
+				::new(eastl::addressof(pNode->mValue)) value_type(pair_first_construct, eastl::move(key));
 				pNode->mpNext = NULL;
 				return pNode;
 		#if EASTL_EXCEPTIONS_ENABLED
