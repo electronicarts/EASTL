@@ -20,23 +20,6 @@ struct DefaultConstructibleType
 	int mVal;
 };
 
-struct MoveOnlyType
-{
-	MoveOnlyType() = delete;
-	MoveOnlyType(int val) : mVal(val) {}
-	MoveOnlyType(const MoveOnlyType&) = delete;
-	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
-	MoveOnlyType& operator=(const MoveOnlyType&) = delete;
-	MoveOnlyType& operator=(MoveOnlyType&& x)
-	{
-		mVal = x.mVal;
-		x.mVal = 0;
-		return *this;
-	}
-
-	int mVal;
-};
-
 struct OperationCountingType
 {
 	OperationCountingType() : mVal() { ++mDefaultConstructorCalls; }

@@ -156,6 +156,7 @@ int EAMain(int argc, char* argv[])
 	BenchmarkHeap();
 	BenchmarkBitset();
 	BenchmarkSort();
+	BenchmarkTupleVector();
 
 	stopwatch.Stop();
 

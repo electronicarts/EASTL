@@ -40,6 +40,7 @@ int TestFixedMap();
 int TestFixedSList();
 int TestFixedSet();
 int TestFixedString();
+int TestFixedTupleVector();
 int TestFixedVector();
 int TestFunctional();
 int TestHash();
@@ -77,6 +78,7 @@ int TestVariant();
 int TestVector();
 int TestVectorMap();
 int TestVectorSet();
+int TestTupleVector();
 
 
 // Now enable warnings as desired.
@@ -1546,6 +1548,25 @@ struct ValueInitOf
 	T get() { return mV; }
 
 	T mV;
+};
+
+// MoveOnlyType - useful for verifying containers that may hold, e.g., unique_ptrs to make sure move ops are implemented
+struct MoveOnlyType
+{
+	MoveOnlyType() = delete;
+	MoveOnlyType(int val) : mVal(val) {}
+	MoveOnlyType(const MoveOnlyType&) = delete;
+	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
+	MoveOnlyType& operator=(const MoveOnlyType&) = delete;
+	MoveOnlyType& operator=(MoveOnlyType&& x)
+	{
+		mVal = x.mVal;
+		x.mVal = 0;
+		return *this;
+	}
+	bool operator==(const MoveOnlyType& o) const { return mVal == o.mVal; }
+
+	int mVal;
 };
 
 
