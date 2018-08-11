@@ -281,7 +281,8 @@ struct TupleVecLeaf
 };
 
 // swallow allows for parameter pack expansion of arguments as means of expanding operations performed
-// if a void function is used for operation expansion, it should be wrapped 
+// if a void function is used for operation expansion, it should be wrapped in (..., 0) so that the compiler
+// thinks it has a parameter to pass into the function
 template <typename... Ts>
 void swallow(Ts&&...) { }
 
