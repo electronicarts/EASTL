@@ -1546,6 +1546,25 @@ struct ValueInitOf
 	T mV;
 };
 
+// MoveOnlyType - useful for verifying containers that may hold, e.g., unique_ptrs to make sure move ops are implemented
+struct MoveOnlyType
+{
+	MoveOnlyType() = delete;
+	MoveOnlyType(int val) : mVal(val) {}
+	MoveOnlyType(const MoveOnlyType&) = delete;
+	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
+	MoveOnlyType& operator=(const MoveOnlyType&) = delete;
+	MoveOnlyType& operator=(MoveOnlyType&& x)
+	{
+		mVal = x.mVal;
+		x.mVal = 0;
+		return *this;
+	}
+	bool operator==(const MoveOnlyType& o) const { return mVal == o.mVal; }
+
+	int mVal;
+};
+
 
 
 #endif // Header include guard

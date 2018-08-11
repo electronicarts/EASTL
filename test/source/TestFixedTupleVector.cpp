@@ -10,24 +10,6 @@
 
 using namespace eastl;
 
-struct MoveOnlyType
-{
-	MoveOnlyType() = delete;
-	MoveOnlyType(int val) : mVal(val) {}
-	MoveOnlyType(const MoveOnlyType&) = delete;
-	MoveOnlyType(MoveOnlyType&& x) : mVal(x.mVal) { x.mVal = 0; }
-	MoveOnlyType& operator=(const MoveOnlyType&) = delete;
-	MoveOnlyType& operator=(MoveOnlyType&& x)
-	{
-		mVal = x.mVal;
-		x.mVal = 0;
-		return *this;
-	}
-	bool operator==(const MoveOnlyType& o) const { return mVal == o.mVal; }
-
-	int mVal;
-};
-
 template <size_t nodeCount, bool bEnableOverflow>
 int TestFixedTupleVectorVariant()
 {
