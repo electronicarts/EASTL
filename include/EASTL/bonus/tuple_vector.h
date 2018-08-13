@@ -533,6 +533,18 @@ public:
 		DoInitFillTuple(n, tup);
 	}
 
+	TupleVecImpl(const value_tuple* first, const value_tuple* last, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: mAllocator(allocator)
+	{
+		DoInitFromTupleArray(first, last);
+	}
+
+	TupleVecImpl(std::initializer_list<value_tuple> iList, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: mAllocator(allocator)
+	{
+		DoInitFromTupleArray(iList.begin(), iList.end());
+	}
+
 protected:
 	// ctor to provide a pre-allocated field of data that the container will own, specifically for fixed_tuple_vector
 	TupleVecImpl(const allocator_type& allocator, void* pData, size_type capacity, size_type dataSize)
@@ -606,6 +618,43 @@ public:
 				erase(begin() + newNumElements, end());
 			}
 		}
+	}
+
+	void assign(const value_tuple* first, const value_tuple* last)
+	{
+//#if EASTL_ASSERT_ENABLED
+//		if (EASTL_UNLIKELY(!validate_iterator_pair(first, last)))
+//			EASTL_FAIL_MSG("tuple_vector::assign -- invalid iterator pair");
+//#endif
+//		size_type newNumElements = last - first;
+//		if (newNumElements > mNumCapacity)
+//		{
+//			this_type temp(first, last, mAllocator);
+//			swap(temp);
+//		}
+//		else
+//		{
+//			const void* ppOtherData[sizeof...(Ts)] = { first.mpData[Indices]... };
+//			size_type firstIdx = first.mIndex;
+//			size_type lastIdx = last.mIndex;
+//			if (newNumElements > mNumElements) // If n > mNumElements ...
+//			{
+//				size_type oldNumElements = mNumElements;
+//				swallow((eastl::copy((Ts*)(ppOtherData[Indices]) + firstIdx,
+//					(Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
+//					TupleVecLeaf<Indices, Ts>::mpData), 0)...);
+//				swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
+//					(Ts*)(ppOtherData[Indices]) + lastIdx,
+//					TupleVecLeaf<Indices, Ts>::mpData + oldNumElements), 0)...);
+//				mNumElements = newNumElements;
+//			}
+//			else // else 0 <= n <= mNumElements
+//			{
+//				swallow((eastl::copy((Ts*)(ppOtherData[Indices]) + firstIdx, (Ts*)(ppOtherData[Indices]) + lastIdx,
+//					TupleVecLeaf<Indices, Ts>::mpData), 0)...);
+//				erase(begin() + newNumElements, end());
+//			}
+//		}
 	}
 
 	reference_tuple push_back()
@@ -798,6 +847,61 @@ public:
 		return begin() + posIdx;
 	}
 
+	iterator insert(const_iterator pos, const value_tuple* first, const value_tuple* last)
+	{
+//#if EASTL_ASSERT_ENABLED
+//		if (EASTL_UNLIKELY(validate_iterator(pos) == isf_none))
+//			EASTL_FAIL_MSG("tuple_vector::insert -- invalid iterator");
+//		if (EASTL_UNLIKELY(last < first || first == nullptr || last == nullptr))
+//			EASTL_FAIL_MSG("tuple_vector::insert -- invalid source pointers");
+//#endif
+		size_type posIdx = pos - cbegin();
+//		size_type numToInsert = end - begin;
+//		size_type oldNumElements = mNumElements;
+//		size_type newNumElements = oldNumElements + numToInsert;
+//		size_type oldNumCapacity = mNumCapacity;
+//		mNumElements = newNumElements;
+//		const value_tuple* pInitListData = iList.begin();
+//		if (newNumElements > oldNumCapacity || posIdx != oldNumElements)
+//		{
+//			if (newNumElements > oldNumCapacity)
+//			{
+//				const size_type newCapacity = max(GetNewCapacity(oldNumCapacity), newNumElements);
+//
+//				void* ppNewLeaf[sizeof...(Ts)];
+//				pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<allocator_type, 0, index_sequence_type, Ts...>(
+//					*this, ppNewLeaf, newCapacity, 0);
+//
+//				swallow((TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
+//					0, posIdx, (Ts*)ppNewLeaf[Indices]), 0)...);
+//				swallow((TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
+//					posIdx, oldNumElements, (Ts*)ppNewLeaf[Indices] + posIdx + numToInsert), 0)...);
+//				//swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx,
+//				//	(Ts*)(ppOtherData[Indices]) + lastIdx,
+//				//	(Ts*)ppNewLeaf[Indices] + posIdx), 0)...);
+//				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
+//
+//				EASTLFree(mAllocator, mpData, mDataSize);
+//				mpData = allocation.first;
+//				mDataSize = allocation.second;
+//				mNumCapacity = newCapacity;
+//			}
+//			else
+//			{
+//				//swallow((TupleVecLeaf<Indices, Ts>::DoInsertRange(
+//				//	(Ts*)(ppOtherData[Indices]) + firstIdx, (Ts*)(ppOtherData[Indices]) + lastIdx,
+//				//	TupleVecLeaf<Indices, Ts>::mpData + posIdx, oldNumElements), 0)...);
+//			}
+//		}
+//		else
+//		{
+//			//swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx,
+//			//	(Ts*)(ppOtherData[Indices]) + lastIdx,
+//			//	TupleVecLeaf<Indices, Ts>::mpData + posIdx), 0)...);
+//		}
+		return begin() + posIdx;
+	}
+
 	iterator erase(const_iterator first, const_iterator last)
 	{
 #if EASTL_ASSERT_ENABLED
@@ -920,6 +1024,7 @@ public:
 	}
 
 	void assign(size_type n, const_reference_tuple tup) { assign(n, eastl::get<Indices>(tup)...); }
+	void assign(std::initializer_list<value_tuple> iList) { assign(iList.begin(), iList.end()); }
 
 	void push_back(Ts&&... args) { emplace_back(eastl::forward<Ts>(args)...); }
 	void push_back(const_reference_tuple tup) { push_back(eastl::get<Indices>(tup)...); }
@@ -933,6 +1038,7 @@ public:
 	iterator insert(const_iterator pos, rvalue_tuple tup) { return emplace(pos, eastl::forward<Ts>(eastl::get<Indices>(tup))...); }
 	iterator insert(const_iterator pos, const_reference_tuple tup) { return insert(pos, eastl::get<Indices>(tup)...); }
 	iterator insert(const_iterator pos, size_type n, const_reference_tuple tup) { return insert(pos, n, eastl::get<Indices>(tup)...); }
+	iterator insert(const_iterator pos, std::initializer_list<value_tuple> iList) { return insert(pos, iList.begin(), iList.end()); }
 
 	iterator erase(const_iterator pos) { return erase(pos, pos + 1); }
 	reverse_iterator erase(const_reverse_iterator pos) { return reverse_iterator(erase((pos + 1).base(), (pos).base())); }
@@ -1080,6 +1186,12 @@ public:
 		return *this;
 	}
 
+	this_type& operator=(std::initializer_list<value_tuple> iList) 
+	{
+		assign(iList.begin, iList.end());
+		return *this; 
+	}
+
 	bool validate() const EA_NOEXCEPT
 	{
 		if (mNumElements > mNumCapacity)
@@ -1181,6 +1293,25 @@ protected:
 		mNumElements = n;
 		swallow((eastl::uninitialized_default_fill_n(TupleVecLeaf<Indices, Ts>::mpData, n), 0)...);
 	}
+
+	void DoInitFromTupleArray(const value_tuple* first, const value_tuple* last)
+	{
+		// dcrooks-todo
+//#if EASTL_ASSERT_ENABLED
+//		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
+//			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
+//#endif
+//		size_type newNumElements = (size_type)(end - begin);
+//		const void* ppOtherData[sizeof...(Ts)] = { begin.mpData[Indices]... };
+//		size_type beginIdx = begin.mIndex;
+//		size_type endIdx = end.mIndex;
+//		DoConditionalReallocate(0, mNumCapacity, newNumElements);
+//		mNumElements = newNumElements;
+//		swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + beginIdx,
+//			(Ts*)(ppOtherData[Indices]) + endIdx,
+//			TupleVecLeaf<Indices, Ts>::mpData), 0)...);
+	}
+
 
 	// Try to grow the size of the container "naturally" given the number of elements being used
 	void DoGrow(size_type oldNumElements, size_type oldNumCapacity, size_type requiredCapacity)
