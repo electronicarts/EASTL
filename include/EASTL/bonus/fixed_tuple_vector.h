@@ -65,7 +65,7 @@ public:
 	fixed_tuple_vector(this_type&& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		base_type::mAllocator.copy_overflow_allocator(x.mAllocator);
+		base_type::internalAllocator().copy_overflow_allocator(x.internalAllocator());
 		base_type::DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
 		x.clear();
 	}
@@ -80,7 +80,7 @@ public:
 	fixed_tuple_vector(const this_type& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
-		base_type::mAllocator.copy_overflow_allocator(x.mAllocator);
+		base_type::internalAllocator().copy_overflow_allocator(x.internalAllocator());
 		base_type::DoInitFromIterator(x.begin(), x.end());
 	}
 
@@ -172,7 +172,7 @@ public:
 	// Returns the value of the bEnableOverflow template parameter.
 	bool can_overflow() const { return bEnableOverflow; }
 
-	const overflow_allocator_type& get_overflow_allocator() const { return base_type::mAllocator.get_overflow_allocator(); }
+	const overflow_allocator_type& get_overflow_allocator() const { return base_type::internalAllocator().get_overflow_allocator(); }
 };
 
 
