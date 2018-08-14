@@ -638,24 +638,14 @@ public:
 			{
 				size_type oldNumElements = mNumElements;
 				size_type idx = 0;
-				// just assign to the already-constructed regions
-				for (; idx < oldNumElements; ++idx, ++first)
-				{
-					(*(begin() + idx)) = (*first);
-				}
-				// placement-new/copy-ctor to the unconstructed regions
-				for (; idx < newNumElements; ++idx, ++first)
-				{
-					swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
-				}
+				
+				DoCopyFromTupleArray(begin(), begin() + oldNumElements, first);
+				DoUninitializedCopyFromTupleArray(begin() + oldNumElements, begin() + newNumElements, first);
 				mNumElements = newNumElements;
 			}
 			else // else 0 <= n <= mNumElements
 			{
-				for (size_type idx = 0; idx < newNumElements; ++idx, ++first)
-				{
-					(*(begin() + idx)) = (*first);
-				}
+				DoCopyFromTupleArray(begin(), begin() + newNumElements, first);
 				erase(begin() + newNumElements, end());
 			}
 		}
@@ -880,14 +870,10 @@ public:
 				swallow((TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
 					posIdx, oldNumElements, (Ts*)ppNewLeaf[Indices] + posIdx + numToInsert), 0)...);
 				
-				// placement-new/copy-ctor to the unconstructed region
-				size_type endNewElements = posIdx + numToInsert;
-				for (size_type idx = posIdx; idx < endNewElements; ++idx, ++first)
-				{
-					swallow(::new((Ts*)ppNewLeaf[Indices] + idx) Ts(eastl::get<Indices>(*first))...);
-				}
-
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
+
+				// Do this after mpData is updated so that we can use new iterators
+				DoUninitializedCopyFromTupleArray(begin() + posIdx, begin() + posIdx + numToInsert, first);
 
 				EASTLFree(mAllocator, mpData, mDataSize);
 				mpData = allocation.first;
@@ -907,13 +893,7 @@ public:
 					swallow((eastl::move_backward((Ts*)ppDataBegin[Indices],
 						(Ts*)ppDataEnd[Indices] - numToInsert, (Ts*)ppDataEnd[Indices]), 0)...); 
 					
-					// assign to the already-constructed regions
-					size_type idx = posIdx;
-					size_type endAssignIdx = posIdx + numToInsert;
-					for (; idx < endAssignIdx; ++idx, ++first)
-					{
-						(*(begin() + idx)) = (*first);
-					}
+					DoCopyFromTupleArray(pos, pos + numToInsert, first);
 				}
 				else
 				{
@@ -921,29 +901,14 @@ public:
 					swallow((eastl::uninitialized_move_ptr((Ts*)ppDataBegin[Indices],
 						(Ts*)ppDataEnd[Indices], (Ts*)ppDataEnd[Indices] + numToInitialize), 0)...);
 					
-					size_type idx = posIdx;
-					size_type endAssignIdx = oldNumElements - numToInitialize;
-					size_type endCopyCtorIdx = oldNumElements + numToInitialize;
-					// assign to the already-constructed regions
-					for (; idx < endAssignIdx; ++idx, ++first)
-					{
-						(*(begin() + idx)) = (*first);
-					}
-					// placement-new/copy-ctor to the unconstructed regions
-					for (; idx < endCopyCtorIdx; ++idx, ++first)
-					{
-						swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
-					}
+					DoCopyFromTupleArray(pos, pos + numToInitialize, first);
+					DoUninitializedCopyFromTupleArray(pos + numToInitialize, pos + numToInsert, first + numToInitialize);
 				}
 			}
 		}
 		else
 		{
-			// placement-new/copy-ctor to the unconstructed regions
-			for (size_type idx = posIdx; idx < newNumElements; ++idx, ++first)
-			{
-				swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
-			}
+			DoUninitializedCopyFromTupleArray(pos, pos + numToInsert, first);
 		}
 		return begin() + posIdx;
 	}
@@ -1349,14 +1314,30 @@ protected:
 		size_type newNumElements = last - first;
 		DoConditionalReallocate(0, mNumCapacity, newNumElements);
 		mNumElements = newNumElements;
-		
-		iterator writeIter = begin();
-		for (size_type idx = 0; idx < newNumElements; ++idx, ++first)
+		DoUninitializedCopyFromTupleArray(begin(), end(), first);
+	}
+
+	void DoCopyFromTupleArray(iterator destPos, iterator destEnd, const value_tuple* srcTuple)
+	{
+		// assign to constructed region
+		while (destPos < destEnd)
 		{
-			swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
+			*destPos = *srcTuple;
+			++destPos;
+			++srcTuple;
 		}
 	}
 
+	void DoUninitializedCopyFromTupleArray(iterator destPos, iterator destEnd, const value_tuple* srcTuple)
+	{
+		// placement-new/copy-ctor to unconstructed regions
+		while (destPos < destEnd)
+		{
+			swallow(::new(eastl::get<Indices>(destPos.MakePointer())) Ts(eastl::get<Indices>(*srcTuple))...);
+			++destPos;
+			++srcTuple;
+		}
+	}
 
 	// Try to grow the size of the container "naturally" given the number of elements being used
 	void DoGrow(size_type oldNumElements, size_type oldNumCapacity, size_type requiredCapacity)
