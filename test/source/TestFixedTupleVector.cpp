@@ -522,7 +522,7 @@ int TestFixedTupleVectorVariant()
 				tuple<bool, TestObject, float>{true, TestObject(4), 4.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 9);
-			EATEST_VERIFY(testVec.capacity() == 10);
+			EATEST_VERIFY(testVec.capacity() == 10 || testVec.capacity() == nodeCount);
 
 			// test insert to end of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(6), 6.0f);
@@ -532,8 +532,11 @@ int TestFixedTupleVectorVariant()
 				tuple<bool, TestObject, float>{true, TestObject(6), 6.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 12);
-			testVec.shrink_to_fit();
-			EATEST_VERIFY(testVec.capacity() == 12);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 12 || testVec.capacity() == nodeCount);
 
 			// test insert to beginning of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(1), 1.0f);
@@ -543,8 +546,11 @@ int TestFixedTupleVectorVariant()
 				tuple<bool, TestObject, float>{true, TestObject(1), 1.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 15);
-			testVec.shrink_to_fit();
-			EATEST_VERIFY(testVec.capacity() == 15);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 15 || testVec.capacity() == nodeCount);
 
 			// test insert to middle of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(2), 2.0f);
@@ -554,8 +560,11 @@ int TestFixedTupleVectorVariant()
 				tuple<bool, TestObject, float>{true, TestObject(2), 2.0f
 			} });
 			EATEST_VERIFY(testVec.size() == 18);
-			testVec.shrink_to_fit();
-			EATEST_VERIFY(testVec.capacity() == 18);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 18 || testVec.capacity() == nodeCount);
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
