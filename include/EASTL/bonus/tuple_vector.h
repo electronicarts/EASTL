@@ -1296,20 +1296,19 @@ protected:
 
 	void DoInitFromTupleArray(const value_tuple* first, const value_tuple* last)
 	{
-		// dcrooks-todo
-//#if EASTL_ASSERT_ENABLED
-//		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
-//			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
-//#endif
-//		size_type newNumElements = (size_type)(end - begin);
-//		const void* ppOtherData[sizeof...(Ts)] = { begin.mpData[Indices]... };
-//		size_type beginIdx = begin.mIndex;
-//		size_type endIdx = end.mIndex;
-//		DoConditionalReallocate(0, mNumCapacity, newNumElements);
-//		mNumElements = newNumElements;
-//		swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + beginIdx,
-//			(Ts*)(ppOtherData[Indices]) + endIdx,
-//			TupleVecLeaf<Indices, Ts>::mpData), 0)...);
+#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(first > last || first == nullptr || last == nullptr))
+			EASTL_FAIL_MSG("tuple_vector::ctor from tuple array -- invalid ptrs");
+#endif
+		size_type newNumElements = (size_type)(last - first);
+		DoConditionalReallocate(0, mNumCapacity, newNumElements);
+		mNumElements = newNumElements;
+		
+		iterator writeIter = begin();
+		for (size_type idx = 0; idx < newNumElements; ++idx, ++first)
+		{
+			swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
+		}
 	}
 
 
