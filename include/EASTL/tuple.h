@@ -691,24 +691,52 @@ class tuple
 public:
 	EA_CONSTEXPR tuple() = default;
 
+
+	template <
+		typename = typename enable_if<
+		Internal::TupleConvertible<tuple<const Ts&...>, tuple>::value,
+		bool>::type>
+	EA_CONSTEXPR tuple(const Ts&... t)
+		: mImpl(make_index_sequence<sizeof...(Ts)>{}, Internal::MakeTupleTypes_t<tuple>{}, t...)
+	{
+	}
+
+	template <typename _ = void, // need an extra type so that compiler can better differentiate from non-explicit variant of ctor
+		typename = typename enable_if<
+		!Internal::TupleConvertible<tuple<const Ts&...>, tuple>::value,
+		bool>::type>
 	explicit EA_CONSTEXPR tuple(const Ts&... t)
 		: mImpl(make_index_sequence<sizeof...(Ts)>{}, Internal::MakeTupleTypes_t<tuple>{}, t...)
 	{
 	}
 
 	template <typename U, typename... Us,
-			  typename = typename enable_if<
-				  sizeof...(Us) + 1 == sizeof...(Ts) && Internal::TupleConvertible<tuple<U, Us...>, tuple>::value,
-				  bool>::type>
-	explicit EA_CONSTEXPR tuple(U&& u, Us&&... us)
+		typename = typename enable_if<
+		sizeof...(Us) + 1 == sizeof...(Ts) && 
+		Internal::TupleConvertible<tuple<U, Us...>, tuple>::value,
+		bool>::type>
+	EA_CONSTEXPR tuple(U&& u, Us&&... us)
 		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, forward<U>(u),
-				forward<Us>(us)...)
+			forward<Us>(us)...)
 	{
 	}
 
+	template <typename _ = void, // need an extra type so that compiler can better differentiate from non-explicit variant of ctor
+		typename U, typename... Us,
+		typename = typename enable_if<
+		sizeof...(Us) + 1 == sizeof...(Ts) &&
+		!Internal::TupleConvertible<tuple<U, Us...>, tuple>::value,
+		bool>::type>
+	explicit EA_CONSTEXPR tuple(U&& u, Us&&... us)
+		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, forward<U>(u),
+			forward<Us>(us)...)
+	{
+	}
+
+
 	template <typename OtherTuple,
-			  typename enable_if<Internal::TupleConvertible<OtherTuple, tuple>::value, bool>::type = false>
-	tuple(OtherTuple&& t)
+		typename enable_if<Internal::TupleConvertible<OtherTuple, tuple>::value, bool>::type = false>
+		tuple(OtherTuple&& t)
 		: mImpl(forward<OtherTuple>(t))
 	{
 	}
