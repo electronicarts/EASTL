@@ -901,8 +901,8 @@ public:
 					swallow((eastl::uninitialized_move_ptr((Ts*)ppDataBegin[Indices],
 						(Ts*)ppDataEnd[Indices], (Ts*)ppDataEnd[Indices] + numToInitialize), 0)...);
 					
-					DoCopyFromTupleArray(pos, pos + numToInitialize, first);
-					DoUninitializedCopyFromTupleArray(pos + numToInitialize, pos + numToInsert, first + numToInitialize);
+					DoCopyFromTupleArray(pos, begin() + oldNumElements, first);
+					DoUninitializedCopyFromTupleArray(begin() + oldNumElements, pos + numToInsert, first + nExtra);
 				}
 			}
 		}
