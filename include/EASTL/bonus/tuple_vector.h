@@ -622,39 +622,43 @@ public:
 
 	void assign(const value_tuple* first, const value_tuple* last)
 	{
-//#if EASTL_ASSERT_ENABLED
-//		if (EASTL_UNLIKELY(!validate_iterator_pair(first, last)))
-//			EASTL_FAIL_MSG("tuple_vector::assign -- invalid iterator pair");
-//#endif
-//		size_type newNumElements = last - first;
-//		if (newNumElements > mNumCapacity)
-//		{
-//			this_type temp(first, last, mAllocator);
-//			swap(temp);
-//		}
-//		else
-//		{
-//			const void* ppOtherData[sizeof...(Ts)] = { first.mpData[Indices]... };
-//			size_type firstIdx = first.mIndex;
-//			size_type lastIdx = last.mIndex;
-//			if (newNumElements > mNumElements) // If n > mNumElements ...
-//			{
-//				size_type oldNumElements = mNumElements;
-//				swallow((eastl::copy((Ts*)(ppOtherData[Indices]) + firstIdx,
-//					(Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
-//					TupleVecLeaf<Indices, Ts>::mpData), 0)...);
-//				swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
-//					(Ts*)(ppOtherData[Indices]) + lastIdx,
-//					TupleVecLeaf<Indices, Ts>::mpData + oldNumElements), 0)...);
-//				mNumElements = newNumElements;
-//			}
-//			else // else 0 <= n <= mNumElements
-//			{
-//				swallow((eastl::copy((Ts*)(ppOtherData[Indices]) + firstIdx, (Ts*)(ppOtherData[Indices]) + lastIdx,
-//					TupleVecLeaf<Indices, Ts>::mpData), 0)...);
-//				erase(begin() + newNumElements, end());
-//			}
-//		}
+#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(first > last || first == nullptr || last == nullptr))
+			EASTL_FAIL_MSG("tuple_vector::ctor from tuple array -- invalid ptrs");
+#endif
+		size_type newNumElements = last - first;
+		if (newNumElements > mNumCapacity)
+		{
+			this_type temp(first, last, mAllocator);
+			swap(temp);
+		}
+		else
+		{
+			if (newNumElements > mNumElements) // If n > mNumElements ...
+			{
+				size_type oldNumElements = mNumElements;
+				size_type idx = 0;
+				// just assign to the already-constructed regions
+				for (; idx < oldNumElements; ++idx, ++first)
+				{
+					(*(begin() + idx)) = (*first);
+				}
+				// placement-new/copy-ctor to the unconstructed regions
+				for (; idx < newNumElements; ++idx, ++first)
+				{
+					swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + idx) Ts(eastl::get<Indices>(*first))...);
+				}
+				mNumElements = newNumElements;
+			}
+			else // else 0 <= n <= mNumElements
+			{
+				for (size_type idx = 0; idx < newNumElements; ++idx, ++first)
+				{
+					(*(begin() + idx)) = (*first);
+				}
+				erase(begin() + newNumElements, end());
+			}
+		}
 	}
 
 	reference_tuple push_back()
@@ -1300,7 +1304,7 @@ protected:
 		if (EASTL_UNLIKELY(first > last || first == nullptr || last == nullptr))
 			EASTL_FAIL_MSG("tuple_vector::ctor from tuple array -- invalid ptrs");
 #endif
-		size_type newNumElements = (size_type)(last - first);
+		size_type newNumElements = last - first;
 		DoConditionalReallocate(0, mNumCapacity, newNumElements);
 		mNumElements = newNumElements;
 		
