@@ -262,7 +262,7 @@ struct TupleVecLeaf
 		{
 			eastl::uninitialized_copy(pSrcEnd - (n - nExtra), pSrcEnd, pDataEnd);
 			eastl::uninitialized_move_ptr(pDestBegin, pDataEnd, pDataEnd + n - nExtra);
-			eastl::copy(pSrcBegin, pSrcEnd, pDestBegin);
+			eastl::copy(pSrcBegin, pSrcEnd - (n - nExtra), pDestBegin);
 		}
 	}
 
