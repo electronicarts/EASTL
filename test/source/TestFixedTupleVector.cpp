@@ -499,27 +499,27 @@ int TestFixedTupleVectorVariant()
 			// test insert on empty vector that doesn't cause growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(3), 3.0f);
 			testVec.insert(testVec.begin(), {
-				tuple<bool, TestObject, float>{true, TestObject(3), 3.0f},
+				{true, TestObject(3), 3.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(3), 3.0f}
+				{true, TestObject(3), 3.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 3);
 
 			// test insert to end of vector that doesn't cause growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(5), 5.0f);
 			testVec.insert(testVec.end(), {
-				tuple<bool, TestObject, float>{true, TestObject(5), 5.0f},
+				{true, TestObject(5), 5.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(5), 5.0f}
+				{true, TestObject(5), 5.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 6);
 
 			// test insert to middle of vector that doesn't cause growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(4), 4.0f);
 			testVec.insert(testVec.begin() + 3, {
-				tuple<bool, TestObject, float>{true, TestObject(4), 4.0f},
+				{true, TestObject(4), 4.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(4), 4.0f}
+				{true, TestObject(4), 4.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 9);
 			EATEST_VERIFY(testVec.capacity() == 10 || testVec.capacity() == nodeCount);
@@ -527,9 +527,9 @@ int TestFixedTupleVectorVariant()
 			// test insert to end of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(6), 6.0f);
 			testVec.insert(testVec.end(), {
-				tuple<bool, TestObject, float>{true, TestObject(6), 6.0f},
+				{true, TestObject(6), 6.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(6), 6.0f}
+				{true, TestObject(6), 6.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 12);
 			if (testVec.has_overflowed())
@@ -541,9 +541,9 @@ int TestFixedTupleVectorVariant()
 			// test insert to beginning of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(1), 1.0f);
 			testVec.insert(testVec.begin(), {
-				tuple<bool, TestObject, float>{true, TestObject(1), 1.0f},
+				{true, TestObject(1), 1.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(1), 1.0f}
+				{true, TestObject(1), 1.0f}
 				});
 			EATEST_VERIFY(testVec.size() == 15);
 			if (testVec.has_overflowed())
@@ -555,9 +555,9 @@ int TestFixedTupleVectorVariant()
 			// test insert to middle of vector that causes growth
 			testTup = tuple<bool, TestObject, float>(true, TestObject(2), 2.0f);
 			testVec.insert(testVec.begin() + 3, {
-				tuple<bool, TestObject, float>{true, TestObject(2), 2.0f},
+				{true, TestObject(2), 2.0f},
 				testTup,
-				tuple<bool, TestObject, float>{true, TestObject(2), 2.0f
+				{true, TestObject(2), 2.0f
 			} });
 			EATEST_VERIFY(testVec.size() == 18);
 			if (testVec.has_overflowed())
@@ -847,9 +847,9 @@ int TestFixedTupleVectorVariant()
 
 			// test assign from initList that grows the capacity
 			testVec.assign({
-				tuple<bool, TestObject, float>{ true, TestObject(1), 1.0f },
-				tuple<bool, TestObject, float>{ true, TestObject(1), 1.0f },
-				tuple<bool, TestObject, float>{ true, TestObject(1), 1.0f }
+				{ true, TestObject(1), 1.0f },
+				{ true, TestObject(1), 1.0f },
+				{ true, TestObject(1), 1.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 3);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
@@ -860,7 +860,7 @@ int TestFixedTupleVectorVariant()
 
 			// test assign from initList that shrinks the vector
 			testVec.assign({
-				tuple<bool, TestObject, float>{ true, TestObject(2), 2.0f }
+				{ true, TestObject(2), 2.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 1);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
@@ -871,8 +871,8 @@ int TestFixedTupleVectorVariant()
 
 			// test assign from initList for when there's enough capacity
 			testVec.assign({
-				tuple<bool, TestObject, float>{ true, TestObject(3), 3.0f },
-				tuple<bool, TestObject, float>{ true, TestObject(3), 3.0f }
+				{ true, TestObject(3), 3.0f },
+				{ true, TestObject(3), 3.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 2);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
@@ -1011,16 +1011,16 @@ int TestFixedTupleVectorVariant()
 		//			srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
 
 		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> srcVec({
-			tuple<bool, TestObject, float>{ true,  TestObject(0), 0.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(1), 1.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(2), 2.0f},
-			tuple<bool, TestObject, float>{ true,  TestObject(3), 3.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(4), 4.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(5), 5.0f},
-			tuple<bool, TestObject, float>{ true,  TestObject(6), 6.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(7), 7.0f},
-			tuple<bool, TestObject, float>{ false, TestObject(8), 8.0f},
-			tuple<bool, TestObject, float>{ true,  TestObject(9), 9.0f}
+			{ true,  TestObject(0), 0.0f},
+			{ false, TestObject(1), 1.0f},
+			{ false, TestObject(2), 2.0f},
+			{ true,  TestObject(3), 3.0f},
+			{ false, TestObject(4), 4.0f},
+			{ false, TestObject(5), 5.0f},
+			{ true,  TestObject(6), 6.0f},
+			{ false, TestObject(7), 7.0f},
+			{ false, TestObject(8), 8.0f},
+			{ true,  TestObject(9), 9.0f}
 			});
 
 		// copy entire tuple_vector in ctor
@@ -1054,16 +1054,16 @@ int TestFixedTupleVectorVariant()
 		{
 			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromAssignment;
 			ctorFromAssignment = {
-				tuple<bool, TestObject, float>{ true,  TestObject(0), 0.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(1), 1.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(2), 2.0f},
-				tuple<bool, TestObject, float>{ true,  TestObject(3), 3.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(4), 4.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(5), 5.0f},
-				tuple<bool, TestObject, float>{ true,  TestObject(6), 6.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(7), 7.0f},
-				tuple<bool, TestObject, float>{ false, TestObject(8), 8.0f},
-				tuple<bool, TestObject, float>{ true,  TestObject(9), 9.0f}
+				{ true,  TestObject(0), 0.0f},
+				{ false, TestObject(1), 1.0f},
+				{ false, TestObject(2), 2.0f},
+				{ true,  TestObject(3), 3.0f},
+				{ false, TestObject(4), 4.0f},
+				{ false, TestObject(5), 5.0f},
+				{ true,  TestObject(6), 6.0f},
+				{ false, TestObject(7), 7.0f},
+				{ false, TestObject(8), 8.0f},
+				{ true,  TestObject(9), 9.0f}
 			};
 			EATEST_VERIFY(ctorFromAssignment.size() == 10);
 			EATEST_VERIFY(ctorFromAssignment.validate());
