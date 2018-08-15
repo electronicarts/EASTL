@@ -231,25 +231,38 @@
 	#define EA_PLATFORM_POSIX 1
 	#define EA_PLATFORM_NAME "Android"
 	#define EA_ASM_STYLE_ATT 1
-	#if defined(__arm__)
+	#if defined(__arm__) && (defined(__aarch64__) || defined(__AARCH64))
+		#define EA_ABI_ARM_LINUX 1
+		#define EA_PROCESSOR_ARM64 1
+		#define EA_PLATFORM_DESCRIPTION "Android on ARM64"
+	#elif defined(__arm__)
 		#define EA_ABI_ARM_LINUX 1  // a.k.a. "ARM eabi"
 		#define EA_PROCESSOR_ARM32 1
 		#define EA_PLATFORM_DESCRIPTION "Android on ARM"
-	#elif defined(__aarch64__)
-		#define EA_PROCESSOR_ARM64 1
-		#define EA_PLATFORM_DESCRIPTION "Android on ARM64"
 	#elif defined(__i386__)
 		#define EA_PROCESSOR_X86 1
 		#define EA_PLATFORM_DESCRIPTION "Android on x86"
-	#elif defined(__x86_64)
-		#define EA_PROCESSOR_X86_64 1
-		#define EA_PLATFORM_DESCRIPTION "Android on x64"
 	#else
 		#error Unknown processor
 	#endif
 	#if !defined(EA_SYSTEM_BIG_ENDIAN) && !defined(EA_SYSTEM_LITTLE_ENDIAN)
 		#define EA_SYSTEM_LITTLE_ENDIAN 1
 	#endif
+	#define EA_PLATFORM_MOBILE 1
+
+#elif defined(EA_PLATFORM_NNX) || defined(_NNX)
+	#undef  EA_PLATFORM_NNX
+	#define EA_PLATFORM_NNX 1
+	#define EA_PLATFORM_LINUX 1
+	#define EA_PLATFORM_UNIX 1
+	#define EA_PLATFORM_POSIX 1
+	#define EA_PLATFORM_NAME "Nintendo NX"
+	#define EA_ASM_STYLE_ATT 1
+	// Match Android 64
+	#define EA_ABI_ARM_LINUX 1
+	#define EA_PROCESSOR_ARM64 1
+	#define EA_PLATFORM_DESCRIPTION "Nintendo Switch"
+	#define EA_SYSTEM_LITTLE_ENDIAN 1
 	#define EA_PLATFORM_MOBILE 1
 
 // Samsung SMART TV - a Linux-based smart TV
