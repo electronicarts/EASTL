@@ -8,13 +8,6 @@ EA_DISABLE_VC_WARNING(4623 4625 4413 4510)
 
 #include <EASTL/tuple.h>
 
-
-#include <tuple>
-#include <vector>
-
-#pragma warning ( disable : 4244 )
-
-
 #if EASTL_TUPLE_ENABLED
 
 namespace TestTupleInternal
