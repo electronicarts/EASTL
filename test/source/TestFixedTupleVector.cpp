@@ -568,7 +568,7 @@ int TestFixedTupleVectorVariant()
 
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec.get<1>()[i] == TestObject(i / 3 + 1));
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i / 3 + 1));
 			}
 			EATEST_VERIFY(testVec.validate());
 		}
@@ -1069,9 +1069,9 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(ctorFromAssignment.validate());
 			for (int i = 0; i < 10; ++i)
 			{
-				EATEST_VERIFY(ctorFromAssignment.get<0>()[i] == (i % 3 == 0));
-				EATEST_VERIFY(ctorFromAssignment.get<1>()[i] == TestObject(i));
-				EATEST_VERIFY(ctorFromAssignment.get<2>()[i] == (float)i);
+				EATEST_VERIFY(ctorFromAssignment.template get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromAssignment.template get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromAssignment.template get<2>()[i] == (float)i);
 			}
 		}
 

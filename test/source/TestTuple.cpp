@@ -8,6 +8,13 @@ EA_DISABLE_VC_WARNING(4623 4625 4413 4510)
 
 #include <EASTL/tuple.h>
 
+
+#include <tuple>
+#include <vector>
+
+#pragma warning ( disable : 4244 )
+
+
 #if EASTL_TUPLE_ENABLED
 
 namespace TestTupleInternal
@@ -446,6 +453,29 @@ int TestTuple()
 			//     EATEST_VERIFY(result == 10);
 			// }
 		}
+	}
+
+	// Compilation test to make sure that the conditionally-explicit cast works
+	{
+		eastl::tuple<int, float, TestObject> arrayTup[] = {
+			{1, 1.0f, TestObject(1)},
+			{2, 2.0f, TestObject(2)},
+			{3, 3.0f, TestObject(3)},
+			{4, 4.0f, TestObject(4)}
+		};
+
+#if false
+		// the following code should not compile with conditionally-explicit behaviour (but does with fully implicit behaviour)
+		eastl::tuple<eastl::vector<float>, float> arrayOfArrayTup[] = {
+			{1.0f, 1.0f},
+			{2.0f, 2.0f}
+		};
+
+		eastl::tuple<eastl::vector<int>, float> arrayOfArrayTup2[] = {
+			{1, 1.0f},
+			{2, 2.0f}
+		};
+#endif
 	}
 
 	return nErrorCount;

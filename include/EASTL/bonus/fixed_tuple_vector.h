@@ -134,7 +134,7 @@ public:
 		const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		base_type::DoInitFromTupleArray(iList.begin(), iList.end());
+		base_type::DoInitFromTupleArray(first, last);
 	}
 
 	fixed_tuple_vector(std::initializer_list<typename base_type::value_tuple> iList,
