@@ -534,13 +534,13 @@ public:
 	}
 
 	TupleVecImpl(const value_tuple* first, const value_tuple* last, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: mAllocator(allocator)
+		: mDataSizeAndAllocator(0, allocator)
 	{
 		DoInitFromTupleArray(first, last);
 	}
 
 	TupleVecImpl(std::initializer_list<value_tuple> iList, const allocator_type& allocator = EASTL_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
-		: mAllocator(allocator)
+		: mDataSizeAndAllocator(0, allocator)
 	{
 		DoInitFromTupleArray(iList.begin(), iList.end());
 	}
@@ -629,7 +629,7 @@ public:
 		size_type newNumElements = last - first;
 		if (newNumElements > mNumCapacity)
 		{
-			this_type temp(first, last, mAllocator);
+			this_type temp(first, last, internalAllocator());
 			swap(temp);
 		}
 		else
@@ -875,10 +875,10 @@ public:
 				// Do this after mpData is updated so that we can use new iterators
 				DoUninitializedCopyFromTupleArray(begin() + posIdx, begin() + posIdx + numToInsert, first);
 
-				EASTLFree(mAllocator, mpData, mDataSize);
+				EASTLFree(internalAllocator(), mpData, internalDataSize());
 				mpData = allocation.first;
-				mDataSize = allocation.second;
 				mNumCapacity = newCapacity;
+				internalDataSize() = allocation.second;
 			}
 			else
 			{
