@@ -94,7 +94,7 @@ competitive with traditional structure-of-arrays setups.
 
 ## How to work with tuple_vector, and where to use it
 	
-Put simply, `tuple_vector` can used as a replacement for `vector`. For example,
+Put simply, `tuple_vector` can be used as a replacement for `vector`. For example,
 instead of declaring a structure and vector as:
 
 ```
