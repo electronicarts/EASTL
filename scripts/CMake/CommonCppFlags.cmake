@@ -20,7 +20,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.1")
         message(FATAL_ERROR "Building with a Apple clang version less than 3.1 is not supported.")
     endif()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang") # non-Apple clangs uses different versioning.
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT CMAKE_CXX_SIMULATE_ID MATCHES "MSVC") # clang, but not clang-cl.
+    # non-Apple clangs uses different versioning.
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.5.0"))
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
     endif()
