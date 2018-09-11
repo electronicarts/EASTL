@@ -1407,9 +1407,9 @@ int TestFixedTupleVectorVariant()
 
 			// partition will split the array into 4 elements where the bool property is true, and 6 where it's false
 			for (int i = 0; i < 4; ++i)
-				EATEST_VERIFY(vec.get<0>()[i] == true);
+				EATEST_VERIFY(vec.template get<0>()[i] == true);
 			for (int i = 4; i < 10; ++i)
-				EATEST_VERIFY(vec.get<0>()[i] == false);
+				EATEST_VERIFY(vec.template get<0>()[i] == false);
 
 			EATEST_VERIFY(vec.validate());
 			EATEST_VERIFY(TestObject::sTOCount == 10);
