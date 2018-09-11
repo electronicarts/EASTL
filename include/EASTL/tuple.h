@@ -795,6 +795,12 @@ inline void swap(tuple<Ts...>& a, tuple<Ts...>& b)
 	a.swap(b);
 }
 
+template <typename... Ts>
+inline void swap(tuple<Ts...>&& a, tuple<Ts...>&& b)
+{
+	a.swap(b);
+}
+
 template <typename... T1s, typename... T2s>
 inline bool operator==(const tuple<T1s...>& t1, const tuple<T2s...>& t2)
 {
