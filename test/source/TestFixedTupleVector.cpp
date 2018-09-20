@@ -8,6 +8,8 @@
 
 #include <EASTL/bonus/fixed_tuple_vector.h>
 
+#include <EASTL/sort.h>
+
 using namespace eastl;
 
 template <size_t nodeCount, bool bEnableOverflow>
@@ -1389,6 +1391,30 @@ int TestFixedTupleVectorVariant()
 		EATEST_VERIFY(lessThanVec <= greaterThanVec);
 		EATEST_VERIFY(equalsVec1 <= equalsVec2);
 		EATEST_VERIFY(equalsVec1 >= equalsVec2);
+	}
+
+	// Test partition
+	{
+		{
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float, MoveOnlyType> vec;
+			for (int i = 0; i < 10; ++i)
+			{
+				vec.push_back(i % 3 == 0, TestObject(i), (float)i, MoveOnlyType(i));
+			}
+
+			eastl::partition(vec.begin(), vec.end(), [](tuple<bool&, TestObject&, float&, MoveOnlyType&> a)
+			{ return get<0>(a) == true; });
+
+			// partition will split the array into 4 elements where the bool property is true, and 6 where it's false
+			for (int i = 0; i < 4; ++i)
+				EATEST_VERIFY(vec.template get<0>()[i] == true);
+			for (int i = 4; i < 10; ++i)
+				EATEST_VERIFY(vec.template get<0>()[i] == false);
+
+			EATEST_VERIFY(vec.validate());
+			EATEST_VERIFY(TestObject::sTOCount == 10);
+		}
+		EATEST_VERIFY(TestObject::IsClear());
 	}
 	return nErrorCount;
 }
