@@ -770,7 +770,7 @@
 	//     EA_RESTORE_CLANG_WARNING()
 	//
 	#ifndef EA_DISABLE_CLANG_WARNING
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EACLANGWHELP0(x) #x
 			#define EACLANGWHELP1(x) EACLANGWHELP0(clang diagnostic ignored x)
 			#define EACLANGWHELP2(x) EACLANGWHELP1(#x)
@@ -784,7 +784,7 @@
 	#endif
 
 	#ifndef EA_RESTORE_CLANG_WARNING
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EA_RESTORE_CLANG_WARNING()    \
 				_Pragma("clang diagnostic pop")
 		#else
@@ -812,7 +812,7 @@
 	//     EA_DISABLE_CLANG_WARNING_AS_ERROR()
 	//
 	#ifndef EA_ENABLE_CLANG_WARNING_AS_ERROR
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EACLANGWERRORHELP0(x) #x
 			#define EACLANGWERRORHELP1(x) EACLANGWERRORHELP0(clang diagnostic error x)
 			#define EACLANGWERRORHELP2(x) EACLANGWERRORHELP1(#x)
@@ -826,7 +826,7 @@
 	#endif
 
 	#ifndef EA_DISABLE_CLANG_WARNING_AS_ERROR
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EA_DISABLE_CLANG_WARNING_AS_ERROR()    \
 				_Pragma("clang diagnostic pop")
 		#else

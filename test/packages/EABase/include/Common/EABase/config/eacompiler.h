@@ -16,6 +16,7 @@
  *     EA_COMPILER_QNX
  *     EA_COMPILER_GREEN_HILLS
  *     EA_COMPILER_CLANG
+ *     EA_COMPILER_CLANG_CL
  *     
  *     EA_COMPILER_VERSION = <integer>
  *     EA_COMPILER_NAME = <string>
@@ -313,7 +314,8 @@
 		#define EA_COMPILER_NAME    "RVCT"
 	  //#define EA_COMPILER_STRING (defined below)
 
-	#elif defined(__clang__)
+	// Clang's GCC-compatible driver.
+	#elif defined(__clang__) && !defined(_MSC_VER)
 		#define EA_COMPILER_CLANG   1
 		#define EA_COMPILER_VERSION (__clang_major__ * 100 + __clang_minor__)
 		#define EA_COMPILER_NAME    "clang"
@@ -392,6 +394,11 @@
 		#define EA_COMPILER_VERSION _MSC_VER
 		#define EA_COMPILER_NAME "Microsoft Visual C++"
 	  //#define EA_COMPILER_STRING (defined below)
+
+		#if defined(__clang__)
+			// Clang's MSVC-compatible driver.
+			#define EA_COMPILER_CLANG_CL 1
+		#endif
 
 		#define EA_STANDARD_LIBRARY_MSVC 1
 		#define EA_STANDARD_LIBRARY_MICROSOFT 1
