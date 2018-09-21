@@ -49,15 +49,6 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PWD/cmake-3.1.3-Linux-x86_64/bin:$PATH                                                           ;fi
   # GCC
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" = "g++" ]]; then export CXX="g++-6" CC="gcc-6"                                               ;fi
-  # Linuxbrew
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test -d $HOME/.linuxbrew/bin || git clone https://github.com/Linuxbrew/brew.git $HOME/.linuxbrew  ;fi
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PATH="$HOME/.linuxbrew/bin:$PATH"                                                                 ;fi
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo 'export PATH="$HOME/.linuxbrew/bin:$PATH"' >>~/.bash_profile                                 ;fi
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MANPATH="$(brew --prefix)/share/man:$MANPATH"                                              ;fi
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export INFOPATH="$(brew --prefix)/share/info:$INFOPATH"                                           ;fi
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew --version                                                                                    ;fi
-  # Linuxbrew GCC
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then brew install gcc               ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which gcc                      ;fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc --version                  ;fi
 
