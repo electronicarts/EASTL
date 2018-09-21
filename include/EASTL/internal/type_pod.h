@@ -716,71 +716,77 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_constructible_CONFORMANCE 1
 
-	// We implement a copy of move here has move_internal. We are currently stuck doing this because our move
-	// implementation is in <utility.h> and <utility.h> currently #includes us, and so we have a header 
-	// chicken-and-egg problem. To do: Resolve this, probably by putting eastl::move somewhere else.
-	template <typename T>
-	inline typename eastl::remove_reference<T>::type&& move_internal(T&& x) EA_NOEXCEPT
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_constructible)))
+		template<typename T, typename... Args>
+		struct is_constructible : public bool_constant<__is_constructible(T, Args...) > {};
+	#else
+		// We implement a copy of move here has move_internal. We are currently stuck doing this because our move
+		// implementation is in <utility.h> and <utility.h> currently #includes us, and so we have a header 
+		// chicken-and-egg problem. To do: Resolve this, probably by putting eastl::move somewhere else.
+		template <typename T>
+		inline typename eastl::remove_reference<T>::type&& move_internal(T&& x) EA_NOEXCEPT
 		{ return ((typename eastl::remove_reference<T>::type&&)x); }
 
-	template <typename T, class ...Args>
-	typename first_type_select<eastl::true_type, decltype(eastl::move_internal(T(eastl::declval<Args>()...)))>::type is(T&&, Args&& ...);
+		template <typename T, class ...Args>
+		typename first_type_select<eastl::true_type, decltype(eastl::move_internal(T(eastl::declval<Args>()...)))>::type is(T&&, Args&& ...);
 
-	template <typename T>
-	struct can_construct_scalar_helper
-	{
+		template <typename T>
+		struct can_construct_scalar_helper
+		{
 			static eastl::true_type can(T);
 			static eastl::false_type can(...);
-	};
+		};
 
-	template <typename ...Args>
-	eastl::false_type is(argument_sink, Args&& ...);
+		template <typename ...Args>
+		eastl::false_type is(argument_sink, Args&& ...);
 
-	// Except for scalars and references (handled below), check for constructibility via decltype.
-	template <bool, typename T, typename... Args>
-	struct is_constructible_helper_2    // argument_sink will catch all T that is not constructible from the Args and denote false_type
-		: public eastl::identity<decltype(is(eastl::declval<T>(), eastl::declval<Args>()...))>::type {};
+		// Except for scalars and references (handled below), check for constructibility via decltype.
+		template <bool, typename T, typename... Args>
+		struct is_constructible_helper_2    // argument_sink will catch all T that is not constructible from the Args and denote false_type
+			: public eastl::identity<decltype(is(eastl::declval<T>(), eastl::declval<Args>()...))>::type {};
 
-	template <typename T>
-	struct is_constructible_helper_2<true, T>
-		: public eastl::is_scalar<T> {};
+		template <typename T>
+		struct is_constructible_helper_2<true, T>
+			: public eastl::is_scalar<T> {};
 
-	template <typename T, typename Arg0> // We handle the case of multiple arguments below (by disallowing them).
-	struct is_constructible_helper_2<true, T, Arg0>
-		: public eastl::identity<decltype(can_construct_scalar_helper<T>::can(eastl::declval<Arg0>()))>::type {};
+		template <typename T, typename Arg0> // We handle the case of multiple arguments below (by disallowing them).
+		struct is_constructible_helper_2<true, T, Arg0>
+			: public eastl::identity<decltype(can_construct_scalar_helper<T>::can(eastl::declval<Arg0>()))>::type {};
 
-	// Scalars and references can be constructed only with 0 or 1 argument. e.g the following is an invalid expression: int(17, 23)
-	template <typename T, typename Arg0, typename ...Args>
-	struct is_constructible_helper_2<true, T, Arg0, Args...>
-		: public eastl::false_type {};
+		// Scalars and references can be constructed only with 0 or 1 argument. e.g the following is an invalid expression: int(17, 23)
+		template <typename T, typename Arg0, typename ...Args>
+		struct is_constructible_helper_2<true, T, Arg0, Args...>
+			: public eastl::false_type {};
 
-	template <bool, typename T, typename... Args>
-	struct is_constructible_helper_1
-		: public is_constructible_helper_2<eastl::is_scalar<T>::value || eastl::is_reference<T>::value, T, Args...> {};
+		template <bool, typename T, typename... Args>
+		struct is_constructible_helper_1
+			: public is_constructible_helper_2<eastl::is_scalar<T>::value || eastl::is_reference<T>::value, T, Args...> {};
 
-	// Unilaterally dismiss void, abstract, unknown bound arrays, and function types as not constructible.
-	template <typename T, typename... Args>
-	struct is_constructible_helper_1<true, T, Args...>
-		: public false_type {};
+		// Unilaterally dismiss void, abstract, unknown bound arrays, and function types as not constructible.
+		template <typename T, typename... Args>
+		struct is_constructible_helper_1<true, T, Args...>
+			: public false_type {};
 
-	// is_constructible
-	template <typename T, typename... Args>
-	struct is_constructible
-		: public is_constructible_helper_1<(eastl::is_abstract<typename eastl::remove_all_extents<T>::type>::value || 
-											eastl::is_array_of_unknown_bounds<T>::value                            ||
-											eastl::is_function<typename eastl::remove_all_extents<T>::type>::value || 
-											eastl::has_void_arg<T, Args...>::value), 
-											T, Args...> {};
+		// is_constructible
+		template <typename T, typename... Args>
+		struct is_constructible
+			: public is_constructible_helper_1<(eastl::is_abstract<typename eastl::remove_all_extents<T>::type>::value || 
+												eastl::is_array_of_unknown_bounds<T>::value                            ||
+												eastl::is_function<typename eastl::remove_all_extents<T>::type>::value || 
+												eastl::has_void_arg<T, Args...>::value), 
+												T, Args...> {};
 
-	// Array types are constructible if constructed with no arguments and if their element type is default-constructible
-	template <typename Array, size_t N>
-	struct is_constructible_helper_2<false, Array[N]>
-		: public eastl::is_constructible<typename eastl::remove_all_extents<Array>::type> {};
+		// Array types are constructible if constructed with no arguments and if their element type is default-constructible
+		template <typename Array, size_t N>
+		struct is_constructible_helper_2<false, Array[N]>
+			: public eastl::is_constructible<typename eastl::remove_all_extents<Array>::type> {};
 
-	// Arrays with arguments are not constructible. e.g. the following is an invalid expression: int[3](37, 34, 12)
-	template <typename Array, size_t N, typename ...Args>
-	struct is_constructible_helper_2<false, Array[N], Args...>
-		: public eastl::false_type {};
+		// Arrays with arguments are not constructible. e.g. the following is an invalid expression: int[3](37, 34, 12)
+		template <typename Array, size_t N, typename ...Args>
+		struct is_constructible_helper_2<false, Array[N], Args...>
+			: public eastl::false_type {};
+
+	#endif
 
 
 	// You need to manually declare const/volatile variants individually if you want them.

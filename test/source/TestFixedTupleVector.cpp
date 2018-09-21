@@ -490,6 +490,89 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(testVec.validate());
 		}
 
+		// test insert with initList
+		{
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> testVec;
+			tuple<bool, TestObject, float> testTup;
+			testVec.reserve(10);
+
+			// test insert on empty vector that doesn't cause growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(3), 3.0f);
+			testVec.insert(testVec.begin(), {
+				{true, TestObject(3), 3.0f},
+				testTup,
+				{true, TestObject(3), 3.0f}
+				});
+			EATEST_VERIFY(testVec.size() == 3);
+
+			// test insert to end of vector that doesn't cause growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(5), 5.0f);
+			testVec.insert(testVec.end(), {
+				{true, TestObject(5), 5.0f},
+				testTup,
+				{true, TestObject(5), 5.0f}
+				});
+			EATEST_VERIFY(testVec.size() == 6);
+
+			// test insert to middle of vector that doesn't cause growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(4), 4.0f);
+			testVec.insert(testVec.begin() + 3, {
+				{true, TestObject(4), 4.0f},
+				testTup,
+				{true, TestObject(4), 4.0f}
+				});
+			EATEST_VERIFY(testVec.size() == 9);
+			EATEST_VERIFY(testVec.capacity() == 10 || testVec.capacity() == nodeCount);
+
+			// test insert to end of vector that causes growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(6), 6.0f);
+			testVec.insert(testVec.end(), {
+				{true, TestObject(6), 6.0f},
+				testTup,
+				{true, TestObject(6), 6.0f}
+				});
+			EATEST_VERIFY(testVec.size() == 12);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 12 || testVec.capacity() == nodeCount);
+
+			// test insert to beginning of vector that causes growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(1), 1.0f);
+			testVec.insert(testVec.begin(), {
+				{true, TestObject(1), 1.0f},
+				testTup,
+				{true, TestObject(1), 1.0f}
+				});
+			EATEST_VERIFY(testVec.size() == 15);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 15 || testVec.capacity() == nodeCount);
+
+			// test insert to middle of vector that causes growth
+			testTup = tuple<bool, TestObject, float>(true, TestObject(2), 2.0f);
+			testVec.insert(testVec.begin() + 3, {
+				{true, TestObject(2), 2.0f},
+				testTup,
+				{true, TestObject(2), 2.0f
+			} });
+			EATEST_VERIFY(testVec.size() == 18);
+			if (testVec.has_overflowed())
+			{
+				testVec.shrink_to_fit();
+			}
+			EATEST_VERIFY(testVec.capacity() == 18 || testVec.capacity() == nodeCount);
+
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec.template get<1>()[i] == TestObject(i / 3 + 1));
+			}
+			EATEST_VERIFY(testVec.validate());
+		}
+
 		// test insert with rvalue args
 		{
 			fixed_tuple_vector<nodeCount, bEnableOverflow, int, MoveOnlyType, TestObject> testVec;
@@ -758,6 +841,47 @@ int TestFixedTupleVectorVariant()
 			}
 			EATEST_VERIFY(TestObject::sTOCount == 10 + 20);
 		}
+
+		{
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> testVec;
+
+			// test assign from initList that grows the capacity
+			testVec.assign({
+				{ true, TestObject(1), 1.0f },
+				{ true, TestObject(1), 1.0f },
+				{ true, TestObject(1), 1.0f }
+				});
+			EATEST_VERIFY(testVec.size() == 3);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(1), 1.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 3);
+
+			// test assign from initList that shrinks the vector
+			testVec.assign({
+				{ true, TestObject(2), 2.0f }
+				});
+			EATEST_VERIFY(testVec.size() == 1);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(2), 2.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 1);
+
+			// test assign from initList for when there's enough capacity
+			testVec.assign({
+				{ true, TestObject(3), 3.0f },
+				{ true, TestObject(3), 3.0f }
+				});
+			EATEST_VERIFY(testVec.size() == 2);
+			for (unsigned int i = 0; i < testVec.size(); ++i)
+			{
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(3), 3.0f));
+			}
+			EATEST_VERIFY(TestObject::sTOCount == 2);
+		}
+
 		EATEST_VERIFY(TestObject::IsClear());
 		TestObject::Reset();
 	}
@@ -881,12 +1005,23 @@ int TestFixedTupleVectorVariant()
 		EASTLAllocatorType ma;
 		EASTLAllocatorType otherMa;
 		TestObject::Reset();
-		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> srcVec;
-		for (int i = 0; i < 10; ++i)
-		{
-			srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
-		}
 
+		// test ctor via initlist to prime srcVec. Equivalent to ...
+		//		for (int i = 0; i < 10; ++i)
+		//			srcVec.push_back(i % 3 == 0, TestObject(i), (float)i);
+
+		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> srcVec({
+			{ true,  TestObject(0), 0.0f},
+			{ false, TestObject(1), 1.0f},
+			{ false, TestObject(2), 2.0f},
+			{ true,  TestObject(3), 3.0f},
+			{ false, TestObject(4), 4.0f},
+			{ false, TestObject(5), 5.0f},
+			{ true,  TestObject(6), 6.0f},
+			{ false, TestObject(7), 7.0f},
+			{ false, TestObject(8), 8.0f},
+			{ true,  TestObject(9), 9.0f}
+			});
 
 		// copy entire tuple_vector in ctor
 		{
@@ -905,6 +1040,31 @@ int TestFixedTupleVectorVariant()
 		{
 			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromAssignment;
 			ctorFromAssignment = srcVec;
+			EATEST_VERIFY(ctorFromAssignment.size() == 10);
+			EATEST_VERIFY(ctorFromAssignment.validate());
+			for (int i = 0; i < 10; ++i)
+			{
+				EATEST_VERIFY(ctorFromAssignment.template get<0>()[i] == (i % 3 == 0));
+				EATEST_VERIFY(ctorFromAssignment.template get<1>()[i] == TestObject(i));
+				EATEST_VERIFY(ctorFromAssignment.template get<2>()[i] == (float)i);
+			}
+		}
+
+		// copy entire tuple_vector via assignment of init-list
+		{
+			fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> ctorFromAssignment;
+			ctorFromAssignment = {
+				{ true,  TestObject(0), 0.0f},
+				{ false, TestObject(1), 1.0f},
+				{ false, TestObject(2), 2.0f},
+				{ true,  TestObject(3), 3.0f},
+				{ false, TestObject(4), 4.0f},
+				{ false, TestObject(5), 5.0f},
+				{ true,  TestObject(6), 6.0f},
+				{ false, TestObject(7), 7.0f},
+				{ false, TestObject(8), 8.0f},
+				{ true,  TestObject(9), 9.0f}
+			};
 			EATEST_VERIFY(ctorFromAssignment.size() == 10);
 			EATEST_VERIFY(ctorFromAssignment.validate());
 			for (int i = 0; i < 10; ++i)

@@ -480,23 +480,13 @@ struct TupleConvertibleImpl : public false_type
 {
 };
 
-template <typename FromFirst, typename... FromRest, typename ToFirst, typename... ToRest>
-struct TupleConvertibleImpl<
-	true, TupleTypes<FromFirst, FromRest...>,
-	TupleTypes<ToFirst, ToRest...>> : public integral_constant<bool,
-															   is_convertible<FromFirst, ToFirst>::value&&
-																   TupleConvertibleImpl<true, TupleTypes<FromRest...>,
-																						TupleTypes<ToRest...>>::value>
+template <typename... FromTypes, typename... ToTypes>
+struct TupleConvertibleImpl<true, TupleTypes<FromTypes...>,	TupleTypes<ToTypes...>>
+	: public integral_constant<bool, conjunction<is_convertible<FromTypes, ToTypes>...>::value>
 {
 };
 
-template <>
-struct TupleConvertibleImpl<true, TupleTypes<>, TupleTypes<>> : public true_type
-{
-};
-
-template <typename From,
-		  typename To,
+template <typename From, typename To,
 		  bool = TupleLike<typename remove_reference<From>::type>::value,
 		  bool = TupleLike<typename remove_reference<To>::type>::value>
 struct TupleConvertible : public false_type
@@ -506,9 +496,8 @@ struct TupleConvertible : public false_type
 template <typename From, typename To>
 struct TupleConvertible<From, To, true, true>
 	: public TupleConvertibleImpl<tuple_size<typename remove_reference<From>::type>::value ==
-		                              tuple_size<typename remove_reference<To>::type>::value,
-		                          MakeTupleTypes_t<From>,
-		                          MakeTupleTypes_t<To>>
+			tuple_size<typename remove_reference<To>::type>::value,
+			MakeTupleTypes_t<From>, MakeTupleTypes_t<To>>
 {
 };
 
@@ -519,20 +508,13 @@ struct TupleAssignableImpl : public false_type
 {
 };
 
-template <typename TargetFirst, typename... TargetRest, typename FromFirst, typename... FromRest>
-struct TupleAssignableImpl<true, TupleTypes<TargetFirst, TargetRest...>, TupleTypes<FromFirst, FromRest...>>
-	: public bool_constant<is_assignable<TargetFirst, FromFirst>::value &&
-		                   TupleAssignableImpl<true, TupleTypes<TargetRest...>, TupleTypes<FromRest...>>::value>
+template <typename... TargetTypes, typename... FromTypes>
+struct TupleAssignableImpl<true, TupleTypes<TargetTypes...>, TupleTypes<FromTypes...>>
+	: public bool_constant<conjunction<is_assignable<TargetTypes, FromTypes>...>::value>
 {
 };
 
-template <>
-struct TupleAssignableImpl<true, TupleTypes<>, TupleTypes<>> : public true_type
-{
-};
-
-template <typename Target,
-		  typename From,
+template <typename Target, typename From,
 		  bool = TupleLike<typename remove_reference<Target>::type>::value,
 		  bool = TupleLike<typename remove_reference<From>::type>::value>
 struct TupleAssignable : public false_type
@@ -541,11 +523,63 @@ struct TupleAssignable : public false_type
 
 template <typename Target, typename From>
 struct TupleAssignable<Target, From, true, true>
-	: public TupleAssignableImpl<tuple_size<typename remove_reference<Target>::type>::value == tuple_size<typename remove_reference<From>::type>::value,
-		                         MakeTupleTypes_t<Target>,
-		                         MakeTupleTypes_t<From>>
+	: public TupleAssignableImpl<
+		tuple_size<typename remove_reference<Target>::type>::value ==
+		tuple_size<typename remove_reference<From>::type>::value,
+		MakeTupleTypes_t<Target>, MakeTupleTypes_t<From>>
 {
 };
+
+// TupleImplicitlyConvertible and TupleExplicitlyConvertible - helpers for constraining conditionally-explicit ctors
+
+template <bool IsSameSize, typename TargetType, typename... FromTypes>
+struct TupleImplicitlyConvertibleImpl : public false_type
+{
+};
+
+
+template <typename... TargetTypes, typename... FromTypes>
+struct TupleImplicitlyConvertibleImpl<true, TupleTypes<TargetTypes...>, FromTypes...>
+	: public conjunction<
+	is_constructible<TargetTypes, FromTypes>...,
+	is_convertible<FromTypes, TargetTypes>...>
+{
+};
+
+template <typename TargetTupleType, typename... FromTypes>
+struct TupleImplicitlyConvertible
+	: public TupleImplicitlyConvertibleImpl<
+	tuple_size<TargetTupleType>::value == sizeof...(FromTypes),
+	MakeTupleTypes_t<TargetTupleType>, FromTypes...>::type
+{
+};
+
+template<typename TargetTupleType, typename... FromTypes>
+using TupleImplicitlyConvertible_t = enable_if_t<TupleImplicitlyConvertible<TargetTupleType, FromTypes...>::value, bool>;
+
+template <bool IsSameSize, typename TargetType, typename... FromTypes>
+struct TupleExplicitlyConvertibleImpl : public false_type
+{
+};
+
+template <typename... TargetTypes, typename... FromTypes>
+struct TupleExplicitlyConvertibleImpl<true, TupleTypes<TargetTypes...>, FromTypes...>
+	: public conjunction<
+		is_constructible<TargetTypes, FromTypes>...,
+		negation<conjunction<is_convertible<FromTypes, TargetTypes>...>>>
+{
+};
+
+template <typename TargetTupleType, typename... FromTypes>
+struct TupleExplicitlyConvertible
+	: public TupleExplicitlyConvertibleImpl<
+	tuple_size<TargetTupleType>::value == sizeof...(FromTypes),
+	MakeTupleTypes_t<TargetTupleType>, FromTypes...>::type
+{
+};
+
+template<typename TargetTupleType, typename... FromTypes>
+using TupleExplicitlyConvertible_t = enable_if_t<TupleExplicitlyConvertible<TargetTupleType, FromTypes...>::value, bool>;
 
 // TupleEqual
 
@@ -686,23 +720,41 @@ struct TupleCat<Tuple1, Tuple2>
 }  // namespace Internal
 
 template <typename... Ts>
-class tuple
+class tuple;
+
+template <typename T, typename... Ts>
+class tuple<T, Ts...>
 {
 public:
 	EA_CONSTEXPR tuple() = default;
+	
+	template <typename T2 = T, 
+		Internal::TupleImplicitlyConvertible_t<tuple, const T2&, const Ts&...> = 0>
+	EA_CONSTEXPR tuple(const T& t, const Ts&... ts)
+		: mImpl(make_index_sequence<sizeof...(Ts) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, t, ts...)
+	{
+	}
 
-	explicit EA_CONSTEXPR tuple(const Ts&... t)
-		: mImpl(make_index_sequence<sizeof...(Ts)>{}, Internal::MakeTupleTypes_t<tuple>{}, t...)
+	template <typename T2 = T, 
+		Internal::TupleExplicitlyConvertible_t<tuple, const T2&, const Ts&...> = 0>
+	explicit EA_CONSTEXPR tuple(const T& t, const Ts&... ts)
+		: mImpl(make_index_sequence<sizeof...(Ts) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, t, ts...)
 	{
 	}
 
 	template <typename U, typename... Us,
-			  typename = typename enable_if<
-				  sizeof...(Us) + 1 == sizeof...(Ts) && Internal::TupleConvertible<tuple<U, Us...>, tuple>::value,
-				  bool>::type>
-	explicit EA_CONSTEXPR tuple(U&& u, Us&&... us)
+		Internal::TupleImplicitlyConvertible_t<tuple, U, Us...> = 0>
+		EA_CONSTEXPR tuple(U&& u, Us&&... us)
 		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, forward<U>(u),
-				forward<Us>(us)...)
+			forward<Us>(us)...)
+	{
+	}
+
+	template <typename U, typename... Us,
+		Internal::TupleExplicitlyConvertible_t<tuple, U, Us...> = 0>
+		explicit EA_CONSTEXPR tuple(U&& u, Us&&... us)
+		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, forward<U>(u),
+			forward<Us>(us)...)
 	{
 	}
 
@@ -724,7 +776,7 @@ public:
 	void swap(tuple& t) { mImpl.swap(t.mImpl); }
 
 private:
-	typedef Internal::TupleImpl<make_index_sequence<sizeof...(Ts)>, Ts...> Impl;
+	typedef Internal::TupleImpl<make_index_sequence<sizeof...(Ts) + 1>, T, Ts...> Impl;
 	Impl mImpl;
 
 	template <size_t I, typename... Ts_>
@@ -736,14 +788,14 @@ private:
 	template <size_t I, typename... Ts_>
 	friend tuple_element_t<I, tuple<Ts_...>>&& get(tuple<Ts_...>&& t);
 
-	template <typename T, typename... ts_>
-	friend T& get(tuple<ts_...>& t);
+	template <typename T_, typename... ts_>
+	friend T_& get(tuple<ts_...>& t);
 
-	template <typename T, typename... ts_>
-	friend const T& get(const tuple<ts_...>& t);
+	template <typename T_, typename... ts_>
+	friend const T_& get(const tuple<ts_...>& t);
 
-	template <typename T, typename... ts_>
-	friend T&& get(tuple<ts_...>&& t);
+	template <typename T_, typename... ts_>
+	friend T_&& get(tuple<ts_...>&& t);
 };
 
 template <>

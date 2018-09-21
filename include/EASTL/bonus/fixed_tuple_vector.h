@@ -130,6 +130,20 @@ public:
 		base_type::DoInitFillTuple(n, tup);
 	}
 
+	fixed_tuple_vector(const typename base_type::value_tuple* first, const typename base_type::value_tuple* last,
+		const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
+	{
+		base_type::DoInitFromTupleArray(first, last);
+	}
+
+	fixed_tuple_vector(std::initializer_list<typename base_type::value_tuple> iList,
+		const overflow_allocator_type& allocator = EASTL_FIXED_TUPLE_VECTOR_DEFAULT_ALLOCATOR)
+		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
+	{
+		base_type::DoInitFromTupleArray(iList.begin(), iList.end());
+	}
+
 	this_type& operator=(const this_type& other)
 	{
 		(base_type&)(*this) = (base_type&)other;
