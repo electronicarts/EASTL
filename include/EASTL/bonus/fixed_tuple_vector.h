@@ -146,7 +146,7 @@ public:
 
 	this_type& operator=(const this_type& other)
 	{
-		(base_type&)(*this) = (base_type&)other;
+		base_type::operator=(other);
 		return *this;
 	}
 
@@ -156,6 +156,12 @@ public:
 		// OK to call DoInitFromIterator in a non-ctor scenario because clear() reset everything, more-or-less
 		base_type::DoInitFromIterator(make_move_iterator(other.begin()), make_move_iterator(other.end()));
 		other.clear();
+		return *this;
+	}
+
+	this_type& operator=(std::initializer_list<typename base_type::value_tuple> iList)
+	{
+		base_type::operator=(iList);
 		return *this;
 	}
 

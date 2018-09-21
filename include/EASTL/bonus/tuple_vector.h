@@ -1199,7 +1199,7 @@ public:
 
 	this_type& operator=(std::initializer_list<value_tuple> iList) 
 	{
-		assign(iList.begin, iList.end());
+		assign(iList.begin(), iList.end());
 		return *this; 
 	}
 
@@ -1499,8 +1499,17 @@ inline void swap(TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<
 template <typename... Ts>
 class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
 {
+	typedef tuple_vector<Ts...> this_type;
 	typedef TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
 	using base_type::base_type;
+
+public:
+
+	this_type& operator=(std::initializer_list<typename base_type::value_tuple> iList) 
+	{
+		base_type::operator=(iList);
+		return *this;
+	}
 };
 
 // Variant of tuple_vector that allows a user-defined allocator type (can't mix default template params with variadics)
@@ -1508,8 +1517,17 @@ template <typename AllocatorType, typename... Ts>
 class tuple_vector_alloc
 	: public TupleVecInternal::TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
 {
+	typedef tuple_vector_alloc<AllocatorType, Ts...> this_type;
 	typedef TupleVecInternal::TupleVecImpl<AllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
 	using base_type::base_type;
+
+public:
+
+	this_type& operator=(std::initializer_list<typename base_type::value_tuple> iList)
+	{
+		base_type::operator=(iList);
+		return *this;
+	}
 };
 
 }  // namespace eastl
