@@ -191,7 +191,14 @@ namespace eastl
 			++result;
 		}
 
-		return eastl::copy(first2, last2, eastl::copy(first1, last1, result));
+		if (first1 == last1)
+		{
+			return eastl::copy(first2, last2, result);
+		}
+		else
+		{
+			return eastl::copy(first1, last1, result);
+		}
 	}
 
 	template <typename InputIterator1, typename InputIterator2, typename OutputIterator>
