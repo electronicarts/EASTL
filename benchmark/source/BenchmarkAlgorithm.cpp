@@ -446,6 +446,23 @@ namespace
 		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
 	}
 
+	template <typename Iterator>
+	void TestMergeStd(EA::StdC::Stopwatch& stopwatch, Iterator firstIn1, Iterator lastIn1, Iterator firstIn2, Iterator lastIn2, Iterator out)
+	{
+		stopwatch.Restart();
+		std::merge(firstIn1, lastIn1, firstIn2, lastIn2, out);
+		stopwatch.Stop();
+		sprintf(Benchmark::gScratchBuffer, "%p", &*out);
+	}
+
+	template <typename Iterator>
+	void TestMergeEa(EA::StdC::Stopwatch& stopwatch, Iterator firstIn1, Iterator lastIn1, Iterator firstIn2, Iterator lastIn2, Iterator out)
+	{
+		stopwatch.Restart();
+		eastl::merge(firstIn1, lastIn1, firstIn2, lastIn2, out);
+		stopwatch.Stop();
+		sprintf(Benchmark::gScratchBuffer, "%p", &*out);
+	}
 } // namespace
 
 
@@ -1106,7 +1123,118 @@ void BenchmarkAlgorithm7(EASTLTest_Rand& /*rng*/, EA::StdC::Stopwatch& stopwatch
 	}
 }
 
+void BenchmarkAlgorithm8(EASTLTest_Rand& rng, EA::StdC::Stopwatch& stopwatch1, EA::StdC::Stopwatch& stopwatch2)
+{
+	const uint32_t ElementCount = 10000;
 
+	eastl::vector<int> srcVecA(ElementCount);
+	eastl::vector<int> srcVecB(ElementCount);
+
+	std::vector<int> stdVecAInt(ElementCount);
+	std::vector<int> stdVecBInt(ElementCount);
+	std::vector<int> stdVecOutInt(2 * ElementCount);
+	std::vector<TestObject> stdVecATestObject(ElementCount);
+	std::vector<TestObject> stdVecBTestObject(ElementCount);
+	std::vector<TestObject> stdVecOutTestObject(2 * ElementCount);
+
+	eastl::vector<int> eaVecAInt(ElementCount);
+	eastl::vector<int> eaVecBInt(ElementCount);
+	eastl::vector<int> eaVecOutInt(2 * ElementCount);
+	eastl::vector<TestObject> eaVecATestObject(ElementCount);
+	eastl::vector<TestObject> eaVecBTestObject(ElementCount);
+	eastl::vector<TestObject> eaVecOutTestObject(2 * ElementCount);
+
+	// Note:
+	//   In some cases the compiler may generate branch free code for the loop body of merge.
+	//   In this situation the performance of merging data that has a random merge selection (i.e. the chance that the smallest
+	//   element is taken from the first or second list is essentially random) is the same as merging data where the choice of
+	//   which list has the smallest element is predictable.
+	//   However, if the compiler doesn't generate branch free code, then the performance of merge will suffer from branch
+	//   misprediction when merging random data and will benefit greatly when misprediction is rare.
+	//   This benchmark is aimed at highlighting what sort of code is being generated, and also showing the impact of
+	//   predictability of the comparisons performed during merge.  The branch predictablity /can/ have a large impact
+	//   on merge sort performance.
+
+	// 'unpred' is the case where the comparison is unpredictable
+	// 'pred' is the case where the comparison is mostly predictable
+	const char* patternDescriptions[][2] =
+	{
+		{
+			"algorithm/merge/vector<int> (unpred)",
+			"algorithm/merge/vector<int> (pred)",
+		},
+		{
+			"algorithm/merge/vector<TestObject> (unpred)",
+			"algorithm/merge/vector<TestObject> (pred)",
+		},
+	};
+
+	enum Pattern
+	{
+		P_Random,
+		P_Predictable,
+		P_Count
+	};
+
+	for (int pattern = 0; pattern < P_Count; pattern++)
+	{
+		if (pattern == P_Random)
+		{
+			eastl::generate(srcVecA.begin(), srcVecA.end(), [&]{ return int(rng()); });
+			eastl::sort(srcVecA.begin(), srcVecA.end());
+			eastl::generate(srcVecB.begin(), srcVecB.end(), [&] { return int(rng()); });
+			eastl::sort(srcVecB.begin(), srcVecB.end());
+		}
+		else if (pattern == P_Predictable)
+		{
+			// The data pattern means that a simple/naive algorithm will select 'runLen' values
+			// from one list, and then 'runLen' values from the other list (alternating back and forth).
+			// Of course, a merge algorithm that is more complicated might have a different order of
+			// comparison.
+			const int runLen = 32;
+			for (int i = 0; i < ElementCount; i++)
+			{
+				int baseValue = ((i / runLen) * 2 * runLen) + (i % (runLen));
+				srcVecA[i] = baseValue;
+				srcVecB[i] = baseValue + runLen;
+			}
+		}
+
+		///////////////////////////////
+		// Test merge
+		///////////////////////////////
+		for (int i = 0; i < 2; i++)
+		{
+			eastl::copy(srcVecA.begin(), srcVecA.end(), stdVecAInt.begin());
+			eastl::copy(srcVecB.begin(), srcVecB.end(), stdVecBInt.begin());
+			eastl::copy(srcVecA.begin(), srcVecA.end(), eaVecAInt.begin());
+			eastl::copy(srcVecB.begin(), srcVecB.end(), eaVecBInt.begin());
+			TestMergeStd(stopwatch1, stdVecAInt.begin(), stdVecAInt.end(), stdVecBInt.begin(), stdVecBInt.end(), stdVecOutInt.begin());
+			TestMergeEa(stopwatch2, eaVecAInt.begin(), eaVecAInt.end(), eaVecBInt.begin(), eaVecBInt.end(), eaVecOutInt.begin());
+
+			if (i == 1)
+			{
+				Benchmark::AddResult(patternDescriptions[0][pattern], stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			}
+
+			for (int j = 0; j < ElementCount; j++)
+			{
+				stdVecATestObject[j] = TestObject(srcVecA[j]);
+				stdVecBTestObject[j] = TestObject(srcVecB[j]);
+				eaVecATestObject[j] = TestObject(srcVecA[j]);
+				eaVecBTestObject[j] = TestObject(srcVecB[j]);
+			}
+			TestMergeStd(stopwatch1, stdVecATestObject.begin(), stdVecATestObject.end(), stdVecBTestObject.begin(), stdVecBTestObject.end(), stdVecOutTestObject.begin());
+			TestMergeEa(stopwatch2, eaVecATestObject.begin(), eaVecATestObject.end(), eaVecBTestObject.begin(), eaVecBTestObject.end(), eaVecOutTestObject.begin());
+
+			if (i == 1)
+			{
+				Benchmark::AddResult(patternDescriptions[1][pattern], stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			}
+		}
+	}
+
+}
 
 
 
@@ -1125,6 +1253,7 @@ void BenchmarkAlgorithm()
 	BenchmarkAlgorithm5(rng, stopwatch1, stopwatch2);
 	BenchmarkAlgorithm6(rng, stopwatch1, stopwatch2);
 	BenchmarkAlgorithm7(rng, stopwatch1, stopwatch2);
+	BenchmarkAlgorithm8(rng, stopwatch1, stopwatch2);
 }
 
 
