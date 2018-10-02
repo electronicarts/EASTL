@@ -191,7 +191,18 @@ namespace eastl
 			++result;
 		}
 
-		return eastl::copy(first2, last2, eastl::copy(first1, last1, result));
+		// Check which list is empty and explicitly copy remaining items from the other list.
+		// For performance reasons, only a single copy operation is invoked to avoid the potential overhead
+		// introduced by chaining two copy operations together.  Even if a copy is of zero size there can
+		// be overhead from calling memmove with a zero size copy.
+		if (first1 == last1)
+		{
+			return eastl::copy(first2, last2, result);
+		}
+		else
+		{
+			return eastl::copy(first1, last1, result);
+		}
 	}
 
 	template <typename InputIterator1, typename InputIterator2, typename OutputIterator>
