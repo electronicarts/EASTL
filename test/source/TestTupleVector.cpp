@@ -134,7 +134,6 @@ int TestTupleVector()
 		alignElementVec.push_back();
 		alignElementVec.push_back();
 
-		auto alignDataPtrs = alignElementVec.data();
 		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestVec4>() % 16 == 0);
 		EATEST_VERIFY((uintptr_t)alignElementVec.get<AlignTestFourByte>() % 8 == 0);
 	}
