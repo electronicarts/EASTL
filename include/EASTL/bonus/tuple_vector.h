@@ -637,7 +637,6 @@ public:
 			if (newNumElements > mNumElements) // If n > mNumElements ...
 			{
 				size_type oldNumElements = mNumElements;
-				size_type idx = 0;
 				
 				DoCopyFromTupleArray(begin(), begin() + oldNumElements, first);
 				DoUninitializedCopyFromTupleArray(begin() + oldNumElements, begin() + newNumElements, first);
