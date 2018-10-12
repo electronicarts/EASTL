@@ -378,6 +378,10 @@
 		#define EA_PROCESSOR_X86 1
 		#define EA_SYSTEM_LITTLE_ENDIAN 1
 		#define EA_PLATFORM_DESCRIPTION "Linux on x86"
+	#elif defined(__ARM_ARCH_7A__) || defined(__ARM_EABI__)
+		#define EA_ABI_ARM_LINUX 1
+		#define EA_PROCESSOR_ARM32 1
+		#define EA_PLATFORM_DESCRIPTION "Linux on ARM 6/7 32-bits"
 	#elif defined(__x86_64__)
 		#define EA_PROCESSOR_X86_64 1
 		#define EA_SYSTEM_LITTLE_ENDIAN 1
