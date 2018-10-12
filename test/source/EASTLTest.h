@@ -71,6 +71,7 @@ int TestString();
 int TestStringHashMap();
 int TestStringMap();
 int TestStringView();
+int TestSystemError();
 int TestTuple();
 int TestTypeTraits();
 int TestUtility();

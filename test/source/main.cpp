@@ -130,6 +130,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("String",					TestString);
 	testSuite.AddTest("StringMap",				TestStringMap);
 	testSuite.AddTest("StringView",			    TestStringView);
+	testSuite.AddTest("SystemError",		    TestSystemError);
 	testSuite.AddTest("TestCppCXTypeTraits",	TestCppCXTypeTraits);
 	testSuite.AddTest("Tuple",					TestTuple);
 	testSuite.AddTest("TupleVector",			TestTupleVector);
