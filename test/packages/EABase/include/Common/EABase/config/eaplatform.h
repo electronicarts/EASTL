@@ -368,6 +368,8 @@
 // _M_IX86 is defined by the Borland compiler.
 // __sparc__ is defined by the GCC compiler.
 // __powerpc__ is defined by the GCC compiler.
+// __ARM_EABI__ is defined by GCC on an ARM v6l (Raspberry Pi 1)
+// __ARM_ARCH_7A__ is defined by GCC on an ARM v7l (Raspberry Pi 2)
 #elif defined(EA_PLATFORM_LINUX) || (defined(__linux) || defined(__linux__))
 	#undef  EA_PLATFORM_LINUX
 	#define EA_PLATFORM_LINUX 1
