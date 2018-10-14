@@ -442,6 +442,41 @@ namespace eastl
 
 
 
+	namespace Internal
+	{
+		// Sorts a range whose initial (start - first) entries are already sorted.
+		// This function is a useful helper to the tim_sort function.
+		// This is the same as insertion_sort except that it has a start parameter which indicates
+		// where the start of the unsorted data is.
+		template <typename BidirectionalIterator, typename StrictWeakOrdering>
+		void insertion_sort_already_started(BidirectionalIterator first, BidirectionalIterator last, BidirectionalIterator start, StrictWeakOrdering compare)
+		{
+			typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+
+			if (first != last) // if the range is non-empty...
+			{
+				BidirectionalIterator iCurrent, iNext, iSorted = start - 1;
+
+				for (++iSorted; iSorted != last; ++iSorted)
+				{
+					const value_type temp(*iSorted);
+
+					iNext = iCurrent = iSorted;
+
+					for (--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
+					{
+						EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
+						*iNext = *iCurrent;
+					}
+
+					*iNext = temp;
+				}
+			}
+		}
+	}
+
+
+
 	/// merge_sort_buffer
 	///
 	/// Implements the MergeSort algorithm with a user-supplied buffer.
@@ -1151,37 +1186,6 @@ namespace eastl
 				#define EASTL_COUNT_LEADING_ZEROES eastl_count_leading_zeroes
 			#endif
 		#endif
-
-
-		// Sorts a range whose initial (start - first) entries are already sorted.
-		// This function is a useful helper to the tim_sort function.
-		// This is the same as insertion_sort except that it has a start parameter which indicates
-		// where the start of the unsorted data is.
-		template <typename BidirectionalIterator, typename StrictWeakOrdering>
-		void insertion_sort_already_started(BidirectionalIterator first, BidirectionalIterator last, BidirectionalIterator start, StrictWeakOrdering compare)
-		{
-			typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-			if(first != last) // if the range is non-empty...
-			{
-				BidirectionalIterator iCurrent, iNext, iSorted = start - 1;
-
-				for(++iSorted; iSorted != last; ++iSorted)
-				{
-					const value_type temp(*iSorted);
-
-					iNext = iCurrent = iSorted;
-
-					for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
-					{
-						EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
-						*iNext = *iCurrent;
-					}
-
-					*iNext = temp;
-				}
-			}
-		}
 
 
 		// reverse_elements
