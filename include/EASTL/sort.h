@@ -442,6 +442,40 @@ namespace eastl
 
 
 
+	namespace Internal
+	{
+		// Sorts a range whose initial (start - first) entries are already sorted.
+		// This function is a useful helper to the tim_sort function.
+		// This is the same as insertion_sort except that it has a start parameter which indicates
+		// where the start of the unsorted data is.
+		template <typename BidirectionalIterator, typename StrictWeakOrdering>
+		void insertion_sort_already_started(BidirectionalIterator first, BidirectionalIterator last, BidirectionalIterator start, StrictWeakOrdering compare)
+		{
+			typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
+
+			if (first != last) // if the range is non-empty...
+			{
+				BidirectionalIterator iCurrent, iNext, iSorted = start - 1;
+
+				for (++iSorted; iSorted != last; ++iSorted)
+				{
+					const value_type temp(*iSorted);
+
+					iNext = iCurrent = iSorted;
+
+					for (--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
+					{
+						EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
+						*iNext = *iCurrent;
+					}
+
+					*iNext = temp;
+				}
+			}
+		}
+	}
+
+
 
 	/// merge_sort_buffer
 	///
@@ -450,71 +484,138 @@ namespace eastl
 	/// Note that merge_sort_buffer requires a random access iterator, which usually means 
 	/// an array (eg. vector, deque).
 	///
-	
-	// For reference, the following is the simple version, before inlining one level 
-	// of recursion and eliminating the copy:
-	//
-	//template <typename RandomAccessIterator, typename T, typename StrictWeakOrdering>
-	//void merge_sort_buffer(RandomAccessIterator first, RandomAccessIterator last, T* pBuffer, StrictWeakOrdering compare)
-	//{
-	//    typedef typename eastl::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-	//
-	//    const difference_type nCount = last - first;
-	//
-	//    if(nCount > 1)
-	//    {
-	//        const difference_type nMid = nCount / 2;
-	//
-	//        eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>
-	//                                (first,        first + nMid, pBuffer, compare);
-	//        eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>
-	//                                (first + nMid, last        , pBuffer, compare);
-	//        eastl::copy(first, last, pBuffer);
-	//        eastl::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>
-	//                    (pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-	//    }
-	//}
-	
+	/// The algorithm used for merge sort is not the standard merge sort.  It has been modified
+	/// to improve performance for data that is already partially sorted.  In fact, if data
+	/// is completely sorted, then performance is O(n), but even data with partially sorted
+	/// regions can benefit from the modifications.
+	///
+	/// 'InsertionSortLimit' specifies a size limit for which the algorithm will use insertion sort.
+	/// Due to the overhead of merge sort, it is often faster to use insertion sort once the size of a region
+	/// is fairly small.  However, insertion sort is not as efficient (in terms of assignments orcomparisons)
+	/// so choosing a value that is too large will reduce performance.  Generally a value of 16 to 32 is reasonable,
+	/// but the best choose will depend on the data being sorted.
+	template <typename RandomAccessIterator, typename T, typename StrictWeakOrdering, typename difference_type, int InsertionSortLimit>
+	class MergeSorter
+	{
+	public:
+		static void sort(RandomAccessIterator first, RandomAccessIterator last, T* pBuffer, StrictWeakOrdering compare)
+		{
+			if (sort_impl(first, last, pBuffer, difference_type(0), compare) == RL_Buffer)
+			{
+				const difference_type nCount = last - first;
+				eastl::copy<T*, RandomAccessIterator>(pBuffer, pBuffer + nCount, first);
+			}
+			EASTL_DEV_ASSERT((eastl::is_sorted<RandomAccessIterator, StrictWeakOrdering>(first, last, compare)));
+		}
+
+	private:
+		static_assert(InsertionSortLimit > 1, "Sequences of length 1 are already sorted.  Use a larger value for InsertionSortLimit");
+
+		enum ResultLocation
+		{
+			RL_SourceRange,	// i.e. result is in the range defined by [first, last)
+			RL_Buffer,		// i.e. result is in pBuffer
+		};
+
+		// sort_impl
+		//
+		// This sort routine sorts the data in [first, last) and places the result in pBuffer or in the original range of the input.  The actual
+		// location of the data is indicated by the enum returned.
+		// 
+		// lastSortedEnd is used to specify a that data in the range [first, first + lastSortedEnd] is already sorted.  This information is used
+		// to avoid unnecessary merge sorting of already sorted data.  lastSortedEnd is a hint, and can be an under estimate of the sorted elements
+		// (i.e. it is legal to pass 0).
+		static ResultLocation sort_impl(RandomAccessIterator first, RandomAccessIterator last, T* pBuffer, difference_type lastSortedEnd, StrictWeakOrdering compare)
+		{
+			const difference_type nCount = last - first;
+
+			if (lastSortedEnd < 1)
+			{
+				lastSortedEnd = is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(first, last, compare) - first;
+			}
+
+			// Sort the region unless lastSortedEnd indicates it is already sorted.
+			if (lastSortedEnd < nCount)
+			{
+				// If the size is less than or equal to InsertionSortLimit use insertion sort instead of recursing further.
+				if (nCount <= InsertionSortLimit)
+				{
+					eastl::Internal::insertion_sort_already_started<RandomAccessIterator, StrictWeakOrdering>(first, last, first + lastSortedEnd, compare);
+					return RL_SourceRange;
+				}
+				else
+				{
+					const difference_type nMid = nCount / 2;
+
+					ResultLocation firstHalfLocation = RL_SourceRange;
+					// Don't sort the first half if it is already sorted.
+					if (lastSortedEnd < nMid)
+					{
+						firstHalfLocation = sort_impl(first, first + nMid, pBuffer, lastSortedEnd, compare);
+					}
+					ResultLocation secondHalfLocation = sort_impl(first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
+
+					return merge_halves(first, last, nMid, pBuffer, firstHalfLocation, secondHalfLocation, compare);
+				}
+			}
+			else
+			{
+				EASTL_DEV_ASSERT((eastl::is_sorted<RandomAccessIterator, StrictWeakOrdering>(first, last, compare)));
+				return RL_SourceRange;
+			}
+		}
+
+		// merge_halves
+		//
+		// Merge two sorted regions of elements.
+		// The inputs to this method effectively define two large buffers.  The variables 'firstHalfLocation' and 'secondHalfLocation' define where the data to be
+		// merged is located within the two buffers.  It is entirely possible that the two areas to be merged could be entirely located in either of the larger buffers.
+		// Upon returning the merged results will be in one of the two buffers (indicated by the return result).
+		static ResultLocation merge_halves(RandomAccessIterator first, RandomAccessIterator last, difference_type nMid, T* pBuffer, bool firstHalfLocation, bool secondHalfLocation, StrictWeakOrdering compare)
+		{
+			const difference_type nCount = last - first;
+			if (firstHalfLocation == RL_SourceRange)
+			{
+				if (secondHalfLocation == RL_SourceRange)
+				{
+					eastl::merge<RandomAccessIterator, RandomAccessIterator, T*, StrictWeakOrdering>(first, first + nMid, first + nMid, last, pBuffer, compare);
+					EASTL_DEV_ASSERT((eastl::is_sorted<T*, StrictWeakOrdering>(pBuffer, pBuffer + nCount, compare)));
+					return RL_Buffer;
+				}
+				else
+				{
+					eastl::copy(first, first + nMid, pBuffer);
+					eastl::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+					EASTL_DEV_ASSERT((eastl::is_sorted<RandomAccessIterator, StrictWeakOrdering>(first, last, compare)));
+					return RL_SourceRange;
+				}
+			}
+			else
+			{
+				if (secondHalfLocation == RL_SourceRange)
+				{
+					eastl::copy(first + nMid, last, pBuffer + nMid);
+					eastl::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+					EASTL_DEV_ASSERT((eastl::is_sorted<RandomAccessIterator, StrictWeakOrdering>(first, last, compare)));
+					return RL_SourceRange;
+				}
+				else
+				{
+					eastl::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+					EASTL_DEV_ASSERT((eastl::is_sorted<RandomAccessIterator, StrictWeakOrdering>(first, last, compare)));
+					return RL_SourceRange;
+				}
+			}
+		}
+
+	};
+
+
 	template <typename RandomAccessIterator, typename T, typename StrictWeakOrdering>
 	void merge_sort_buffer(RandomAccessIterator first, RandomAccessIterator last, T* pBuffer, StrictWeakOrdering compare)
 	{
 		typedef typename eastl::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-		const difference_type nCount = last - first;
-
-		if(nCount > 1)
-		{
-			const difference_type nMid = nCount / 2;
-			RandomAccessIterator  half = first + nMid;
- 
-			if(nMid > 1)
-			{
-				const difference_type nQ1(nMid / 2);
-				RandomAccessIterator  part(first + nQ1);
-
-				eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>(first, part, pBuffer,       compare);
-				eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>(part,  half, pBuffer + nQ1, compare);
-				eastl::merge<RandomAccessIterator, RandomAccessIterator, T*, StrictWeakOrdering>
-							(first, part, part, half, pBuffer, compare);
-			}
-			else
-				*pBuffer = *first;
- 
-			if((nCount - nMid) > 1)
-			{
-				const difference_type nQ3((difference_type)(((size_t)nMid + (size_t)nCount) >> 1));  // Equivalent to (nQ3 = (nMid + nCount) / 2) but handles the case of integer rollover.
-				RandomAccessIterator  part(first + nQ3);
-
-				eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>(half, part, pBuffer + nMid, compare);
-				eastl::merge_sort_buffer<RandomAccessIterator, T, StrictWeakOrdering>(part, last, pBuffer + nQ3,  compare);
-				eastl::merge<RandomAccessIterator, RandomAccessIterator, T*, StrictWeakOrdering>
-							(half, part, part, last, pBuffer + nMid, compare);
-			}
-			else
-				*(pBuffer + nMid) = *half;
- 
-			eastl::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>
-						(pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-		}
+		MergeSorter<RandomAccessIterator, T, StrictWeakOrdering, difference_type, 16>::sort(first, last, pBuffer, compare);
 	}
 
 	template <typename RandomAccessIterator, typename T>
@@ -1085,37 +1186,6 @@ namespace eastl
 				#define EASTL_COUNT_LEADING_ZEROES eastl_count_leading_zeroes
 			#endif
 		#endif
-
-
-		// Sorts a range whose initial (start - first) entries are already sorted.
-		// This function is a useful helper to the tim_sort function.
-		// This is the same as insertion_sort except that it has a start parameter which indicates
-		// where the start of the unsorted data is.
-		template <typename BidirectionalIterator, typename StrictWeakOrdering>
-		void insertion_sort_already_started(BidirectionalIterator first, BidirectionalIterator last, BidirectionalIterator start, StrictWeakOrdering compare)
-		{
-			typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-			if(first != last) // if the range is non-empty...
-			{
-				BidirectionalIterator iCurrent, iNext, iSorted = start - 1;
-
-				for(++iSorted; iSorted != last; ++iSorted)
-				{
-					const value_type temp(*iSorted);
-
-					iNext = iCurrent = iSorted;
-
-					for(--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
-					{
-						EASTL_VALIDATE_COMPARE(!compare(*iCurrent, temp)); // Validate that the compare function is sane.
-						*iNext = *iCurrent;
-					}
-
-					*iNext = temp;
-				}
-			}
-		}
 
 
 		// reverse_elements
