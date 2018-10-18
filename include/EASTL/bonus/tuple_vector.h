@@ -1499,6 +1499,26 @@ inline void swap(TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
 	a.swap(b);
 }
 
+// A customization of swap is made for r-values of tuples-of-references - 
+// normally, swapping rvalues doesn't make sense, but in this case, we do want to 
+// swap the contents of what the tuple-of-references are referring to
+//
+// This is required due to TupleVecIter returning a value-type for its dereferencing,
+// as opposed to an actual real reference of some sort
+template<typename... Ts>
+inline
+typename enable_if<conjunction<is_swappable<Ts>...>::value>::type
+swap(tuple<Ts&...>&& a, tuple<Ts&...>&& b)
+{
+	a.swap(b);
+}
+
+template<typename... Ts>
+inline
+typename enable_if<!conjunction<is_swappable<Ts>...>::value>::type
+swap(tuple<Ts&...>&& a, tuple<Ts&...>&& b) = delete;
+
+
 // External interface of tuple_vector
 template <typename... Ts>
 class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, make_index_sequence<sizeof...(Ts)>, Ts...>
