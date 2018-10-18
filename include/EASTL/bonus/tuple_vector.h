@@ -1435,6 +1435,12 @@ public:
 		return *this;
 	}
 
+	difference_type operator-(const this_type& rhs) const { return mIterator.mIndex - rhs.mIterator.mIndex; }
+	bool operator<(const this_type& rhs) const { return mIterator.mIndex < rhs.mIterator.mIndex; }
+	bool operator>(const this_type& rhs) const { return mIterator.mIndex > rhs.mIterator.mIndex; }
+	bool operator>=(const this_type& rhs) const { return mIterator.mIndex >= rhs.mIterator.mIndex; }
+	bool operator<=(const this_type& rhs) const { return mIterator.mIndex <= rhs.mIterator.mIndex; }
+
 	reference operator[](difference_type n) const { return *(*this + n); }
 
 private:
