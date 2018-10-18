@@ -23,6 +23,7 @@
 #ifndef EASTL_TUPLEVECTOR_H
 #define EASTL_TUPLEVECTOR_H
 
+#include <EASTL/bonus/compressed_pair.h>
 #include <EASTL/internal/config.h>
 #include <EASTL/iterator.h>
 #include <EASTL/memory.h>
