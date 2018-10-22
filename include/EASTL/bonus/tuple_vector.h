@@ -23,6 +23,7 @@
 #ifndef EASTL_TUPLEVECTOR_H
 #define EASTL_TUPLEVECTOR_H
 
+#include <EASTL/bonus/compressed_pair.h>
 #include <EASTL/internal/config.h>
 #include <EASTL/iterator.h>
 #include <EASTL/memory.h>
@@ -54,10 +55,10 @@ namespace TupleVecInternal
 {
 
 // forward declarations
-template <size_t I, typename... Ts>
+template <eastl_size_t I, typename... Ts>
 struct tuplevec_element;
 
-template <size_t I, typename... Ts>
+template <eastl_size_t I, typename... Ts>
 using tuplevec_element_t = typename tuplevec_element<I, Ts...>::type;
 
 template <typename... Ts>
@@ -69,17 +70,17 @@ class TupleVecImpl;
 template <typename... Ts>
 struct TupleRecurser;
 
-template <size_t I, typename... Ts>
+template <eastl_size_t I, typename... Ts>
 struct TupleIndexRecurser;
 
-template <size_t I, typename T>
+template <eastl_size_t I, typename T>
 struct TupleVecLeaf;
 
 template <typename Indices, typename... Ts>
 struct TupleVecIter;
 
 // tuplevec_element helper to be able to isolate a type given an index
-template <size_t I>
+template <eastl_size_t I>
 struct tuplevec_element<I>
 {
 	static_assert(I != I, "tuplevec_element index out of range");
@@ -92,7 +93,7 @@ struct tuplevec_element<0, T, Ts...>
 	typedef T type;
 };
 
-template <size_t I, typename T, typename... Ts>
+template <eastl_size_t I, typename T, typename... Ts>
 struct tuplevec_element<I, T, Ts...>
 {
 	typedef tuplevec_element_t<I - 1, Ts...> type;
@@ -187,8 +188,8 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	template<typename Allocator, size_type I, typename Indices, typename... VecTypes>
 	static pair<void*, size_type> DoAllocate(TupleVecImpl<Allocator, Indices, VecTypes...> &vec, void** ppNewLeaf, size_type capacity, size_type offset)
 	{
-		size_t allocationOffset = CalculatAllocationOffset(offset);
-		size_t allocationSize = CalculateAllocationSize(offset, capacity);
+		size_type allocationOffset = CalculatAllocationOffset(offset);
+		size_type allocationSize = CalculateAllocationSize(offset, capacity);
 		pair<void*, size_type> allocation = TupleRecurser<Ts...>::template DoAllocate<Allocator, I + 1, Indices, VecTypes...>(
 			vec, ppNewLeaf, capacity, allocationSize);
 		ppNewLeaf[I] = (void*)((uintptr_t)(allocation.first) + allocationOffset);
@@ -198,8 +199,8 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	template<typename TupleVecImplType, size_type I>
 	static void SetNewData(TupleVecImplType &vec, void* pData, size_type capacity, size_type offset)
 	{
-		size_t allocationOffset = CalculatAllocationOffset(offset);
-		size_t allocationSize = CalculateAllocationSize(offset, capacity);
+		size_type allocationOffset = CalculatAllocationOffset(offset);
+		size_type allocationSize = CalculateAllocationSize(offset, capacity);
 		vec.TupleVecLeaf<I, T>::mpData = (T*)((uintptr_t)pData + allocationOffset);
 		TupleRecurser<Ts...>::template SetNewData<TupleVecImplType, I + 1>(vec, pData, capacity, allocationSize);
 	}
@@ -210,7 +211,7 @@ private:
 		return CalculatAllocationOffset(offset) + sizeof(T) * capacity;
 	}
 
-	static EA_CONSTEXPR size_t CalculatAllocationOffset(size_t offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
+	static EA_CONSTEXPR size_type CalculatAllocationOffset(size_type offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
 };
 
 template <size_t I, typename T>
@@ -316,12 +317,12 @@ struct TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>> :
 // and resolving the tuple of pointers to the various parts of the original tupleVec when dereferenced.
 // While resolving the tuple is a non-zero operation, it consistently generated better code than the alternative of
 // storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
-template <size_t... Indices, typename... Ts>
-struct TupleVecIter<integer_sequence<size_t, Indices...>, Ts...>
+template <eastl_size_t... Indices, typename... Ts>
+struct TupleVecIter<index_sequence<Indices...>, Ts...>
 	: public iterator<random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 private:
-	typedef TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> this_type;
+	typedef TupleVecIter<index_sequence<Indices...>, Ts...> this_type;
 	typedef eastl_size_t size_type;
 
 	typedef iterator<random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>> iter_type;
@@ -434,11 +435,11 @@ private:
 };
 
 // TupleVecImpl
-template <typename Allocator, size_t... Indices, typename... Ts>
-class TupleVecImpl<Allocator, integer_sequence<size_t, Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
+template <typename Allocator, eastl_size_t... Indices, typename... Ts>
+class TupleVecImpl<Allocator, index_sequence<Indices...>, Ts...> : public TupleVecLeaf<Indices, Ts>...
 {
 	typedef Allocator	allocator_type;
-	typedef integer_sequence<size_t, Indices...> index_sequence_type;
+	typedef index_sequence<Indices...> index_sequence_type;
 	typedef TupleVecImpl<Allocator, index_sequence_type, Ts...> this_type;
 	typedef TupleVecImpl<Allocator, index_sequence_type, const Ts...> const_this_type;
 
@@ -1151,13 +1152,13 @@ public:
 		return at(size() - 1); 
 	}
 
-	template <size_t I>
+	template <size_type I>
 	tuplevec_element_t<I, Ts...>* get() 
 	{
 		typedef tuplevec_element_t<I, Ts...> Element;
 		return TupleVecLeaf<I, Element>::mpData;
 	}
-	template <size_t I>
+	template <size_type I>
 	const tuplevec_element_t<I, Ts...>* get() const
 	{
 		typedef tuplevec_element_t<I, Ts...> Element;
@@ -1374,15 +1375,14 @@ protected:
 
 }  // namespace TupleVecInternal
 
-
-// Move_iterator specialization for TupleVecIter.
-// An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
-// what we actually want is "tuple<Ts&&...>". This specialization gives us that.
-template <size_t... Indices, typename... Ts>
-class move_iterator<TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...>>
+   // Move_iterator specialization for TupleVecIter.
+   // An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
+   // what we actually want is "tuple<Ts&&...>". This specialization gives us that.
+template <eastl_size_t... Indices, typename... Ts>
+class move_iterator<TupleVecInternal::TupleVecIter<index_sequence<Indices...>, Ts...>>
 {
 public:
-	typedef TupleVecInternal::TupleVecIter<integer_sequence<size_t, Indices...>, Ts...> iterator_type;
+	typedef TupleVecInternal::TupleVecIter<index_sequence<Indices...>, Ts...> iterator_type;
 	typedef iterator_type wrapped_iterator_type; // This is not in the C++ Standard; it's used by use to identify it as
 												 // a wrapping iterator type.
 	typedef iterator_traits<iterator_type> traits_type;
@@ -1436,63 +1436,89 @@ public:
 		return *this;
 	}
 
+	difference_type operator-(const this_type& rhs) const { return mIterator - rhs.mIterator; }
+	bool operator<(const this_type& rhs) const { return mIterator < rhs.mIterator; }
+	bool operator>(const this_type& rhs) const { return mIterator > rhs.mIterator; }
+	bool operator>=(const this_type& rhs) const { return mIterator >= rhs.mIterator; }
+	bool operator<=(const this_type& rhs) const { return mIterator <= rhs.mIterator; }
+
 	reference operator[](difference_type n) const { return *(*this + n); }
 
 private:
-	reference MakeReference() const 
+	reference MakeReference() const
 	{
 		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
 	}
 };
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
 }
 
-template <typename AllocatorA, typename AllocatorB,  typename... Ts>
-inline bool operator!=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator!=(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
 }
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator<(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator<(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					  const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 }
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator>(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					  const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator>(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					  const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return b < a;
 }
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator<=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator<=(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return !(b < a);
 }
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline bool operator>=(const TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-					   const TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline bool operator>=(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	return !(a < b);
 }
 
-template <typename AllocatorA, typename AllocatorB, typename... Ts>
-inline void swap(TupleVecInternal::TupleVecImpl<AllocatorA, make_index_sequence<sizeof...(Ts)>, Ts...>& a,
-				TupleVecInternal::TupleVecImpl<AllocatorB, make_index_sequence<sizeof...(Ts)>, Ts...>& b)
+template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
+inline void swap(TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
+				TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
 	a.swap(b);
 }
+
+// A customization of swap is made for r-values of tuples-of-references - 
+// normally, swapping rvalues doesn't make sense, but in this case, we do want to 
+// swap the contents of what the tuple-of-references are referring to
+//
+// This is required due to TupleVecIter returning a value-type for its dereferencing,
+// as opposed to an actual real reference of some sort
+template<typename... Ts>
+inline
+typename enable_if<conjunction<is_swappable<Ts>...>::value>::type
+swap(tuple<Ts&...>&& a, tuple<Ts&...>&& b)
+{
+	a.swap(b);
+}
+
+template<typename... Ts>
+inline
+typename enable_if<!conjunction<is_swappable<Ts>...>::value>::type
+swap(tuple<Ts&...>&& a, tuple<Ts&...>&& b) = delete;
+
 
 // External interface of tuple_vector
 template <typename... Ts>
