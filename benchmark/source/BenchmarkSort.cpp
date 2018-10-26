@@ -638,7 +638,7 @@ int CompareSortPerformance()
 
 				for (SortFunctionType sortFunction : sortFunctions)
 				{
-					sOutput.append_sprintf("%25s, %14s, Size: %8u, Time: %14I64u ticks %0.2f ticks/elem\n",
+					sOutput.append_sprintf("%25s, %14s, Size: %8u, Time: %14" PRIu64 " ticks %0.2f ticks/elem\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
 					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
 					                       float(sResults[i][sizeType][sortFunction].mTime)/float(size));
@@ -813,7 +813,7 @@ int CompareSortPerformance()
 
 				for (SortFunctionType sortFunction : sortFunctions)
 				{
-					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11I64u ticks, Compares: %11I64u\n",
+					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11" PRIu64 " ticks, Compares: %11" PRIu64 "\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
 					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
 					                       sResults[i][sizeType][sortFunction].mCompareCount);
@@ -991,7 +991,7 @@ int CompareSortPerformance()
 
 				for (SortFunctionType sortFunction : sortFunctions)
 				{
-					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11I64u ticks, Assignments: %11I64u\n",
+					sOutput.append_sprintf("%25s, %14s, Size: %6u, Time: %11" PRIu64 " ticks, Assignments: %11" PRIu64 "\n",
 					                       GetSortFunctionName(sortFunction), GetRandomizationTypeName(i),
 					                       (unsigned)size, sResults[i][sizeType][sortFunction].mTime,
 					                       sResults[i][sizeType][sortFunction].mAssignCount);
