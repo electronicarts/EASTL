@@ -43,7 +43,7 @@ add_definitions(-DEASTL_OPENSOURCE=1)
 # Library definition
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTL_SOURCES "source/*.cpp" "include/EASTL/*.h" "include/EASTL/bonus/*.h")
-add_library(EASTL ${EASTL_SOURCES})
+add_library(EASTL SHARED ${EASTL_SOURCES})
 include_directories("include")
 
 #-------------------------------------------------------------------------------------------
