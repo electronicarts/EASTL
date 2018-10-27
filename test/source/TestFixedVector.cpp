@@ -8,7 +8,7 @@
 #include <EASTL/unique_ptr.h>
 #include <EAStdC/EAMemory.h>
 #include <new>
-
+#include <variant>
 
 using namespace eastl;
 
@@ -533,7 +533,12 @@ int TestFixedVector()
 		EATEST_VERIFY(fv.validate());
 	}
 	#endif
-
+	
+	//Test pairing of std::variant with fixed_vector
+	{
+		eastl::fixed_vector<std::variant<int>, 4> v;
+		eastl::fixed_vector<std::variant<int>, 4> b = eastl::move(v);
+	}
 	return nErrorCount;     
 }
 
