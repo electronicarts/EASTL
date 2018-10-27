@@ -8,7 +8,11 @@
 #include <EASTL/unique_ptr.h>
 #include <EAStdC/EAMemory.h>
 #include <new>
-#include <variant>
+
+#if __cplusplus > 201402L //Only to be included when standard > C++17
+#include <variant> //Variant not present in older standards
+#endif
+
 
 using namespace eastl;
 
@@ -534,11 +538,13 @@ int TestFixedVector()
 	}
 	#endif
 	
+	#if __cplusplus > 201402L
 	//Test pairing of std::variant with fixed_vector
 	{
 		eastl::fixed_vector<std::variant<int>, 4> v;
 		eastl::fixed_vector<std::variant<int>, 4> b = eastl::move(v);
 	}
+	#endif
 	return nErrorCount;     
 }
 
