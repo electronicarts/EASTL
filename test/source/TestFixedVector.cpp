@@ -9,7 +9,7 @@
 #include <EAStdC/EAMemory.h>
 #include <new>
 
-#if __cplusplus > 201402L //Only to be included when standard > C++17
+#if defined(EA_COMPILER_CPP17_ENABLED) 
 #include <variant> //Variant not present in older standards
 #endif
 
@@ -538,7 +538,7 @@ int TestFixedVector()
 	}
 	#endif
 	
-	#if __cplusplus > 201402L
+	#if defined(EA_COMPILER_CPP17_ENABLED) 
 	//Test pairing of std::variant with fixed_vector
 	{
 		eastl::fixed_vector<std::variant<int>, 4> v;
