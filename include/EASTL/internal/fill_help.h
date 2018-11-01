@@ -13,6 +13,10 @@
 
 #include <EASTL/internal/config.h>
 
+#if defined(EA_COMPILER_MICROSOFT) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+#include <intrin.h>
+#endif
+
 namespace eastl
 {
 	// fill
