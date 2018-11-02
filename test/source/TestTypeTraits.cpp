@@ -7,6 +7,7 @@
 #include <EASTL/type_traits.h>
 #include <EASTL/vector.h>
 #include <EAStdC/EAAlignment.h>
+#include "ConceptImpls.h"
 
 
 
@@ -1907,6 +1908,16 @@ int TestTypeTraits()
 		static_assert(eastl::endian::native != eastl::endian::little,  "must not be little endian");
 		static_assert(eastl::endian::native == eastl::endian::big,     "must be big endian");
 	#endif
+	}
+
+	// has_equality
+	{
+		static_assert( has_equality_v<int>, "has_equality failure");
+		static_assert( has_equality_v<short>, "has_equality failure");
+		static_assert( has_equality_v<long>, "has_equality failure");
+		static_assert( has_equality_v<long long>, "has_equality failure");
+		static_assert( has_equality_v<TestObject>, "has_equality failure");
+		static_assert(!has_equality_v<MissingEquality>, "has_equality failure");
 	}
 
 	return nErrorCount;

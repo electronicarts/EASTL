@@ -124,6 +124,72 @@ int TestArray()
 		VERIFY(!(a  > c));
 	}
 
+	// constexpr tests
+	{
+	#ifndef EA_NO_CPP14_CONSTEXPR
+		EA_CPP14_CONSTEXPR eastl::array<int, 4> a = {{ 0, 1, 2, 3 }};
+
+		static_assert(a == eastl::array<int, 4>{{ 0, 1, 2, 3 }}, "array constexpr failure");
+
+		static_assert(a[0] == 0, "array constexpr failure");
+		static_assert(a[1] == 1, "array constexpr failure");
+		static_assert(a[2] == 2, "array constexpr failure");
+		static_assert(a[3] == 3, "array constexpr failure");
+
+		static_assert(a.at(0) == 0, "array constexpr failure");
+		static_assert(a.at(1) == 1, "array constexpr failure");
+		static_assert(a.at(2) == 2, "array constexpr failure");
+		static_assert(a.at(3) == 3, "array constexpr failure");
+
+		static_assert(a.data()[0] == 0, "array constexpr failure");
+		static_assert(a.data()[1] == 1, "array constexpr failure");
+		static_assert(a.data()[2] == 2, "array constexpr failure");
+		static_assert(a.data()[3] == 3, "array constexpr failure");
+
+		static_assert(a.empty() == false, "array constexpr failure");
+		static_assert(a.size() == 4, "array constexpr failure");
+		static_assert(a.max_size() == 4, "array constexpr failure");
+
+		static_assert(a.front() == 0, "array constexpr failure");
+		static_assert(a.back() == 3, "array constexpr failure");
+
+		static_assert(a.begin()[0] == 0, "array constexpr failure");
+		static_assert(a.begin()[1] == 1, "array constexpr failure");
+		static_assert(a.begin()[2] == 2, "array constexpr failure");
+		static_assert(a.begin()[3] == 3, "array constexpr failure");
+
+		static_assert(a.cbegin()[0] == 0, "array constexpr failure");
+		static_assert(a.cbegin()[1] == 1, "array constexpr failure");
+		static_assert(a.cbegin()[2] == 2, "array constexpr failure");
+		static_assert(a.cbegin()[3] == 3, "array constexpr failure");
+
+		static_assert(a.end()[-1] == 3, "array constexpr failure");
+		static_assert(a.end()[-2] == 2, "array constexpr failure");
+		static_assert(a.end()[-3] == 1, "array constexpr failure");
+		static_assert(a.end()[-4] == 0, "array constexpr failure");
+
+		static_assert(a.cend()[-1] == 3, "array constexpr failure");
+		static_assert(a.cend()[-2] == 2, "array constexpr failure");
+		static_assert(a.cend()[-3] == 1, "array constexpr failure");
+		static_assert(a.cend()[-4] == 0, "array constexpr failure");
+
+		#if !(defined(EA_COMPILER_GNUC) && EA_COMPILER_CPP14_ENABLED)
+		// Disable these tests on GCC compilers pre-C++17 as
+		// reverse_iterator implementations are strictly not allowed to
+		// be constexpr until C++17.   
+		static_assert(a.crbegin()[0] == 3, "array constexpr failure");
+		static_assert(a.crbegin()[1] == 2, "array constexpr failure");
+		static_assert(a.crbegin()[2] == 1, "array constexpr failure");
+		static_assert(a.crbegin()[3] == 0, "array constexpr failure");
+
+		static_assert(a.crend()[-1] == 0, "array constexpr failure");
+		static_assert(a.crend()[-2] == 1, "array constexpr failure");
+		static_assert(a.crend()[-3] == 2, "array constexpr failure");
+		static_assert(a.crend()[-4] == 3, "array constexpr failure");
+		#endif
+	#endif
+	}
+
 	return nErrorCount;
 }
 

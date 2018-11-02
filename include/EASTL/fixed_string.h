@@ -121,21 +121,15 @@ namespace eastl
 		fixed_string(CtorDoNotInitialize, size_type n);
 		fixed_string(CtorSprintf, const value_type* pFormat, ...);
 		fixed_string(std::initializer_list<T> ilist, const overflow_allocator_type& overflowAllocator);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		fixed_string(this_type&& x);
 		fixed_string(this_type&& x, const overflow_allocator_type& overflowAllocator);
-		#endif
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(const base_type& x);
 		this_type& operator=(const value_type* p);
 		this_type& operator=(const value_type c);
 		this_type& operator=(std::initializer_list<T> ilist);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		this_type& operator=(this_type&& x);
-		#endif
 
 		void swap(this_type& x);
 
@@ -410,43 +404,41 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(this_type&& x)
-			: base_type(fixed_allocator_type(mBuffer.buffer))
-		{
-			// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
-			#if EASTL_NAME_ENABLED
-				get_allocator().set_name(x.get_allocator().get_name());
-			#endif
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(this_type&& x)
+		: base_type(fixed_allocator_type(mBuffer.buffer))
+	{
+		// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
+		#if EASTL_NAME_ENABLED
+			get_allocator().set_name(x.get_allocator().get_name());
+		#endif
 
-			internalLayout().SetHeapBeginPtr(mArray);
-			internalLayout().SetHeapCapacity(nodeCount - 1);
-			internalLayout().SetHeapSize(0);
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
 
-			*internalLayout().HeapBeginPtr() = 0;
+		*internalLayout().HeapBeginPtr() = 0;
 
-			append(x); // Let x destruct its own items.
-		}
+		append(x); // Let x destruct its own items.
+	}
 
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(this_type&& x, const overflow_allocator_type& overflowAllocator)
-			: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
-		{
-			// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
-			#if EASTL_NAME_ENABLED
-				get_allocator().set_name(x.get_allocator().get_name());
-			#endif
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	inline fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_string(this_type&& x, const overflow_allocator_type& overflowAllocator)
+		: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
+	{
+		// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
+		#if EASTL_NAME_ENABLED
+			get_allocator().set_name(x.get_allocator().get_name());
+		#endif
 
-			internalLayout().SetHeapBeginPtr(mArray);
-			internalLayout().SetHeapCapacity(nodeCount - 1);
-			internalLayout().SetHeapSize(0);
+		internalLayout().SetHeapBeginPtr(mArray);
+		internalLayout().SetHeapCapacity(nodeCount - 1);
+		internalLayout().SetHeapSize(0);
 
-			*internalLayout().HeapBeginPtr() = 0;
+		*internalLayout().HeapBeginPtr() = 0;
 
-			append(x); // Let x destruct its own items.
-		}
-	#endif
+		append(x); // Let x destruct its own items.
+	}
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
@@ -518,26 +510,24 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		inline typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
-		this_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::operator=(this_type&& x)
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	inline typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::
+	this_type& fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::operator=(this_type&& x)
+	{
+		// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
+
+		// if(static_cast<base_type*>(this) != &x) This should be impossible, so we disable it until proven otherwise.
 		{
-			// We copy from x instead of trade with it. We need to do so because fixed_ containers use local memory buffers.
+			clear();
 
-			// if(static_cast<base_type*>(this) != &x) This should be impossible, so we disable it until proven otherwise.
-			{
-				clear();
+			#if EASTL_ALLOCATOR_COPY_ENABLED
+				get_allocator() = x.get_allocator();
+			#endif
 
-				#if EASTL_ALLOCATOR_COPY_ENABLED
-					get_allocator() = x.get_allocator();
-				#endif
-
-				append(x); // Let x destruct its own items.
-			}
-			return *this;
+			append(x); // Let x destruct its own items.
 		}
-	#endif
+		return *this;
+	}
 
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
@@ -758,47 +748,45 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
-																				 fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
-		{
-			a.append(b); // Using an rvalue by name results in it becoming an lvalue.
-			return a;
-		}
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
+																			 fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
+	{
+		a.append(b); // Using an rvalue by name results in it becoming an lvalue.
+		return a;
+	}
 
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
-																		   const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
-		{
-			a.append(b);
-			return a;
-		}
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
+																	   const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& b)
+	{
+		a.append(b);
+		return a;
+	}
 
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p,
-																								fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
-		{
-			b.insert(0, p);
-			return b;
-		}
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p,
+																							fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
+	{
+		b.insert(0, p);
+		return b;
+	}
 
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
-																  const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p)
-		{
-			a.append(p);
-			return a;
-		}
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
+															  const typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type* p)
+	{
+		a.append(p);
+		return a;
+	}
 
-		template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-		fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
-																		typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c)
-		{
-			a.push_back(c);
-			return a;
-		}
-	#endif
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator> operator+(fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& a,
+																	typename fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>::value_type c)
+	{
+		a.push_back(c);
+		return a;
+	}
 
 
 	// operator ==, !=, <, >, <=, >= come from the string implementations.

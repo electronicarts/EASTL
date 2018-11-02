@@ -112,19 +112,19 @@ int TestTupleVector()
 		struct EA_ALIGN(16) AlignTestVec4
 		{
 			float a[4];
-			AlignTestVec4() :a{ 1.0f, 2.0f, 3.0f, 4.0f } {}
+			AlignTestVec4() : a{1.0f, 2.0f, 3.0f, 4.0f} {}
 		};
 
 		struct AlignTestByte3
 		{
 			char a[3];
-			AlignTestByte3() :a{ 1, 2, 3 } {}
+			AlignTestByte3() : a{1, 2, 3} {}
 		};
 
 		struct EA_ALIGN(8) AlignTestFourByte
 		{
 			int a[5];
-			AlignTestFourByte() :a{ -1, -2, -3, -4, -5 } {}
+			AlignTestFourByte() : a{-1, -2, -3, -4, -5} {}
 		};
 
 		tuple_vector<bool, AlignTestVec4, AlignTestByte3, AlignTestFourByte> alignElementVec;
@@ -143,6 +143,7 @@ int TestTupleVector()
 		TestObject::Reset();
 
 		tuple_vector<bool, TestObject, float> testVec;
+		typedef tuple_vector<bool, TestObject, float>::size_type tuple_vector_size_type;
 		testVec.reserve(10);
 		for (int i = 0; i < 10; ++i)
 		{
@@ -187,7 +188,7 @@ int TestTupleVector()
 		auto newTestVecSize = testVecCapacity + 5;
 		testVec.resize(newTestVecSize, true, TestObject(5), 5.0f);
 		EATEST_VERIFY(testVec.size() == newTestVecSize);
-		EATEST_VERIFY(TestObject::sTOCount == newTestVecSize);
+		EATEST_VERIFY(static_cast<tuple_vector_size_type>(TestObject::sTOCount) == newTestVecSize);
 		EATEST_VERIFY(testVec.capacity() > newTestVecSize);
 		EATEST_VERIFY(testVec.validate());
 		for (unsigned int i = 5; i < newTestVecSize; ++i)
@@ -199,6 +200,8 @@ int TestTupleVector()
 
 		{
 			tuple<bool, TestObject, float> resizeTup(true, TestObject(10), 10.0f);
+			typedef tuple_vector<bool, TestObject, float>::size_type tuple_vector_size_type;
+
 			// test resize with tuple that does destruction of objects
 			testVecCapacity = testVec.capacity();
 			EATEST_VERIFY(testVecCapacity >= 15); // check for next two resizes to make sure we don't grow vec
@@ -218,7 +221,7 @@ int TestTupleVector()
 			newTestVecSize = testVecCapacity + 5;
 			testVec.resize(newTestVecSize, resizeTup);
 			EATEST_VERIFY(testVec.size() == newTestVecSize);
-			EATEST_VERIFY(TestObject::sTOCount == newTestVecSize + 1);
+			EATEST_VERIFY(static_cast<tuple_vector_size_type>(TestObject::sTOCount) == newTestVecSize + 1);
 			EATEST_VERIFY(testVec.capacity() > newTestVecSize);
 			EATEST_VERIFY(testVec.validate());
 			for (unsigned int i = 5; i < 20; ++i)
@@ -238,7 +241,7 @@ int TestTupleVector()
 		// test other modifiers
 		testVec.pop_back();
 		EATEST_VERIFY(testVec.size() == newTestVecSize - 1);
-		EATEST_VERIFY(TestObject::sTOCount == newTestVecSize - 1); // down 2 from last sTOCount check - resizeTup dtor and pop_back
+		EATEST_VERIFY(static_cast<decltype(testVec)::size_type>(TestObject::sTOCount) == newTestVecSize - 1); // down 2 from last sTOCount check - resizeTup dtor and pop_back
 		
 		EATEST_VERIFY(testVec.capacity() > newTestVecSize);
 		testVec.shrink_to_fit();
@@ -1447,7 +1450,7 @@ int TestTupleVector()
 			EATEST_VERIFY(get<0>(movedTup) == 1);
 			EATEST_VERIFY(get<0>(*v1.begin()) == 1);
 
-			for (unsigned int i = 0; i < v1.size(); ++i)
+			for (int i = 0; i < static_cast<int>(v1.size()); ++i)
 			{
 				EATEST_VERIFY(v1.get<0>()[i] == i + 1);
 			}

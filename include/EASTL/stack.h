@@ -86,19 +86,14 @@ namespace eastl
 		{
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <class Allocator>
-			stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
-			  : c(eastl::move(x.c), allocator)
-			{
-			}
-		#endif
+		template <class Allocator>
+		stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
+		  : c(eastl::move(x.c), allocator)
+		{
+		}
 
 		explicit stack(const container_type& x);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			explicit stack(container_type&& x);
-		#endif
+		explicit stack(container_type&& x);
 
 		// Additional C++11 support to consider:
 		//
@@ -117,21 +112,10 @@ namespace eastl
 		const_reference top() const;
 
 		void push(const value_type& value);
+		void push(value_type&& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			void push(value_type&& x);
-		#endif
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			void emplace_back(Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				void emplace_back(value_type&& x);
-			#endif
-
-			void emplace_back(const value_type& x);
-		#endif
+		template <class... Args>
+		void emplace_back(Args&&... args);
 
 		void pop();
 
@@ -168,14 +152,12 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline stack<T, Container>::stack(Container&& x)
-			: c(eastl::move(x))
-		{
-			// Empty
-		}
-	#endif
+	template <typename T, typename Container>
+	inline stack<T, Container>::stack(Container&& x)
+		: c(eastl::move(x))
+	{
+		// Empty
+	}
 
 
 	template <typename T, typename Container>
@@ -231,38 +213,19 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline void stack<T, Container>::push(value_type&& x) 
-		{
-			c.push_back(eastl::move(x));
-		}
-	#endif
+	template <typename T, typename Container>
+	inline void stack<T, Container>::push(value_type&& x) 
+	{
+		c.push_back(eastl::move(x));
+	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename T, typename Container>
-		template <class... Args> 
-		inline void stack<T, Container>::emplace_back(Args&&... args)
-		{
-			c.emplace_back(eastl::forward<Args>(args)...);
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename T, typename Container>
-			inline void stack<T, Container>::emplace_back(value_type&& x)
-			{
-				c.emplace_back(eastl::move(x));
-			}
-		#endif
-
-
-		template <typename T, typename Container>
-		inline void stack<T, Container>::emplace_back(const value_type& x)
-		{
-			c.emplace_back(x);
-		}
-	#endif
+	template <typename T, typename Container>
+	template <class... Args> 
+	inline void stack<T, Container>::emplace_back(Args&&... args)
+	{
+		c.emplace_back(eastl::forward<Args>(args)...);
+	}
 
 
 	template <typename T, typename Container>

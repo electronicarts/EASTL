@@ -32,10 +32,22 @@ template class eastl::ring_buffer< int,        eastl::list<int>        >;
 template class eastl::ring_buffer< Align64,    eastl::list<Align64>    >;
 template class eastl::ring_buffer< TestObject, eastl::list<TestObject> >;
 
+// TODO(rparolin):  To consider adding support for eastl::array. 
+// template class eastl::ring_buffer< int, eastl::array<int, 64>>;
+
 typedef eastl::fixed_string<char, 256, false>          RBFixedString;
 typedef eastl::fixed_vector<RBFixedString, 100, false> RBFixedStringVector;
 typedef RBFixedStringVector::overflow_allocator_type   RBFixedStringVectorOverflowAllocator;
 template class eastl::ring_buffer<RBFixedString, RBFixedStringVector, RBFixedStringVectorOverflowAllocator>;
+
+typedef eastl::fixed_vector<int, 100, false> RBFixedIntVector;
+template class eastl::ring_buffer<int, RBFixedIntVector, RBFixedIntVector::overflow_allocator_type>;
+// template class eastl::ring_buffer<int, RBFixedIntVector>;  // currently fails to compile
+
+typedef eastl::fixed_vector<int, 100> RBFixedIntVectorWithOverFlow;
+template class eastl::ring_buffer<int, RBFixedIntVectorWithOverFlow, RBFixedIntVectorWithOverFlow::overflow_allocator_type>; 
+// template class eastl::ring_buffer<int, RBFixedIntVectorWithOverFlow>; // currently fails to compile
+
 
 
 int TestRingBuffer()

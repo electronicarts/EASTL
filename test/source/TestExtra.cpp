@@ -355,52 +355,32 @@ static int TestQueue()
 		for(int i = 0; i < 100; i++)
 			toVector.push_back(TestObject(i));
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// template <class Allocator>
-			// queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
-			//
-			// explicit queue(container_type&& x);
-			//
-			// void push(value_type&& x);
+		// template <class Allocator>
+		// queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
+		//
+		// explicit queue(container_type&& x);
+		//
+		// void push(value_type&& x);
 
-			queue<TestObject, vector<TestObject> > toQ_0;
-			queue<TestObject, vector<TestObject> > toQ_A(eastl::move(toQ_0), toQ_0.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
-			EATEST_VERIFY(toQ_A.size() == 0);
-			toQ_A.push(TestObject(1000));
-			EATEST_VERIFY(toQ_A.size() == 1);
+		queue<TestObject, vector<TestObject> > toQ_0;
+		queue<TestObject, vector<TestObject> > toQ_A(eastl::move(toQ_0), toQ_0.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
+		EATEST_VERIFY(toQ_A.size() == 0);
+		toQ_A.push(TestObject(1000));
+		EATEST_VERIFY(toQ_A.size() == 1);
 
-			queue<TestObject, vector<TestObject> > toQ_B(eastl::move(toQ_A), toQ_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
-			EATEST_VERIFY((toQ_B.size() == 1) && toQ_A.empty());
+		queue<TestObject, vector<TestObject> > toQ_B(eastl::move(toQ_A), toQ_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
+		EATEST_VERIFY((toQ_B.size() == 1) && toQ_A.empty());
 
-			eastl::vector<TestObject> toVectorM(toVector);
-			queue<TestObject, vector<TestObject> > toQ_C(eastl::move(toVectorM));
-			EATEST_VERIFY((toQ_C.size() == toVector.size()) && toVectorM.empty());
+		eastl::vector<TestObject> toVectorM(toVector);
+		queue<TestObject, vector<TestObject> > toQ_C(eastl::move(toVectorM));
+		EATEST_VERIFY((toQ_C.size() == toVector.size()) && toVectorM.empty());
 
-		#endif
+		// template <class... Args>
+		// void emplace_back(Args&&... args);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template <class... Args>
-			// void emplace_back(Args&&... args);
-
-			queue<TestObject, vector<TestObject> > toQ_D;
-			toQ_D.emplace_back(0, 1, 2);
-			EATEST_VERIFY(toQ_D.size() == 1) && (toQ_D.back() == TestObject(0, 1, 2));
-
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// void emplace_back(value_type&& x);
-				queue<TestObject, vector<TestObject> > toQ_D;
-				toQ_D.emplace_back(TestObject(0, 1, 2));
-				EATEST_VERIFY(toQ_D.size() == 1) && (toQ_D.back() == TestObject(0, 1, 2));
-
-			#endif
-			// void emplace_back(const value_type& x);
-			queue<TestObject, vector<TestObject> > toQ_E;
-			TestObject to(0, 1, 2);
-			toQ_E.emplace_back(to);
-			EATEST_VERIFY(toQ_E.size() == 1) && (toQ_E.back() == TestObject(0, 1, 2));
-		#endif
-
+		queue<TestObject, vector<TestObject> > toQ_D;
+		toQ_D.emplace_back(0, 1, 2);
+		EATEST_VERIFY(toQ_D.size() == 1) && (toQ_D.back() == TestObject(0, 1, 2));
 	}
 
 
@@ -554,54 +534,34 @@ static int TestPriorityQueue()
 		for(int i = 0; i < 100; i++)
 			toVector.push_back(TestObject(i));
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// template <class Allocator>
-			// priority_queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
-			//
-			// explicit priority_queue(const compare_type& compare, container_type&& x);
-			//
-			// template <class InputIterator>
-			// priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x);
-			//
-			// void push(value_type&& x);
+		// template <class Allocator>
+		// priority_queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
+		//
+		// explicit priority_queue(const compare_type& compare, container_type&& x);
+		//
+		// template <class InputIterator>
+		// priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x);
+		//
+		// void push(value_type&& x);
 
-			priority_queue<TestObject, vector<TestObject> > toPQ_0;
-			priority_queue<TestObject, vector<TestObject> > toPQ_A(toPQ_0.get_container().begin(), toPQ_0.get_container().begin(), eastl::less<TestObject>(), toPQ_0.get_container());
-			EATEST_VERIFY(toPQ_A.size() == 0);
-			toPQ_A.push(TestObject(1000));
-			EATEST_VERIFY(toPQ_A.size() == 1);
+		priority_queue<TestObject, vector<TestObject> > toPQ_0;
+		priority_queue<TestObject, vector<TestObject> > toPQ_A(toPQ_0.get_container().begin(), toPQ_0.get_container().begin(), eastl::less<TestObject>(), toPQ_0.get_container());
+		EATEST_VERIFY(toPQ_A.size() == 0);
+		toPQ_A.push(TestObject(1000));
+		EATEST_VERIFY(toPQ_A.size() == 1);
 
-			priority_queue<TestObject, vector<TestObject> > toPQ_B(eastl::move(toPQ_A), toPQ_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
-			EATEST_VERIFY((toPQ_B.size() == 1) && toPQ_A.empty());
+		priority_queue<TestObject, vector<TestObject> > toPQ_B(eastl::move(toPQ_A), toPQ_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
+		EATEST_VERIFY((toPQ_B.size() == 1) && toPQ_A.empty());
 
-			eastl::vector<TestObject> toVectorM(toVector);
-			priority_queue<TestObject, vector<TestObject> > toPQ_C(eastl::less<TestObject>(), eastl::move(toVectorM));
-			EATEST_VERIFY((toPQ_C.size() == toVector.size()) && toVectorM.empty());
+		eastl::vector<TestObject> toVectorM(toVector);
+		priority_queue<TestObject, vector<TestObject> > toPQ_C(eastl::less<TestObject>(), eastl::move(toVectorM));
+		EATEST_VERIFY((toPQ_C.size() == toVector.size()) && toVectorM.empty());
 
-		#endif
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template <class... Args>
-			// void emplace(Args&&... args);
-
-			priority_queue<TestObject, vector<TestObject> > toPQ_D;
-			toPQ_D.emplace(0, 1, 2);
-			EATEST_VERIFY(toPQ_D.size() == 1) && (toPQ_D.top() == TestObject(0, 1, 2));
-
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// void emplace(value_type&& x);
-				priority_queue<TestObject, vector<TestObject> > toPQ_D;
-				toPQ_D.emplace(TestObject(0, 1, 2));
-				EATEST_VERIFY(toPQ_D.size() == 1) && (toPQ_D.top() == TestObject(0, 1, 2));
-
-			#endif
-			// void emplace(const value_type& x);
-			priority_queue<TestObject, vector<TestObject> > toPQ_E;
-			TestObject to(0, 1, 2);
-			toPQ_E.emplace(to);
-			EATEST_VERIFY(toPQ_E.size() == 1) && (toPQ_E.top() == TestObject(0, 1, 2));
-		#endif
+		// template <class... Args>
+		// void emplace(Args&&... args);
+		priority_queue<TestObject, vector<TestObject> > toPQ_D;
+		toPQ_D.emplace(0, 1, 2);
+		EATEST_VERIFY(toPQ_D.size() == 1) && (toPQ_D.top() == TestObject(0, 1, 2));
 	}
 
 
@@ -705,51 +665,30 @@ static int TestStack()
 		for(int i = 0; i < 100; i++)
 			toVector.push_back(TestObject(i));
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// template <class Allocator>
-			// stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
-			//
-			// explicit stack(container_type&& x);
-			//
-			// void push(value_type&& x);
+		// template <class Allocator>
+		// stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL);
+		//
+		// explicit stack(container_type&& x);
+		//
+		// void push(value_type&& x);
+		stack<TestObject, vector<TestObject> > toS_0;
+		stack<TestObject, vector<TestObject> > toS_A(eastl::move(toS_0), toS_0.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
+		EATEST_VERIFY(toS_A.size() == 0);
+		toS_A.push(TestObject(1000));
+		EATEST_VERIFY(toS_A.size() == 1);
 
-			stack<TestObject, vector<TestObject> > toS_0;
-			stack<TestObject, vector<TestObject> > toS_A(eastl::move(toS_0), toS_0.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
-			EATEST_VERIFY(toS_A.size() == 0);
-			toS_A.push(TestObject(1000));
-			EATEST_VERIFY(toS_A.size() == 1);
+		stack<TestObject, vector<TestObject> > toS_B(eastl::move(toS_A), toS_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
+		EATEST_VERIFY((toS_B.size() == 1) && toS_A.empty());
 
-			stack<TestObject, vector<TestObject> > toS_B(eastl::move(toS_A), toS_A.get_container().get_allocator()); // It would be better if we also tested an alternative allocator.
-			EATEST_VERIFY((toS_B.size() == 1) && toS_A.empty());
+		eastl::vector<TestObject> toVectorM(toVector);
+		stack<TestObject, vector<TestObject> > toS_C(eastl::move(toVectorM));
+		EATEST_VERIFY((toS_C.size() == toVector.size()) && toVectorM.empty());
 
-			eastl::vector<TestObject> toVectorM(toVector);
-			stack<TestObject, vector<TestObject> > toS_C(eastl::move(toVectorM));
-			EATEST_VERIFY((toS_C.size() == toVector.size()) && toVectorM.empty());
-
-		#endif
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template <class... Args>
-			// void emplace_back(Args&&... args);
-
-			stack<TestObject, vector<TestObject> > toS_D;
-			toS_D.emplace_back(0, 1, 2);
-			EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
-
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// void emplace_back(value_type&& x);
-				stack<TestObject, vector<TestObject> > toS_D;
-				toS_D.emplace_back(TestObject(0, 1, 2));
-				EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
-
-			#endif
-			// void emplace_back(const value_type& x);
-			stack<TestObject, vector<TestObject> > toS_E;
-			TestObject to(0, 1, 2);
-			toS_E.emplace_back(to);
-			EATEST_VERIFY(toS_E.size() == 1) && (toS_E.top() == TestObject(0, 1, 2));
-		#endif
+		// template <class... Args>
+		// void emplace_back(Args&&... args);
+		stack<TestObject, vector<TestObject> > toS_D;
+		toS_D.emplace_back(0, 1, 2);
+		EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
 	}
 
 

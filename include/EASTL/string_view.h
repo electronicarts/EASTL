@@ -150,7 +150,7 @@ namespace eastl
 
 			count = eastl::min(count, mnCount - pos);
 			auto* pResult = CharStringUninitializedCopy(mpBegin + pos, mpBegin + pos + count, pDestination);
-			*pResult = 0; // write null-terminator
+			// *pResult = 0; // don't write the null-terminator
 			return pResult - pDestination;
 		}
 

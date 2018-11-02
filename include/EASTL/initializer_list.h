@@ -18,42 +18,14 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-// Older EABase versions have a bug in EA_HAVE_CPP11_INITIALIZER_LIST for the 
-// combination of clang/libstdc++, so we implement a fix for that here.
-#if (EABASE_VERSION_N < 20042) // If using a version of EABase that has a bug or doesn't have support at all...
-	#if defined(EA_HAVE_CPP11_INITIALIZER_LIST)
-		#undef EA_HAVE_CPP11_INITIALIZER_LIST
-	#endif
-	#if defined(EA_NO_HAVE_CPP11_INITIALIZER_LIST)
-		#undef EA_NO_HAVE_CPP11_INITIALIZER_LIST
-	#endif
-
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) // Dinkumware. VS2010+
-		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
-	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION >= 301) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_PLATFORM_APPLE)
-		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
-	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_PLATFORM_APPLE)
-		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
-	#elif defined(EA_HAVE_LIBCPP_LIBRARY) && (_LIBCPP_VERSION >= 1) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
-	#else
-		#define EA_NO_HAVE_CPP11_INITIALIZER_LIST 1
-	#endif
-
-#endif
-
 
 #if defined(EA_HAVE_CPP11_INITIALIZER_LIST) // If the compiler can generate calls to std::initializer_list...
 
 	// The initializer_list type must be declared in the std namespace, as that's the 
 	// namespace the compiler uses when generating code to use it.
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-	#endif
+	EA_DISABLE_ALL_VC_WARNINGS()
 	#include <initializer_list>
-	#ifdef _MSC_VER
-		#pragma warning(pop)
-	#endif
+	EA_RESTORE_ALL_VC_WARNINGS()
 
 #else
 

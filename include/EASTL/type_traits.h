@@ -345,12 +345,20 @@ namespace eastl
 	//
 	// Example usage:
 	//    typedef ChosenType = typename type_select<is_integral<SomeType>::value, ChoiceAType, ChoiceBType>::type;
+	//        or
+	//    using ChosenType = type_select_t<is_integral_v<SomeType>, ChoiceAType, ChoiceBType>;
 	//
 	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
 	struct type_select { typedef ConditionIsTrueType type; };
 
 	template <typename ConditionIsTrueType, class ConditionIsFalseType>
 	struct type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
+		using type_select_t = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -643,6 +651,10 @@ namespace eastl
 	template <typename T> struct is_volatile : public eastl::is_volatile_value<T*>{};
 	template <typename T> struct is_volatile<T&> : public eastl::false_type{}; // Note here that T is volatile, not the reference to T. So is_const is false. See section 8.3.2p1 of the C++ standard.
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_volatile_v = is_volatile<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1076,6 +1088,7 @@ namespace eastl
 	/// or big endian. Mixed or middle endian is not modeled here as described
 	/// by the C++20 spec.
 	///////////////////////////////////////////////////////////////////////
+	EA_DISABLE_VC_WARNING(4472) // 'endian' is a native enum: add an access specifier (private/public) to declare a managed enum
 	enum class endian
 	{
 		#ifdef EA_SYSTEM_LITTLE_ENDIAN
@@ -1088,6 +1101,7 @@ namespace eastl
 			native = big
 		#endif
 	};
+	EA_RESTORE_VC_WARNING();
 
 } // namespace eastl
 

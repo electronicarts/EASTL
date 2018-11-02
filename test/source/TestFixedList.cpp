@@ -439,117 +439,62 @@ int TestFixedList()
 		// fixed_list(this_type&& x);
 		// fixed_list(this_type&&, const allocator_type&);
 		// this_type& operator=(this_type&& x);
+		fixed_list<TestObject, 16> list3TO33(3, TestObject(33));
+		fixed_list<TestObject, 16> toListA(eastl::move(list3TO33));
+		EATEST_VERIFY((toListA.size() == 3) && (toListA.front().mX == 33) /* && (list3TO33.size() == 0) fixed_list usually can't honor the move request. */);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			fixed_list<TestObject, 16> list3TO33(3, TestObject(33));
-			fixed_list<TestObject, 16> toListA(eastl::move(list3TO33));
-			EATEST_VERIFY((toListA.size() == 3) && (toListA.front().mX == 33) /* && (list3TO33.size() == 0) fixed_list usually can't honor the move request. */);
+		// The following is not as strong a test of this ctor as it could be. A stronger test would be to use IntanceAllocator with different instances.
+		fixed_list<TestObject, 16, true, MallocAllocator> list4TO44(4, TestObject(44));
+		fixed_list<TestObject, 16, true, MallocAllocator> toListB(eastl::move(list4TO44), MallocAllocator());
+		EATEST_VERIFY((toListB.size() == 4) && (toListB.front().mX == 44) /* && (list4TO44.size() == 0) fixed_list usually can't honor the move request. */);
 
-			// The following is not as strong a test of this ctor as it could be. A stronger test would be to use IntanceAllocator with different instances.
-			fixed_list<TestObject, 16, true, MallocAllocator> list4TO44(4, TestObject(44));
-			fixed_list<TestObject, 16, true, MallocAllocator> toListB(eastl::move(list4TO44), MallocAllocator());
-			EATEST_VERIFY((toListB.size() == 4) && (toListB.front().mX == 44) /* && (list4TO44.size() == 0) fixed_list usually can't honor the move request. */);
-
-			fixed_list<TestObject, 16, true, MallocAllocator> list5TO55(5, TestObject(55));
-			toListB = eastl::move(list5TO55);
-			EATEST_VERIFY((toListB.size() == 5) && (toListB.front().mX == 55) /* && (list5TO55.size() == 0) fixed_list usually can't honor the move request. */);
-		#endif
+		fixed_list<TestObject, 16, true, MallocAllocator> list5TO55(5, TestObject(55));
+		toListB = eastl::move(list5TO55);
+		EATEST_VERIFY((toListB.size() == 5) && (toListB.front().mX == 55) /* && (list5TO55.size() == 0) fixed_list usually can't honor the move request. */);
 	}
 
 
 	{
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template <class... Args>
-			// void emplace_front(Args&&... args);
+		// template <class... Args>
+		// void emplace_front(Args&&... args);
 
-			// template <class... Args>
-			// void emplace_back(Args&&... args);
+		// template <class... Args>
+		// void emplace_back(Args&&... args);
 
-			// template <class... Args>
-			// iterator emplace(const_iterator position, Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// void emplace_front(value_type&& value);
-				// void emplace_back(value_type&& value);
-				// iterator emplace(const_iterator position, value_type&& value);
-			#endif
-			// void emplace_front(const value_type& value);
-			// void emplace_back(const value_type& value);
-			// iterator emplace(const_iterator position, const value_type& value);
-		#endif
+		// template <class... Args>
+		// iterator emplace(const_iterator position, Args&&... args);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			TestObject::Reset();
+		TestObject::Reset();
 
-			fixed_list<TestObject, 16> toListA;
+		fixed_list<TestObject, 16> toListA;
 
-			toListA.emplace_front(1, 2, 3); // This uses the TestObject(int x0, int x1, int x2, bool bThrowOnCopy) constructor.
-			EATEST_VERIFY((toListA.size() == 1) && (toListA.front().mX == (1+2+3)) && (TestObject::sTOCtorCount == 1));
+		toListA.emplace_front(1, 2, 3); // This uses the TestObject(int x0, int x1, int x2, bool bThrowOnCopy) constructor.
+		EATEST_VERIFY((toListA.size() == 1) && (toListA.front().mX == (1+2+3)) && (TestObject::sTOCtorCount == 1));
 
-			toListA.emplace_back(2, 3, 4);
-			EATEST_VERIFY((toListA.size() == 2) && (toListA.back().mX == (2+3+4)) && (TestObject::sTOCtorCount == 2));
+		toListA.emplace_back(2, 3, 4);
+		EATEST_VERIFY((toListA.size() == 2) && (toListA.back().mX == (2+3+4)) && (TestObject::sTOCtorCount == 2));
 
-			toListA.emplace(toListA.begin(), 3, 4, 5);
-			EATEST_VERIFY((toListA.size() == 3) && (toListA.front().mX == (3+4+5)) && (TestObject::sTOCtorCount == 3));
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				TestObject::Reset();
-
-				// We have a potential problem here in that the compiler is not required to use move construction below.
-				// It is allowed to use standard copy construction if it wants. We could force it with eastl::move() usage.
-				fixed_list<TestObject, 16> toListA;
-
-				toListA.emplace_front(TestObject(1, 2, 3));
-				EATEST_VERIFY((toListA.size() == 1) && (toListA.front().mX == (1+2+3)) && (TestObject::sTOMoveCtorCount == 1));
-
-				toListA.emplace_back(TestObject(2, 3, 4));
-				EATEST_VERIFY((toListA.size() == 2) && (toListA.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 2));
-
-				toListA.emplace(toListA.begin(), TestObject(3, 4, 5));
-				EATEST_VERIFY((toListA.size() == 3) && (toListA.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3));
-			#endif
-			
-			TestObject::Reset();
-
-			list<TestObject> toListB;
-			TestObject to123(1, 2, 3);
-			TestObject to234(2, 3, 4);
-			TestObject to345(3, 4, 5);
-
-			toListB.emplace_front(to123);   // This should use the const value_type& version and not the value_type&& version of emplace_front.
-			EATEST_VERIFY((toListB.size() == 1) && (toListB.front().mX == (1+2+3)) && (TestObject::sTOCopyCtorCount == 1));
-
-			toListB.emplace_back(to234);
-			EATEST_VERIFY((toListB.size() == 2) && (toListB.back().mX == (2+3+4)) && (TestObject::sTOCopyCtorCount == 2));
-
-			toListB.emplace(toListB.begin(), to345);
-			EATEST_VERIFY((toListB.size() == 3) && (toListB.front().mX == (3+4+5)) && (TestObject::sTOCopyCtorCount == 3));
-
-			EATEST_VERIFY(to123.mX == (1+2+3));  // Verify that the object was copied and not moved. If it was moved then mX would be 0 and not 1+2+3.
-			EATEST_VERIFY(to234.mX == (2+3+4));
-			EATEST_VERIFY(to345.mX == (3+4+5));
-		#endif
+		toListA.emplace(toListA.begin(), 3, 4, 5);
+		EATEST_VERIFY((toListA.size() == 3) && (toListA.front().mX == (3+4+5)) && (TestObject::sTOCtorCount == 3));
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// This test is similar to the emplace EASTL_MOVE_SEMANTICS_ENABLED pathway above. 
-			TestObject::Reset();
+		// This test is similar to the emplace pathway above. 
+		TestObject::Reset();
 
-			// void push_front(T&& x);
-			// void push_back(T&& x);
-			// iterator insert(const_iterator position, T&& x);
+		// void push_front(T&& x);
+		// void push_back(T&& x);
+		// iterator insert(const_iterator position, T&& x);
 
-			fixed_list<TestObject, 16> toListC;
+		fixed_list<TestObject, 16> toListC;
 
-			toListC.push_front(TestObject(1, 2, 3));
-			EATEST_VERIFY((toListC.size() == 1) && (toListC.front().mX == (1+2+3)) && (TestObject::sTOMoveCtorCount == 1));
+		toListC.push_front(TestObject(1, 2, 3));
+		EATEST_VERIFY((toListC.size() == 1) && (toListC.front().mX == (1+2+3)) && (TestObject::sTOMoveCtorCount == 1));
 
-			toListC.push_back(TestObject(2, 3, 4));
-			EATEST_VERIFY((toListC.size() == 2) && (toListC.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 2));
+		toListC.push_back(TestObject(2, 3, 4));
+		EATEST_VERIFY((toListC.size() == 2) && (toListC.back().mX == (2+3+4)) && (TestObject::sTOMoveCtorCount == 2));
 
-			toListC.insert(toListC.begin(), TestObject(3, 4, 5));
-			EATEST_VERIFY((toListC.size() == 3) && (toListC.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3));
-		#endif
+		toListC.insert(toListC.begin(), TestObject(3, 4, 5));
+		EATEST_VERIFY((toListC.size() == 3) && (toListC.front().mX == (3+4+5)) && (TestObject::sTOMoveCtorCount == 3));
 	}
 
 

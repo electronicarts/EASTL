@@ -36,7 +36,6 @@
 
 namespace eastl
 {
-
 	#if EASTL_EXCEPTIONS_ENABLED
 		class bad_function_call : public std::exception
 		{
@@ -52,7 +51,6 @@ namespace eastl
 
 	namespace internal
 	{
-
 		class unused_class {};
 
 		union functor_storage_alignment
@@ -98,8 +96,9 @@ namespace eastl
 		template <typename Functor, int SIZE_IN_BYTES>
 		struct is_functor_inplace_allocatable
 		{
-			static constexpr bool value = sizeof(Functor) <= sizeof(functor_storage<SIZE_IN_BYTES>)
-									   && (eastl::alignment_of<functor_storage<SIZE_IN_BYTES>>::value % eastl::alignment_of<Functor>::value) == 0;
+			static constexpr bool value =
+			    sizeof(Functor) <= sizeof(functor_storage<SIZE_IN_BYTES>) &&
+			    (eastl::alignment_of_v<functor_storage<SIZE_IN_BYTES>> % eastl::alignment_of_v<Functor>) == 0;
 		};
 
 		template <int SIZE_IN_BYTES>
@@ -200,6 +199,7 @@ namespace eastl
 				{
 					auto& allocator = *EASTLAllocatorDefault();
 					Functor* func = static_cast<Functor*>(allocator.allocate(sizeof(Functor), alignof(Functor), 0));
+
 				#if EASTL_EXCEPTIONS_ENABLED
 					if (!func)
 					{
@@ -208,6 +208,7 @@ namespace eastl
 				#else
 					EASTL_ASSERT_MSG(func != nullptr, "Allocation failed!");
 				#endif
+
 					::new (static_cast<void*>(func)) Functor(eastl::forward<T>(functor));
 					GetFunctorPtrRef(storage) = func;
 				}
@@ -343,18 +344,22 @@ namespace eastl
 
 		public:
 			function_detail() EA_NOEXCEPT = default;
-			function_detail(std::nullptr_t) EA_NOEXCEPT
-			{
-			}
+			function_detail(std::nullptr_t) EA_NOEXCEPT {}
 
 			function_detail(const function_detail& other)
 			{
-				Copy(other);
+				if (this != &other)
+				{
+					Copy(other);
+				}
 			}
 
 			function_detail(function_detail&& other)
 			{
-				Move(eastl::move(other));
+				if (this != &other)
+				{
+					Move(eastl::move(other));
+				}
 			}
 
 			template <typename Functor, typename = EASTL_INTERNAL_FUNCTION_DETAIL_VALID_FUNCTION_ARGS(Functor, R, Args..., function_detail)>
@@ -370,16 +375,22 @@ namespace eastl
 
 			function_detail& operator=(const function_detail& other)
 			{
-				Destroy();
-				Copy(other);
+				if (this != &other)
+				{
+					Destroy();
+					Copy(other);
+				}
 
 				return *this;
 			}
 
 			function_detail& operator=(function_detail&& other)
 			{
-				Destroy();
-				Move(eastl::move(other));
+				if(this != &other)
+				{
+					Destroy();
+					Move(eastl::move(other));
+				}
 
 				return *this;
 			}
@@ -397,7 +408,6 @@ namespace eastl
 			function_detail& operator=(Functor&& functor)
 			{
 				CreateForwardFunctor(eastl::forward<Functor>(functor));
-
 				return *this;
 			}
 
@@ -405,23 +415,27 @@ namespace eastl
 			function_detail& operator=(eastl::reference_wrapper<Functor> f) EA_NOEXCEPT
 			{
 				CreateForwardFunctor(f);
-
 				return *this;
 			}
 
 			void swap(function_detail& other) EA_NOEXCEPT
 			{
+				if(this == &other)
+					return;
+
 				FunctorStorageType tempStorage;
 				if (other.HaveManager())
 				{
 					(void)(*other.mMgrFuncPtr)(static_cast<void*>(&tempStorage), static_cast<void*>(&other.mStorage),
 											   Base::ManagerOperations::MGROPS_MOVE_FUNCTOR);
 				}
+
 				if (HaveManager())
 				{
 					(void)(*mMgrFuncPtr)(static_cast<void*>(&other.mStorage), static_cast<void*>(&mStorage),
 										 Base::ManagerOperations::MGROPS_MOVE_FUNCTOR);
 				}
+
 				if (other.HaveManager())
 				{
 					(void)(*other.mMgrFuncPtr)(static_cast<void*>(&mStorage), static_cast<void*>(&tempStorage),
@@ -497,7 +511,7 @@ namespace eastl
 				if (HaveManager())
 				{
 					(void)(*mMgrFuncPtr)(static_cast<void*>(&mStorage), nullptr,
-										 Base::ManagerOperations::MGROPS_DESTRUCT_FUNCTOR);
+					                     Base::ManagerOperations::MGROPS_DESTRUCT_FUNCTOR);
 				}
 			}
 
@@ -505,9 +519,11 @@ namespace eastl
 			{
 				if (other.HaveManager())
 				{
-					(void)(*other.mMgrFuncPtr)(static_cast<void*>(&mStorage), const_cast<void*>(static_cast<const void*>(&other.mStorage)),
-											   Base::ManagerOperations::MGROPS_COPY_FUNCTOR);
+					(void)(*other.mMgrFuncPtr)(static_cast<void*>(&mStorage),
+					                           const_cast<void*>(static_cast<const void*>(&other.mStorage)),
+					                           Base::ManagerOperations::MGROPS_COPY_FUNCTOR);
 				}
+
 				mMgrFuncPtr = other.mMgrFuncPtr;
 				mInvokeFuncPtr = other.mInvokeFuncPtr;
 			}
@@ -517,8 +533,9 @@ namespace eastl
 				if (other.HaveManager())
 				{
 					(void)(*other.mMgrFuncPtr)(static_cast<void*>(&mStorage), static_cast<void*>(&other.mStorage),
-											   Base::ManagerOperations::MGROPS_MOVE_FUNCTOR);
+					                           Base::ManagerOperations::MGROPS_MOVE_FUNCTOR);
 				}
+
 				mMgrFuncPtr = other.mMgrFuncPtr;
 				mInvokeFuncPtr = other.mInvokeFuncPtr;
 				other.mMgrFuncPtr = nullptr;

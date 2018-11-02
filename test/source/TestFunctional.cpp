@@ -410,6 +410,13 @@ int TestFunctional()
 		nErrorCount += TestHashHelper<float>(4330.099999f);
 		nErrorCount += TestHashHelper<double>(4330.055);
 		nErrorCount += TestHashHelper<long double>(4330.0654l);
+
+		{
+			enum hash_enum_test { e1, e2, e3 };
+			nErrorCount += TestHashHelper<hash_enum_test>(e1);
+			nErrorCount += TestHashHelper<hash_enum_test>(e2);
+			nErrorCount += TestHashHelper<hash_enum_test>(e3);
+		}
 	}
 
 
@@ -868,6 +875,26 @@ int TestFunctional()
 			EATEST_VERIFY(result == 21);
 		}
 
+		// user regression "self assigment" tests
+		{
+			eastl::function<int(void)> fn = [cache = 0] () mutable  { return cache++; };
+
+			EATEST_VERIFY(fn() == 0);
+			EATEST_VERIFY(fn() == 1);
+			EATEST_VERIFY(fn() == 2);
+
+			fn = fn;
+
+			EATEST_VERIFY(fn() == 3);
+			EATEST_VERIFY(fn() == 4);
+			EATEST_VERIFY(fn() == 5);
+
+			fn = eastl::move(fn);
+
+			EATEST_VERIFY(fn() == 6);
+			EATEST_VERIFY(fn() == 7);
+			EATEST_VERIFY(fn() == 8);
+		}
 	}
 
 	// Checking _MSC_EXTENSIONS is required because the Microsoft calling convention classifiers are only available when

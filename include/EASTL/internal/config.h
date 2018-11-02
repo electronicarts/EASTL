@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.12.01"
-	#define EASTL_VERSION_N  31201
+	#define EASTL_VERSION   "3.12.04"
+	#define EASTL_VERSION_N  31204
 #endif
 
 
@@ -146,10 +146,12 @@
 
 	#if defined(EA_COMPILER_MSVC_2015)
 		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
 	#elif defined(EA_COMPILER_CPP14_ENABLED)
 		#define EA_CPP14_CONSTEXPR constexpr
 	#else
 		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
 	#endif
 #endif
 

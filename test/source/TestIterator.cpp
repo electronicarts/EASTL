@@ -124,7 +124,6 @@ int TestIterator_moveIterator()
 {
 	int nErrorCount = 0;
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		eastl::vector<int> v = {0, 1, 42, 2};
 		const auto constBeginMoveIter = eastl::make_move_iterator(v.begin());
@@ -139,7 +138,6 @@ int TestIterator_moveIterator()
 		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
 		EATEST_VERIFY(*moveIter != *(constBeginMoveIter + 2));
 	}
-	#endif
 
 	return nErrorCount;
 }
@@ -182,19 +180,17 @@ int TestIterator()
 	{
 		// move_iterator
 		// move_iterator<Iterator> make_move_iterator(Iterator mi)
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			typedef eastl::vector<eastl::string> StringArray;
+		typedef eastl::vector<eastl::string> StringArray;
 
-			StringArray src;
-			for(eastl_size_t i = 0; i < 4; i++)
-				src.push_back(eastl::string(1, (char8_t)('0' + i))); // v should become {"0", "1", "2", "3"};
+		StringArray src;
+		for(eastl_size_t i = 0; i < 4; i++)
+			src.push_back(eastl::string(1, (char8_t)('0' + i))); // v should become {"0", "1", "2", "3"};
 
-			// Moves the values out of the string array and into the result.
-			StringArray dst(eastl::make_move_iterator(src.begin()), eastl::make_move_iterator(src.end()));
+		// Moves the values out of the string array and into the result.
+		StringArray dst(eastl::make_move_iterator(src.begin()), eastl::make_move_iterator(src.end()));
 
-			EATEST_VERIFY((src.size() == 4) && (src[0] ==  "") && (src[3] ==  ""));
-			EATEST_VERIFY((dst.size() == 4) && (dst[0] == "0") && (dst[3] == "3"));
-		#endif
+		EATEST_VERIFY((src.size() == 4) && (src[0] ==  "") && (src[3] ==  ""));
+		EATEST_VERIFY((dst.size() == 4) && (dst[0] == "0") && (dst[3] == "3"));
 	}
 
 	{
@@ -333,9 +329,7 @@ int TestIterator()
 		static_assert((eastl::is_iterator_wrapper<eastl::array<char>*>::value                                == false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::vector<char> >::value                               == false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::generic_iterator<int*> >::value                     == true),   "is_iterator_wrapper failure");
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			static_assert((eastl::is_iterator_wrapper<eastl::move_iterator<eastl::array<int>::iterator> >::value == true),   "is_iterator_wrapper failure");
-		#endif
+		static_assert((eastl::is_iterator_wrapper<eastl::move_iterator<eastl::array<int>::iterator> >::value == true),   "is_iterator_wrapper failure");
 	}
 
 
@@ -345,34 +339,24 @@ int TestIterator()
 		int* pInt = eastl::unwrap_iterator(&intArray[0]);
 		intArray[0] = 17;
 		EATEST_VERIFY(*pInt == 17);
-		#if !defined(EA_COMPILER_NO_DECLTYPE)
-			static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(&intArray[0])), int*>::value == true),  "unwrap_iterator failure");
-		#endif
+		static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(&intArray[0])), int*>::value == true),  "unwrap_iterator failure");
 
 		eastl::generic_iterator<int*> giIntArray(intArray);
 		pInt = eastl::unwrap_iterator(giIntArray);
 		intArray[0] = 18;
 		EATEST_VERIFY(*pInt == 18);
-		#if !defined(EA_COMPILER_NO_DECLTYPE)
-			static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(giIntArray)), int*>::value == true),  "unwrap_iterator failure");
-		#endif
+		static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(giIntArray)), int*>::value == true),  "unwrap_iterator failure");
 
 		eastl::vector<int> intVector(4, 19);
 		eastl::vector<int>::iterator itVector = eastl::unwrap_iterator(intVector.begin());
 		EATEST_VERIFY(*itVector == 19);
-		#if !defined(EA_COMPILER_NO_DECLTYPE)
-			static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(intVector.begin())), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
-		#endif
+		static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(intVector.begin())), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			eastl::move_iterator<eastl::vector<int>::iterator> miIntVector(intVector.begin());
-			itVector = eastl::unwrap_iterator(miIntVector);
-			intVector[0] = 20;
-			EATEST_VERIFY(*itVector == 20);
-			#if !defined(EA_COMPILER_NO_DECLTYPE)
-				static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(miIntVector)), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
-			#endif
-		#endif
+		eastl::move_iterator<eastl::vector<int>::iterator> miIntVector(intVector.begin());
+		itVector = eastl::unwrap_iterator(miIntVector);
+		intVector[0] = 20;
+		EATEST_VERIFY(*itVector == 20);
+		static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(miIntVector)), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
 	}
 
 	return nErrorCount;

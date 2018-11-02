@@ -348,7 +348,7 @@ static int TestUtilitySwap()
 	return nErrorCount;
 }
 
-#if !defined(EA_COMPILER_NO_NOEXCEPT) && EASTL_MOVE_SEMANTICS_ENABLED
+#if !defined(EA_COMPILER_NO_NOEXCEPT)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Warning C4626 warns against an implicitly deleted move assignment operator.
@@ -417,7 +417,7 @@ static int TestUtilityMove()
 	int nErrorCount = 0;
 
 // move_if_noexcept
-#if !defined(EA_COMPILER_NO_NOEXCEPT) && EASTL_MOVE_SEMANTICS_ENABLED
+#if !defined(EA_COMPILER_NO_NOEXCEPT)
 	noexcept_move_copy nemcA;
 	noexcept_move_copy nemcB =
 		eastl::move_if_noexcept(nemcA);  // nemcB should be constructed via noexcept_move_copy(noexcept_move_copy&&)

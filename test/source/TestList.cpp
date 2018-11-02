@@ -944,6 +944,45 @@ int TestList()
 		VERIFY(a == ref);
 	}
 
+	#if 0
+	// user reported regression
+	//
+	// Details can be found at: https://github.com/electronicarts/EASTL/issues/199
+	//
+	// The eastl::list has a fallback mechanism to copy node values if the list
+	// allocator instances don't compare equal.  The standard allows this to be
+	// undefined behaviour but we could potential break user code so we have to
+	// deprecate it over time.
+	//
+	// https://en.cppreference.com/w/cpp/container/list/splice
+	//
+	// "No elements are copied or moved, only the internal pointers of the list
+	// nodes are re-pointed. The behavior is undefined if: get_allocator() !=
+	// other.get_allocator()."
+	//
+	{
+		struct C
+		{
+			C() = default;
+			C(const C&) = delete;
+			C(C&&) = delete;
+
+			C& operator=(const C&) = delete;
+			C& operator=(C&&) = delete;
+		};
+
+		eastl::list<C> l0, l1;
+
+		l0.emplace_back();
+		l0.emplace_back();
+
+		l1.emplace_back();
+		l1.emplace_back();
+
+		l0.splice(l0.end(), l1, l1.begin());
+	}
+	#endif
+
 	return nErrorCount;
 }
 

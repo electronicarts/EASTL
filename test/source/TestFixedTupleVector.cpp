@@ -1506,7 +1506,7 @@ int TestFixedTupleVectorVariant()
 			EATEST_VERIFY(get<0>(movedTup) == 1);
 			EATEST_VERIFY(get<0>(*v1.begin()) == 1);
 
-			for (unsigned int i = 0; i < v1.size(); ++i)
+			for (int i = 0; i < static_cast<int>(v1.size()); ++i)
 			{
 				EATEST_VERIFY(v1.template get<0>()[i] == i + 1);
 			}

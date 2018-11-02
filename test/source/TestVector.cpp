@@ -31,9 +31,6 @@ template class eastl::vector<int>;
 template class eastl::vector<Align64>;
 template class eastl::vector<TestObject>;
 
-// TODO(rparolin): Fix compiler errors and enable this 
-// template class eastl::vector<eastl::unique_ptr<int>>;
-
 
 // This tests "uninitialized_fill" usage in vector when T has a user provided
 // address-of operator overload.  In these situations, EASTL containers must use
@@ -138,24 +135,22 @@ struct testmovable
 {
 	EA_NON_COPYABLE(testmovable)
 public:
-	testmovable() {}
+	testmovable() EA_NOEXCEPT {}
 
 	testmovable(testmovable&&) EA_NOEXCEPT {}
 
 	testmovable& operator=(testmovable&&) EA_NOEXCEPT { return *this; }
 };
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
-	struct TestMoveAssignToSelf
-	{
-		TestMoveAssignToSelf() : mMovedToSelf(false) {}
-		TestMoveAssignToSelf(const TestMoveAssignToSelf& other)       { mMovedToSelf = other.mMovedToSelf; }
-		TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&& other) { mMovedToSelf = true; return *this; }
-		TestMoveAssignToSelf& operator=(const TestMoveAssignToSelf&) = delete;
+struct TestMoveAssignToSelf
+{
+	TestMoveAssignToSelf() EA_NOEXCEPT : mMovedToSelf(false) {}
+	TestMoveAssignToSelf(const TestMoveAssignToSelf& other)       { mMovedToSelf = other.mMovedToSelf; }
+	TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&& other) { mMovedToSelf = true; return *this; }
+	TestMoveAssignToSelf& operator=(const TestMoveAssignToSelf&) = delete;
 
-		bool mMovedToSelf;
-	};
-#endif
+	bool mMovedToSelf;
+};
 
 #if EASTL_VARIABLE_TEMPLATES_ENABLED
 	/// custom type-trait which checks if a type is comparable via the <operator.
@@ -296,7 +291,6 @@ int TestVector()
 	TestObject::Reset();
 
 	{
-#if EASTL_MOVE_SEMANTICS_ENABLED
 		using namespace eastl;
 
 		// vector(this_type&& x)
@@ -322,7 +316,6 @@ int TestVector()
 		ItemWithConst& ref = myVec2.emplace_back(42);
 		EATEST_VERIFY(myVec2.back().i == 42);
 		EATEST_VERIFY(ref.i == 42);
-#endif
 	}
 
 	{
@@ -494,10 +487,6 @@ int TestVector()
 		EATEST_VERIFY(intArray.validate());
 		EATEST_VERIFY(intArray.size() == 56);
 		EATEST_VERIFY(intArray[5] == 5);
-
-#if EASTL_MOVE_SEMANTICS_ENABLED
-
-#endif
 	}
 
 	{
@@ -525,28 +514,15 @@ int TestVector()
 	{
 		using namespace eastl;
 
-#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-// template<class... Args>
-// iterator emplace(const_iterator position, Args&&... args);
+		// template<class... Args>
+		// iterator emplace(const_iterator position, Args&&... args);
 
-// template<class... Args>
-// void emplace_back(Args&&... args);
-#else
-#if EASTL_MOVE_SEMANTICS_ENABLED
-// iterator emplace(const_iterator position, value_type&& value);
-// void     emplace_back(value_type&& value);
-#endif
+		// template<class... Args>
+		// void emplace_back(Args&&... args);
 
-// iterator emplace(const_iterator position, value_type& value);
-// void     emplace_back(value_type& value);
-#endif
+		// iterator insert(const_iterator position, value_type&& value);
+		// void push_back(value_type&& value);
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
-// iterator insert(const_iterator position, value_type&& value);
-// void push_back(value_type&& value);
-#endif
-
-#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
 		TestObject::Reset();
 
 		vector<TestObject> toVectorA;
@@ -560,56 +536,7 @@ int TestVector()
 		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
 					  (TestObject::sTOCtorCount == 3));  // 3 because the original count of 1, plus the existing vector
 														 // element will be moved, plus the one being emplaced.
-#else
-#if EASTL_MOVE_SEMANTICS_ENABLED
-		TestObject::Reset();
 
-		// We have a potential problem here in that the compiler is not required to use move construction below.
-		// It is allowed to use standard copy construction if it wants. We could force it with eastl::move() usage.
-		vector<TestObject> toVectorA;
-
-		TestObject& ref = toVectorA.emplace_back(TestObject(2, 3, 4));
-		EATEST_VERIFY((toVectorA.size() == 1) && (toVectorA.back().mX == (2 + 3 + 4)) &&
-					  (TestObject::sTOMoveCtorCount == 1));
-		EATEST_VERIFY(ref.mX == (2 + 3 + 4));
-
-		toVectorA.emplace(toVectorA.begin(), TestObject(3, 4, 5));
-		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
-					  (TestObject::sTOMoveCtorCount == 3));  // 3 because the original count of 1, plus the existing
-															 // vector element will be moved, plus the one being
-															 // emplaced.
-#endif
-
-		TestObject::Reset();
-
-		vector<TestObject> toVectorB;
-		TestObject to234(2, 3, 4);
-		TestObject to345(3, 4, 5);
-
-		toVectorB.emplace_back(to234);  // This will be copied (not moved) by compilers that don't support rvalue move
-										// because it's not a temporary and we don't use eastl::move() on it.
-		EATEST_VERIFY((toVectorB.size() == 1) && (toVectorB.back().mX == (2 + 3 + 4)) &&
-					  (TestObject::sTOArgCtorCount == 2));
-		EATEST_VERIFY((TestObject::sTOCopyCtorCount + TestObject::sTOMoveCtorCount) ==
-					  1);  // A compiler that supports move may in fact take advantage of that internally.
-
-		toVectorB.emplace(toVectorB.begin(), to345);  // This will be copied (not moved) by compilers that don't support
-													  // rvalue move because it's not a temporary and we don't use
-													  // eastl::move() on it.
-		EATEST_VERIFY((toVectorB.size() == 2) && (toVectorB.front().mX == (3 + 4 + 5)) &&
-					  (TestObject::sTOArgCtorCount == 2));
-		EATEST_VERIFY((TestObject::sTOCopyCtorCount + TestObject::sTOMoveCtorCount) ==
-					  3);  // A compiler that supports move may in fact take advantage of that internally.
-
-		EATEST_VERIFY(
-			to234.mX ==
-			(2 + 3 +
-			 4));  // Verify that the object was copied and not moved. If it was moved then mX would be 0 and not 2+3+4.
-		EATEST_VERIFY(to345.mX == (3 + 4 + 5));
-#endif
-
-#if EASTL_MOVE_SEMANTICS_ENABLED
-		// This test is similar to the emplace EASTL_MOVE_SEMANTICS_ENABLED pathway above.
 		TestObject::Reset();
 
 		// void push_back(T&& x);
@@ -626,7 +553,6 @@ int TestVector()
 					  (TestObject::sTOMoveCtorCount == 3));  // 3 because the original count of 1, plus the existing
 															 // vector element will be moved, plus the one being
 															 // emplaced.
-#endif
 	}
 
 	// We don't check for TestObject::IsClear because we messed with state above and don't currently have a matching set
@@ -1096,7 +1022,6 @@ int TestVector()
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		// Test insert move objects
 		eastl::vector<TestObject> toVector1;
@@ -1146,7 +1071,6 @@ int TestVector()
 					  TestObject::sTOCopyCtorCount + TestObject::sTOCopyAssignCount == 11); // Move 7 existing element and copy the 10 inserted +
 																							// the temporary one inside the function
 	}
-#endif
 
 	TestObject::Reset();
 
@@ -1236,7 +1160,6 @@ int TestVector()
 		EATEST_VERIFY(v.capacity() == 0);
 		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
 		// Test set_capacity make a move when reducing size
 		vector<TestObject> toArray2(10, TestObject(7));
 		TestObject::Reset();
@@ -1244,7 +1167,6 @@ int TestVector()
 		EATEST_VERIFY(TestObject::sTOMoveCtorCount == 5 &&
 					  TestObject::sTOCopyCtorCount + TestObject::sTOCopyAssignCount == 0); // Move the 5 existing elements, no copy
 		EATEST_VERIFY(VerifySequence(toArray2.begin(), toArray2.end(), int(), "vector.set_capacity", 7, 7, 7, 7, 7, -1));
-#endif
 	}
 
 	TestObject::Reset();
@@ -1598,7 +1520,6 @@ int TestVector()
 		v2.push_back(StructWithConstRefToInt(j));
 	}
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		// Regression for issue with vector containing non-copyable values reported by user
 		eastl::vector<testmovable> moveablevec;
@@ -1614,10 +1535,8 @@ int TestVector()
 		v1.erase(v1.begin(), v1.begin());
 		EATEST_VERIFY(!v1[0].mMovedToSelf);
 	}
-#endif
 
 #if defined(EASTL_TEST_CONCEPT_IMPLS)
-
 	{
 		// vector default constructor should require no more than Destructible
 		eastl::vector<Destructible> v1;
@@ -1655,7 +1574,6 @@ int TestVector()
 		EATEST_VERIFY(v4.size() == 2 && v4[0].value == v4[1].value && v4[0].value == CopyConstructible::defaultValue);
 	}
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		// vector::reserve() should only require MoveInsertible
 		eastl::vector<MoveConstructible> v5;
@@ -1678,7 +1596,6 @@ int TestVector()
 			eastl::move_iterator<MoveConstructible*>(eastl::end(moveConstructibleArray)));
 		EATEST_VERIFY(v7.size() == 1 && v7[0].value == MoveConstructible::defaultValue);
 	}
-#endif
 
 	{
 		// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
@@ -1693,7 +1610,6 @@ int TestVector()
 		EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
 	}
 
-#if EASTL_MOVE_SEMANTICS_ENABLED
 	{
 		// vector::resize() should only require MoveInsertable and DefaultInsertable
 		eastl::vector<MoveAndDefaultConstructible> v8;
@@ -1711,8 +1627,6 @@ int TestVector()
 		v1.erase(begin(v1));
 		EATEST_VERIFY(v1.empty());
 	}
-#endif
-
 #endif // EASTL_TEST_CONCEPT_IMPLS
 
 	{
@@ -1735,7 +1649,7 @@ int TestVector()
 				container_value_type operator*()           { return {}; }
 			};
 
-			container_with_custom_iterator() {}
+			container_with_custom_iterator() EA_NOEXCEPT {}
 
 			iterator begin() const { return {}; }
 			iterator end() const   { return {}; }

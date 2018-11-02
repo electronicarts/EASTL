@@ -10,6 +10,7 @@
 #include <EASTL/core_allocator_adapter.h>
 #include <EASTL/list.h>
 #include <EAStdC/EAString.h>
+#include <EAStdC/EAAlignment.h>
 
 
 
@@ -338,6 +339,44 @@ static int TestSwapAllocator()
 	return nErrorCount;
 }
 
+static int TestAllocationOffsetAndAlignment()
+{
+	int nErrorCount = 0;
+
+	auto testAllocatorAlignment = [&nErrorCount](int requestedSize, int requestedAlignment, int requestedOffset)
+	{
+		CountingAllocator::resetCount();
+		CountingAllocator a;
+
+		void* p = allocate_memory(a, requestedSize, requestedAlignment, requestedOffset);
+
+		EATEST_VERIFY(p != nullptr);
+		EATEST_VERIFY(EA::StdC::IsAligned(p, requestedAlignment));
+
+		a.deallocate(p, requestedSize);
+		EATEST_VERIFY(CountingAllocator::getActiveAllocationSize() == 0);
+	};
+
+	testAllocatorAlignment(100, 1, 0);
+	testAllocatorAlignment(100, 2, 0);
+	testAllocatorAlignment(100, 4, 0);
+	testAllocatorAlignment(100, 8, 0);
+	testAllocatorAlignment(100, 16, 0);
+
+	testAllocatorAlignment(100, 1, 8);
+	testAllocatorAlignment(100, 2, 8);
+	testAllocatorAlignment(100, 4, 8);
+	testAllocatorAlignment(100, 8, 8);
+
+	testAllocatorAlignment(100, 1, 16);
+	testAllocatorAlignment(100, 2, 16);
+	testAllocatorAlignment(100, 4, 16);
+	testAllocatorAlignment(100, 8, 16);
+	testAllocatorAlignment(100, 16, 16);
+
+	return nErrorCount;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestAllocator
@@ -346,6 +385,7 @@ int TestAllocator()
 {
 	int nErrorCount = 0;
 	
+	nErrorCount += TestAllocationOffsetAndAlignment();
 	nErrorCount += TestFixedAllocator();
 	nErrorCount += TestAllocatorMalloc();
 	nErrorCount += TestCoreAllocatorAdapter();

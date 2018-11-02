@@ -282,47 +282,43 @@ int TEST_STRING_NAME()
 
 	// basic_string(this_type&& x);
 	// basic_string(this_type&& x, const allocator_type& allocator);
-	{
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		{  // test heap string
-			StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			StringType str2(eastl::move(str1));
+	{  // test heap string
+		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		StringType str2(eastl::move(str1));
 
-			VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-			VERIFY(str1.empty());
-			VERIFY(!str2.empty());
+		VERIFY(str1.empty());
+		VERIFY(!str2.empty());
 
-			VERIFY(str1.length() == 0);
-			VERIFY(str2.length() == 26);
+		VERIFY(str1.length() == 0);
+		VERIFY(str2.length() == 26);
 
-			VERIFY(str1.size() == 0);
-			VERIFY(str2.size() == 26);
+		VERIFY(str1.size() == 0);
+		VERIFY(str2.size() == 26);
 
-			VERIFY(str1.validate());
-			VERIFY(str2.validate());
-		}
-		{  // test sso string
-			StringType str1(LITERAL("a"));
-			StringType str2(eastl::move(str1));
+		VERIFY(str1.validate());
+		VERIFY(str2.validate());
+	}
+	{  // test sso string
+		StringType str1(LITERAL("a"));
+		StringType str2(eastl::move(str1));
 
-			VERIFY(str1 != LITERAL("a"));
-			VERIFY(str2 == LITERAL("a"));
+		VERIFY(str1 != LITERAL("a"));
+		VERIFY(str2 == LITERAL("a"));
 
-			VERIFY(str1.empty());
-			VERIFY(!str2.empty());
+		VERIFY(str1.empty());
+		VERIFY(!str2.empty());
 
-			VERIFY(str1.length() == 0);
-			VERIFY(str2.length() == 1);
+		VERIFY(str1.length() == 0);
+		VERIFY(str2.length() == 1);
 
-			VERIFY(str1.size() == 0);
-			VERIFY(str2.size() == 1);
+		VERIFY(str1.size() == 0);
+		VERIFY(str2.size() == 1);
 
-			VERIFY(str1.validate());
-			VERIFY(str2.validate());
-		}
-	#endif
+		VERIFY(str1.validate());
+		VERIFY(str2.validate());
 	}
 
 	// basic_string(const view_type& sv, const allocator_type& allocator);
@@ -510,46 +506,42 @@ int TEST_STRING_NAME()
 
 	// this_type& operator=(this_type&& x);
 	{
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		{
-			StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			StringType str2 = eastl::move(str1);
+		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		StringType str2 = eastl::move(str1);
 
-			VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		VERIFY(str1 != LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		VERIFY(str2 == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-			VERIFY(str1.empty());
-			VERIFY(!str2.empty());
+		VERIFY(str1.empty());
+		VERIFY(!str2.empty());
 
-			VERIFY(str1.length() == 0);
-			VERIFY(str2.length() == 26);
+		VERIFY(str1.length() == 0);
+		VERIFY(str2.length() == 26);
 
-			VERIFY(str1.size() == 0);
-			VERIFY(str2.size() == 26);
+		VERIFY(str1.size() == 0);
+		VERIFY(str2.size() == 26);
 
-			VERIFY(str1.validate());
-			VERIFY(str2.validate());
-		}
-		{
-			StringType str1(LITERAL("a"));
-			StringType str2 = eastl::move(str1);
+		VERIFY(str1.validate());
+		VERIFY(str2.validate());
+	}
+	{
+		StringType str1(LITERAL("a"));
+		StringType str2 = eastl::move(str1);
 
-			VERIFY(str1 != LITERAL("a"));
-			VERIFY(str2 == LITERAL("a"));
+		VERIFY(str1 != LITERAL("a"));
+		VERIFY(str2 == LITERAL("a"));
 
-			VERIFY(str1.empty());
-			VERIFY(!str2.empty());
+		VERIFY(str1.empty());
+		VERIFY(!str2.empty());
 
-			VERIFY(str1.length() == 0);
-			VERIFY(str2.length() == 1);
+		VERIFY(str1.length() == 0);
+		VERIFY(str2.length() == 1);
 
-			VERIFY(str1.size() == 0);
-			VERIFY(str2.size() == 1);
+		VERIFY(str1.size() == 0);
+		VERIFY(str2.size() == 1);
 
-			VERIFY(str1.validate());
-			VERIFY(str2.validate());
-		}
-	#endif
+		VERIFY(str1.validate());
+		VERIFY(str2.validate());
 	}
 
 	//     this_type& operator=(value_type* p);
@@ -737,7 +729,6 @@ int TEST_STRING_NAME()
 
 	// this_type& assign(this_type&& x);
 	{
-	#if EASTL_MOVE_SEMANTICS_ENABLED
 		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		StringType str2;
 
@@ -756,18 +747,15 @@ int TEST_STRING_NAME()
 
 		VERIFY(str1.validate());
 		VERIFY(str2.validate());
-	#endif
 	}
 
 	// this_type& assign(std::initializer_list<value_type>);
 	{
-	#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		str.assign({'1','2','3'});
 
 		VERIFY(str == LITERAL("123"));
 		VERIFY(str.validate());
-	#endif
 	}
 
 	// template <typename OtherCharType>

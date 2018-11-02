@@ -553,6 +553,7 @@ namespace eastl
 					{
 						firstHalfLocation = sort_impl(first, first + nMid, pBuffer, lastSortedEnd, compare);
 					}
+
 					ResultLocation secondHalfLocation = sort_impl(first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
 
 					return merge_halves(first, last, nMid, pBuffer, firstHalfLocation, secondHalfLocation, compare);
@@ -571,7 +572,7 @@ namespace eastl
 		// The inputs to this method effectively define two large buffers.  The variables 'firstHalfLocation' and 'secondHalfLocation' define where the data to be
 		// merged is located within the two buffers.  It is entirely possible that the two areas to be merged could be entirely located in either of the larger buffers.
 		// Upon returning the merged results will be in one of the two buffers (indicated by the return result).
-		static ResultLocation merge_halves(RandomAccessIterator first, RandomAccessIterator last, difference_type nMid, T* pBuffer, bool firstHalfLocation, bool secondHalfLocation, StrictWeakOrdering compare)
+		static ResultLocation merge_halves(RandomAccessIterator first, RandomAccessIterator last, difference_type nMid, T* pBuffer, ResultLocation firstHalfLocation, ResultLocation secondHalfLocation, StrictWeakOrdering compare)
 		{
 			const difference_type nCount = last - first;
 			if (firstHalfLocation == RL_SourceRange)

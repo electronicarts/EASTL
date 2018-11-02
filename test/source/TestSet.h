@@ -95,31 +95,29 @@ int TestSetConstruction()
 
 
 		// operator=(set&&)
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// We test just the EASTL container here.
-			eastl::scoped_ptr<T1> pT1P(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-			eastl::scoped_ptr<T1> pT1Q(new T1);
-			T1& t1P = *pT1P;
-			T1& t1Q = *pT1Q;
+		// We test just the EASTL container here.
+		eastl::scoped_ptr<T1> pT1P(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		eastl::scoped_ptr<T1> pT1Q(new T1);
+		T1& t1P = *pT1P;
+		T1& t1Q = *pT1Q;
 
-			typename T1::value_type v10(0);
-			typename T1::value_type v11(1);
-			typename T1::value_type v12(2);
-			typename T1::value_type v13(3);
-			typename T1::value_type v14(4);
-			typename T1::value_type v15(5);
+		typename T1::value_type v10(0);
+		typename T1::value_type v11(1);
+		typename T1::value_type v12(2);
+		typename T1::value_type v13(3);
+		typename T1::value_type v14(4);
+		typename T1::value_type v15(5);
 
-			t1P.insert(v10);
-			t1P.insert(v11);
-			t1P.insert(v12);
+		t1P.insert(v10);
+		t1P.insert(v11);
+		t1P.insert(v12);
 
-			t1Q.insert(v13);
-			t1Q.insert(v14);
-			t1Q.insert(v15);
+		t1Q.insert(v13);
+		t1Q.insert(v14);
+		t1Q.insert(v15);
 
-			t1Q = eastl::move(t1P); // We are effectively requesting to swap t1A with t1B.
-		  //EATEST_VERIFY((t1P.size() == 3) && (t1P.find(v13) != t1P.end()) && (t1P.find(v14) != t1P.end()) && (t1P.find(v15) != t1P.end()));  // Currently operator=(this_type&& x) clears x instead of swapping with it.
-		#endif
+		t1Q = eastl::move(t1P); // We are effectively requesting to swap t1A with t1B.
+	  //EATEST_VERIFY((t1P.size() == 3) && (t1P.find(v13) != t1P.end()) && (t1P.find(v14) != t1P.end()) && (t1P.find(v15) != t1P.end()));  // Currently operator=(this_type&& x) clears x instead of swapping with it.
 
 
 		// swap
@@ -664,26 +662,14 @@ int TestSetCpp11()
 {
 	int nErrorCount = 0;
 
-	//#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-	//    template <class... Args>
-	//    insert_return_type emplace(Args&&... args);
+	// template <class... Args>
+	// insert_return_type emplace(Args&&... args);
 	//
-	//    template <class... Args> 
-	//    iterator emplace_hint(const_iterator position, Args&&... args);
-	//#else
-	//    #if EASTL_MOVE_SEMANTICS_ENABLED
-	//        insert_return_type emplace(value_type&& value);
-	//        iterator emplace_hint(const_iterator position, value_type&& value);
-	//    #endif
+	// template <class... Args> 
+	// iterator emplace_hint(const_iterator position, Args&&... args);
 	//
-	//    insert_return_type emplace(const value_type& value);
-	//    iterator emplace_hint(const_iterator position, const value_type& value);
-	//#endif
-	//
-	//#if EASTL_MOVE_SEMANTICS_ENABLED
-	//    insert_return_type insert(value_type&& value);
-	//    iterator insert(const_iterator position, value_type&& value);
-	//#endif
+	// insert_return_type insert(value_type&& value);
+	// iterator insert(const_iterator position, value_type&& value);
 	TestObject::Reset();
 
 	typedef T1 TOSet;
@@ -694,44 +680,42 @@ int TestSetCpp11()
 	TestObject to0(0);
 	TestObject to1(1);
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		toSetInsertResult = toSet.emplace(to0);
-		EATEST_VERIFY(toSetInsertResult.second == true);
-		//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
+	toSetInsertResult = toSet.emplace(to0);
+	EATEST_VERIFY(toSetInsertResult.second == true);
+	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-		toSetInsertResult = toSet.emplace(eastl::move(to1));
-		EATEST_VERIFY(toSetInsertResult.second == true);
+	toSetInsertResult = toSet.emplace(eastl::move(to1));
+	EATEST_VERIFY(toSetInsertResult.second == true);
 
-		// insert_return_type t1A.emplace(value_type&& value);
-		TestObject to40(4);
-		EATEST_VERIFY(toSet.find(to40) == toSet.end());
-		EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
-		toSetInsertResult = toSet.emplace(eastl::move(to40));
-		EATEST_VERIFY(toSetInsertResult.second == true);
-		EATEST_VERIFY(toSet.find(to40) != toSet.end());
-		EATEST_VERIFY(to40.mX == 0);
+	// insert_return_type t1A.emplace(value_type&& value);
+	TestObject to40(4);
+	EATEST_VERIFY(toSet.find(to40) == toSet.end());
+	EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
+	toSetInsertResult = toSet.emplace(eastl::move(to40));
+	EATEST_VERIFY(toSetInsertResult.second == true);
+	EATEST_VERIFY(toSet.find(to40) != toSet.end());
+	EATEST_VERIFY(to40.mX == 0);
 
-		TestObject to41(4);
-		toSetInsertResult = toSet.emplace(eastl::move(to41));
-		EATEST_VERIFY(toSetInsertResult.second == false);
-		EATEST_VERIFY(toSet.find(to41) != toSet.end());
+	TestObject to41(4);
+	toSetInsertResult = toSet.emplace(eastl::move(to41));
+	EATEST_VERIFY(toSetInsertResult.second == false);
+	EATEST_VERIFY(toSet.find(to41) != toSet.end());
 
-		// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
-		TestObject to50(5);
-		toSetInsertResult = toSet.emplace(eastl::move(to50));
-		EATEST_VERIFY(toSetInsertResult.second == true);
-		EATEST_VERIFY(toSet.find(to50) != toSet.end());
+	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
+	TestObject to50(5);
+	toSetInsertResult = toSet.emplace(eastl::move(to50));
+	EATEST_VERIFY(toSetInsertResult.second == true);
+	EATEST_VERIFY(toSet.find(to50) != toSet.end());
 
-		TestObject to51(5);
-		toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to51));
-		EATEST_VERIFY(*toSetIterator == TestObject(5));
-		EATEST_VERIFY(toSet.find(to51) != toSet.end());
+	TestObject to51(5);
+	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to51));
+	EATEST_VERIFY(*toSetIterator == TestObject(5));
+	EATEST_VERIFY(toSet.find(to51) != toSet.end());
 
-		TestObject to6(6);
-		toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
-		EATEST_VERIFY(*toSetIterator == TestObject(6));
-		EATEST_VERIFY(toSet.find(to6) != toSet.end());
-	#endif
+	TestObject to6(6);
+	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(*toSetIterator == TestObject(6));
+	EATEST_VERIFY(toSet.find(to6) != toSet.end());
 		
 	TestObject to2(2);
 	EATEST_VERIFY(toSet.find(to2) == toSet.end());
@@ -758,34 +742,32 @@ int TestSetCpp11()
 	EATEST_VERIFY(*toSetIterator == to8);
 	EATEST_VERIFY(toSet.find(to8) != toSet.end());
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		//pair<iterator,bool> t1A.insert(value_type&& value);
-		TestObject to3(3);
-		EATEST_VERIFY(toSet.find(to3) == toSet.end());
-		toSetInsertResult = toSet.insert(TestObject(to3));
-		EATEST_VERIFY(toSetInsertResult.second == true);
-		EATEST_VERIFY(toSet.find(to3) != toSet.end());
-		toSetInsertResult = toSet.insert(TestObject(to3));
-		EATEST_VERIFY(toSetInsertResult.second == false);
-		EATEST_VERIFY(toSet.find(to3) != toSet.end());
+	//pair<iterator,bool> t1A.insert(value_type&& value);
+	TestObject to3(3);
+	EATEST_VERIFY(toSet.find(to3) == toSet.end());
+	toSetInsertResult = toSet.insert(TestObject(to3));
+	EATEST_VERIFY(toSetInsertResult.second == true);
+	EATEST_VERIFY(toSet.find(to3) != toSet.end());
+	toSetInsertResult = toSet.insert(TestObject(to3));
+	EATEST_VERIFY(toSetInsertResult.second == false);
+	EATEST_VERIFY(toSet.find(to3) != toSet.end());
 
 
-		// iterator t1A.insert(const_iterator position, value_type&& value);
-		TestObject to90(9);
-		toSetInsertResult = toSet.emplace(eastl::move(to90));
-		EATEST_VERIFY(toSetInsertResult.second == true);
-		EATEST_VERIFY(toSet.find(to90) != toSet.end());
+	// iterator t1A.insert(const_iterator position, value_type&& value);
+	TestObject to90(9);
+	toSetInsertResult = toSet.emplace(eastl::move(to90));
+	EATEST_VERIFY(toSetInsertResult.second == true);
+	EATEST_VERIFY(toSet.find(to90) != toSet.end());
 
-		TestObject to91(9);
-		toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to91));
-		EATEST_VERIFY(*toSetIterator == TestObject(9));
-		EATEST_VERIFY(toSet.find(to91) != toSet.end());
+	TestObject to91(9);
+	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to91));
+	EATEST_VERIFY(*toSetIterator == TestObject(9));
+	EATEST_VERIFY(toSet.find(to91) != toSet.end());
 
-		TestObject to10(10);
-		toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
-		EATEST_VERIFY(*toSetIterator == TestObject(10));
-		EATEST_VERIFY(toSet.find(to10) != toSet.end());
-	#endif
+	TestObject to10(10);
+	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(*toSetIterator == TestObject(10));
+	EATEST_VERIFY(toSet.find(to10) != toSet.end());
 
 	return nErrorCount;
 }
@@ -808,26 +790,14 @@ int TestMultisetCpp11()
 {
 	int nErrorCount = 0;
 
-	//#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-	//    template <class... Args>
-	//    insert_return_type emplace(Args&&... args);
+	// template <class... Args>
+	// insert_return_type emplace(Args&&... args);
 	//
-	//    template <class... Args> 
-	//    iterator emplace_hint(const_iterator position, Args&&... args);
-	//#else
-	//    #if EASTL_MOVE_SEMANTICS_ENABLED
-	//        insert_return_type emplace(value_type&& value);
-	//        iterator emplace_hint(const_iterator position, value_type&& value);
-	//    #endif
+	// template <class... Args> 
+	// iterator emplace_hint(const_iterator position, Args&&... args);
 	//
-	//    insert_return_type emplace(const value_type& value);
-	//    iterator emplace_hint(const_iterator position, const value_type& value);
-	//#endif
-	//
-	//#if EASTL_MOVE_SEMANTICS_ENABLED
-	//    insert_return_type insert(value_type&& value);
-	//    iterator insert(const_iterator position, value_type&& value);
-	//#endif
+	// insert_return_type insert(value_type&& value);
+	// iterator insert(const_iterator position, value_type&& value);
 	TestObject::Reset();
 
 	typedef T1 TOSet;
@@ -837,44 +807,42 @@ int TestMultisetCpp11()
 	TestObject to0(0);
 	TestObject to1(1);
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		toSetIterator = toSet.emplace(to0);
-		EATEST_VERIFY(*toSetIterator == TestObject(0));
-		//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
+	toSetIterator = toSet.emplace(to0);
+	EATEST_VERIFY(*toSetIterator == TestObject(0));
+	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-		toSetIterator = toSet.emplace(eastl::move(to1));
-		EATEST_VERIFY(*toSetIterator == TestObject(1));
+	toSetIterator = toSet.emplace(eastl::move(to1));
+	EATEST_VERIFY(*toSetIterator == TestObject(1));
 
-		// insert_return_type t1A.emplace(value_type&& value);
-		TestObject to40(4);
-		EATEST_VERIFY(toSet.find(to40) == toSet.end());
-		EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
-		toSetIterator = toSet.emplace(eastl::move(to40));
-		EATEST_VERIFY(*toSetIterator == TestObject(4));
-		EATEST_VERIFY(toSet.find(to40) != toSet.end());
-		EATEST_VERIFY(to40.mX == 0);
+	// insert_return_type t1A.emplace(value_type&& value);
+	TestObject to40(4);
+	EATEST_VERIFY(toSet.find(to40) == toSet.end());
+	EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
+	toSetIterator = toSet.emplace(eastl::move(to40));
+	EATEST_VERIFY(*toSetIterator == TestObject(4));
+	EATEST_VERIFY(toSet.find(to40) != toSet.end());
+	EATEST_VERIFY(to40.mX == 0);
 
-		TestObject to41(4);
-		toSetIterator = toSet.emplace(eastl::move(to41));  // multiset can insert another of these.
-		EATEST_VERIFY(*toSetIterator == TestObject(4));
-		EATEST_VERIFY(toSet.find(to41) != toSet.end());
+	TestObject to41(4);
+	toSetIterator = toSet.emplace(eastl::move(to41));  // multiset can insert another of these.
+	EATEST_VERIFY(*toSetIterator == TestObject(4));
+	EATEST_VERIFY(toSet.find(to41) != toSet.end());
 
-		// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
-		TestObject to50(5);
-		toSetIterator = toSet.emplace(eastl::move(to50));
-		EATEST_VERIFY(*toSetIterator == TestObject(5));
-		EATEST_VERIFY(toSet.find(to50) != toSet.end());
+	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
+	TestObject to50(5);
+	toSetIterator = toSet.emplace(eastl::move(to50));
+	EATEST_VERIFY(*toSetIterator == TestObject(5));
+	EATEST_VERIFY(toSet.find(to50) != toSet.end());
 
-		TestObject to51(5);
-		toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to51));
-		EATEST_VERIFY(*toSetIterator == TestObject(5));
-		EATEST_VERIFY(toSet.find(to51) != toSet.end());
+	TestObject to51(5);
+	toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to51));
+	EATEST_VERIFY(*toSetIterator == TestObject(5));
+	EATEST_VERIFY(toSet.find(to51) != toSet.end());
 
-		TestObject to6(6);
-		toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
-		EATEST_VERIFY(*toSetIterator == TestObject(6));
-		EATEST_VERIFY(toSet.find(to6) != toSet.end());
-	#endif
+	TestObject to6(6);
+	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(*toSetIterator == TestObject(6));
+	EATEST_VERIFY(toSet.find(to6) != toSet.end());
 		
 	TestObject to2(2);
 	EATEST_VERIFY(toSet.find(to2) == toSet.end());
@@ -901,33 +869,31 @@ int TestMultisetCpp11()
 	EATEST_VERIFY(*toSetIterator == to8);
 	EATEST_VERIFY(toSet.find(to8) != toSet.end());
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		// insert_return_type t1A.insert(value_type&& value);
-		TestObject to3(3);
-		EATEST_VERIFY(toSet.find(to3) == toSet.end());
-		toSetIterator = toSet.insert(TestObject(to3));
-		EATEST_VERIFY(*toSetIterator == TestObject(3));
-		EATEST_VERIFY(toSet.find(to3) != toSet.end());
-		toSetIterator = toSet.insert(TestObject(to3));
-		EATEST_VERIFY(*toSetIterator == TestObject(3));
-		EATEST_VERIFY(toSet.find(to3) != toSet.end());
+	// insert_return_type t1A.insert(value_type&& value);
+	TestObject to3(3);
+	EATEST_VERIFY(toSet.find(to3) == toSet.end());
+	toSetIterator = toSet.insert(TestObject(to3));
+	EATEST_VERIFY(*toSetIterator == TestObject(3));
+	EATEST_VERIFY(toSet.find(to3) != toSet.end());
+	toSetIterator = toSet.insert(TestObject(to3));
+	EATEST_VERIFY(*toSetIterator == TestObject(3));
+	EATEST_VERIFY(toSet.find(to3) != toSet.end());
 
-		// iterator t1A.insert(const_iterator position, value_type&& value);
-		TestObject to90(9);
-		toSetIterator = toSet.emplace(eastl::move(to90));
-		EATEST_VERIFY(*toSetIterator == TestObject(9));
-		EATEST_VERIFY(toSet.find(to90) != toSet.end());
+	// iterator t1A.insert(const_iterator position, value_type&& value);
+	TestObject to90(9);
+	toSetIterator = toSet.emplace(eastl::move(to90));
+	EATEST_VERIFY(*toSetIterator == TestObject(9));
+	EATEST_VERIFY(toSet.find(to90) != toSet.end());
 
-		TestObject to91(9);
-		toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to91));
-		EATEST_VERIFY(*toSetIterator == TestObject(9));
-		EATEST_VERIFY(toSet.find(to91) != toSet.end());
+	TestObject to91(9);
+	toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to91));
+	EATEST_VERIFY(*toSetIterator == TestObject(9));
+	EATEST_VERIFY(toSet.find(to91) != toSet.end());
 
-		TestObject to10(10);
-		toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
-		EATEST_VERIFY(*toSetIterator == TestObject(10));
-		EATEST_VERIFY(toSet.find(to10) != toSet.end());
-	#endif
+	TestObject to10(10);
+	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(*toSetIterator == TestObject(10));
+	EATEST_VERIFY(toSet.find(to10) != toSet.end());
 
 	return nErrorCount;
 }

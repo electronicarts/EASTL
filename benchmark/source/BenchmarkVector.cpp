@@ -56,16 +56,14 @@ namespace
 			return *this;
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			MovableType(MovableType&& x) EA_NOEXCEPT : mpData(x.mpData)
-				{ x.mpData = NULL; }
+		MovableType(MovableType&& x) EA_NOEXCEPT : mpData(x.mpData)
+			{ x.mpData = NULL; }
 
-			MovableType& operator=(MovableType&& x)
-			{
-				eastl::swap(mpData, x.mpData); // In practice it may not be right to do a swap, depending on the case.
-				return *this;
-			}
-		#endif
+		MovableType& operator=(MovableType&& x)
+		{
+			eastl::swap(mpData, x.mpData); // In practice it may not be right to do a swap, depending on the case.
+			return *this;
+		}
 
 	   ~MovableType()
 			{ delete[] mpData; }
@@ -123,21 +121,19 @@ namespace
 			return *this;
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			AutoRefCount(AutoRefCount&& x) EA_NOEXCEPT : mpObject(x.mpObject) 
-			{ 
-				x.mpObject = NULL;
-			}
+		AutoRefCount(AutoRefCount&& x) EA_NOEXCEPT : mpObject(x.mpObject) 
+		{ 
+			x.mpObject = NULL;
+		}
 
-			AutoRefCount& operator=(AutoRefCount&& x)
-			{
-				if(mpObject)
-					mpObject->Release();
-				mpObject = x.mpObject;
-				x.mpObject = NULL;
-				return *this;
-			}
-		#endif
+		AutoRefCount& operator=(AutoRefCount&& x)
+		{
+			if(mpObject)
+				mpObject->Release();
+			mpObject = x.mpObject;
+			x.mpObject = NULL;
+			return *this;
+		}
 
 		~AutoRefCount() 
 		{

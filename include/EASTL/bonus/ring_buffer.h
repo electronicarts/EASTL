@@ -940,37 +940,73 @@ namespace eastl
 	}
 	*/
 
-	template<typename Container, bool UseHeapTemporary = (sizeof(Container) >= EASTL_MAX_STACK_USAGE)>
-	struct ContainerTemporary
+
+	namespace Internal 
 	{
-		ContainerTemporary(Container& parentContainer);
-		Container& get();
-	};
+		///////////////////////////////////////////////////////////////
+		// has_overflow_allocator
+		//
+		// returns true_type when the specified container type is an 
+		// eastl::fixed_*  container and therefore has an overflow 
+		// allocator type.
+		//
+		template <typename T, typename = void>
+		struct has_overflow_allocator : false_type {};
+
+		template <typename T>
+		struct has_overflow_allocator<T, void_t<decltype(declval<T>().get_overflow_allocator())>> : true_type {};
 
 
-	template<typename Container>
-	struct ContainerTemporary<Container, false>
+		///////////////////////////////////////////////////////////////
+		// GetFixedContainerCtorAllocator
+		//
+		// eastl::fixed_* containers are only constructible via their 
+		// overflow allocator type. This helper select the appropriate 
+		// allocator from the specified container.
+		//
+		template <typename Container, bool UseOverflowAllocator = has_overflow_allocator<Container>()()>
+		struct GetFixedContainerCtorAllocator
+		{
+			auto& operator()(Container& c) { return c.get_overflow_allocator(); }
+		};
+
+		template <typename Container>
+		struct GetFixedContainerCtorAllocator<Container, false>
+		{
+			auto& operator()(Container& c) { return c.get_allocator(); }
+		};
+	} // namespace Internal
+
+
+	///////////////////////////////////////////////////////////////
+	// ContainerTemporary
+	// 
+	// Helper type which prevents utilizing excessive stack space 
+	// when creating temporaries when swapping/copying the underlying 
+	// ring_buffer container type. 
+	//
+	template <typename Container, bool UseHeapTemporary = (sizeof(Container) >= EASTL_MAX_STACK_USAGE)>
+	struct ContainerTemporary
 	{
 		Container mContainer;
 
 		ContainerTemporary(Container& parentContainer)
-			: mContainer(parentContainer.get_allocator())
+		    : mContainer(Internal::GetFixedContainerCtorAllocator<Container>{}(parentContainer))
 		{
 		}
 
 		Container& get() { return mContainer; }
 	};
 
-
-	template<typename Container>
+	template <typename Container>
 	struct ContainerTemporary<Container, true>
 	{
 		typename Container::allocator_type* mAllocator;
 		Container* mContainer;
 
 		ContainerTemporary(Container& parentContainer)
-			: mAllocator(&parentContainer.get_allocator())
-			, mContainer(new(mAllocator->allocate(sizeof(Container))) Container)
+		    : mAllocator(&parentContainer.get_allocator())
+		    , mContainer(new (mAllocator->allocate(sizeof(Container))) Container)
 		{
 		}
 

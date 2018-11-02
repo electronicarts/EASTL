@@ -454,5 +454,13 @@
 	<DisplayString Condition="($T3) == 5" Optional="true">({mFirst}, {mSecond})</DisplayString>
 </Type>
 
+<Type Name="eastl::optional&lt;*&gt;">
+	<Intrinsic Name="value" Expression="*($T1*)&amp;val"/>
+	<DisplayString Condition="!engaged">nullopt</DisplayString>
+	<DisplayString Condition="engaged">{value()}</DisplayString>
+	<Expand>
+		<Item Condition="engaged" Name="value">value()</Item>
+	</Expand>
+</Type>
 
 </AutoVisualizer>

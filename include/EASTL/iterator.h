@@ -242,68 +242,68 @@ namespace eastl
 		Iterator mIterator;
 
 	public:
-		reverse_iterator()      // It's important that we construct mIterator, because if Iterator  
+		EA_CPP14_CONSTEXPR reverse_iterator()      // It's important that we construct mIterator, because if Iterator  
 			: mIterator() { }   // is a pointer, there's a difference between doing it and not.
 
-		explicit reverse_iterator(iterator_type i)
+		EA_CPP14_CONSTEXPR explicit reverse_iterator(iterator_type i)
 			: mIterator(i) { }
 
-		reverse_iterator(const reverse_iterator& ri)
+		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator& ri)
 			: mIterator(ri.mIterator) { }
 
 		template <typename U>
-		reverse_iterator(const reverse_iterator<U>& ri)
+		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator<U>& ri)
 			: mIterator(ri.base()) { }
 
 		// This operator= isn't in the standard, but the the C++ 
 		// library working group has tentatively approved it, as it
 		// allows const and non-const reverse_iterators to interoperate.
 		template <typename U>
-		reverse_iterator<Iterator>& operator=(const reverse_iterator<U>& ri)
+		EA_CPP14_CONSTEXPR reverse_iterator<Iterator>& operator=(const reverse_iterator<U>& ri)
 			{ mIterator = ri.base(); return *this; }
 
-		iterator_type base() const
+		EA_CPP14_CONSTEXPR iterator_type base() const
 			{ return mIterator; }
 
-		reference operator*() const
+		EA_CPP14_CONSTEXPR reference operator*() const
 		{
 			iterator_type i(mIterator);
 			return *--i;
 		}
 
-		pointer operator->() const
+		EA_CPP14_CONSTEXPR pointer operator->() const
 			{ return &(operator*()); }
 
-		reverse_iterator& operator++()
+		EA_CPP14_CONSTEXPR reverse_iterator& operator++()
 			{ --mIterator; return *this; }
 
-		reverse_iterator operator++(int)
+		EA_CPP14_CONSTEXPR reverse_iterator operator++(int)
 		{
 			reverse_iterator ri(*this);
 			--mIterator;
 			return ri;
 		}
 
-		reverse_iterator& operator--()
+		EA_CPP14_CONSTEXPR reverse_iterator& operator--()
 			{ ++mIterator; return *this; }
 
-		reverse_iterator operator--(int)
+		EA_CPP14_CONSTEXPR reverse_iterator operator--(int)
 		{
 			reverse_iterator ri(*this);
 			++mIterator;
 			return ri;
 		}
 
-		reverse_iterator operator+(difference_type n) const
+		EA_CPP14_CONSTEXPR reverse_iterator operator+(difference_type n) const
 			{ return reverse_iterator(mIterator - n); }
 
-		reverse_iterator& operator+=(difference_type n)
+		EA_CPP14_CONSTEXPR reverse_iterator& operator+=(difference_type n)
 			{ mIterator -= n; return *this; }
 
-		reverse_iterator operator-(difference_type n) const
+		EA_CPP14_CONSTEXPR reverse_iterator operator-(difference_type n) const
 			{ return reverse_iterator(mIterator + n); }
 
-		reverse_iterator& operator-=(difference_type n)
+		EA_CPP14_CONSTEXPR reverse_iterator& operator-=(difference_type n)
 			{ mIterator += n; return *this; }
 
 		// http://cplusplus.github.io/LWG/lwg-defects.html#386, 
@@ -314,7 +314,7 @@ namespace eastl
 		// reference operator[](difference_type n) const
 		//     { return mIterator[-n - 1]; }
 
-		reference operator[](difference_type n) const
+		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
 			{ return *(*this + n); }
 	};
 
@@ -329,49 +329,49 @@ namespace eastl
 	// a single template parameter to placate std::relops. But relops is hardly used due to 
 	// the troubles it causes and so we are avoiding support here until somebody complains about it.
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator==(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() == b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator<(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() > b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator!=(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() != b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator>(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() < b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator<=(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() >= b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline bool
+	EA_CPP14_CONSTEXPR inline bool
 	operator>=(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return a.base() <= b.base(); }
 
 
 	template <typename Iterator1, typename Iterator2>
-	inline typename reverse_iterator<Iterator1>::difference_type
+	EA_CPP14_CONSTEXPR inline typename reverse_iterator<Iterator1>::difference_type
 	operator-(const reverse_iterator<Iterator1>& a, const reverse_iterator<Iterator2>& b)
 		{ return b.base() - a.base(); }
 
 
 	template <typename Iterator>
-	inline reverse_iterator<Iterator>
+	EA_CPP14_CONSTEXPR inline reverse_iterator<Iterator>
 	operator+(typename reverse_iterator<Iterator>::difference_type n, const reverse_iterator<Iterator>& a)
 		{ return reverse_iterator<Iterator>(a.base() - n); }
 
@@ -410,212 +410,171 @@ namespace eastl
 
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		/// move_iterator
-		///
-		/// From the C++11 Standard, section 24.5.3.1:
-		/// Class template move_iterator is an iterator adaptor with the same behavior as the underlying iterator
-		/// except that its dereference operator implicitly converts the value returned by the underlying iterator's
-		/// dereference operator to an rvalue reference. Some generic algorithms can be called with move iterators to
-		/// replace copying with moving.
+	/// move_iterator
+	///
+	/// From the C++11 Standard, section 24.5.3.1:
+	/// Class template move_iterator is an iterator adaptor with the same behavior as the underlying iterator
+	/// except that its dereference operator implicitly converts the value returned by the underlying iterator's
+	/// dereference operator to an rvalue reference. Some generic algorithms can be called with move iterators to
+	/// replace copying with moving.
 
-		template<typename Iterator>
-		class move_iterator // Don't inherit from iterator.
+	template<typename Iterator>
+	class move_iterator // Don't inherit from iterator.
+	{
+	public:
+		typedef Iterator                                iterator_type;
+		typedef iterator_type                           wrapped_iterator_type;   // This is not in the C++ Standard; it's used by use to identify it as a wrapping iterator type.
+		typedef iterator_traits<Iterator>               traits_type;
+		typedef typename traits_type::iterator_category iterator_category;
+		typedef typename traits_type::value_type        value_type;
+		typedef typename traits_type::difference_type   difference_type;
+		typedef Iterator                                pointer;
+		typedef value_type&&                            reference;
+
+	protected:
+		iterator_type mIterator;
+
+	public:
+		move_iterator()
+		  : mIterator()
 		{
-		public:
-			typedef Iterator                                iterator_type;
-			typedef iterator_type                           wrapped_iterator_type;   // This is not in the C++ Standard; it's used by use to identify it as a wrapping iterator type.
-			typedef iterator_traits<Iterator>               traits_type;
-			typedef typename traits_type::iterator_category iterator_category;
-			typedef typename traits_type::value_type        value_type;
-			typedef typename traits_type::difference_type   difference_type;
-			typedef Iterator                                pointer;
-			typedef value_type&&                            reference;
+		}
 
-		protected:
-			iterator_type mIterator;
+		explicit move_iterator(iterator_type mi)
+		  : mIterator(mi) { }
 
-		public:
-			move_iterator()
-			  : mIterator()
-			{
-			}
+		template<typename U>
+		move_iterator(const move_iterator<U>& mi)
+		  : mIterator(mi.base())
+		{
+		}
 
-			explicit move_iterator(iterator_type mi)
-			  : mIterator(mi) { }
+		iterator_type base() const
+			{ return mIterator; }
 
-			template<typename U>
-			move_iterator(const move_iterator<U>& mi)
-			  : mIterator(mi.base())
-			{
-			}
+		reference operator*() const
+			{ return eastl::move(*mIterator); }
 
-			iterator_type base() const
-				{ return mIterator; }
+		pointer operator->() const
+			{ return mIterator; }
 
-			reference operator*() const
-				{ return eastl::move(*mIterator); }
+		move_iterator& operator++()
+		{
+			++mIterator;
+			return *this;
+		}
 
-			pointer operator->() const
-				{ return mIterator; }
+		move_iterator operator++(int)
+		{
+			move_iterator tempMoveIterator = *this;
+			++mIterator;
+			return tempMoveIterator;
+		}
 
-			move_iterator& operator++()
-			{
-				++mIterator;
-				return *this;
-			}
+		move_iterator& operator--()
+		{
+			--mIterator;
+			return *this;
+		}
 
-			move_iterator operator++(int)
-			{
-				move_iterator tempMoveIterator = *this;
-				++mIterator;
-				return tempMoveIterator;
-			}
+		move_iterator operator--(int)
+		{
+			move_iterator tempMoveIterator = *this;
+			--mIterator;
+			return tempMoveIterator;
+		}
 
-			move_iterator& operator--()
-			{
-				--mIterator;
-				return *this;
-			}
+		move_iterator operator+(difference_type n) const
+			{ return move_iterator(mIterator + n); }
 
-			move_iterator operator--(int)
-			{
-				move_iterator tempMoveIterator = *this;
-				--mIterator;
-				return tempMoveIterator;
-			}
+		move_iterator& operator+=(difference_type n)
+		{
+			mIterator += n;
+			return *this;
+		}
 
-			move_iterator operator+(difference_type n) const
-				{ return move_iterator(mIterator + n); }
+		move_iterator operator-(difference_type n) const
+			{ return move_iterator(mIterator - n); }
 
-			move_iterator& operator+=(difference_type n)
-			{
-				mIterator += n;
-				return *this;
-			}
+		move_iterator& operator-=(difference_type n)
+		{ 
+			mIterator -= n;
+			return *this;
+		}
 
-			move_iterator operator-(difference_type n) const
-				{ return move_iterator(mIterator - n); }
-	
-			move_iterator& operator-=(difference_type n)
-			{ 
-				mIterator -= n;
-				return *this;
-			}
+		reference operator[](difference_type n) const
+			{ return eastl::move(mIterator[n]); }
+	};
 
-			reference operator[](difference_type n) const
-				{ return eastl::move(mIterator[n]); }
-		};
-
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator==(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return a.base() == b.base(); }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator==(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return a.base() == b.base(); }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator!=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return !(a == b); }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator!=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return !(a == b); }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator<(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return a.base() < b.base(); }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator<(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return a.base() < b.base(); }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator<=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return !(b < a); }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator<=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return !(b < a); }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator>(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return b < a; }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator>(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return b < a; }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline bool
-		operator>=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
-			{ return !(a < b); }
+	template<typename Iterator1, typename Iterator2>
+	inline bool
+	operator>=(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b)
+		{ return !(a < b); }
 
 
-		template<typename Iterator1, typename Iterator2>
-		inline auto
-		operator-(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b) -> decltype(a.base() - b.base())
-			{ return a.base() - b.base(); }
+	template<typename Iterator1, typename Iterator2>
+	inline auto
+	operator-(const move_iterator<Iterator1>& a, const move_iterator<Iterator2>& b) -> decltype(a.base() - b.base())
+		{ return a.base() - b.base(); }
 
 
-		template<typename Iterator>
-		inline move_iterator<Iterator>
-		operator+(typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& a)
-			{ return a + n; }
+	template<typename Iterator>
+	inline move_iterator<Iterator>
+	operator+(typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& a)
+		{ return a + n; }
 
 
-		template<typename Iterator>
-		inline move_iterator<Iterator> make_move_iterator(Iterator i)
-			{ return move_iterator<Iterator>(i); }
+	template<typename Iterator>
+	inline move_iterator<Iterator> make_move_iterator(Iterator i)
+		{ return move_iterator<Iterator>(i); }
 
 
-		// make_move_if_noexcept_iterator returns move_iterator<Iterator> if the Iterator is of a noexcept type;
-		// otherwise returns Iterator as-is. The point of this is to be able to avoid moves that can generate exceptions and instead 
-		// fall back to copies or whatever the default IteratorType::operator* returns for use by copy/move algorithms.
-		// To consider: merge the conditional expression usage here with the one used by move_if_noexcept, as they are the same condition.
-		#if EASTL_EXCEPTIONS_ENABLED
-			#if defined(EA_COMPILER_NO_FUNCTION_TEMPLATE_DEFAULT_ARGS)
-				namespace Internal
-				{
-					template <typename Iterator, bool is_noexcept>
-					struct mminei_helper_1
-					{
-						typedef eastl::move_iterator<Iterator> ReturnType; 
-						static inline ReturnType mminei(Iterator i)
-							{ return eastl::move_iterator<Iterator>(i); }
-					};
-					template <typename Iterator>
-					struct mminei_helper_1<Iterator, false>
-					{
-						typedef Iterator ReturnType; 
-						static inline ReturnType mminei(Iterator i)
-							{ return eastl::move_iterator<Iterator>(i); }
-					};
-
-					template <typename Iterator>
-					struct mminei_helper
-					{
-						static const bool is_noexcept = eastl::is_nothrow_move_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value || !eastl::is_copy_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value;
-						typedef typename mminei_helper_1<Iterator, is_noexcept>::ReturnType ReturnType;
-					};
-				}
-
-				template <typename Iterator>
-				inline typename Internal::mminei_helper<Iterator>::ReturnType
-				make_move_if_noexcept_iterator(Iterator i)
-				{
-					return Internal::mminei_helper_1<Iterator, Internal::mminei_helper<Iterator>::is_noexcept>::mminei(i);
-				}
-			#else
-				template <typename Iterator, typename IteratorType = typename eastl::conditional<eastl::is_nothrow_move_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value || 
-																								 !eastl::is_copy_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value, 
-																								 eastl::move_iterator<Iterator>, Iterator>::type>
-				inline IteratorType make_move_if_noexcept_iterator(Iterator i)
-					{ return IteratorType(i); }
-			#endif
-		#else
-			// Else there are no exceptions and thus we always return a move_iterator.
-			template <typename Iterator>
-			inline eastl::move_iterator<Iterator> make_move_if_noexcept_iterator(Iterator i)
-				{ return eastl::move_iterator<Iterator>(i); }
-		#endif
+	// make_move_if_noexcept_iterator returns move_iterator<Iterator> if the Iterator is of a noexcept type;
+	// otherwise returns Iterator as-is. The point of this is to be able to avoid moves that can generate exceptions and instead 
+	// fall back to copies or whatever the default IteratorType::operator* returns for use by copy/move algorithms.
+	// To consider: merge the conditional expression usage here with the one used by move_if_noexcept, as they are the same condition.
+	#if EASTL_EXCEPTIONS_ENABLED
+		template <typename Iterator, typename IteratorType = typename eastl::conditional<eastl::is_nothrow_move_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value || 
+																						 !eastl::is_copy_constructible<typename eastl::iterator_traits<Iterator>::value_type>::value, 
+																						 eastl::move_iterator<Iterator>, Iterator>::type>
+		inline IteratorType make_move_if_noexcept_iterator(Iterator i)
+			{ return IteratorType(i); }
 	#else
-
-		// To consider: Should we make a dummy move_iterator that does nothing new?
-		// It could be a subclass of generic_iterator.
-
-	#endif // #if EASTL_MOVE_SEMANTICS_ENABLED
+		// Else there are no exceptions and thus we always return a move_iterator.
+		template <typename Iterator>
+		inline eastl::move_iterator<Iterator> make_move_if_noexcept_iterator(Iterator i)
+			{ return eastl::move_iterator<Iterator>(i); }
+	#endif
 
 
 
@@ -631,11 +590,9 @@ namespace eastl
 	struct is_move_iterator
 		: public eastl::false_type {};
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template<typename Iterator>
-		struct is_move_iterator< eastl::move_iterator<Iterator> >
-			: public eastl::true_type {};
-	#endif
+	template<typename Iterator>
+	struct is_move_iterator< eastl::move_iterator<Iterator> >
+		: public eastl::true_type {};
 
 
 	/// unwrap_move_iterator
@@ -1021,19 +978,19 @@ namespace eastl
 	// http://en.cppreference.com/w/cpp/iterator/data
 	//
 	template <class Container>
-	EA_CONSTEXPR auto data(Container& c) -> decltype(c.data())
+	EA_CPP14_CONSTEXPR auto data(Container& c) -> decltype(c.data())
 		{ return c.data(); }
 
 	template <class Container>
-	EA_CONSTEXPR auto data(const Container& c) -> decltype(c.data())
+	EA_CPP14_CONSTEXPR auto data(const Container& c) -> decltype(c.data())
 		{ return c.data(); }
 
 	template <class T, std::size_t N>
-	EA_CONSTEXPR T* data(T(&array)[N]) EA_NOEXCEPT 
+	EA_CPP14_CONSTEXPR T* data(T(&array)[N]) EA_NOEXCEPT 
 		{ return array; }
 
 	template <class E>
-	EA_CONSTEXPR const E* data(std::initializer_list<E> il) EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR const E* data(std::initializer_list<E> il) EA_NOEXCEPT
 		{ return il.begin(); }
 
 
@@ -1042,11 +999,11 @@ namespace eastl
 	// http://en.cppreference.com/w/cpp/iterator/size
 	//
 	template <class C> 
-	EA_CONSTEXPR auto size(const C& c) -> decltype(c.size())
+	EA_CPP14_CONSTEXPR auto size(const C& c) -> decltype(c.size())
 		{ return c.size(); }
 
 	template <class T, std::size_t N>
-	EA_CONSTEXPR std::size_t size(const T (&)[N]) EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR std::size_t size(const T (&)[N]) EA_NOEXCEPT
 		{ return N; }
 
 
@@ -1055,15 +1012,15 @@ namespace eastl
 	// http://en.cppreference.com/w/cpp/iterator/empty
 	//
 	template <class Container> 
-	EA_CONSTEXPR auto empty(const Container& c) -> decltype(c.empty())
+	EA_CPP14_CONSTEXPR auto empty(const Container& c) -> decltype(c.empty())
 		{ return c.empty(); }
 
 	template <class T, std::size_t N>
-	EA_CONSTEXPR bool empty(const T (&)[N]) EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR bool empty(const T (&)[N]) EA_NOEXCEPT
 		{ return false; }
 
 	template <class E> 
-	EA_CONSTEXPR bool empty(std::initializer_list<E> il) EA_NOEXCEPT
+	EA_CPP14_CONSTEXPR bool empty(std::initializer_list<E> il) EA_NOEXCEPT
 		{ return il.size() == 0; }
 
 #endif // defined(EA_COMPILER_CPP11_ENABLED) && EA_COMPILER_CPP11_ENABLED
@@ -1091,115 +1048,115 @@ namespace eastl
 
 	#if EASTL_BEGIN_END_ENABLED
 		template <typename Container>
-		inline auto begin(Container& container) -> decltype(container.begin())
+		EA_CPP14_CONSTEXPR inline auto begin(Container& container) -> decltype(container.begin())
 		{    
 			return container.begin();
 		}
 
 		template <typename Container>
-		inline auto begin(const Container& container) -> decltype(container.begin())
+		EA_CPP14_CONSTEXPR inline auto begin(const Container& container) -> decltype(container.begin())
 		{    
 			return container.begin();
 		}
 
 		template <typename Container>
-		inline auto cbegin(const Container& container) -> decltype(container.begin())
+		EA_CPP14_CONSTEXPR inline auto cbegin(const Container& container) -> decltype(container.begin())
 		{    
 			return container.begin();
 		}
 
 		template <typename Container>
-		inline auto end(Container& container) -> decltype(container.end())
+		EA_CPP14_CONSTEXPR inline auto end(Container& container) -> decltype(container.end())
 		{
 			return container.end();
 		}
 
 		template <typename Container>
-		inline auto end(const Container& container) -> decltype(container.end())
+		EA_CPP14_CONSTEXPR inline auto end(const Container& container) -> decltype(container.end())
 		{
 			return container.end();
 		}
 
 		template <typename Container>
-		inline auto cend(const Container& container) -> decltype(container.end())
+		EA_CPP14_CONSTEXPR inline auto cend(const Container& container) -> decltype(container.end())
 		{
 			return container.end();
 		}
 
 		template <typename Container>
-		inline auto rbegin(Container& container) -> decltype(container.rbegin())
+		EA_CPP14_CONSTEXPR inline auto rbegin(Container& container) -> decltype(container.rbegin())
 		{
 			return container.rbegin();
 		}
 
 		template <typename Container>
-		inline auto rbegin(const Container& container) -> decltype(container.rbegin())
+		EA_CPP14_CONSTEXPR inline auto rbegin(const Container& container) -> decltype(container.rbegin())
 		{
 			return container.rbegin();
 		}
 
 		template <typename Container>
-		inline auto rend(Container& container) -> decltype(container.rend())
+		EA_CPP14_CONSTEXPR inline auto rend(Container& container) -> decltype(container.rend())
 		{
 			return container.rend();
 		}
 
 		template <typename Container>
-		inline auto rend(const Container& container) -> decltype(container.rend())
+		EA_CPP14_CONSTEXPR inline auto rend(const Container& container) -> decltype(container.rend())
 		{
 			return container.rend();
 		}
 
 		template <typename Container>
-		inline auto crbegin(const Container& container) -> decltype(eastl::rbegin(container))
+		EA_CPP14_CONSTEXPR inline auto crbegin(const Container& container) -> decltype(eastl::rbegin(container))
 		{
 			return container.rbegin();
 		}
 
 		template <typename Container>
-		inline auto crend(const Container& container) -> decltype(eastl::rend(container))
+		EA_CPP14_CONSTEXPR inline auto crend(const Container& container) -> decltype(eastl::rend(container))
 		{
 			return container.rend();
 		}
 
 		template<typename T, size_t arraySize>
-		inline T* begin(T (&arrayObject)[arraySize])
+		EA_CPP14_CONSTEXPR inline T* begin(T (&arrayObject)[arraySize])
 		{
 			return arrayObject;
 		}
 
 		template<typename T, size_t arraySize> 
-		inline T* end(T (&arrayObject)[arraySize])
+		EA_CPP14_CONSTEXPR inline T* end(T (&arrayObject)[arraySize])
 		{
 			return (arrayObject + arraySize);
 		}
 
 		template <typename T, size_t arraySize>
-		inline reverse_iterator<T*> rbegin(T (&arrayObject)[arraySize])
+		EA_CPP14_CONSTEXPR inline reverse_iterator<T*> rbegin(T (&arrayObject)[arraySize])
 		{
 			return reverse_iterator<T*>(arrayObject + arraySize);
 		}
 
 		template <typename T, size_t arraySize>
-		inline reverse_iterator<T*> rend(T (&arrayObject)[arraySize])
+		EA_CPP14_CONSTEXPR inline reverse_iterator<T*> rend(T (&arrayObject)[arraySize])
 		{
 			return reverse_iterator<T*>(arrayObject);
 		}
 
 		template <typename E>
-		inline reverse_iterator<const E*> rbegin(std::initializer_list<E> ilist)
+		EA_CPP14_CONSTEXPR inline reverse_iterator<const E*> rbegin(std::initializer_list<E> ilist)
 		{
 			return eastl::reverse_iterator<const E*>(ilist.end());
 		}
 
 		template <typename E>
-		inline reverse_iterator<const E*> rend(std::initializer_list<E> ilist)
+		EA_CPP14_CONSTEXPR inline reverse_iterator<const E*> rend(std::initializer_list<E> ilist)
 		{
 			return eastl::reverse_iterator<const E*>(ilist.begin());
 		}
 
 		template <typename Iterator>
-		reverse_iterator<Iterator> make_reverse_iterator(Iterator i)
+		EA_CPP14_CONSTEXPR reverse_iterator<Iterator> make_reverse_iterator(Iterator i)
 			{ return reverse_iterator<Iterator>(i); }
 
 	#endif // EASTL_BEGIN_END_ENABLED

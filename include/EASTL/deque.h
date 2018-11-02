@@ -227,19 +227,19 @@ namespace eastl
 		T*  mpEnd;              // The end of the current subarray. To consider: remove this member, as it is always equal to 'mpBegin + kDequeSubarraySize'. Given that deque subarrays usually consist of hundreds of bytes, this isn't a massive win. Also, now that we are implementing a zero-allocation new deque policy, mpEnd may in fact not be equal to 'mpBegin + kDequeSubarraySize'.
 		T** mpCurrentArrayPtr;  // Pointer to current subarray. We could alternatively implement this as a list node iterator if the deque used a linked list.
 
-		struct Increment{ };
-		struct Decrement{ };
-		struct FromConst{};
+		struct Increment {};
+		struct Decrement {};
+		struct FromConst {};
 
 		DequeIterator(T** pCurrentArrayPtr, T* pCurrent);
 		DequeIterator(const const_iterator& x, FromConst) : mpCurrent(x.mpCurrent), mpBegin(x.mpBegin), mpEnd(x.mpEnd), mpCurrentArrayPtr(x.mpCurrentArrayPtr){}
 		DequeIterator(const iterator&       x, Increment);
 		DequeIterator(const iterator&       x, Decrement);
 
-		this_type copy(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait has_trivial_relocate,
+		this_type copy(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait is_move_assignable,
 		this_type copy(const iterator& first, const iterator& last, false_type); // false means it does not. 
 
-		void copy_backward(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait has_trivial_relocate,
+		void copy_backward(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait is_move_assignable,
 		void copy_backward(const iterator& first, const iterator& last, false_type); // false means it does not.
 
 		void SetSubarray(T** pCurrentArrayPtr);
@@ -298,17 +298,17 @@ namespace eastl
 		void                  set_allocator(const allocator_type& allocator);
 
 	protected:
-		T*   DoAllocateSubarray();
-		void DoFreeSubarray(T* p);
-		void DoFreeSubarrays(T** pBegin, T** pEnd);
+		T*       DoAllocateSubarray();
+		void     DoFreeSubarray(T* p);
+		void     DoFreeSubarrays(T** pBegin, T** pEnd);
 
-		T**  DoAllocatePtrArray(size_type n);
-		void DoFreePtrArray(T** p, size_t n);
+		T**      DoAllocatePtrArray(size_type n);
+		void     DoFreePtrArray(T** p, size_t n);
 
 		iterator DoReallocSubarray(size_type nAdditionalCapacity, Side allocationSide);
 		void     DoReallocPtrArray(size_type nAdditionalCapacity, Side allocationSide);
 
-		void DoInit(size_type n);
+		void     DoInit(size_type n);
 
 	}; // DequeBase
 
@@ -1053,7 +1053,7 @@ namespace eastl
 			memmove(mpCurrent, first.mpCurrent, (size_t)((uintptr_t)last.mpCurrent - (uintptr_t)first.mpCurrent));
 			return *this + (last.mpCurrent - first.mpCurrent);
 		}
-		return eastl::copy(first, last, *this);
+		return eastl::copy(eastl::make_move_iterator(first), eastl::make_move_iterator(last), eastl::make_move_iterator(*this)).base();
 	}
 
 
@@ -1073,7 +1073,7 @@ namespace eastl
 		if((first.mpBegin == last.mpBegin) && (first.mpBegin == mpBegin)) // If all operations are within the same subarray, implement the operation as a memcpy.
 			memmove(mpCurrent - (last.mpCurrent - first.mpCurrent), first.mpCurrent, (size_t)((uintptr_t)last.mpCurrent - (uintptr_t)first.mpCurrent));
 		else
-			eastl::copy_backward(first, last, *this);
+			eastl::copy_backward(eastl::make_move_iterator(first), eastl::make_move_iterator(last), eastl::make_move_iterator(*this));
 	}
 
 
@@ -1780,7 +1780,7 @@ namespace eastl
 
 		if(i < (difference_type)(size() / 2)) // Should we insert at the front or at the back? We divide the range in half.
 		{
-			emplace_front(*mItBegin); // This operation potentially invalidates all existing iterators and so we need to assign them anew relative to mItBegin below.
+			emplace_front(eastl::move(*mItBegin)); // This operation potentially invalidates all existing iterators and so we need to assign them anew relative to mItBegin below.
 
 			itPosition = mItBegin + i;
 
@@ -1788,18 +1788,18 @@ namespace eastl
 				  iterator oldBegin     (mItBegin,   typename iterator::Increment());
 			const iterator oldBeginPlus1(oldBegin,   typename iterator::Increment());
 
-			oldBegin.copy(oldBeginPlus1, newPosition, eastl::has_trivial_relocate<value_type>());
+			oldBegin.copy(oldBeginPlus1, newPosition, eastl::is_move_assignable<value_type>());
 		}
 		else
 		{
-			emplace_back(*iterator(mItEnd, typename iterator::Decrement()));
+			emplace_back(eastl::move(*iterator(mItEnd, typename iterator::Decrement())));
 
 			itPosition = mItBegin + i;
 
 				  iterator oldBack      (mItEnd,  typename iterator::Decrement());
 			const iterator oldBackMinus1(oldBack, typename iterator::Decrement());
 
-			oldBack.copy_backward(itPosition, oldBackMinus1, eastl::has_trivial_relocate<value_type>());
+			oldBack.copy_backward(itPosition, oldBackMinus1, eastl::is_move_assignable<value_type>());
 		}
 
 		*itPosition = eastl::move(valueSaved);
@@ -1925,6 +1925,9 @@ namespace eastl
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY(!(validate_iterator(position) & isf_valid)))
 				EASTL_FAIL_MSG("deque::erase -- invalid iterator");
+
+			if(EASTL_UNLIKELY(position == end()))
+				EASTL_FAIL_MSG("deque::erase -- end() iterator is an invalid iterator for erase");
 		#endif
 
 		iterator itPosition(position, typename iterator::FromConst());
@@ -1933,12 +1936,12 @@ namespace eastl
 
 		if(i < (difference_type)(size() / 2)) // Should we move the front entries forward or the back entries backward? We divide the range in half.
 		{
-			itNext.copy_backward(mItBegin, itPosition, eastl::has_trivial_relocate<value_type>());
+			itNext.copy_backward(mItBegin, itPosition, eastl::is_move_assignable<value_type>());
 			pop_front();
 		}
 		else
 		{
-			itPosition.copy(itNext, mItEnd, eastl::has_trivial_relocate<value_type>());
+			itPosition.copy(itNext, mItEnd, eastl::is_move_assignable<value_type>());
 			pop_back();
 		}
 
@@ -1970,7 +1973,7 @@ namespace eastl
 				const iterator itNewBegin(mItBegin + n);
 				value_type** const pPtrArrayBegin = mItBegin.mpCurrentArrayPtr;
 
-				itLast.copy_backward(mItBegin, itFirst, eastl::has_trivial_relocate<value_type>());
+				itLast.copy_backward(mItBegin, itFirst, eastl::is_move_assignable<value_type>());
 
 				for(; mItBegin != itNewBegin; ++mItBegin) // Question: If value_type is a POD type, will the compiler generate this loop at all?
 					mItBegin.mpCurrent->~value_type();    //           If so, then we need to make a specialization for destructing PODs.
@@ -1984,7 +1987,7 @@ namespace eastl
 				iterator itNewEnd(mItEnd - n);
 				value_type** const pPtrArrayEnd = itNewEnd.mpCurrentArrayPtr + 1;
 
-				itFirst.copy(itLast, mItEnd, eastl::has_trivial_relocate<value_type>());
+				itFirst.copy(itLast, mItEnd, eastl::is_move_assignable<value_type>());
 
 				for(iterator itTemp(itNewEnd); itTemp != mItEnd; ++itTemp)
 					itTemp.mpCurrent->~value_type();
@@ -2077,6 +2080,7 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	void deque<T, Allocator, kDequeSubarraySize>::swap(deque& x)
 	{
+	#if defined(EASTL_DEQUE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_DEQUE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		if(mAllocator == x.mAllocator) // If allocators are equivalent...
 			DoSwap(x);
 		else // else swap the contents.
@@ -2085,6 +2089,19 @@ namespace eastl
 			*this = x;                   // itself call this member swap function.
 			x     = temp;
 		}
+	#else
+		// NOTE(rparolin): The previous implementation required T to be copy-constructible in the fall-back case where
+		// allocators with unique instances copied elements.  This was an unnecessary restriction and prevented the common
+		// usage of deque with non-copyable types (eg. eastl::deque<non_copyable> or eastl::deque<unique_ptr>). 
+		// 
+		// The previous implementation violated the following requirements of deque::swap so the fall-back code has
+		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = false' therefore the fall-back case is
+		// undefined behaviour.  We simply swap the contents and the allocator as that is the common expectation of
+		// users and does not put the container into an invalid state since it can not free its memory via its current
+		// allocator instance.
+		//
+		DoSwap(x);
+	#endif
 	}
 
 

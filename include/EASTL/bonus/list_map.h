@@ -212,10 +212,8 @@ namespace eastl
 		// To do: Implement the following:
 
 		//list_map(const this_type& x);
-		//#if EASTL_MOVE_SEMANTICS_ENABLED
-		//    list_map(this_type&& x);
-		//    list_map(this_type&& x, const allocator_type& allocator);
-		//#endif
+		//list_map(this_type&& x);
+		//list_map(this_type&& x, const allocator_type& allocator);
 		//list_map(std::initializer_list<mapped_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_LIST_MAP_DEFAULT_ALLOCATOR);
 
 		//template <typename Iterator>
@@ -223,10 +221,7 @@ namespace eastl
 
 		//this_type& operator=(const this_type& x);
 		//this_type& operator=(std::initializer_list<mapped_type> ilist);
-
-		//#if EASTL_MOVE_SEMANTICS_ENABLED
-		//    this_type& operator=(this_type&& x);
-		//#endif
+		//this_type& operator=(this_type&& x);
 
 		//void swap(this_type& x);
 

@@ -388,11 +388,10 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_has_trivial_relocate_CONFORMANCE 0  // is_pod is not fully conforming. Can return false negatives.
 
-	// With current compilers, this is all we can do.
-	template <typename T> 
-	struct has_trivial_relocate : public eastl::integral_constant<bool, eastl::is_pod<T>::value && !eastl::is_volatile<T>::value>{};
+	template <typename T>
+	struct has_trivial_relocate : public eastl::bool_constant<eastl::is_pod_v<T> && !eastl::is_volatile_v<T>> {};
 
-	#define EASTL_DECLARE_TRIVIAL_RELOCATE(T) namespace eastl{ template <> struct has_trivial_relocate<T> : public true_type{}; template <> struct has_trivial_relocate<const T> : public true_type{}; }
+    #define EASTL_DECLARE_TRIVIAL_RELOCATE(T) namespace eastl{ template <> struct has_trivial_relocate<T> : public true_type{}; template <> struct has_trivial_relocate<const T> : public true_type{}; }
 
 
 
@@ -1449,6 +1448,11 @@ namespace eastl
 			: public eastl::integral_constant<bool, eastl::is_scalar<T>::value> {};
 
 	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T, class U>
+		EA_CONSTEXPR bool is_trivially_assignable_v = is_trivially_assignable<T, U>::value;
+    #endif
 
 	// The main purpose of this function is to help the non-conforming case above.
 	// Note: We don't handle const/volatile variations here, as we expect the user to 

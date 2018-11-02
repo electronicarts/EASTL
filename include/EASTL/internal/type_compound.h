@@ -445,7 +445,13 @@ namespace eastl
 		template <> struct is_enum<void const volatile> : public false_type {};
 	#endif
 
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template<typename T>
+		EA_CONSTEXPR bool is_enum_v = is_enum<T>::value;
+	#endif
+
 	#define EASTL_DECLARE_ENUM(T) namespace eastl{ template <> struct is_enum<T> : public true_type{}; template <> struct is_enum<const T> : public true_type{}; }
+
 
 
 

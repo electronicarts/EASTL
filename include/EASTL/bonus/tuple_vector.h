@@ -34,6 +34,10 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
+EA_DISABLE_VC_WARNING(4623) // warning C4623: default constructor was implicitly defined as deleted
+EA_DISABLE_VC_WARNING(4625) // warning C4625: copy constructor was implicitly defined as deleted
+EA_DISABLE_VC_WARNING(4510) // warning C4510: default constructor could not be generated
+
 namespace eastl
 {
 	/// EASTL_TUPLE_VECTOR_DEFAULT_NAME
@@ -162,6 +166,14 @@ struct TupleRecurser<>
 		// This is fine, as our default ctor initializes with NULL pointers. 
 		size_type alignment = TupleRecurser<VecTypes...>::GetTotalAlignment();
 		void* ptr = capacity ? allocate_memory(vec.internalAllocator(), offset, alignment, 0) : nullptr;
+
+	#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY((size_type)ptr & (alignment - 1)) != 0)
+		{
+			EASTL_FAIL_MSG("tuple_vector::DoAllocate -- memory not alignment at requested alignment");
+		}
+	#endif
+
 		return make_pair(ptr, offset);
 	}
 
@@ -1375,9 +1387,9 @@ protected:
 
 }  // namespace TupleVecInternal
 
-   // Move_iterator specialization for TupleVecIter.
-   // An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
-   // what we actually want is "tuple<Ts&&...>". This specialization gives us that.
+// Move_iterator specialization for TupleVecIter.
+// An rvalue reference of a move_iterator would normaly be "tuple<Ts...> &&" whereas
+// what we actually want is "tuple<Ts&&...>". This specialization gives us that.
 template <eastl_size_t... Indices, typename... Ts>
 class move_iterator<TupleVecInternal::TupleVecIter<index_sequence<Indices...>, Ts...>>
 {
@@ -1556,5 +1568,9 @@ public:
 };
 
 }  // namespace eastl
+
+EA_RESTORE_VC_WARNING()
+EA_RESTORE_VC_WARNING()
+EA_RESTORE_VC_WARNING()
 
 #endif  // EASTL_TUPLEVECTOR_H

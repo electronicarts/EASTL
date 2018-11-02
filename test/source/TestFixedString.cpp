@@ -47,55 +47,6 @@ template class eastl::fixed_substring<char8_t>;
 template class eastl::fixed_substring<char16_t>;
 
 
-/*
-namespace Test
-{
-	namespace Allocator
-	{
-		struct ITestAllocator
-		{
-			virtual void* Alloc(size_t size, const char* name, unsigned int flags) = 0;
-			virtual void  Free(void* block, size_t size = 0) = 0;
-		};
-	}
-
-	class TestAllocator
-	{
-	public:
-		typedef Allocator::ITestAllocator  allocator_type;
-		typedef TestAllocator              this_type;
-
-	public:
-		TestAllocator(const char* = NULL) : mpTestAllocator(NULL) {}
-		TestAllocator(const char*, allocator_type* pTestAllocator) : mpTestAllocator(pTestAllocator) {}
-		TestAllocator(const char*, allocator_type* pTestAllocator, int) : mpTestAllocator(pTestAllocator) {}
-		TestAllocator(const TestAllocator& x) : mpTestAllocator(x.mpTestAllocator) {}
-		TestAllocator(const TestAllocator& x, const char*) : mpTestAllocator(x.mpTestAllocator) {}
-
-		TestAllocator& operator=(const TestAllocator& x) { mpTestAllocator = x.mpTestAllocator; }
-
-		void* allocate(size_t n, int = 0) { return malloc(n); }
-		void* allocate(size_t n, size_t, size_t, int = 0)  { return malloc(n); } // This is broken, but we don't actually use it so it doesn't matter.
-		void  deallocate(void* p, size_t) { free(p); }
-
-		allocator_type* get_allocator() const { return mpTestAllocator; }
-		void            set_allocator(allocator_type* pAllocator) { mpTestAllocator = pAllocator; }
-
-		int  get_flags() const { return 0; }
-		void set_flags(int) {}
-
-		const char* get_name() const { return ""; }
-		void        set_name(const char*) {}
-
-	public: // Public because otherwise VC++ generates (possibly invalid) warnings about inline friend template specializations.
-		allocator_type* mpTestAllocator;
-	};
-
-	bool operator==(const TestAllocator& a, const TestAllocator& b) { return a.mpTestAllocator == b.mpTestAllocator; }
-	bool operator!=(const TestAllocator& a, const TestAllocator& b) { return a.mpTestAllocator != b.mpTestAllocator; }
-}
-*/
-
 
 
 /*
@@ -372,38 +323,36 @@ int TestFixedString()
 			c = 'g' + a;
 			EATEST_VERIFY(c == "gabc");
 
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// fixed_string operator+(fixed_string&& a,    fixed_string&& b);
-				// fixed_string operator+(fixed_string&& a,    const fixed_string& b);
-				// fixed_string operator+(const value_type* p, fixed_string&& b);
-				// fixed_string operator+(fixed_string&& a,    const value_type* p);
-				// fixed_string operator+(fixed_string&& a,    value_type b);
+			// fixed_string operator+(fixed_string&& a,    fixed_string&& b);
+			// fixed_string operator+(fixed_string&& a,    const fixed_string& b);
+			// fixed_string operator+(const value_type* p, fixed_string&& b);
+			// fixed_string operator+(fixed_string&& a,    const value_type* p);
+			// fixed_string operator+(fixed_string&& a,    value_type b);
 
-				c = eastl::move(a) + eastl::move(b);
-				EATEST_VERIFY(c == "abcdef");
-				c.clear();
+			c = eastl::move(a) + eastl::move(b);
+			EATEST_VERIFY(c == "abcdef");
+			c.clear();
 
-				FSTest a1("abc");
-				FSTest b1("def");
-				c = eastl::move(a1) + b1;
-				EATEST_VERIFY(c == "abcdef");
-				c.clear();
+			FSTest a1("abc");
+			FSTest b1("def");
+			c = eastl::move(a1) + b1;
+			EATEST_VERIFY(c == "abcdef");
+			c.clear();
 
-				FSTest b2("def");
-				c = "abc" + eastl::move(b2);
-				EATEST_VERIFY(c == "abcdef");
-				c.clear();
+			FSTest b2("def");
+			c = "abc" + eastl::move(b2);
+			EATEST_VERIFY(c == "abcdef");
+			c.clear();
 
-				FSTest a3("abc");
-				c = eastl::move(a3) + "def";
-				EATEST_VERIFY(c == "abcdef");
-				c.clear();
+			FSTest a3("abc");
+			c = eastl::move(a3) + "def";
+			EATEST_VERIFY(c == "abcdef");
+			c.clear();
 
-				FSTest a4("abc");
-				c = eastl::move(a4) + 'd';
-				EATEST_VERIFY(c == "abcd");
-				c.clear();
-			#endif
+			FSTest a4("abc");
+			c = eastl::move(a4) + 'd';
+			EATEST_VERIFY(c == "abcd");
+			c.clear();
 		}
 
 
@@ -457,17 +406,15 @@ int TestFixedString()
 		overflowAllocator.deallocate(p, 1);
 	}
 
-	/*
 	{
 		// Regression for compile failure when EASTL_NO_RVALUE_REFERENCES is 0.
-		typedef eastl::fixed_string<char8_t, 32, true, Test::TestAllocator> TestString;
+		typedef eastl::fixed_string<char8_t, 32, true, MallocAllocator> TestString;
 
 		TestString ts1;
 		TestString ts2(ts1 + "Test");
 
 		EATEST_VERIFY(ts1.empty() && ts2.size() == 4);
 	}
-	*/
 
 	{
 		// Test equality tests of differently-sized fixed_strings.

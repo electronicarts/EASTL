@@ -54,11 +54,9 @@ namespace SmartPtrTest
 
 		CustomDeleter() {}
 		CustomDeleter(const CustomDeleter&) {}
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			CustomDeleter(CustomDeleter&&) {}
-			CustomDeleter& operator=(const CustomDeleter&) { return *this; }
-			CustomDeleter& operator=(CustomDeleter&&) { return *this; }
-		#endif
+		CustomDeleter(CustomDeleter&&) {}
+		CustomDeleter& operator=(const CustomDeleter&) { return *this; }
+		CustomDeleter& operator=(CustomDeleter&&) { return *this; }
 	};
 
 
@@ -70,11 +68,9 @@ namespace SmartPtrTest
 
 		CustomArrayDeleter() {}
 		CustomArrayDeleter(const CustomArrayDeleter&) {}
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			CustomArrayDeleter(CustomArrayDeleter&&) {}
-			CustomArrayDeleter& operator=(const CustomArrayDeleter&) { return *this; }
-			CustomArrayDeleter& operator=(CustomArrayDeleter&&) { return *this; }
-		#endif
+		CustomArrayDeleter(CustomArrayDeleter&&) {}
+		CustomArrayDeleter& operator=(const CustomArrayDeleter&) { return *this; }
+		CustomArrayDeleter& operator=(CustomArrayDeleter&&) { return *this; }
 	};
 
 
@@ -500,28 +496,26 @@ static int Test_unique_ptr()
 		unique_ptr<A, CustomDeleter> pT6(new A(17), customADeleter);
 		EATEST_VERIFY(pT6->mc == 17);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// unique_ptr(pointer pValue, typename eastl::remove_reference<Deleter>::type&& deleter) noexcept
-			unique_ptr<A, CustomDeleter> pT7(new A(18), CustomDeleter());
-			EATEST_VERIFY(pT7->mc == 18);
+		// unique_ptr(pointer pValue, typename eastl::remove_reference<Deleter>::type&& deleter) noexcept
+		unique_ptr<A, CustomDeleter> pT7(new A(18), CustomDeleter());
+		EATEST_VERIFY(pT7->mc == 18);
 
-			// unique_ptr(this_type&& x) noexcept
-			unique_ptr<A, CustomDeleter> pT8(eastl::move(pT7));
-			EATEST_VERIFY(pT8->mc == 18);
+		// unique_ptr(this_type&& x) noexcept
+		unique_ptr<A, CustomDeleter> pT8(eastl::move(pT7));
+		EATEST_VERIFY(pT8->mc == 18);
 
-			// unique_ptr(unique_ptr<U, E>&& u, ...)
-			unique_ptr<A, default_delete<A> > pT9(eastl::move(pT2));
+		// unique_ptr(unique_ptr<U, E>&& u, ...)
+		unique_ptr<A, default_delete<A> > pT9(eastl::move(pT2));
 
-			// this_type& operator=(this_type&& u) noexcept
-			// operator=(unique_ptr<U, E>&& u) noexcept
-			//unique_ptr<void, CustomDeleter> pTVoid;
-			//unique_ptr<int, CustomDeleter>  pTInt(new int(1));
-			//pTVoid.operator=<int, CustomDeleter>(eastl::move(pTInt));  // This doesn't work because CustomDeleter doesn't know how to delete void*. Need to rework this test.
+		// this_type& operator=(this_type&& u) noexcept
+		// operator=(unique_ptr<U, E>&& u) noexcept
+		//unique_ptr<void, CustomDeleter> pTVoid;
+		//unique_ptr<int, CustomDeleter>  pTInt(new int(1));
+		//pTVoid.operator=<int, CustomDeleter>(eastl::move(pTInt));  // This doesn't work because CustomDeleter doesn't know how to delete void*. Need to rework this test.
 
-			// this_type& operator=(nullptr_t) noexcept
-			pT6 = nullptr;
-			EATEST_VERIFY(pT6.get() == (A*)0);
-		#endif
+		// this_type& operator=(nullptr_t) noexcept
+		pT6 = nullptr;
+		EATEST_VERIFY(pT6.get() == (A*)0);
 	}
 
 	{
@@ -636,55 +630,51 @@ static int Test_unique_ptr()
 		pT6[0].mc = 17;
 		EATEST_VERIFY(pT6[0].mc == 17);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// unique_ptr(pointer pValue, typename eastl::remove_reference<Deleter>::type&& deleter) noexcept
-			unique_ptr<A[], CustomArrayDeleter> pT7(new A[18], CustomArrayDeleter());
-			pT7[0].mc = 18;
-			EATEST_VERIFY(pT7[0].mc == 18);
+		// unique_ptr(pointer pValue, typename eastl::remove_reference<Deleter>::type&& deleter) noexcept
+		unique_ptr<A[], CustomArrayDeleter> pT7(new A[18], CustomArrayDeleter());
+		pT7[0].mc = 18;
+		EATEST_VERIFY(pT7[0].mc == 18);
 
-			// unique_ptr(this_type&& x) noexcept
-			unique_ptr<A[], CustomArrayDeleter> pT8(eastl::move(pT7));
-			EATEST_VERIFY(pT8[0].mc == 18);
+		// unique_ptr(this_type&& x) noexcept
+		unique_ptr<A[], CustomArrayDeleter> pT8(eastl::move(pT7));
+		EATEST_VERIFY(pT8[0].mc == 18);
 
-			// unique_ptr(unique_ptr<U, E>&& u, ...)
-			unique_ptr<A[], default_delete<A[]> > pT9(eastl::move(pT2));
-			EATEST_VERIFY(pT9[0].mc == 3);
+		// unique_ptr(unique_ptr<U, E>&& u, ...)
+		unique_ptr<A[], default_delete<A[]> > pT9(eastl::move(pT2));
+		EATEST_VERIFY(pT9[0].mc == 3);
 
-			// this_type& operator=(this_type&& u) noexcept
-			// operator=(unique_ptr<U, E>&& u) noexcept
-			//unique_ptr<void, CustomDeleter> pTVoid;
-			//unique_ptr<int, CustomDeleter>  pTInt(new int(1));
-			//pTVoid.operator=<int, CustomDeleter>(eastl::move(pTInt));  // This doesn't work because CustomDeleter doesn't know how to delete void*. Need to rework this test.
+		// this_type& operator=(this_type&& u) noexcept
+		// operator=(unique_ptr<U, E>&& u) noexcept
+		//unique_ptr<void, CustomDeleter> pTVoid;
+		//unique_ptr<int, CustomDeleter>  pTInt(new int(1));
+		//pTVoid.operator=<int, CustomDeleter>(eastl::move(pTInt));  // This doesn't work because CustomDeleter doesn't know how to delete void*. Need to rework this test.
 
-			// this_type& operator=(nullptr_t) noexcept
-			pT6 = nullptr;
-			EATEST_VERIFY(pT6.get() == (A*)0);
-		#endif
+		// this_type& operator=(nullptr_t) noexcept
+		pT6 = nullptr;
+		EATEST_VERIFY(pT6.get() == (A*)0);
 
 		// unique_ptr<> make_unique(Args&&... args);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			unique_ptr<NamedClass> p = eastl::make_unique<NamedClass>("test", "test2");
-			EATEST_VERIFY(EA::StdC::Strcmp(p->mpName, "test") == 0 && EA::StdC::Strcmp(p->mpName2, "test2") == 0);
+		unique_ptr<NamedClass> p = eastl::make_unique<NamedClass>("test", "test2");
+		EATEST_VERIFY(EA::StdC::Strcmp(p->mpName, "test") == 0 && EA::StdC::Strcmp(p->mpName2, "test2") == 0);
 
-			unique_ptr<NamedClass[]> pArray = eastl::make_unique<NamedClass[]>(4);
-			pArray[0].mpName = "test";
-			EATEST_VERIFY(EA::StdC::Strcmp(p->mpName, "test") == 0);
+		unique_ptr<NamedClass[]> pArray = eastl::make_unique<NamedClass[]>(4);
+		pArray[0].mpName = "test";
+		EATEST_VERIFY(EA::StdC::Strcmp(p->mpName, "test") == 0);
 
-			#ifdef EASTL_TEST_DISABLED_PENDING_SUPPORT
-			{
-				const size_t kAlignedStructAlignment = 512;
-				struct AlignedStruct {} EA_ALIGN(kAlignedStructAlignment);
+		#ifdef EASTL_TEST_DISABLED_PENDING_SUPPORT
+		{
+			const size_t kAlignedStructAlignment = 512;
+			struct AlignedStruct {} EA_ALIGN(kAlignedStructAlignment);
 
-				unique_ptr<AlignedStruct> pAlignedStruct = eastl::make_unique<AlignedStruct>();
-				EATEST_VERIFY_F(intptr_t(pAlignedStruct.get()) % kAlignedStructAlignment == 0, "pAlignedStruct didn't have proper alignment");
-			}
-			#endif
-
-			//Expected to not be valid:
-			//unique_ptr<NamedClass[4]> p2Array4 = eastl::make_unique<NamedClass[4]>();
-			//p2Array4[0].mpName = "test";
-			//EATEST_VERIFY(EA::StdC::Strcmp(p2Array4[0].mpName, "test") == 0);
+			unique_ptr<AlignedStruct> pAlignedStruct = eastl::make_unique<AlignedStruct>();
+			EATEST_VERIFY_F(intptr_t(pAlignedStruct.get()) % kAlignedStructAlignment == 0, "pAlignedStruct didn't have proper alignment");
+		}
 		#endif
+
+		//Expected to not be valid:
+		//unique_ptr<NamedClass[4]> p2Array4 = eastl::make_unique<NamedClass[4]>();
+		//p2Array4[0].mpName = "test";
+		//EATEST_VERIFY(EA::StdC::Strcmp(p2Array4[0].mpName, "test") == 0);
 	}
 
 	EATEST_VERIFY(A::mCount == 0); // This check verifies that no A instances were lost, which also verifies that the [] version of the deleter was used in all cases.

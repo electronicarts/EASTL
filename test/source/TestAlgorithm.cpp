@@ -888,11 +888,7 @@ int TestAlgorithm()
   
 			eastl::move(src.begin(), src.end(), dest.begin());
 			EATEST_VERIFY((dest[0] == "0") && (dest[3] == "3"));
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				EATEST_VERIFY(src[0].empty() && src[3].empty());
-			#else
-				// Else move_backward wasn't able to use C++11 move and instead did a copy.
-			#endif
+			EATEST_VERIFY(src[0].empty() && src[3].empty());
 		}
 
 		{
@@ -904,11 +900,7 @@ int TestAlgorithm()
   
 			eastl::move_backward(src.begin(), src.end(), dest.end());
 			EATEST_VERIFY((dest[0] == "0") && (dest[3] == "3"));
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				EATEST_VERIFY(src[0].empty() && src[3].empty());
-			#else
-				// Else move_backward wasn't able to use C++11 move and instead did a copy.
-			#endif
+			EATEST_VERIFY(src[0].empty() && src[3].empty());
 		}
 	}
 

@@ -456,6 +456,7 @@ int TestTuple()
 			{3, 3.0f, TestObject(3)},
 			{4, 4.0f, TestObject(4)}
 		};
+		(void)arrayTup;
 
 #if false
 		// the following code should not compile with conditionally-explicit behaviour (but does with fully implicit behaviour)
@@ -470,6 +471,17 @@ int TestTuple()
 		};
 #endif
 	}
+
+	#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+	// tuple structured bindings test 
+	{
+		eastl::tuple<int, int, int> t = {1,2,3};
+		auto [x,y,z] = t;
+		EATEST_VERIFY(x == 1);
+		EATEST_VERIFY(y == 2);
+		EATEST_VERIFY(z == 3);
+	}
+	#endif
 
 	return nErrorCount;
 }

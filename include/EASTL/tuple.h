@@ -917,7 +917,6 @@ inline typename Internal::TupleCat<Tuples...>::ResultType tuple_cat(Tuples&&... 
 	return Internal::TupleCat<Tuples...>::DoCat(forward<Tuples>(ts)...);
 }
 
-
 // apply
 //
 // Invoke a callable object using a tuple to supply the arguments. 
@@ -942,6 +941,35 @@ EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
 
 
 }  // namespace eastl
+
+
+///////////////////////////////////////////////////////////////
+// C++17 structured bindings support for eastl::tuple
+//
+#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+	#include <tuple>
+	namespace std
+	{
+		// NOTE(rparolin): Some platform implementations didn't check the standard specification and implemented the
+		// "tuple_size" and "tuple_element" primary template with as a struct.  The standard specifies they are
+		// implemented with the class keyword so we provide the template specializations as a class and disable the
+		// generated warning.
+		EA_DISABLE_CLANG_WARNING(-Wmismatched-tags)
+
+		template <class... Ts>
+		class tuple_size<::eastl::tuple<Ts...>> : ::eastl::integral_constant<size_t, sizeof...(Ts)>
+		{
+		};
+
+		template <size_t I, class... Ts>
+		class tuple_element<I, ::eastl::tuple<Ts...>> : public ::eastl::tuple_element<I, ::eastl::tuple<Ts...>>
+		{
+		};
+
+		EA_RESTORE_CLANG_WARNING()
+	}
+#endif
+
 
 #endif  // EASTL_TUPLE_ENABLED
 EA_RESTORE_VC_WARNING()

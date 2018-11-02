@@ -352,7 +352,7 @@
 	// using postfix alignment attributes. Prefix works for alignment, but does not align
 	// the size like postfix does.  Prefix also fails on templates.  So gcc style post fix
 	// is still used, but the user will need to use EA_POSTFIX_ALIGN before the constructor parameters.
-	#if   defined(__GNUC__) && (__GNUC__ < 3)
+	#if defined(__GNUC__) && (__GNUC__ < 3)
 		#define EA_ALIGN_OF(type) ((size_t)__alignof__(type))
 		#define EA_ALIGN(n)
 		#define EA_PREFIX_ALIGN(n)
@@ -481,8 +481,10 @@
 	// Defines if the GCC attribute init_priority is supported by the compiler.
 	//
 	#if !defined(EA_INIT_PRIORITY_AVAILABLE)
-		#if   defined(__GNUC__) && !defined(__EDG__) // EDG typically #defines __GNUC__ but doesn't implement init_priority.
+		#if defined(__GNUC__) && !defined(__EDG__) // EDG typically #defines __GNUC__ but doesn't implement init_priority.
 			#define EA_INIT_PRIORITY_AVAILABLE 1 
+		#elif defined(__clang__)
+			#define EA_INIT_PRIORITY_AVAILABLE 1  // Clang implements init_priority
 		#endif
 	#endif
 
@@ -1608,8 +1610,9 @@
 	// ------------------------------------------------------------------------
 	// EA_ABM
 	// EA_ABM may be used to determine if Advanced Bit Manipulation sets are available for the target architecture (POPCNT, LZCNT)
+	// 
 	#ifndef EA_ABM
-		#if defined(__ABM__) || defined(EA_PLATFORM_CAPILANO)
+		#if defined(__ABM__) || defined(EA_PLATFORM_XBOXONE) || defined(EA_PLATFORM_PS4)
 			#define EA_ABM 1
 		#else
 			#define EA_ABM 0

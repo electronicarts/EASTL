@@ -1261,34 +1261,20 @@ int TestHash()
 	#endif
 
 	{
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// hashtable(this_type&& x);
-			// hashtable(this_type&& x, const allocator_type& allocator);
-			// this_type& operator=(this_type&& x);
-		#endif
+		// hashtable(this_type&& x);
+		// hashtable(this_type&& x, const allocator_type& allocator);
+		// this_type& operator=(this_type&& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			// template <class... Args>
-			// insert_return_type emplace(Args&&... args);
+		// template <class... Args>
+		// insert_return_type emplace(Args&&... args);
 
-			// template <class... Args>
-			// iterator emplace_hint(const_iterator position, Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				// insert_return_type emplace(value_type&& value);
-				// iterator emplace_hint(const_iterator position, value_type&& value);
-			#endif
+		// template <class... Args>
+		// iterator emplace_hint(const_iterator position, Args&&... args);
 
-			// insert_return_type emplace(const value_type& value);
-			// iterator emplace_hint(const_iterator position, const value_type& value);
-		#endif
+		// template <class P> // Requires that "value_type is constructible from forward<P>(otherValue)."
+		// insert_return_type insert(P&& otherValue);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			// template <class P> // Requires that "value_type is constructible from forward<P>(otherValue)."
-			// insert_return_type insert(P&& otherValue);
-
-			// iterator insert(const_iterator hint, value_type&& value);
-		#endif
+		// iterator insert(const_iterator hint, value_type&& value);
 
 		// Regression of user reported compiler error in hashtable sfinae mechanism 
 		{
@@ -1337,7 +1323,7 @@ int TestHash()
 	// 
 	// error: 'eastl::pair<T1, T2>::pair(T1&&) [with T1 = const int&; T2 = const int&]' cannot be overloaded
 	// error: with 'eastl::pair<T1, T2>::pair(const T1&) [with T1 = const int&; T2 = const int&]'
-	#if EASTL_MOVE_SEMANTICS_ENABLED && !defined(EA_COMPILER_GNUC)
+	#if !defined(EA_COMPILER_GNUC)
 	{
 		EA_DISABLE_VC_WARNING(4626)
 		struct Key
