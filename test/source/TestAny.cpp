@@ -415,6 +415,22 @@ int TestAny()
 		VERIFY(any_cast<float>(a) == 42.f);
 	}
 
+    {
+        eastl::any a = 1;
+        int* i = eastl::any_cast<int>(&a);
+        VERIFY((*i) == 1);
+
+        a = 2;
+        int *j = (int*)eastl::unsafe_any_cast<void>(&a);
+        VERIFY((*j) == 2);
+
+        const eastl::any b = 3;
+        const void * p = eastl::unsafe_any_cast<void>(&b);
+        void *q = const_cast<void *>(p);
+        int *r = static_cast<int *>(q);
+        VERIFY((*r) == 3);
+    }
+
 	return nErrorCount;
 }
 

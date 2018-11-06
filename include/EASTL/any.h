@@ -5,7 +5,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // This file implements the eastl::any which is part of the C++ standard STL
-// library specification.  
+// library specification.
 //
 // eastl::any is a type-safe container for single values of any type.  Our
 // implementation makes use of the "small local buffer" optimization to avoid
@@ -42,7 +42,7 @@ namespace eastl
 {
 	///////////////////////////////////////////////////////////////////////////////
 	// bad_any_cast
-	// 
+	//
 	// The type thrown by any_cast on failure.
 	//
 	// http://en.cppreference.com/w/cpp/utility/any/bad_any_cast
@@ -54,7 +54,7 @@ namespace eastl
 			{ return "bad cast"; }
 	};
 
-	struct bad_any_cast : public bad_cast 
+	struct bad_any_cast : public bad_cast
 	{
 		const char* what() const EA_NOEXCEPT EA_OVERRIDE
 			{ return "bad_any_cast"; }
@@ -73,8 +73,8 @@ namespace eastl
 
 				// NOTE(rparolin): CRASH!
 				// You crashed here because you requested a type that was not contained in the object.
-				// We choose to intentionally crash here instead of returning invalid data to the calling 
-				// code which could cause hard to track down bugs. 
+				// We choose to intentionally crash here instead of returning invalid data to the calling
+				// code which could cause hard to track down bugs.
 				*((volatile int*)0) = 0xDEADC0DE;
 			#endif
 		}
@@ -87,9 +87,9 @@ namespace eastl
 	class any
 	{
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// storage_operation 
+		// storage_operation
 		//
-		// operations supported by the storage handler 
+		// operations supported by the storage handler
 		//
 		enum class storage_operation
 		{
@@ -102,7 +102,7 @@ namespace eastl
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// storage 
+		// storage
 		//
 		// the underlying storage type which enables the switching between objects stored in
 		// the heap and objects stored within the any type.
@@ -117,28 +117,31 @@ namespace eastl
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// use_internal_storage 
+		// use_internal_storage
 		//
-		// determines when the "local buffer optimization" is used 
+		// determines when the "local buffer optimization" is used
 		//
 		template <typename T>
 		using use_internal_storage = bool_constant
 		<
-			is_nothrow_move_constructible<T>::value 
+			is_nothrow_move_constructible<T>::value
 			&& (sizeof(T) <= sizeof(storage)) &&
-			(alignment_of<storage>::value % alignment_of<T>::value == 0)  
+			(alignment_of<storage>::value % alignment_of<T>::value == 0)
 		>;
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// non-member friend functions	
+		// non-member friend functions
 		//
-    	template <class ValueType> friend const ValueType* any_cast(const any* pAny) EA_NOEXCEPT;
-		template <class ValueType> friend ValueType* any_cast(any* pAny) EA_NOEXCEPT; 
+    template <class ValueType> friend const ValueType* any_cast(const any* pAny) EA_NOEXCEPT;
+		template <class ValueType> friend ValueType* any_cast(any* pAny) EA_NOEXCEPT;
 		template <class ValueType> friend ValueType any_cast(const any& operand);
 		template <class ValueType> friend ValueType any_cast(any& operand);
 		template <class ValueType> friend ValueType any_cast(any&& operand);
 
+		//Adding Unsafe operations
+		template <class ValueType> friend const ValueType* unsafe_any_cast(const any* pAny) EA_NOEXCEPT;
+		template <class ValueType> friend ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT;
 
 		//////////////////////////////////////////////////////////////////////////////////////////
 		// internal storage handler
@@ -235,7 +238,7 @@ namespace eastl
 		struct storage_handler_external
 		{
 			template <typename V>
-			static inline void construct(storage& s, V&& v) 
+			static inline void construct(storage& s, V&& v)
 			{
 				s.external_storage = ::new T(eastl::forward<V>(v));
 			}
@@ -315,7 +318,7 @@ namespace eastl
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// storage_handler_ptr 
+		// storage_handler_ptr
 		//
 		// defines the function signature of the storage handler that both the internal and
 		// external storage handlers must implement to retrieve the underlying type of the any
@@ -325,7 +328,7 @@ namespace eastl
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		// storage_handler 
+		// storage_handler
 		//
 		// based on the specified type T we select the appropriate underlying storage handler
 		// based on the 'use_internal_storage' trait.
@@ -345,9 +348,9 @@ namespace eastl
 	public:
 			#ifndef EA_COMPILER_GNUC
 				// TODO(rparolin):  renable constexpr for GCC
-				EA_CONSTEXPR 
+				EA_CONSTEXPR
 			#endif
-			any() EA_NOEXCEPT 
+			any() EA_NOEXCEPT
 			: m_storage(), m_handler(nullptr) {}
 
 		any(const any& other) : m_handler(nullptr)
@@ -356,14 +359,14 @@ namespace eastl
 			{
 				// NOTE(rparolin): You can not simply copy the underlying
 				// storage because it could hold a pointer to an object on the
-				// heap which breaks the copy semantics of the language. 
+				// heap which breaks the copy semantics of the language.
 				other.m_handler(storage_operation::COPY, &other, this);
 				m_handler = other.m_handler;
 			}
 		}
 
 		any(any&& other) EA_NOEXCEPT : m_handler(nullptr)
-		{ 
+		{
 			if(other.m_handler)
 			{
 				// NOTE(rparolin): You can not simply move the underlying
@@ -388,7 +391,7 @@ namespace eastl
 		}
 
 		template <class T, class... Args>
-		explicit any(in_place_type_t<T>, Args&&... args) 
+		explicit any(in_place_type_t<T>, Args&&... args)
 		{
 			typedef storage_handler<decay_t<T>> StorageHandlerT;
 			static_assert(eastl::is_constructible<T, Args...>::value, "T must be constructible with Args...");
@@ -419,16 +422,16 @@ namespace eastl
 			return *this;
 		}
 
-		any& operator=(const any& other) 
-		{ 
+		any& operator=(const any& other)
+		{
 			any(other).swap(*this);
-			return *this; 
+			return *this;
 		}
 
-		any& operator=(any&& other) EA_NOEXCEPT 
-		{ 
+		any& operator=(any&& other) EA_NOEXCEPT
+		{
 			any(eastl::move(other)).swap(*this);
-			return *this; 
+			return *this;
 		}
 
         // 20.7.3.3, modifiers
@@ -456,13 +459,13 @@ namespace eastl
 			}
         #endif
 
-		void reset() EA_NOEXCEPT 
+		void reset() EA_NOEXCEPT
 		{
 			if(m_handler)
 				m_handler(storage_operation::DESTROY, this, nullptr);
 		}
 
-		void swap(any& other) EA_NOEXCEPT 
+		void swap(any& other) EA_NOEXCEPT
 		{
 			if(this == &other)
 				return;
@@ -495,7 +498,7 @@ namespace eastl
 		bool has_value() const EA_NOEXCEPT { return m_handler != nullptr; }
 
         #if EASTL_RTTI_ENABLED
-			inline const std::type_info& type() const EA_NOEXCEPT 
+			inline const std::type_info& type() const EA_NOEXCEPT
 			{
 				if(m_handler)
 				{
@@ -589,6 +592,19 @@ namespace eastl
 				) ?
 		           static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr)) :
 		           nullptr;
+	}
+
+	//Unsafe operations - use with caution
+	template <class ValueType>
+	inline const ValueType* unsafe_any_cast(const any* pAny) EA_NOEXCEPT
+	{
+		return unsafe_any_cast<ValueType>(const_cast<any*>(pAny));
+	}
+
+	template <class ValueType>
+	inline ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT
+	{
+		return static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr));
 	}
 
     //////////////////////////////////////////////////////////////////////////////////////////
