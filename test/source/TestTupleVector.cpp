@@ -1521,6 +1521,19 @@ int TestTupleVector()
 		TestObject::Reset();
 	}
 
+	// Test allocator manipulation
+	{
+		InstanceAllocator ia0((uint8_t)0), ia1((uint8_t)1);
+		tuple_vector_alloc<InstanceAllocator, int> vec(ia0);
+
+		// private vector allocator was copied from ia0 and should have matching id
+		EATEST_VERIFY(vec.get_allocator() == ia0);
+
+		// Assigning allocator
+		vec.set_allocator(ia1);
+		EATEST_VERIFY(vec.get_allocator() == ia1);
+	}
+
 	return nErrorCount;
 }
 
