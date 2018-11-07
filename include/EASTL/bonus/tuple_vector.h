@@ -1252,7 +1252,7 @@ public:
 	allocator_type& get_allocator() EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
 	const allocator_type& get_allocator() const EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
 
-	void set_allocator(const allocator_type& alloc) { mDataSizeAndAllocator.second() == alloc; }
+	void set_allocator(const allocator_type& alloc) { mDataSizeAndAllocator.second() = alloc; }
 
 protected:
 
