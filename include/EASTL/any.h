@@ -140,7 +140,7 @@ namespace eastl
 		template <class ValueType> friend ValueType any_cast(any&& operand);
 
         //Adding Unsafe any cast operations
-        template <class ValueType> friend const ValueType* unsafe_any_cast(const any* pAny) EA_NOE    XCEPT;
+        template <class ValueType> friend const ValueType* unsafe_any_cast(const any* pAny) EA_NOEXCEPT;
         template <class ValueType> friend ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT;
 
 
@@ -605,7 +605,7 @@ namespace eastl
     template <class ValueType>
     inline ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT
     {
-        return static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr)    );
+        return static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
