@@ -139,6 +139,10 @@ namespace eastl
 		template <class ValueType> friend ValueType any_cast(any& operand);
 		template <class ValueType> friend ValueType any_cast(any&& operand);
 
+        //Adding Unsafe any cast operations
+        template <class ValueType> friend const ValueType* unsafe_any_cast(const any* pAny) EA_NOEXCEPT;
+        template <class ValueType> friend ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT;
+
 
 		//////////////////////////////////////////////////////////////////////////////////////////
 		// internal storage handler
@@ -590,6 +594,19 @@ namespace eastl
 		           static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr)) :
 		           nullptr;
 	}
+
+    //Unsafe operations - use with caution
+    template <class ValueType>
+    inline const ValueType* unsafe_any_cast(const any* pAny) EA_NOEXCEPT
+    {
+        return unsafe_any_cast<ValueType>(const_cast<any*>(pAny));
+    }
+
+    template <class ValueType>
+    inline ValueType* unsafe_any_cast(any* pAny) EA_NOEXCEPT
+    {
+        return static_cast<ValueType*>(pAny->m_handler(any::storage_operation::GET, pAny, nullptr));
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////
 	// make_any
