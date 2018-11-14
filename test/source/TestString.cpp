@@ -99,6 +99,40 @@ int TestString()
 		static_assert(sizeof(EboString) == expectedSize, "unexpected layout size of basic_string");
 	}
 
+
+	{ // Test if string's size constructor allocates and deallocates correctly
+		using AllocatorType = CountingAllocator;
+		using String = eastl::basic_string<char8_t, AllocatorType>;
+		AllocatorType::resetCount();
+		{
+			// Check size initializer
+			String scopedString (512, 'c');
+
+			VERIFY(AllocatorType::getAllocationCount() == 1); // Allocated
+		}
+		VERIFY(AllocatorType::getAllocationCount() == 0); // Deallocated
+
+		AllocatorType::resetCount();
+		{
+			// Check size append
+			String scopedString{};
+			scopedString.append(512, 'c');
+
+			VERIFY(AllocatorType::getAllocationCount() == 1); // Allocated
+		}
+		VERIFY(AllocatorType::getAllocationCount() == 0); // Deallocated
+
+		AllocatorType::resetCount();
+		{
+			// Check resize
+			String scopedString{};
+			scopedString.resize(512, 'c');
+
+			VERIFY(AllocatorType::getAllocationCount() == 1); // Allocated
+		}
+		VERIFY(AllocatorType::getAllocationCount() == 0); // Deallocated
+	}
+
 	return nErrorCount;
 }
 
