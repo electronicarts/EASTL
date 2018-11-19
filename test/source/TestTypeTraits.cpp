@@ -1752,6 +1752,7 @@ int TestTypeTraits()
 		PodB*  pB    = union_cast<PodB*>(pA);
 		PodA*  pANew = union_cast<PodA*>(pB);
 		EATEST_VERIFY(pA == pANew);
+		delete pA;
 	}
 
 	// void_t
