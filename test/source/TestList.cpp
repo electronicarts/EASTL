@@ -5,6 +5,7 @@
 #include "EASTLTest.h"
 #include <EASTL/list.h>
 #include <EASTL/sort.h>
+#include <EASTL/fixed_allocator.h>
 
 using namespace eastl;
 
@@ -713,10 +714,20 @@ int TestList()
 
 	// void reset_lose_memory()    
 	{
-		eastl::list<int> a = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-		a.reset_lose_memory();
-		VERIFY(a.empty());
-		VERIFY(a.size() == 0);
+		typedef eastl::list<int, fixed_allocator> IntList;
+		typedef IntList::node_type                IntListNode;
+		const size_t  kBufferCount = 10;
+		IntListNode   buffer1[kBufferCount];
+		IntList       intList1;
+		const size_t  kAlignOfIntListNode = EA_ALIGN_OF(IntListNode);
+		intList1.get_allocator().init(buffer1, sizeof(buffer1), sizeof(IntListNode), kAlignOfIntListNode);
+
+		intList1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+		VERIFY(!intList1.empty());
+		VERIFY(intList1.size() == 10);
+		intList1.reset_lose_memory();
+		VERIFY(intList1.empty());
+		VERIFY(intList1.size() == 0);
 	}
 
 	// void remove(const T& x);
