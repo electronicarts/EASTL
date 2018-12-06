@@ -147,6 +147,9 @@
 	#if defined(EA_COMPILER_MSVC_2015)
 		#define EA_CPP14_CONSTEXPR  // not supported
 		#define EA_NO_CPP14_CONSTEXPR 
+	#elif defined(__GNUC__) && (EA_COMPILER_VERSION < 9000)   // Before GCC 9.0
+		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
 	#elif defined(EA_COMPILER_CPP14_ENABLED)
 		#define EA_CPP14_CONSTEXPR constexpr
 	#else
