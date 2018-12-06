@@ -47,6 +47,22 @@ int TestString()
 	nErrorCount += TestBasicString32<eastl::u32string>();
 #endif
 
+	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.
+	CountingAllocator::resetCount();
+	nErrorCount += TestBasicString<eastl::basic_string<char, CountingAllocator>>();
+	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
+
+	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, CountingAllocator>>();
+	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
+
+	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, CountingAllocator>>();
+	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
+
+#if EA_CHAR32_NATIVE
+	nErrorCount += TestBasicString32<eastl::basic_string<char32_t, CountingAllocator>>();
+	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
+#endif
+
 	// to_string
 	{
 		VERIFY(eastl::to_string(42)    == "42");

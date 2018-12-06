@@ -34,6 +34,7 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
+EA_DISABLE_VC_WARNING(4244) // warning C4244: 'conversion from '___' to '___', possible loss of data
 EA_DISABLE_VC_WARNING(4623) // warning C4623: default constructor was implicitly defined as deleted
 EA_DISABLE_VC_WARNING(4625) // warning C4625: copy constructor was implicitly defined as deleted
 EA_DISABLE_VC_WARNING(4510) // warning C4510: default constructor could not be generated
@@ -168,7 +169,7 @@ struct TupleRecurser<>
 		void* ptr = capacity ? allocate_memory(vec.get_allocator(), offset, alignment, 0) : nullptr;
 
 	#if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY((size_type)ptr & (alignment - 1)) != 0)
+		if (EASTL_UNLIKELY((size_t)ptr & (alignment - 1)) != 0)
 		{
 			EASTL_FAIL_MSG("tuple_vector::DoAllocate -- memory not alignment at requested alignment");
 		}
@@ -189,7 +190,7 @@ struct TupleRecurser<T, Ts...> : TupleRecurser<Ts...>
 	
 	static EA_CONSTEXPR size_type GetTotalAlignment()
 	{
-		return max(alignof(T), TupleRecurser<Ts...>::GetTotalAlignment());
+		return max(static_cast<size_type>(alignof(T)), TupleRecurser<Ts...>::GetTotalAlignment());
 	}
 
 	static EA_CONSTEXPR size_type GetTotalAllocationSize(size_type capacity, size_type offset)
@@ -226,7 +227,7 @@ private:
 	static EA_CONSTEXPR size_type CalculatAllocationOffset(size_type offset) { return (offset + alignof(T) - 1) & (~alignof(T) + 1); }
 };
 
-template <size_t I, typename T>
+template <eastl_size_t I, typename T>
 struct TupleVecLeaf
 {
 	typedef eastl_size_t size_type;
@@ -1544,7 +1545,6 @@ class tuple_vector : public TupleVecInternal::TupleVecImpl<EASTLAllocatorType, m
 	using base_type::base_type;
 
 public:
-
 	this_type& operator=(std::initializer_list<typename base_type::value_tuple> iList) 
 	{
 		base_type::operator=(iList);
@@ -1572,6 +1572,7 @@ public:
 
 }  // namespace eastl
 
+EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()

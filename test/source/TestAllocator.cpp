@@ -363,11 +363,6 @@ static int TestAllocationOffsetAndAlignment()
 	testAllocatorAlignment(100, 8, 0);
 	testAllocatorAlignment(100, 16, 0);
 
-	testAllocatorAlignment(100, 1, 8);
-	testAllocatorAlignment(100, 2, 8);
-	testAllocatorAlignment(100, 4, 8);
-	testAllocatorAlignment(100, 8, 8);
-
 	testAllocatorAlignment(100, 1, 16);
 	testAllocatorAlignment(100, 2, 16);
 	testAllocatorAlignment(100, 4, 16);

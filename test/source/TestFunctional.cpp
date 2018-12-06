@@ -1255,6 +1255,29 @@ int TestFunctional()
 
 			EATEST_VERIFY(f.called == true);
 		}
+
+		// ref/cref
+		{
+			{
+				int i = 0;
+				eastl::reference_wrapper<int> r1 = eastl::ref(i);
+				r1.get() = 42;
+
+				eastl::reference_wrapper<int> r2 = eastl::ref(r1);
+
+				EATEST_VERIFY(i == 42);
+				EATEST_VERIFY(r2 == 42);
+			}
+
+			{
+				int i = 1337;
+				eastl::reference_wrapper<const int> r1 = eastl::cref(i);
+				EATEST_VERIFY(r1 == 1337);
+
+				eastl::reference_wrapper<const int> r2 = eastl::cref(r1);
+				EATEST_VERIFY(r2 == 1337);
+			}
+		}
 	}
 
 	return nErrorCount;

@@ -163,6 +163,11 @@ int TestArray()
 		static_assert(a.cbegin()[2] == 2, "array constexpr failure");
 		static_assert(a.cbegin()[3] == 3, "array constexpr failure");
 
+		static_assert(a.crbegin()[0] == 3, "array constexpr failure");
+		static_assert(a.crbegin()[1] == 2, "array constexpr failure");
+		static_assert(a.crbegin()[2] == 1, "array constexpr failure");
+		static_assert(a.crbegin()[3] == 0, "array constexpr failure");
+
 		static_assert(a.end()[-1] == 3, "array constexpr failure");
 		static_assert(a.end()[-2] == 2, "array constexpr failure");
 		static_assert(a.end()[-3] == 1, "array constexpr failure");
@@ -173,20 +178,10 @@ int TestArray()
 		static_assert(a.cend()[-3] == 1, "array constexpr failure");
 		static_assert(a.cend()[-4] == 0, "array constexpr failure");
 
-		#if !(defined(EA_COMPILER_GNUC) && EA_COMPILER_CPP14_ENABLED)
-		// Disable these tests on GCC compilers pre-C++17 as
-		// reverse_iterator implementations are strictly not allowed to
-		// be constexpr until C++17.   
-		static_assert(a.crbegin()[0] == 3, "array constexpr failure");
-		static_assert(a.crbegin()[1] == 2, "array constexpr failure");
-		static_assert(a.crbegin()[2] == 1, "array constexpr failure");
-		static_assert(a.crbegin()[3] == 0, "array constexpr failure");
-
 		static_assert(a.crend()[-1] == 0, "array constexpr failure");
 		static_assert(a.crend()[-2] == 1, "array constexpr failure");
 		static_assert(a.crend()[-3] == 2, "array constexpr failure");
 		static_assert(a.crend()[-4] == 3, "array constexpr failure");
-		#endif
 	#endif
 	}
 

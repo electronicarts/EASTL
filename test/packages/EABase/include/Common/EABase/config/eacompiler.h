@@ -849,6 +849,23 @@
 	#endif
 
 
+	// EA_COMPILER_NO_CONSTEXPR_IF
+	//
+	// Refers to C++17 = constexpr if(const expression) conditionals.
+	//
+	#if !defined(EA_COMPILER_NO_CONSTEXPR_IF)
+		#if defined(EA_COMPILER_CPP17_ENABLED) && (defined(_MSC_VER) && (EA_COMPILER_VERSION >= 1911)) // VS2017 15.3+
+			// supported.
+		#elif defined(EA_COMPILER_CPP17_ENABLED) && defined(__clang__) && (EA_COMPILER_VERSION >= 309) // Clang 3.9+
+			// supported.
+		#elif defined(EA_COMPILER_CPP17_ENABLED) && defined(__GNUC__) && (EA_COMPILER_VERSION >= 7000) // GCC 7+
+			// supported.
+		#else
+			#define EA_COMPILER_NO_CONSTEXPR_IF 1
+		#endif
+	#endif
+	
+
 	// EA_COMPILER_NO_OVERRIDE
 	// 
 	// Refers to the C++11 override specifier.

@@ -1365,7 +1365,7 @@ int TestHash()
 			AllocatorType::resetCount();
 
 			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
-			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
 		}
 		{
 			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
@@ -1374,7 +1374,7 @@ int TestHash()
 			AllocatorType::resetCount();
 
 			myMap.emplace(eastl::move(key), eastl::move(value));
-			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
 		}
 		{
 			StringStringMap myMap;
@@ -1383,7 +1383,7 @@ int TestHash()
 			AllocatorType::resetCount();
 
 			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
-			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
 		}
 		{
 			StringStringMap myMap;
@@ -1392,7 +1392,7 @@ int TestHash()
 			AllocatorType::resetCount();
 
 			myMap.emplace(eastl::move(key), eastl::move(value));
-			EATEST_VERIFY(AllocatorType::getAllocationCount() == 1);
+			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
 		}
 	}
 

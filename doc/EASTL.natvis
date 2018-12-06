@@ -463,4 +463,53 @@
 	</Expand>
 </Type>
 
+<Type Name="eastl::ratio&lt;*&gt;">
+	<DisplayString>{$T1} to {$T2}}</DisplayString>
+</Type>
+
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000000000&gt; &gt;">
+	<DisplayString>{mRep} nanoseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000000&gt; &gt;">
+	<DisplayString>{mRep} microseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000&gt; &gt;">
+	<DisplayString>{mRep} milliseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1&gt; &gt;">
+	<DisplayString>{mRep} seconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;60,1&gt; &gt;">
+	<DisplayString>{mRep} minutes</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;3600,1&gt; &gt;">
+	<DisplayString>{mRep} hours</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;*,*&gt; &gt;">
+	<DisplayString>{mRep} duration with ratio = [{$T2} : {$T3}] </DisplayString>
+</Type>
+
+
+
+<Type Name="eastl::function&lt;*&gt;">
+	<DisplayString Condition="mInvokeFuncPtr == nullptr">empty</DisplayString>
+	<DisplayString>{mInvokeFuncPtr}</DisplayString>
+</Type>
+
+
+<Type Name="eastl::reference_wrapper&lt;*&gt;">
+	<DisplayString>{*val}</DisplayString>
+</Type>
+
+
+<!-- TODO eastl::tuple -->
+
+
 </AutoVisualizer>

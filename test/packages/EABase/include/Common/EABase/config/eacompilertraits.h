@@ -53,6 +53,7 @@
  *    EA_SEALED
  *    EA_ABSTRACT
  *    EA_CONSTEXPR / EA_CONSTEXPR_OR_CONST
+ *    EA_CONSTEXPR_IF 
  *    EA_EXTERN_TEMPLATE
  *    EA_NOEXCEPT
  *    EA_NORETURN
@@ -1134,6 +1135,35 @@
 	#endif
 
 
+	// ------------------------------------------------------------------------
+	// EA_CURRENT_FUNCTION
+	//
+	// Provides a consistent way to get the current function name as a macro
+	// like the __FILE__ and __LINE__ macros work. The C99 standard specifies
+	// that __func__ be provided by the compiler, but most compilers don't yet
+	// follow that convention. However, many compilers have an alternative.
+	//
+	// We also define EA_CURRENT_FUNCTION_SUPPORTED for when it is not possible
+	// to have EA_CURRENT_FUNCTION work as expected.
+	//
+	// Defined inside a function because otherwise the macro might not be 
+	// defined and code below might not compile. This happens with some 
+	// compilers.
+	//
+	#ifndef EA_CURRENT_FUNCTION
+		#if defined __GNUC__ || (defined __ICC && __ICC >= 600)
+			#define EA_CURRENT_FUNCTION __PRETTY_FUNCTION__
+		#elif defined(__FUNCSIG__)
+			#define EA_CURRENT_FUNCTION __FUNCSIG__
+		#elif (defined __INTEL_COMPILER && __INTEL_COMPILER >= 600) || (defined __IBMCPP__ && __IBMCPP__ >= 500) || (defined CS_UNDEFINED_STRING && CS_UNDEFINED_STRING >= 0x4200)
+			#define EA_CURRENT_FUNCTION __FUNCTION__
+		#elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901
+			#define EA_CURRENT_FUNCTION __func__
+		#else
+			#define EA_CURRENT_FUNCTION "(unknown function)"
+		#endif
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// wchar_t
@@ -1869,11 +1899,11 @@
 	//     EA_CONSTEXPR_OR_CONST double gValue = std::sin(kTwoPi);
 	// 
 	#if !defined(EA_CONSTEXPR)
-	#if defined(EA_COMPILER_NO_CONSTEXPR)
-		#define EA_CONSTEXPR
-	#else
-		#define EA_CONSTEXPR constexpr
-	#endif
+		#if defined(EA_COMPILER_NO_CONSTEXPR)
+			#define EA_CONSTEXPR
+		#else
+			#define EA_CONSTEXPR constexpr
+		#endif
 	#endif
 
 	#if !defined(EA_CONSTEXPR_OR_CONST)
@@ -1883,6 +1913,27 @@
 			#define EA_CONSTEXPR_OR_CONST constexpr
 		#endif
 	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_CONSTEXPR_IF
+	// 
+	// Portable wrapper for C++17's 'constexpr if' support.
+	//
+	// https://en.cppreference.com/w/cpp/language/if
+	// 
+	// Example usage:
+	// 
+	// EA_CONSTEXPR_IF(eastl::is_copy_constructible_v<T>) 
+	// 	{ ... }
+	// 
+	#if !defined(EA_CONSTEXPR_IF)
+		#if defined(EA_COMPILER_NO_CONSTEXPR_IF)
+			#define EA_CONSTEXPR_IF(predicate) if ((predicate))
+		#else
+			#define EA_CONSTEXPR_IF(predicate) if constexpr ((predicate))
+		#endif
+	#endif
+
 
 
 	// ------------------------------------------------------------------------

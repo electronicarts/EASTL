@@ -39,7 +39,7 @@ class fixed_tuple_vector : public TupleVecInternal::TupleVecImpl<fixed_vector_al
 	TupleVecInternal::TupleRecurser<Ts...>::GetTotalAlignment(), 0,
 	bEnableOverflow, EASTLAllocatorType>, make_index_sequence<sizeof...(Ts)>, Ts...>
 {
-private:
+public:
 	typedef fixed_vector_allocator<
 		TupleVecInternal::TupleRecurser<Ts...>::GetTotalAllocationSize(nodeCount, 0), 1,
 		TupleVecInternal::TupleRecurser<Ts...>::GetTotalAlignment(), 0,
@@ -51,6 +51,7 @@ private:
 	typedef TupleVecInternal::TupleVecImpl<fixed_allocator_type, make_index_sequence<sizeof...(Ts)>, Ts...> base_type;
 	typedef typename base_type::size_type size_type;
 
+private:
 	aligned_buffer_type mBuffer;
 
 public:

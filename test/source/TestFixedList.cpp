@@ -503,19 +503,17 @@ int TestFixedList()
 		// this_type& operator=(std::initializer_list<value_type> ilist);
 		// void assign(std::initializer_list<value_type> ilist);
 		// iterator insert(iterator position, std::initializer_list<value_type> ilist);
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-			list<int> intList = { 0, 1, 2 };
-			EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 0, 1, 2, -1));
+		list<int> intList = { 0, 1, 2 };
+		EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 0, 1, 2, -1));
 
-			intList = { 13, 14, 15 };
-			EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 13, 14, 15, -1));
+		intList = { 13, 14, 15 };
+		EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 13, 14, 15, -1));
 
-			intList.assign({ 16, 17, 18 });
-			EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 16, 17, 18, -1));
+		intList.assign({ 16, 17, 18 });
+		EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 16, 17, 18, -1));
 
-			intList.insert(intList.begin(), { 14, 15 });
-			EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 14, 15, 16, 17, 18, -1));
-		#endif
+		intList.insert(intList.begin(), { 14, 15 });
+		EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "list std::initializer_list", 14, 15, 16, 17, 18, -1));
 	}
 
 

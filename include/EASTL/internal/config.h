@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.12.04"
-	#define EASTL_VERSION_N  31204
+	#define EASTL_VERSION   "3.12.07"
+	#define EASTL_VERSION_N  31207
 #endif
 
 
@@ -1643,7 +1643,7 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 // MallocAligned call and it's typically better if it can use the Malloc call.
 // But this requires knowing what the minimum possible alignment is.
 #if !defined(EASTL_ALLOCATOR_MIN_ALIGNMENT)
-	#define EASTL_ALLOCATOR_MIN_ALIGNMENT (EA_PLATFORM_PTR_SIZE * 2)
+	#define EASTL_ALLOCATOR_MIN_ALIGNMENT EA_PLATFORM_MIN_MALLOC_ALIGNMENT
 #endif
 
 

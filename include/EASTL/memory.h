@@ -203,13 +203,12 @@ namespace eastl
 	class late_constructed
 	{
 	public:
-		typedef late_constructed<T, autoConstruct>                     this_type;
-		typedef T                                                      value_type;
-		typedef typename eastl::aligned_storage<sizeof(value_type), 
-						 eastl::alignment_of<value_type>::value>::type storage_type;
+		using this_type    = late_constructed<T, autoConstruct>;
+		using value_type   = T;
+		using storage_type = eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>>;
 
 		late_constructed() EA_NOEXCEPT  // In the case of the late_constructed instance being at global scope, we rely on the 
-		  : mpValue(NULL) {}            // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
+		  : mpValue(nullptr) {}            // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
 
 		~late_constructed()
 		{
@@ -225,18 +224,27 @@ namespace eastl
 		} 
 
 		bool is_constructed() const EA_NOEXCEPT
-			{ return mpValue != NULL; }
+			{ return mpValue != nullptr; }
 
 		void destruct()
 		{
 			if(mpValue)
 			{
 				(*mpValue).~value_type();
-				mpValue = NULL;
+				mpValue = nullptr;
 			}
 		}
 
 		value_type& operator*() EA_NOEXCEPT
+		{
+			if(!mpValue)
+				construct();
+
+			EA_ANALYSIS_ASSUME(mpValue);
+			return *mpValue;
+		}
+
+		const value_type& operator*() const EA_NOEXCEPT
 		{
 			if(!mpValue)
 				construct();
@@ -252,7 +260,21 @@ namespace eastl
 			return mpValue;
 		}
 
+		const value_type* operator->() const EA_NOEXCEPT
+		{
+			if(!mpValue)
+				construct();
+			return mpValue;
+		}
+
 		value_type* get() EA_NOEXCEPT
+		{
+			if(!mpValue)
+				construct(); 
+			return mpValue;
+		}
+
+		const value_type* get() const EA_NOEXCEPT
 		{
 			if(!mpValue)
 				construct(); 
@@ -275,10 +297,19 @@ namespace eastl
 		typename base_type::value_type& operator*() EA_NOEXCEPT
 			{ EASTL_ASSERT(base_type::mpValue); return *base_type::mpValue; }
 
+		const typename base_type::value_type& operator*() const EA_NOEXCEPT
+			{ EASTL_ASSERT(base_type::mpValue); return *base_type::mpValue; }
+
 		typename base_type::value_type* operator->() EA_NOEXCEPT
 			{ EASTL_ASSERT(base_type::mpValue); return base_type::mpValue; }
 
+		const typename base_type::value_type* operator->() const EA_NOEXCEPT
+			{ EASTL_ASSERT(base_type::mpValue); return base_type::mpValue; }
+
 		typename base_type::value_type* get() EA_NOEXCEPT
+			{ return base_type::mpValue; }
+
+		const typename base_type::value_type* get() const EA_NOEXCEPT
 			{ return base_type::mpValue; }
 	};
 

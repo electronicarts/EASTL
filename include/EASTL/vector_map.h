@@ -211,26 +211,22 @@ namespace eastl
 		template <class... Args> 
 		iterator emplace_hint(const_iterator position, Args&&... args);
 
-		eastl::pair<iterator, bool> insert(const value_type& value);
-
 		template <typename P, typename = eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>>>
 		pair<iterator, bool> insert(P&& otherValue);
 
-		pair<iterator, bool> insert(const key_type& otherValue);
-		pair<iterator, bool> insert(key_type&& otherValue);
-
-		iterator insert(const_iterator position, const value_type& value);
-		iterator insert(const_iterator position, value_type&& value);
-
-		void insert(std::initializer_list<value_type> ilist);
+		eastl::pair<iterator, bool> insert(const value_type& value);
+		pair<iterator, bool>        insert(const key_type& otherValue);
+		pair<iterator, bool>        insert(key_type&& otherValue);
+		iterator                    insert(const_iterator position, const value_type& value);
+		iterator                    insert(const_iterator position, value_type&& value);
+		void                        insert(std::initializer_list<value_type> ilist);
 
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
 
-		iterator  erase(const_iterator position);
-		iterator  erase(const_iterator first, const_iterator last);
-		size_type erase(const key_type& k);
-
+		iterator         erase(const_iterator position);
+		iterator         erase(const_iterator first, const_iterator last);
+		size_type        erase(const key_type& k);
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 

@@ -1525,7 +1525,7 @@ int TestFixedTupleVectorVariant()
 
 	// Test comparisons
 	{
-		eastl::allocator otherAlloc;
+
 		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> equalsVec1, equalsVec2;
 		for (int i = 0; i < 10; ++i)
 		{
@@ -1534,9 +1534,11 @@ int TestFixedTupleVectorVariant()
 		}
 		EATEST_VERIFY(equalsVec1 == equalsVec2);
 
-		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> smallSizeVec(5);
-		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> lessThanVec(10);
-		fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float> greaterThanVec(10, otherAlloc);
+		using ftv = fixed_tuple_vector<nodeCount, bEnableOverflow, bool, TestObject, float>;
+		typename ftv::overflow_allocator_type otherAlloc;
+		ftv smallSizeVec(5);
+		ftv lessThanVec(10);
+		ftv greaterThanVec(10, otherAlloc);
 		for (int i = 0; i < 10; ++i)
 		{
 			lessThanVec.push_back(i % 3 == 0, TestObject(i), (float)i);

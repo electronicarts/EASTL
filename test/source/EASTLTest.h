@@ -1269,10 +1269,11 @@ public:
 	const char* get_name() const          { return base_type::get_name(); }
 	void set_name(const char* pName)      { base_type::set_name(pName); }
 
-	static auto getAllocationCount()      { return totalAllocCount; }
-	static auto getTotalAllocationSize()  { return totalAllocatedMemory; }
-	static auto getActiveAllocationSize() { return activeAllocatedMemory; }
-	static auto neverUsed()				  { return totalAllocCount == 0; }
+	static auto getTotalAllocationCount()  { return totalAllocCount; }
+	static auto getTotalAllocationSize()   { return totalAllocatedMemory; }
+	static auto getActiveAllocationSize()  { return activeAllocatedMemory; }
+	static auto getActiveAllocationCount() { return activeAllocCount; }
+	static auto neverUsed()				   { return totalAllocCount == 0; }
 
 	static void resetCount()
 	{
