@@ -708,6 +708,11 @@
 	#define EA_WCHAR_UNIQUE 0
 #endif
 
+// Feature check for native char8_t support. Currently only enabled
+// in Clang since r346892 when -std=c++2a is specified.  
+#if defined(__cpp_char8_t)
+	#define CHAR8_T_DEFINED
+#endif
 
 #ifndef CHAR8_T_DEFINED // If the user hasn't already defined these...
 	#define CHAR8_T_DEFINED
