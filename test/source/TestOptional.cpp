@@ -542,11 +542,6 @@ int TestOptional()
 			struct local
 			{
 				eastl::unique_ptr<int> ptr;
-
-				local(const local&) = delete;
-				local(local&&) = default;
-				local& operator=(const local&) = delete;
-				local& operator=(local&&) = default;
 			};
 
 			eastl::optional<local> o1 = local{eastl::make_unique<int>(42)};
