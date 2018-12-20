@@ -232,16 +232,16 @@ namespace eastl
 		}
 	#endif
 
-	inline size_t CharStrlen(const char8_t* p)
+	inline constexpr size_t CharStrlen(const char8_t* p)
 	{
-		#if defined(_MSC_VER) || defined(__GNUC__) 
-			return strlen(p);
-		#else
+//		#if defined(_MSC_VER) || defined(__GNUC__) 
+//			return strlen(p);
+//		#else
 			const char8_t* pCurrent = p;
 			while(*pCurrent)
 				++pCurrent;
 			return (size_t)(pCurrent - p);
-		#endif
+//		#endif
 	}
 
 	inline size_t CharStrlen(const char16_t* p)
