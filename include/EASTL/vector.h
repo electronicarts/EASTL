@@ -204,13 +204,13 @@ namespace eastl
 		using base_type::internalAllocator;
 
 	public:
-		vector() noexcept(noexcept(EASTL_VECTOR_DEFAULT_ALLOCATOR));
-		explicit vector(const allocator_type& allocator) noexcept;
+		vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR));
+		explicit vector(const allocator_type& allocator) EA_NOEXCEPT;
 		explicit vector(size_type n, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		vector(size_type n, const value_type& value, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		vector(const this_type& x);
 		vector(const this_type& x, const allocator_type& allocator);
-		vector(this_type&& x) noexcept;
+		vector(this_type&& x) EA_NOEXCEPT;
 		vector(this_type&& x, const allocator_type& allocator);
 		vector(std::initializer_list<value_type> ilist, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 
@@ -502,7 +502,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector() noexcept(noexcept(EASTL_VECTOR_DEFAULT_ALLOCATOR))
+	inline vector<T, Allocator>::vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))
 		: base_type()
 	{
 		// Empty
@@ -510,7 +510,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(const allocator_type& allocator) noexcept
+	inline vector<T, Allocator>::vector(const allocator_type& allocator) EA_NOEXCEPT
 		: base_type(allocator)
 	{
 		// Empty
@@ -552,7 +552,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(this_type&& x) noexcept
+	inline vector<T, Allocator>::vector(this_type&& x) EA_NOEXCEPT
 		: base_type(eastl::move(x.internalAllocator()))  // vector requires move-construction of allocator in this case.
 	{
 		DoSwap(x);
@@ -2015,7 +2015,7 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	inline void swap(vector<T, Allocator>& a, vector<T, Allocator>& b) noexcept(noexcept(a.swap(b)))
+	inline void swap(vector<T, Allocator>& a, vector<T, Allocator>& b) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(a.swap(b)))
 	{
 		a.swap(b);
 	}
