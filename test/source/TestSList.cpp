@@ -5,6 +5,7 @@
 #include "EASTLTest.h"
 #include <EASTL/slist.h>
 #include <EABase/eabase.h>
+#include <EASTL/fixed_allocator.h>
 
 using namespace eastl;
 
@@ -579,10 +580,21 @@ int TestSList()
 
 	// void reset_lose_memory();    
 	{
-		slist<int> list1;
-		list1.resize(100, 42);
+		typedef eastl::slist<int, fixed_allocator> SIntList;
+		typedef SIntList::node_type                SIntListNode;
+		const size_t  kBufferCount = 100;
+		SIntListNode  buffer1[kBufferCount];
+		SIntList      list1;
+		const size_t  kAlignOfSIntListNode = EA_ALIGN_OF(SIntListNode);
+		list1.get_allocator().init(buffer1, sizeof(buffer1), sizeof(SIntListNode), kAlignOfSIntListNode);
+
+		VERIFY(list1.empty());
+		VERIFY(list1.size() == 0);
+		VERIFY(list1.validate());
+
+		list1.resize(kBufferCount, 42);
 		VERIFY(!list1.empty());
-		VERIFY(list1.size() == 100);
+		VERIFY(list1.size() == kBufferCount);
 		VERIFY(list1.validate());
 
 		list1.reset_lose_memory();
