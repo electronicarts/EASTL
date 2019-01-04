@@ -340,7 +340,7 @@
 			#define EA_PLATFORM_DESCRIPTION "OSX on ARM64"
 		#elif defined(__POWERPC64__) || defined(__powerpc64__)
 			#define EA_PROCESSOR_POWERPC 1
-			#define CS_UNDEFINED_STRING 1
+			#define EA_PROCESSOR_POWERPC_64 1
 			#define EA_SYSTEM_BIG_ENDIAN 1
 			#define EA_PLATFORM_DESCRIPTION "OSX on PowerPC 64"
 		#elif defined(__POWERPC__) || defined(__powerpc__)
@@ -393,7 +393,7 @@
 		#define EA_PLATFORM_DESCRIPTION "Linux on x64"
 	#elif defined(__powerpc64__)
 		#define EA_PROCESSOR_POWERPC 1
-		#define CS_UNDEFINED_STRING 1
+		#define EA_PROCESSOR_POWERPC_64 1
 		#define EA_SYSTEM_BIG_ENDIAN 1
 		#define EA_PLATFORM_DESCRIPTION "Linux on PowerPC 64"
 	#elif defined(__powerpc__)
@@ -427,7 +427,7 @@
 		#define EA_PLATFORM_DESCRIPTION "BSD on x64"
 	#elif defined(__powerpc64__)
 		#define EA_PROCESSOR_POWERPC 1
-		#define CS_UNDEFINED_STRING 1
+		#define EA_PROCESSOR_POWERPC_64 1
 		#define EA_SYSTEM_BIG_ENDIAN 1
 		#define EA_PLATFORM_DESCRIPTION "BSD on PowerPC 64"
 	#elif defined(__powerpc__)

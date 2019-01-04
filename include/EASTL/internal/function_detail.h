@@ -407,6 +407,7 @@ namespace eastl
 			template <typename Functor, typename = EASTL_INTERNAL_FUNCTION_DETAIL_VALID_FUNCTION_ARGS(Functor, R, Args..., function_detail)>
 			function_detail& operator=(Functor&& functor)
 			{
+				Destroy();
 				CreateForwardFunctor(eastl::forward<Functor>(functor));
 				return *this;
 			}
@@ -414,6 +415,7 @@ namespace eastl
 			template <typename Functor>
 			function_detail& operator=(eastl::reference_wrapper<Functor> f) EA_NOEXCEPT
 			{
+				Destroy();
 				CreateForwardFunctor(f);
 				return *this;
 			}

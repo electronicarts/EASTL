@@ -618,8 +618,10 @@ int TestList()
 		auto insert_pos = a.begin();
 		eastl::advance(insert_pos, 5);
 
-		a.insert(insert_pos, 4, 42);
+		auto result = a.insert(insert_pos, 4, 42);
 		VERIFY(a == ref);
+		VERIFY(*result == 42);
+		VERIFY(*(--result) == 4);
 	}
 
 	// void insert(const_iterator position, InputIterator first, InputIterator last);
@@ -631,8 +633,10 @@ int TestList()
 		auto insert_pos = a.begin();
 		eastl::advance(insert_pos, 5);
 
-		a.insert(insert_pos, to_insert.begin(), to_insert.end());
+		auto result = a.insert(insert_pos, to_insert.begin(), to_insert.end());
 		VERIFY(a == ref);
+		VERIFY(*result == 42);
+		VERIFY(*(--result) == 4);
 	}
 
 	// iterator insert(const_iterator position, std::initializer_list<value_type> ilist);

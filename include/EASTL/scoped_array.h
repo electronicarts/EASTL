@@ -126,7 +126,7 @@ namespace eastl
 		/// Example usage:
 		///    scoped_array<int> ptr(new int[6]);
 		///    int x = ptr[2];
-		T& operator[](ptrdiff_t i) const
+		typename add_lvalue_reference<T>::type operator[](ptrdiff_t i) const
 		{
 			// assert(mpArray && (i >= 0));
 			return mpArray[i];

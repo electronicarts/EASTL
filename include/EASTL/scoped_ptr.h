@@ -145,7 +145,7 @@ namespace eastl
 		/// Example usage:
 		///    scoped_ptr<int> ptr(new int(3));
 		///    int x = *ptr;
-		T& operator*() const
+		typename add_lvalue_reference<T>::type operator*() const
 		{
 			// assert(mpValue);
 			return *mpValue;

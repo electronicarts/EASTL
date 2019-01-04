@@ -823,6 +823,11 @@ static int Test_scoped_ptr()
 		delete pA;
 	}
 
+	{
+		scoped_ptr<void> ptr(new int);
+		(void)ptr;
+	}
+
 	EATEST_VERIFY(A::mCount == 0);
 
 	return nErrorCount;
@@ -878,6 +883,11 @@ static int Test_scoped_array()
 		scoped_array<A> ptr(new A[6]);
 		A* pArray = ptr.detach();
 		delete[] pArray;
+	}
+
+	{
+		scoped_array<void> ptr(new int[6]);
+		(void)ptr;
 	}
 
 	EATEST_VERIFY(A::mCount == 0);

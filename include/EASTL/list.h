@@ -384,10 +384,10 @@ namespace eastl
 		iterator insert(const_iterator position, const value_type& value);
 		iterator insert(const_iterator position, value_type&& x);
 		iterator insert(const_iterator position, std::initializer_list<value_type> ilist);
-		void     insert(const_iterator position, size_type n, const value_type& value); // TODO(rparolin): return iterator C++11 support
+		iterator insert(const_iterator position, size_type n, const value_type& value);
 
 		template <typename InputIterator>
-		void insert(const_iterator position, InputIterator first, InputIterator last);  // TODO(rparolin): return iterator C++11 support
+		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
 		iterator erase(const_iterator position);
 		iterator erase(const_iterator first, const_iterator last);
@@ -1374,18 +1374,25 @@ namespace eastl
 	}
 
 	template <typename T, typename Allocator>
-	inline void list<T, Allocator>::insert(const_iterator position, size_type n, const value_type& value)
+	inline typename list<T, Allocator>::iterator
+	list<T, Allocator>::insert(const_iterator position, size_type n, const value_type& value)
 	{
-		// To do: Get rid of DoInsertValues and put its implementation directly here.
+		iterator itPrev(position.mpNode);
+		--itPrev;
 		DoInsertValues((ListNodeBase*)position.mpNode, n, value);
+		return ++itPrev; // Inserts in front of position, returns iterator to new elements. 
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void list<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
+	inline typename list<T, Allocator>::iterator
+	list<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
 	{
+		iterator itPrev(position.mpNode);
+		--itPrev;
 		DoInsert((ListNodeBase*)position.mpNode, first, last, is_integral<InputIterator>());
+		return ++itPrev; // Inserts in front of position, returns iterator to new elements. 
 	}
 
 

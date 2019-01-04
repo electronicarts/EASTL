@@ -12,32 +12,9 @@
 #include <EASTL/algorithm.h>
 
 
-// STD_HASH_SUPPORTED
-//
-// Defined as 0 or 1. identifies if hash_map (pre-C++11 container type) is supported.
-// 
-#ifndef STD_HASH_SUPPORTED
-	// Apache STL doesn't have any kind of hash containers.
-	#if defined(_RWSTD_VER_STR)
-		#define STD_HASH_SUPPORTED 0
-	#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006) // To consider: Find a better way to identify the switchover from pre-C++11 hash containers to C++11 hash containers.
-		#define STD_HASH_SUPPORTED 0 // Need to use std::unordered_map, etc. instead of hash_map, etc.
-	#elif defined(EA_COMPILER_CLANG) && (EA_COMPILER_CPP11_ENABLED) // Bad way to determine if we have C++11 hash containers
-		#define STD_HASH_SUPPORTED 0
-	#else
-		#define STD_HASH_SUPPORTED 1
-	#endif
-#endif
-
 
 EA_DISABLE_ALL_VC_WARNINGS()
-#if STD_HASH_SUPPORTED
-	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && (defined(_CXXCONFIG) || defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_MINGW))
-		#include <ext/hash_map>
-	#else
-		#include <hash_map>
-	#endif
-#endif
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include <stdio.h>
@@ -79,46 +56,11 @@ struct HashString8
 };
 
 
-#if STD_HASH_SUPPORTED
-	#if defined(_STLPORT_VERSION) // STLPort is an modular add-on that can override any other STL.
-		typedef std::hash_map<uint32_t, TestObject>     StdMapUint32TO;
-		typedef eastl::hash_map<uint32_t, TestObject>   EaMapUint32TO;
+using StdMapUint32TO = std::unordered_map<uint32_t, TestObject>;
+using StdMapStrUint32 = std::unordered_map<std::string, uint32_t, HashString8<std::string>>;
 
-		typedef std::hash_map<std::string, uint32_t, HashString8<std::string> >       StdMapStrUint32;
-		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
-
-	#elif defined(_MSC_VER) 
-		typedef stdext::hash_map<uint32_t, TestObject>  StdMapUint32TO;
-		typedef eastl::hash_map<uint32_t, TestObject>   EaMapUint32TO;
-
-		typedef stdext::hash_map<std::string, uint32_t, HashString8<std::string> >    StdMapStrUint32;
-		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
-
-	#elif defined(_CPPLIB_VER) // Dinkumware STL.
-		typedef std::hash_map<uint32_t, TestObject>     StdMapUint32TO;
-		typedef eastl::hash_map<uint32_t, TestObject>   EaMapUint32TO;
-
-		typedef std::hash_map<std::string, uint32_t, HashString8<std::string> >       StdMapStrUint32;
-		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
-
-	#elif defined(__GNUC__) && (defined(_CXXCONFIG) || defined(_GLIBCXX_STD) || defined(EA_PLATFORM_UNIX)) // GCC using libstdc++
-		typedef __gnu_cxx::hash_map<uint32_t, TestObject> StdMapUint32TO;
-		typedef eastl::hash_map<uint32_t, TestObject>     EaMapUint32TO;
-
-		typedef __gnu_cxx::hash_map<std::string, uint32_t, HashString8<std::string> > StdMapStrUint32;
-		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
-
-	#else // Else generic hash map similar to that proposed for the C++ standard. 
-		typedef std::hash_map<uint32_t, TestObject>     StdMapUint32TO;
-		typedef eastl::hash_map<uint32_t, TestObject>   EaMapUint32TO;
-
-		typedef std::hash_map<std::string, uint32_t, HashString8<std::string> >       StdMapStrUint32;
-		typedef eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string> > EaMapStrUint32;
-
-	#endif
-#endif
-
-
+using EaMapUint32TO = eastl::hash_map<uint32_t, TestObject>;
+using EaMapStrUint32 = eastl::hash_map<eastl::string, uint32_t, HashString8<eastl::string>>;
 
 
 namespace
@@ -291,225 +233,221 @@ namespace
 
 void BenchmarkHash()
 {
-	#if STD_HASH_SUPPORTED
-		EASTLTest_Printf("HashMap\n");
+	EASTLTest_Printf("HashMap\n");
 
-		EA::UnitTest::Rand  rng(EA::UnitTest::GetRandSeed());
-		EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
-		EA::StdC::Stopwatch stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::UnitTest::Rand  rng(EA::UnitTest::GetRandSeed());
+	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	EA::StdC::Stopwatch stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
 
+	{
+		eastl::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
+		eastl::vector< eastl::pair<uint32_t, TestObject> >  eaVectorUT(10000);
+
+		eastl::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
+		eastl::vector< eastl::pair<eastl::string, uint32_t> >  eaVectorSU(10000);
+
+		for(eastl_size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
 		{
-			eastl::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
-			eastl::vector< eastl::pair<uint32_t, TestObject> >  eaVectorUT(10000);
+			const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
+			const uint32_t n2 = rng.RandValue();
 
-			eastl::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
-			eastl::vector< eastl::pair<eastl::string, uint32_t> >  eaVectorSU(10000);
+			stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
+			eaVectorUT[i]  = eastl::pair<uint32_t, TestObject>(n1, TestObject(n2));
 
-			for(eastl_size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
-			{
-				const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
-				const uint32_t n2 = rng.RandValue();
+			char str_n1[32];
+			sprintf(str_n1, "%u", (unsigned)n1);
 
-				stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
-				eaVectorUT[i]  = eastl::pair<uint32_t, TestObject>(n1, TestObject(n2));
-
-				char str_n1[32];
-				sprintf(str_n1, "%u", (unsigned)n1);
-
-				stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
-				eaVectorSU[i]  = eastl::pair<eastl::string, uint32_t>(eastl::string(str_n1), n2);
-			}
-
-			for(int i = 0; i < 2; i++)
-			{
-				StdMapUint32TO  stdMapUint32TO;
-				EaMapUint32TO   eaMapUint32TO;
-
-				StdMapStrUint32 stdMapStrUint32;
-				EaMapStrUint32  eaMapStrUint32;
-
-
-				///////////////////////////////
-				// Test insert(const value_type&)
-				///////////////////////////////
-
-				TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-				TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestInsert(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test iteration
-				///////////////////////////////
-
-				TestIteration(stopwatch1, stdMapUint32TO, StdMapUint32TO::value_type(9999999, TestObject(9999999)));
-				TestIteration(stopwatch2,  eaMapUint32TO,  EaMapUint32TO::value_type(9999999, TestObject(9999999)));
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestIteration(stopwatch1, stdMapStrUint32, StdMapStrUint32::value_type(  std::string("9999999"), 9999999));
-				TestIteration(stopwatch2,  eaMapStrUint32,  EaMapStrUint32::value_type(eastl::string("9999999"), 9999999));
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test operator[]
-				///////////////////////////////
-
-				TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-				TestBracket(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestBracket(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test find
-				///////////////////////////////
-
-				TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-				TestFind(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestFind(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test find_as
-				///////////////////////////////
-
-				TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test count
-				///////////////////////////////
-
-				TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-				TestCount(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestCount(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test erase(const key_type& key)
-				///////////////////////////////
-
-				TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
-				TestEraseValue(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  (eaVectorUT.size() / 2));
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
-				TestEraseValue(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  (eaVectorSU.size() / 2));
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test erase(iterator position)
-				///////////////////////////////
-
-				TestErasePosition(stopwatch1, stdMapUint32TO);
-				TestErasePosition(stopwatch2, eaMapUint32TO);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestErasePosition(stopwatch1, stdMapStrUint32);
-				TestErasePosition(stopwatch2, eaMapStrUint32);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test erase(iterator first, iterator last)
-				///////////////////////////////
-
-				TestEraseRange(stopwatch1, stdMapUint32TO);
-				TestEraseRange(stopwatch2, eaMapUint32TO);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestEraseRange(stopwatch1, stdMapStrUint32);
-				TestEraseRange(stopwatch2, eaMapStrUint32);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-				///////////////////////////////
-				// Test clear()
-				///////////////////////////////
-
-				// Clear the containers of whatever they happen to have. We want the containers to have full data.
-				TestClear(stopwatch1, stdMapUint32TO);
-				TestClear(stopwatch2, eaMapUint32TO);
-				TestClear(stopwatch1, stdMapStrUint32);
-				TestClear(stopwatch2, eaMapStrUint32);
-
-				// Re-set the containers with full data.
-				TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-				TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-				TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-				TestInsert(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-				// Now clear the data again, this time measuring it.
-				TestClear(stopwatch1, stdMapUint32TO);
-				TestClear(stopwatch2, eaMapUint32TO);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<uint32_t, TestObject>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-				TestClear(stopwatch1, stdMapStrUint32);
-				TestClear(stopwatch2, eaMapStrUint32);
-
-				if(i == 1)
-					Benchmark::AddResult("hash_map<string, uint32_t>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			}
+			stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
+			eaVectorSU[i]  = eastl::pair<eastl::string, uint32_t>(eastl::string(str_n1), n2);
 		}
-	#else
-		EASTLTest_Printf("HashMap...Unsupported by the tested std STL.\n");
-	#endif
+
+		for(int i = 0; i < 2; i++)
+		{
+			StdMapUint32TO  stdMapUint32TO;
+			EaMapUint32TO   eaMapUint32TO;
+
+			StdMapStrUint32 stdMapStrUint32;
+			EaMapStrUint32  eaMapStrUint32;
+
+
+			///////////////////////////////
+			// Test insert(const value_type&)
+			///////////////////////////////
+
+			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+			TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestInsert(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test iteration
+			///////////////////////////////
+
+			TestIteration(stopwatch1, stdMapUint32TO, StdMapUint32TO::value_type(9999999, TestObject(9999999)));
+			TestIteration(stopwatch2,  eaMapUint32TO,  EaMapUint32TO::value_type(9999999, TestObject(9999999)));
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestIteration(stopwatch1, stdMapStrUint32, StdMapStrUint32::value_type(  std::string("9999999"), 9999999));
+			TestIteration(stopwatch2,  eaMapStrUint32,  EaMapStrUint32::value_type(eastl::string("9999999"), 9999999));
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test operator[]
+			///////////////////////////////
+
+			TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+			TestBracket(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestBracket(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test find
+			///////////////////////////////
+
+			TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+			TestFind(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestFind(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test find_as
+			///////////////////////////////
+
+			TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test count
+			///////////////////////////////
+
+			TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+			TestCount(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestCount(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test erase(const key_type& key)
+			///////////////////////////////
+
+			TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
+			TestEraseValue(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  (eaVectorUT.size() / 2));
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
+			TestEraseValue(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  (eaVectorSU.size() / 2));
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test erase(iterator position)
+			///////////////////////////////
+
+			TestErasePosition(stopwatch1, stdMapUint32TO);
+			TestErasePosition(stopwatch2, eaMapUint32TO);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestErasePosition(stopwatch1, stdMapStrUint32);
+			TestErasePosition(stopwatch2, eaMapStrUint32);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test erase(iterator first, iterator last)
+			///////////////////////////////
+
+			TestEraseRange(stopwatch1, stdMapUint32TO);
+			TestEraseRange(stopwatch2, eaMapUint32TO);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestEraseRange(stopwatch1, stdMapStrUint32);
+			TestEraseRange(stopwatch2, eaMapStrUint32);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test clear()
+			///////////////////////////////
+
+			// Clear the containers of whatever they happen to have. We want the containers to have full data.
+			TestClear(stopwatch1, stdMapUint32TO);
+			TestClear(stopwatch2, eaMapUint32TO);
+			TestClear(stopwatch1, stdMapStrUint32);
+			TestClear(stopwatch2, eaMapStrUint32);
+
+			// Re-set the containers with full data.
+			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+			TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			TestInsert(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+			// Now clear the data again, this time measuring it.
+			TestClear(stopwatch1, stdMapUint32TO);
+			TestClear(stopwatch2, eaMapUint32TO);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<uint32_t, TestObject>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestClear(stopwatch1, stdMapStrUint32);
+			TestClear(stopwatch2, eaMapStrUint32);
+
+			if(i == 1)
+				Benchmark::AddResult("hash_map<string, uint32_t>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+		}
+	}
 }
 
 

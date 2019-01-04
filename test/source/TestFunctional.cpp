@@ -15,7 +15,7 @@
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <functional>
-EA_RESTORE_ALL_VC_WARNINGS();
+EA_RESTORE_ALL_VC_WARNINGS()
 
 namespace
 {
@@ -795,7 +795,6 @@ int TestFunctional()
 				EATEST_VERIFY(fn0() == 1 && fn1() == 1);
 			}
 
-			#if !EASTL_NO_RVALUE_REFERENCES
 			{
 				eastl::function<int()> fn0 = ReturnZero;
 				eastl::function<int()> fn1 = ReturnOne;
@@ -804,7 +803,6 @@ int TestFunctional()
 				fn0 = eastl::move(fn1);
 				EATEST_VERIFY(fn0() == 1 && fn1 == nullptr);
 			}
-			#endif
 
 			{
 				eastl::function<int(int)> f1(nullptr);
@@ -894,6 +892,33 @@ int TestFunctional()
 			EATEST_VERIFY(fn() == 6);
 			EATEST_VERIFY(fn() == 7);
 			EATEST_VERIFY(fn() == 8);
+		}
+
+		// user regression for memory leak when re-assigning an eastl::function which already holds a large closure.
+		{
+				static int sCtorCount = 0;
+				static int sDtorCount = 0;
+
+				{
+					struct local
+					{
+						local() { sCtorCount++; }
+						local(const local&) {  sCtorCount++; }
+						local(local&&)  {  sCtorCount++; }
+						~local() { sDtorCount++; }
+
+						void operator=(const local&) = delete; // suppress msvc warning
+					} l;
+
+					eastl::function<bool()> f;
+
+					f = [l]() { return false; };
+
+					// ensure closure resources are cleaned up when assigning to a non-null eastl::function.
+					f = [l]() { return true; };
+				}
+
+				EATEST_VERIFY(sCtorCount == sDtorCount);
 		}
 	}
 

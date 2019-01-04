@@ -10,17 +10,12 @@
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#pragma warning(disable: 4350)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 #include <algorithm>
 #include <functional>
 #include <vector>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_ALL_VC_WARNINGS()
 
 
 using namespace EA;
@@ -1168,6 +1163,8 @@ static int CompareSmallInputSortPerformanceHelper(eastl::vector<eastl_size_t> &a
 							stopwatch.Stop();
 							break;
 
+						case sf_qsort:
+						case sf_radix_sort:
 						case sf_count:
 						default:
 							EATEST_VERIFY_F(false, "Missing case statement for sort function %s.", GetSortFunctionName(sortFunction));
