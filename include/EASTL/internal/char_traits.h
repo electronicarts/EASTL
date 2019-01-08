@@ -232,7 +232,7 @@ namespace eastl
 		}
 	#endif
 
-	inline EA_CONSTEXPR size_t CharStrlen(const char8_t* p)
+	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char8_t* p)
 	{
 		const char8_t* pCurrent = p;
 		while(*pCurrent)
@@ -240,7 +240,7 @@ namespace eastl
 		return (size_t)(pCurrent - p);
 	}
 
-	inline EA_CONSTEXPR size_t CharStrlen(const char16_t* p)
+	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char16_t* p)
 	{
 		const char16_t* pCurrent = p;
 		while(*pCurrent)
@@ -248,7 +248,7 @@ namespace eastl
 		return (size_t)(pCurrent - p);
 	}
 
-	inline EA_CONSTEXPR size_t CharStrlen(const char32_t* p)
+	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char32_t* p)
 	{
 		const char32_t* pCurrent = p;
 		while(*pCurrent)
@@ -257,7 +257,7 @@ namespace eastl
 	}
 
 	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline EA_CONSTEXPR size_t CharStrlen(const wchar_t* p)
+		inline EA_CPP14_CONSTEXPR size_t CharStrlen(const wchar_t* p)
 		{
 			const wchar_t* pCurrent = p;
 			while(*pCurrent)
