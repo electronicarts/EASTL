@@ -337,7 +337,7 @@ namespace eastl
 		// The view of memory when the string data is able to store the string data locally (without a heap allocation).
 		struct SSOLayout
 		{
-			enum : size_type { SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type) };
+			static constexpr size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
 
 			// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
 			// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.
