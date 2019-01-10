@@ -35,10 +35,10 @@ namespace eastl
 	struct reverse_wrapper
 	{
 		reverse_wrapper(Container& c) : mContainer(c) {}
-	    Container& mContainer;
+		Container& mContainer;
 	};
 
-    template <typename Container>
+	template <typename Container>
 	auto begin(const reverse_wrapper<Container>& w) -> decltype(rbegin(w.mContainer))
 		{ return rbegin(w.mContainer); }
 
