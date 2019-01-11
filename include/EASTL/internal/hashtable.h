@@ -1263,10 +1263,20 @@ namespace eastl
 		node_type* DoAllocateNode(value_type&& value);
 		node_type* DoAllocateNode(const value_type& value);
 
-		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key);
-		iterator                    DoInsertKey(false_type, const key_type& key);
-		eastl::pair<iterator, bool> DoInsertKey(true_type, key_type&& key);
-		iterator                    DoInsertKey(false_type, key_type&& key);
+		// DoInsertKey is supposed to get hash_code_t c  = get_hash_code(key).
+		// it is done in case application has it's own hashset/hashmap-like containter, where hash code is for some reason known prior the insert
+		// this allows to save some performance, especially with heavy hash functions
+		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key, hash_code_t c);
+		iterator                    DoInsertKey(false_type, const key_type& key, hash_code_t c);
+		eastl::pair<iterator, bool> DoInsertKey(true_type, key_type&& key, hash_code_t c);
+		iterator                    DoInsertKey(false_type, key_type&& key, hash_code_t c);
+
+		// We keep DoInsertKey overload without third parameter, for compatibility with older revisions of EASTL (3.12.07 and earlier)
+		// It used to call get_hash_code as a first call inside the DoInsertKey.
+		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key){return DoInsertKey(true_type(), key, get_hash_code(key));}
+		iterator                    DoInsertKey(false_type, const key_type& key){return DoInsertKey(false_type(), key, get_hash_code(key));}
+		eastl::pair<iterator, bool> DoInsertKey(true_type, key_type&& key){return DoInsertKey(true_type(), eastl::move(key), get_hash_code(key));}
+		iterator                    DoInsertKey(false_type, key_type&& key){return DoInsertKey(false_type(), eastl::move(key), get_hash_code(key));}
 
 		void       DoRehash(size_type nBucketCount);
 		node_type* DoFindNode(node_type* pNode, const key_type& k, hash_code_t c) const;
@@ -2492,9 +2502,8 @@ namespace eastl
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, const key_type& key) // true_type means bUniqueKeys is true.
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
-		const hash_code_t c     = get_hash_code(key);
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 		node_type* const  pNode = DoFindNode(mpBucketArray[n], key, c);
 
@@ -2541,14 +2550,13 @@ namespace eastl
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means bUniqueKeys is false.
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, const key_type& key, const hash_code_t c) // false_type means bUniqueKeys is false.
 	{
 		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
 		if(bRehash.first)
 			DoRehash(bRehash.second);
 
-		const hash_code_t c = get_hash_code(key);
 		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 
 		node_type* const pNodeNew = DoAllocateNodeFromKey(key);
@@ -2583,9 +2591,8 @@ namespace eastl
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, key_type&& key) // true_type means bUniqueKeys is true.
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
-		const hash_code_t c     = get_hash_code(key);
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 		node_type* const  pNode = DoFindNode(mpBucketArray[n], key, c);
 
@@ -2631,14 +2638,13 @@ namespace eastl
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, key_type&& key) // false_type means bUniqueKeys is false.
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(false_type, key_type&& key, const hash_code_t c) // false_type means bUniqueKeys is false.
 	{
 		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
 		if(bRehash.first)
 			DoRehash(bRehash.second);
 
-		const hash_code_t c = get_hash_code(key);
 		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 
 		node_type* const pNodeNew = DoAllocateNodeFromKey(eastl::move(key));
