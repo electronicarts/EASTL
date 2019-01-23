@@ -203,7 +203,6 @@ namespace eastl
 		};
 
 
-#if EASTL_VARIADIC_TEMPLATES_ENABLED
 		// has_construct
         template <class Alloc, class T, class... Args>
         decltype(eastl::declval<Alloc>().construct(eastl::declval<T*>(), eastl::declval<Args>()...), eastl::true_type())
@@ -220,24 +219,6 @@ namespace eastl
                           eastl::true_type>::value>
         {
         };
-#else
-		// has_construct (single argument case)
-        template <class Alloc, class T, class Arg0>
-        decltype(eastl::declval<Alloc>().construct(eastl::declval<T*>(), eastl::declval<Arg0>()), eastl::true_type())
-        has_construct_test(Alloc&& a, T* p, Arg0&& args);
-
-        template <class Alloc, class Pointer, class Arg0>
-        eastl::false_type has_construct_test(const Alloc& a, Pointer&& p, Arg0&& args);
-
-        template <class Alloc, class Pointer, class Arg0>
-        struct has_construct
-            : public eastl::integral_constant< bool,
-                  eastl::is_same<decltype(has_construct_test(eastl::declval<Alloc>(), eastl::declval<Pointer>(),
-				  eastl::declval<Arg0>())),
-                          eastl::true_type>::value>
-        {
-        };
-#endif
 
 
 		// has_destroy
@@ -333,7 +314,6 @@ namespace eastl
 
 		static void deallocate(allocator_type& a, pointer p, size_type n) EA_NOEXCEPT { a.deallocate(p, n); }
 
-	#ifndef EA_COMPILER_NO_VARIADIC_TEMPLATES
 	    template <class T, class... Args>
 	    static void internal_construct(eastl::true_type, allocator_type& a, T* p, Args&&... args)
 	    {
@@ -351,34 +331,12 @@ namespace eastl
 		{
 			internal_construct(Internal::has_construct<allocator_type, T*, Args...>(), a, p, eastl::forward<Args>(args)...);
 		}
-	#else  // EA_COMPILER_NO_VARIADIC_TEMPLATES
-		template <class T>
-		static void construct(allocator_type& a, T* p)
-		{
-			::new ((void*)p) T();
-		}
-		template <class T, class A0>
-		static void construct(allocator_type& a, T* p, const A0& a0)
-		{
-			::new ((void*)p) T(a0);
-		}
-		template <class T, class A0, class A1>
-		static void construct(allocator_type& a, T* p, const A0& a0, const A1& a1)
-		{
-			::new ((void*)p) T(a0, a1);
-		}
-		template <class T, class A0, class A1, class A2>
-		static void construct(allocator_type& a, T* p, const A0& a0, const A1& a1, const A2& a2)
-		{
-			::new ((void*)p) T(a0, a1, a2);
-		}
-	#endif // EA_COMPILER_NO_VARIADIC_TEMPLATES
 
 	    template <class T>
 	    static void internal_destroy(eastl::true_type, allocator_type& a, T* p) { a.destroy(p); }
 
 	    template <class T>
-	    static void internal_destroy(eastl::false_type, allocator_type&, T* p) { p->~T(); }
+	    static void internal_destroy(eastl::false_type, allocator_type&, T* p) { EA_UNUSED(p); p->~T(); }
 
 	    template <class T>
 	    static void destroy(allocator_type& a, T* p)

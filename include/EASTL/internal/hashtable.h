@@ -1273,10 +1273,10 @@ namespace eastl
 
 		// We keep DoInsertKey overload without third parameter, for compatibility with older revisions of EASTL (3.12.07 and earlier)
 		// It used to call get_hash_code as a first call inside the DoInsertKey.
-		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key){return DoInsertKey(true_type(), key, get_hash_code(key));}
-		iterator                    DoInsertKey(false_type, const key_type& key){return DoInsertKey(false_type(), key, get_hash_code(key));}
-		eastl::pair<iterator, bool> DoInsertKey(true_type, key_type&& key){return DoInsertKey(true_type(), eastl::move(key), get_hash_code(key));}
-		iterator                    DoInsertKey(false_type, key_type&& key){return DoInsertKey(false_type(), eastl::move(key), get_hash_code(key));}
+		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key)  { return DoInsertKey(true_type(),  key, get_hash_code(key)); }
+		iterator                    DoInsertKey(false_type, const key_type& key) { return DoInsertKey(false_type(), key, get_hash_code(key)); }
+		eastl::pair<iterator, bool> DoInsertKey(true_type, key_type&& key)       { return DoInsertKey(true_type(),  eastl::move(key), get_hash_code(key)); }
+		iterator                    DoInsertKey(false_type, key_type&& key)      { return DoInsertKey(false_type(), eastl::move(key), get_hash_code(key)); }
 
 		void       DoRehash(size_type nBucketCount);
 		node_type* DoFindNode(node_type* pNode, const key_type& k, hash_code_t c) const;

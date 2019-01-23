@@ -1,0 +1,7 @@
+build:
+    script:
+        - nant -masterconfigfile:f:\dev.xml -buildroot:f:\ci-builds -D:config=pc64-vc-dev-debug-opt test-build
+
+test:
+    script:
+        - nant -masterconfigfile:f:\dev.xml -buildroot:f:\ci-builds -D:config=pc64-vc-dev-debug-opt test-run-fast

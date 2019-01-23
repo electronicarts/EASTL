@@ -2015,7 +2015,7 @@ namespace eastl
 	inline bool equal(const signed char* first1, const signed char* last1, const signed char* first2)
 		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
 
-	#ifndef EA_WCHAR_T_NON_NATIVE // EABase defines this. If you are getting a compiler error here, then somebody has taken away EABase or broken it.
+	#ifndef EA_WCHAR_T_NON_NATIVE
 		inline bool equal(const wchar_t* first1, const wchar_t* last1, const wchar_t* first2)
 			{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
 	#endif
@@ -2036,15 +2036,6 @@ namespace eastl
 		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
 
 	inline bool equal(const uint64_t* first1, const uint64_t* last1, const uint64_t* first2)
-		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
-
-	inline bool equal(const float* first1, const float* last1, const float* first2)
-		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
-
-	inline bool equal(const double* first1, const double* last1, const double* first2)
-		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
-
-	inline bool equal(const long double* first1, const long double* last1, const long double* first2)
 		{ return (memcmp(first1, first2, (size_t)((uintptr_t)last1 - (uintptr_t)first1)) == 0); }
 	*/
 

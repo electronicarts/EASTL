@@ -236,10 +236,10 @@ namespace eastl
 		DequeIterator(const iterator&       x, Increment);
 		DequeIterator(const iterator&       x, Decrement);
 
-		this_type copy(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait is_move_assignable,
+		this_type copy(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait has_trivial_relocate,
 		this_type copy(const iterator& first, const iterator& last, false_type); // false means it does not. 
 
-		void copy_backward(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait is_move_assignable,
+		void copy_backward(const iterator& first, const iterator& last, true_type);  // true means that value_type has the type_trait has_trivial_relocate,
 		void copy_backward(const iterator& first, const iterator& last, false_type); // false means it does not.
 
 		void SetSubarray(T** pCurrentArrayPtr);
@@ -1049,7 +1049,6 @@ namespace eastl
 		//        Currently we only do memcpy if the entire operation occurs within a single subarray.
 		if((first.mpBegin == last.mpBegin) && (first.mpBegin == mpBegin)) // If all operations are within the same subarray, implement the operation as a memmove.
 		{
-			// The following is equivalent to: eastl::copy(first.mpCurrent, last.mpCurrent, mpCurrent);
 			memmove(mpCurrent, first.mpCurrent, (size_t)((uintptr_t)last.mpCurrent - (uintptr_t)first.mpCurrent));
 			return *this + (last.mpCurrent - first.mpCurrent);
 		}
@@ -1061,7 +1060,7 @@ namespace eastl
 	typename DequeIterator<T, Pointer, Reference, kDequeSubarraySize>::this_type
 	DequeIterator<T, Pointer, Reference, kDequeSubarraySize>::copy(const iterator& first, const iterator& last, false_type)
 	{
-		return eastl::copy(first, last, *this);
+		return eastl::copy(eastl::make_move_iterator(first), eastl::make_move_iterator(last), eastl::make_move_iterator(*this)).base();
 	}
 
 
@@ -1080,7 +1079,7 @@ namespace eastl
 	template <typename T, typename Pointer, typename Reference, unsigned kDequeSubarraySize>
 	void DequeIterator<T, Pointer, Reference, kDequeSubarraySize>::copy_backward(const iterator& first, const iterator& last, false_type)
 	{
-		eastl::copy_backward(first, last, *this);
+		eastl::copy_backward(eastl::make_move_iterator(first), eastl::make_move_iterator(last), eastl::make_move_iterator(*this)).base();
 	}
 
 
@@ -1788,7 +1787,7 @@ namespace eastl
 				  iterator oldBegin     (mItBegin,   typename iterator::Increment());
 			const iterator oldBeginPlus1(oldBegin,   typename iterator::Increment());
 
-			oldBegin.copy(oldBeginPlus1, newPosition, eastl::is_move_assignable<value_type>());
+			oldBegin.copy(oldBeginPlus1, newPosition, eastl::has_trivial_relocate<value_type>());
 		}
 		else
 		{
@@ -1799,7 +1798,7 @@ namespace eastl
 				  iterator oldBack      (mItEnd,  typename iterator::Decrement());
 			const iterator oldBackMinus1(oldBack, typename iterator::Decrement());
 
-			oldBack.copy_backward(itPosition, oldBackMinus1, eastl::is_move_assignable<value_type>());
+			oldBack.copy_backward(itPosition, oldBackMinus1, eastl::has_trivial_relocate<value_type>());
 		}
 
 		*itPosition = eastl::move(valueSaved);
@@ -1936,12 +1935,12 @@ namespace eastl
 
 		if(i < (difference_type)(size() / 2)) // Should we move the front entries forward or the back entries backward? We divide the range in half.
 		{
-			itNext.copy_backward(mItBegin, itPosition, eastl::is_move_assignable<value_type>());
+			itNext.copy_backward(mItBegin, itPosition, eastl::has_trivial_relocate<value_type>());
 			pop_front();
 		}
 		else
 		{
-			itPosition.copy(itNext, mItEnd, eastl::is_move_assignable<value_type>());
+			itPosition.copy(itNext, mItEnd, eastl::has_trivial_relocate<value_type>());
 			pop_back();
 		}
 
@@ -1973,7 +1972,7 @@ namespace eastl
 				const iterator itNewBegin(mItBegin + n);
 				value_type** const pPtrArrayBegin = mItBegin.mpCurrentArrayPtr;
 
-				itLast.copy_backward(mItBegin, itFirst, eastl::is_move_assignable<value_type>());
+				itLast.copy_backward(mItBegin, itFirst, eastl::has_trivial_relocate<value_type>());
 
 				for(; mItBegin != itNewBegin; ++mItBegin) // Question: If value_type is a POD type, will the compiler generate this loop at all?
 					mItBegin.mpCurrent->~value_type();    //           If so, then we need to make a specialization for destructing PODs.
@@ -1987,7 +1986,7 @@ namespace eastl
 				iterator itNewEnd(mItEnd - n);
 				value_type** const pPtrArrayEnd = itNewEnd.mpCurrentArrayPtr + 1;
 
-				itFirst.copy(itLast, mItEnd, eastl::is_move_assignable<value_type>());
+				itFirst.copy(itLast, mItEnd, eastl::has_trivial_relocate<value_type>());
 
 				for(iterator itTemp(itNewEnd); itTemp != mItEnd; ++itTemp)
 					itTemp.mpCurrent->~value_type();

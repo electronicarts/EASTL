@@ -3,13 +3,6 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-// Due to a bug in VC++, we have no choice but to disable this warning, 
-// as it is a bogus warning in some cases.
-#if defined(_MSC_VER)
-	#pragma warning(disable: 4244)  // conversion from '__w64 const int' to 'int', possible loss of data
-#endif
-
-
 #include "EASTLTest.h"
 #include <EABase/eabase.h>
 #include <EASTL/deque.h>
@@ -17,6 +10,7 @@
 #include <EASTL/vector.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
+#include <EASTL/unique_ptr.h>
 #include "ConceptImpls.h"
 
 #if !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
@@ -1032,6 +1026,32 @@ int TestDeque()
 		auto prev = d.get_allocator().getActiveAllocationSize();
 		d.shrink_to_fit();
 		VERIFY(d.get_allocator().getActiveAllocationSize() < prev);
+	}
+
+	{
+		auto prevAllocCount = gEASTLTest_AllocationCount;
+		{
+			EA_DISABLE_VC_WARNING(4625 4626)
+			struct a
+			{
+				a(int* p)
+					: ptr(p) { }
+
+				eastl::unique_ptr<int> ptr;
+			};
+			EA_RESTORE_VC_WARNING()
+
+			static_assert(eastl::has_trivial_relocate<a>::value == false, "failure");
+
+			eastl::deque<a> d;
+
+			d.emplace_back(new int(1));
+			d.emplace_back(new int(2));
+			d.emplace_back(new int(3));
+
+			d.erase(d.begin() + 1);
+		}
+		VERIFY(gEASTLTest_AllocationCount == prevAllocCount);
 	}
 
 	return nErrorCount;

@@ -643,6 +643,11 @@ namespace eastl
 			template <> struct is_abstract<const volatile T> : public eastl::integral_constant<bool, isAbstract>  { }; \
 		}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_abstract_v = is_abstract<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_trivially_copyable

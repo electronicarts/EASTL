@@ -208,9 +208,11 @@ namespace eastl
 		///    ptr.reset(NULL);        // deletes int(4)
 		void reset(pointer pValue = pointer()) EA_NOEXCEPT
 		{
-			if(pValue != mPair.first())
+			if (pValue != mPair.first())
 			{
-				get_deleter()(mPair.first());
+				if (mPair.first())
+					get_deleter()(mPair.first());
+
 				mPair.first() = pValue;
 			}
 		}

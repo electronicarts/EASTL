@@ -176,6 +176,11 @@ namespace eastl
 	template <typename T> 
 	struct is_member_function_pointer : public integral_constant<bool, is_mem_fun_pointer_value<T>::value>{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_member_function_pointer_v = is_member_function_pointer<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_member_pointer
@@ -196,6 +201,10 @@ namespace eastl
 	struct is_member_pointer<U T::*> 
 		: public eastl::true_type{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_member_pointer_v = is_member_pointer<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -213,6 +222,10 @@ namespace eastl
 																	  eastl::is_member_pointer<T>::value &&
 																	 !eastl::is_member_function_pointer<T>::value
 																	 > {};
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_member_object_pointer_v = is_member_object_pointer<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -402,6 +415,10 @@ namespace eastl
 		struct is_class : public false_type{};
 	#endif
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_class_v = is_class<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -445,7 +462,7 @@ namespace eastl
 		template <> struct is_enum<void const volatile> : public false_type {};
 	#endif
 
-	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		EA_CONSTEXPR bool is_enum_v = is_enum<T>::value;
 	#endif
@@ -519,6 +536,11 @@ namespace eastl
 		struct is_polymorphic : public integral_constant<bool, is_polymorphic_value<T>::value>{};
 	#endif
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_polymorphic_v = is_polymorphic<T>::value;
+	#endif
+
 
 
 
@@ -542,6 +564,11 @@ namespace eastl
 	struct is_object : public integral_constant<bool,
 		!is_reference<T>::value && !is_void<T>::value && !is_function<T>::value
 	>{};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_object_v = is_object<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -569,6 +596,11 @@ namespace eastl
 	template <typename T> struct is_scalar<T* volatile>       : public true_type {};
 	template <typename T> struct is_scalar<T* const volatile> : public true_type {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_scalar_v = is_scalar<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_compound
@@ -589,6 +621,11 @@ namespace eastl
 
 	template <typename T> 
 	struct is_compound : public integral_constant<bool, !is_fundamental<T>::value>{};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_compound_v = is_compound<T>::value;
+	#endif
 
 
 
@@ -690,6 +727,11 @@ namespace eastl
 		// compiler support so we always return false
 		template <typename T>
 		struct is_final : public false_type {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_final_v = is_final<T>::value;
 	#endif
 } // namespace eastl
 
