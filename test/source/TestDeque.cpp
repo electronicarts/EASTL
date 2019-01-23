@@ -1029,7 +1029,9 @@ int TestDeque()
 	}
 
 	{
+	#ifndef EASTL_OPENSOURCE
 		auto prevAllocCount = gEASTLTest_AllocationCount;
+	#endif
 		{
 			EA_DISABLE_VC_WARNING(4625 4626)
 			struct a
@@ -1051,7 +1053,9 @@ int TestDeque()
 
 			d.erase(d.begin() + 1);
 		}
+	#ifndef EASTL_OPENSOURCE
 		VERIFY(gEASTLTest_AllocationCount == prevAllocCount);
+	#endif
 	}
 
 	return nErrorCount;
