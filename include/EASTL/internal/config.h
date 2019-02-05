@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.13.00"
-	#define EASTL_VERSION_N  31300
+	#define EASTL_VERSION   "3.13.02"
+	#define EASTL_VERSION_N  31302
 #endif
 
 
@@ -755,14 +755,6 @@ namespace eastl
 // in practice may never occur for you.
 //
 ///////////////////////////////////////////////////////////////////////////////
-
-#ifndef EASTL_STRING_OPT_CHAR_INIT
-	// Defined as 0 or 1. Default is 1.
-	// Defines if newly created characters are initialized to 0 or left
-	// as random values.
-	// The C++ string standard is to initialize chars to 0.
-	#define EASTL_STRING_OPT_CHAR_INIT 1
-#endif
 
 #ifndef EASTL_STRING_OPT_EXPLICIT_CTORS
 	// Defined as 0 or 1. Default is 0.

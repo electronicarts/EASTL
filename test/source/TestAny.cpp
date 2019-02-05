@@ -375,24 +375,20 @@ int TestAny()
 
 	// Aligned type tests
 	{
-		// TODO(rparolin): Aligned types that do not fit into the local buffer optimization require use of global
-		// operator new that takes the alignment parameter.  I'm hesitant to add this dependency as it is not widely
-		// used in EASTL containers.  Consider for a future release.
-		//
-		// {
-		//    any a = Align16(1337);
-		//    VERIFY(any_cast<Align16>(a) == Align16(1337));
-		// }
-		//
-		// {
-		//     any a = Align32(1337);
-		//     VERIFY(any_cast<Align32>(a) == Align32(1337));
-		// }
-		//
-		// {
-		//     any a = Align64(1337);
-		//     VERIFY(any_cast<Align64>(a) == Align64(1337));
-		// }
+		{
+		   any a = Align16(1337);
+		   VERIFY(any_cast<Align16>(a) == Align16(1337));
+		}
+		
+		{
+			any a = Align32(1337);
+			VERIFY(any_cast<Align32>(a) == Align32(1337));
+		}
+		
+		{
+			any a = Align64(1337);
+			VERIFY(any_cast<Align64>(a) == Align64(1337));
+		}
 	}
 
 	// make_any
@@ -431,7 +427,6 @@ int TestAny()
 		int *r = static_cast<int *>(q);
 		VERIFY((*r) == 3);
 	}
-
 
 	return nErrorCount;
 }

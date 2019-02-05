@@ -391,7 +391,7 @@ inline void int128_t_base::OperatorPlus(const int128_t_base& value1, const int12
 inline void int128_t_base::OperatorMinus(const int128_t_base& value1, const int128_t_base& value2, int128_t_base& result)
 {
 	uint64_t t      = (value1.mPart0 - value2.mPart0);
-	uint64_t nCarry = (value1.mPart0 < value2.mPart0) ? 1 : 0;
+	uint64_t nCarry = (value1.mPart0 < value2.mPart0) ? 1u : 0u;
 	result.mPart0   = t;
 	result.mPart1   = (value1.mPart1 - value2.mPart1) - nCarry;
 }
@@ -1266,7 +1266,7 @@ EA_RESTORE_VC_WARNING()
 // would work.
 //
 /* EA_CONSTEXPR */ inline uint128_t UINT128_C(uint64_t nPart1, uint64_t nPart0) { return uint128_t(nPart0, nPart1); }
-/* EA_CONSTEXPR */ inline int128_t INT128_C(int64_t nPart1, int64_t nPart0) { return int128_t(nPart0, nPart1); }
+/* EA_CONSTEXPR */ inline int128_t INT128_C(int64_t nPart1, int64_t nPart0) { return int128_t(static_cast<uint64_t>(nPart0), static_cast<uint64_t>(nPart1)); }
 
 
 

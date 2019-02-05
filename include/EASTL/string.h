@@ -1322,11 +1322,7 @@ namespace eastl
 			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		else if(n > s)
 		{
-			#if EASTL_STRING_OPT_CHAR_INIT
-				append(n - s, value_type());
-			#else
-				append(n - s);
-			#endif
+			append(n - s, value_type());
 		}
 	}
 
@@ -3650,7 +3646,7 @@ namespace eastl
 	basic_string<T, Allocator> operator+(const typename basic_string<T, Allocator>::value_type* p, basic_string<T, Allocator>&& b)
 	{
 		b.insert(0, p);
-		return b;
+		return eastl::move(b);
 	}
 
 	template <typename T, typename Allocator>

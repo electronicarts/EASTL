@@ -78,6 +78,22 @@ namespace eastl
 				*((volatile int*)0) = 0xDEADC0DE;
 			#endif
 		}
+
+		template<typename T, typename... Args>
+		void* DefaultConstruct(Args&&... args)
+		{
+			auto* pMem = EASTLAllocatorDefault()->allocate(sizeof(T), alignof(T), 0);
+
+			return ::new(pMem) T(eastl::forward<Args>(args)...);
+		}
+
+		template<typename T>
+		void DefaultDestroy(T* p)
+		{
+			p->~T();
+
+			EASTLAllocatorDefault()->deallocate(static_cast<void*>(p), sizeof(T));
+		}
 	}
 
 
@@ -232,6 +248,7 @@ namespace eastl
 		};
 
 
+
 		//////////////////////////////////////////////////////////////////////////////////////////
 		// external storage handler
 		//
@@ -241,24 +258,25 @@ namespace eastl
 			template <typename V>
 			static inline void construct(storage& s, V&& v) 
 			{
-				s.external_storage = ::new T(eastl::forward<V>(v));
+				s.external_storage = Internal::DefaultConstruct<T>(eastl::forward<V>(v));
 			}
 
 			template <typename... Args>
 			static inline void construct_inplace(storage& s, Args... args)
 			{
-				s.external_storage = ::new T(eastl::forward<Args>(args)...);
+				s.external_storage = Internal::DefaultConstruct<T>(eastl::forward<Args>(args)...);
 			}
 
 			template <class NT, class U, class... Args>
 			static inline void construct_inplace(storage& s, std::initializer_list<U> il, Args&&... args)
 			{
-				s.external_storage = ::new NT(il, eastl::forward<Args>(args)...);
+				s.external_storage = Internal::DefaultConstruct<NT>(il, eastl::forward<Args>(args)...);
 			}
 
 			static inline void destroy(any& refAny)
 			{
-				delete static_cast<T*>(refAny.m_storage.external_storage);
+				Internal::DefaultDestroy(static_cast<T*>(refAny.m_storage.external_storage));
+
 				refAny.m_handler = nullptr;
 			}
 
