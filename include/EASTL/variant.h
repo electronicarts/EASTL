@@ -159,9 +159,9 @@ namespace eastl
 	// 20.7.11, hash support
 	template <class T> struct hash;
 	template <> struct hash<monostate>
-		{ size_t operator()(monostate val) const { return static_cast<size_t>(-0x42); } };
+		{ size_t operator()(monostate) const { return static_cast<size_t>(-0x42); } };
 
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	// variant_storage
 	// 
