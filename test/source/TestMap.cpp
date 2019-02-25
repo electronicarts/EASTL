@@ -154,6 +154,25 @@ int TestMap()
 		EATEST_VERIFY(map3.at(0) == 1);
 	}
 
+	// User regression test
+	{
+	#if !EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+		typedef eastl::map<int, MoveOnlyTypeDefaultCtor> IntMOMap;
+
+		IntMOMap m1, m2;
+		m2[0] = MoveOnlyTypeDefaultCtor(0);
+		m2[1] = MoveOnlyTypeDefaultCtor(1);
+
+		EATEST_VERIFY( m1.empty());
+		EATEST_VERIFY(!m2.empty());
+
+		m1.swap(m2);
+
+		EATEST_VERIFY(!m1.empty());
+		EATEST_VERIFY( m2.empty());
+	#endif
+	}
+
 //    todo:  create a test case for this.
 //    {	
 //      // User reports that an incorrectly wrapped pair key used to insert into an eastl map compiles when it should fire a compiler error about unconvertible types.

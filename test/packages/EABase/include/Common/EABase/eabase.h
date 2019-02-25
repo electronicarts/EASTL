@@ -61,17 +61,6 @@
 	#include <assert.h>
 #endif
 
-// ------------------------------------------------------------------------
-// Ensure this header file is only processed once (with certain compilers)
-// GCC doesn't need such a pragma because it has special recognition for 
-// include guards (such as that above) and effectively implements the same
-// thing without having to resort to non-portable pragmas. It is possible
-// that the decision to use pragma once here is ill-advised, perhaps because
-// some compilers masquerade as MSVC but don't implement all features.
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
-#endif
-
 
 // ------------------------------------------------------------------------
 // By default, GCC defines NULL as ((void*)0), which is the

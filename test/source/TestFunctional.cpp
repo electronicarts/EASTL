@@ -881,7 +881,13 @@ int TestFunctional()
 			EATEST_VERIFY(fn() == 1);
 			EATEST_VERIFY(fn() == 2);
 
+			EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas)
+			EA_DISABLE_CLANG_WARNING(-Wunknown-warning-option)
+			EA_DISABLE_CLANG_WARNING(-Wself-assign-overloaded)
 			fn = fn;
+			EA_RESTORE_CLANG_WARNING()
+			EA_RESTORE_CLANG_WARNING()
+			EA_RESTORE_CLANG_WARNING()
 
 			EATEST_VERIFY(fn() == 3);
 			EATEST_VERIFY(fn() == 4);

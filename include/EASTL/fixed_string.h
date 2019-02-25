@@ -753,7 +753,7 @@ namespace eastl
 																			 fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
 	{
 		a.append(b); // Using an rvalue by name results in it becoming an lvalue.
-		return a;
+		return eastl::move(a);
 	}
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
@@ -769,7 +769,7 @@ namespace eastl
 																							fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>&& b)
 	{
 		b.insert(0, p);
-		return b;
+		return eastl::move(b);
 	}
 
 	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>

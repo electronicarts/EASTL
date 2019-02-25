@@ -54,6 +54,12 @@ namespace eastl
 	#endif
 
 
+	/// EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+	///
+	#ifndef EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+		#define EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR 0
+	#endif
+
 
 	/// RBTreeColor
 	///
@@ -770,7 +776,7 @@ namespace eastl
 			{
 		#endif
 				for(; first != last; ++first)
-					insert(*first);
+					insert(eastl::move(*first));
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -952,12 +958,18 @@ namespace eastl
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	void rbtree<K, V, C, A, E, bM, bU>::swap(this_type& x)
 	{
+	#if EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		if(mAllocator == x.mAllocator) // If allocators are equivalent...
+	#endif
 		{
 			// Most of our members can be exchaged by a basic swap:
 			// We leave mAllocator as-is.
 			eastl::swap(mnSize,              x.mnSize);
 			eastl::swap(base_type::mCompare, x.mCompare);
+		#if !EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+			eastl::swap(mAllocator,          x.mAllocator);
+		#endif
+
 
 			// However, because our anchor node is a part of our class instance and not 
 			// dynamically allocated, we can't do a swap of it but must do a more elaborate
@@ -1001,12 +1013,14 @@ namespace eastl
 				x.mAnchor.mpNodeParent = NULL;
 			} // Else both are NULL and there is nothing to do.
 		}
+	#if EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		else
 		{
 			const this_type temp(*this); // Can't call eastl::swap because that would
 			*this = x;                   // itself call this member swap function.
 			x     = temp;
 		}
+	#endif
 	}
 
 

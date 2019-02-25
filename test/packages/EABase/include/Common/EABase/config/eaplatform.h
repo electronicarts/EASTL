@@ -636,11 +636,7 @@
 // have 64 bit registers but 32 bit pointers.
 //
 #ifndef EA_PLATFORM_WORD_SIZE
-   #if (EA_PLATFORM_PTR_SIZE == 8)
-	  #define EA_PLATFORM_WORD_SIZE 8
-   #else
-	  #define EA_PLATFORM_WORD_SIZE EA_PLATFORM_PTR_SIZE
-   #endif
+	#define EA_PLATFORM_WORD_SIZE EA_PLATFORM_PTR_SIZE
 #endif
 
 // EA_PLATFORM_MIN_MALLOC_ALIGNMENT

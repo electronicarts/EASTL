@@ -1570,6 +1570,25 @@ struct MoveOnlyType
 	int mVal;
 };
 
+// MoveOnlyTypeDefaultCtor - useful for verifying containers that may hold, e.g., unique_ptrs to make sure move ops are implemented
+struct MoveOnlyTypeDefaultCtor
+{
+	MoveOnlyTypeDefaultCtor() = default;
+	MoveOnlyTypeDefaultCtor(int val) : mVal(val) {}
+	MoveOnlyTypeDefaultCtor(const MoveOnlyTypeDefaultCtor&) = delete;
+	MoveOnlyTypeDefaultCtor(MoveOnlyTypeDefaultCtor&& x) : mVal(x.mVal) { x.mVal = 0; }
+	MoveOnlyTypeDefaultCtor& operator=(const MoveOnlyTypeDefaultCtor&) = delete;
+	MoveOnlyTypeDefaultCtor& operator=(MoveOnlyTypeDefaultCtor&& x)
+	{
+		mVal = x.mVal;
+		x.mVal = 0;
+		return *this;
+	}
+	bool operator==(const MoveOnlyTypeDefaultCtor& o) const { return mVal == o.mVal; }
+
+	int mVal;
+};
+
 
 
 //////////////////////////////////////////////////////////////////////////////

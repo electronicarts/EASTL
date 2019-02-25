@@ -278,51 +278,59 @@ int TestTuple()
 		EATEST_VERIFY(get<0>(makeTuple) == 1 && get<1>(makeTuple) == 2.0 && get<2>(makeTuple) == true);
 
 		// TODO: reference_wrapper implementation needs to be finished to enable this code
-		/*
-		int a = 2;
-		float b = 3.0f;
-		auto makeTuple2 = make_tuple(ref(a), b);
-		get<0>(makeTuple2) = 3;
-		get<1>(makeTuple2) = 4.0f;
-		EATEST_VERIFY(get<0>(makeTuple2) == 3 && get<1>(makeTuple2) == 4.0f && a == 3 && b == 3.0f);
-		*/
+		{
+			int a = 2;
+			float b = 3.0f;
+			auto makeTuple2 = make_tuple(ref(a), b);
+			get<0>(makeTuple2) = 3;
+			get<1>(makeTuple2) = 4.0f;
+			EATEST_VERIFY(get<0>(makeTuple2) == 3 && get<1>(makeTuple2) == 4.0f && a == 3 && b == 3.0f);
+		}
 
 		// forward_as_tuple
-		auto forwardTest = [](tuple < MoveOnlyType &&, MoveOnlyType && > x)->tuple<MoveOnlyType, MoveOnlyType>
 		{
-			return tuple<MoveOnlyType, MoveOnlyType>(move(x));
-		};
+			auto forwardTest = [](tuple<MoveOnlyType&&, MoveOnlyType&&> x) -> tuple<MoveOnlyType, MoveOnlyType>
+			{
+				return tuple<MoveOnlyType, MoveOnlyType>(move(x));
+			};
 
-		tuple<MoveOnlyType, MoveOnlyType> aMovableTuple(
-			forwardTest(forward_as_tuple(MoveOnlyType(1), MoveOnlyType(2))));
-		EATEST_VERIFY(get<0>(aMovableTuple).mVal == 1 && get<1>(aMovableTuple).mVal == 2);
+			tuple<MoveOnlyType, MoveOnlyType> aMovableTuple(
+			    forwardTest(forward_as_tuple(MoveOnlyType(1), MoveOnlyType(2))));
 
-		// tie
-		int a = 0;
-		double b = 0.0f;
-		static_assert(is_assignable<const Internal::ignore_t&, int>::value, "ignore_t not assignable");
-		static_assert(Internal::TupleAssignable<tuple<const Internal::ignore_t&>, tuple<int>>::value, "Not assignable");
-		tie(a, ignore, b) = make_tuple(1, 3, 5);
-		EATEST_VERIFY(a == 1 && b == 5.0f);
-		// tuple_cat
-		auto tcatRes = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true));
-		EATEST_VERIFY(get<0>(tcatRes) == 1 && get<1>(tcatRes) == 2.0f && get<2>(tcatRes) == 3.0 &&
-					  get<3>(tcatRes) == true);
+			EATEST_VERIFY(get<0>(aMovableTuple).mVal == 1 && get<1>(aMovableTuple).mVal == 2);
+		}
 
-		auto tcatRes2 = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true), make_tuple(5u, '6'));
-		EATEST_VERIFY(get<0>(tcatRes2) == 1 && get<1>(tcatRes2) == 2.0f && get<2>(tcatRes2) == 3.0 &&
-					  get<3>(tcatRes2) == true && get<4>(tcatRes2) == 5u && get<5>(tcatRes2) == '6');
+		{
+			// tie
+			int a = 0;
+			double b = 0.0f;
+			static_assert(is_assignable<const Internal::ignore_t&, int>::value, "ignore_t not assignable");
+			static_assert(Internal::TupleAssignable<tuple<const Internal::ignore_t&>, tuple<int>>::value, "Not assignable");
+			tie(a, ignore, b) = make_tuple(1, 3, 5);
+			EATEST_VERIFY(a == 1 && b == 5.0f);
 
-		auto aCattedRefTuple = tuple_cat(make_tuple(1), tie(a, ignore, b));
-		get<1>(aCattedRefTuple) = 2;
-		EATEST_VERIFY(a == 2);
+			// tuple_cat
+			auto tcatRes = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true));
+			EATEST_VERIFY(get<0>(tcatRes) == 1 && get<1>(tcatRes) == 2.0f && get<2>(tcatRes) == 3.0 &&
+					get<3>(tcatRes) == true);
 
-		// Empty tuple
-		tuple<> emptyTuple;
-		EATEST_VERIFY(tuple_size<decltype(emptyTuple)>::value == 0);
-		emptyTuple = make_tuple();
-		auto anotherEmptyTuple = make_tuple();
-		swap(anotherEmptyTuple, emptyTuple);
+			auto tcatRes2 = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true), make_tuple(5u, '6'));
+			EATEST_VERIFY(get<0>(tcatRes2) == 1 && get<1>(tcatRes2) == 2.0f && get<2>(tcatRes2) == 3.0 &&
+					get<3>(tcatRes2) == true && get<4>(tcatRes2) == 5u && get<5>(tcatRes2) == '6');
+
+			auto aCattedRefTuple = tuple_cat(make_tuple(1), tie(a, ignore, b));
+			get<1>(aCattedRefTuple) = 2;
+			EATEST_VERIFY(a == 2);
+		}
+
+		{
+			// Empty tuple
+			tuple<> emptyTuple;
+			EATEST_VERIFY(tuple_size<decltype(emptyTuple)>::value == 0);
+			emptyTuple = make_tuple();
+			auto anotherEmptyTuple = make_tuple();
+			swap(anotherEmptyTuple, emptyTuple);
+		}
 	}
 
 	// test piecewise_construct
@@ -482,6 +490,20 @@ int TestTuple()
 		EATEST_VERIFY(z == 3);
 	}
 	#endif
+
+	// user regression for tuple_cat
+	{
+		void* empty = nullptr;
+		auto t = eastl::make_tuple(empty, true);
+		auto tc = eastl::tuple_cat(eastl::make_tuple("asd", 1), t);
+
+		static_assert(eastl::is_same_v<decltype(tc), eastl::tuple<const char*, int, void*, bool>>, "type mismatch");
+
+		EATEST_VERIFY(eastl::string("asd") == eastl::get<0>(tc));
+		EATEST_VERIFY(eastl::get<1>(tc) == 1);
+		EATEST_VERIFY(eastl::get<2>(tc) == nullptr);
+		EATEST_VERIFY(eastl::get<3>(tc) == true);
+	}
 
 	return nErrorCount;
 }

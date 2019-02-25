@@ -318,22 +318,18 @@ namespace eastl
 	//
 	// Used as a type which constructs from anything.
 	//
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
-		struct argument_sink{ argument_sink(...){} };
-	#else
-		// For compilers that support variadic templates we provide an
-		// alternative argument_sink which provides a constructor overload of
-		// the variadic pack of arguments by reference.  This avoids issues of
-		// object alignment not being respected in Microsoft compilers.  Seen
-		// in VS2015 preview.  In general, since arguments are consumed and
-		// ignored its cheaper to consume references than passing by value
-		// which incurs a construction cost.
-		struct argument_sink
-		{
-			template<typename... Args>
-			argument_sink(Args&&...) {}
-		};
-	#endif
+	// For compilers that support variadic templates we provide an
+	// alternative argument_sink which provides a constructor overload of
+	// the variadic pack of arguments by reference.  This avoids issues of
+	// object alignment not being respected in Microsoft compilers.  Seen
+	// in VS2015 preview.  In general, since arguments are consumed and
+	// ignored its cheaper to consume references than passing by value
+	// which incurs a construction cost.
+	struct argument_sink
+	{
+		template<typename... Args>
+		argument_sink(Args&&...) {}
+	};
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -494,26 +490,24 @@ namespace eastl
 	//
 	// http://en.cppreference.com/w/cpp/types/conjunction
 	//
-	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
-		template <class...>
-		struct conjunction : eastl::true_type {};
+	template <class...>
+	struct conjunction : eastl::true_type {};
 
-		template <class B>
-		struct conjunction<B> : B {};
+	template <class B>
+	struct conjunction<B> : B {};
 
-	    template <class B, class... Bn>
-	    struct conjunction<B, Bn...> : conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+	template <class B, class... Bn>
+	struct conjunction<B, Bn...> : conditional<bool(B::value), conjunction<Bn...>, B>::type {};
 
-        #if EASTL_VARIABLE_TEMPLATES_ENABLED
-			#if EASTL_INLINE_VARIABLE_ENABLED
-				template<class... Bn>
-				inline constexpr bool conjunction_v = conjunction<Bn...>::value;
-			#else
-				template<class... Bn>
-				static const constexpr bool conjunction_v = conjunction<Bn...>::value;
-			#endif
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		#if EASTL_INLINE_VARIABLE_ENABLED
+			template<class... Bn>
+			inline constexpr bool conjunction_v = conjunction<Bn...>::value;
+		#else
+			template<class... Bn>
+			static const constexpr bool conjunction_v = conjunction<Bn...>::value;
 		#endif
-    #endif
+	#endif
 
 
 
@@ -525,26 +519,24 @@ namespace eastl
 	//
 	// http://en.cppreference.com/w/cpp/types/disjunction
 	//
-	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
-		template <class...>
-		struct disjunction : eastl::false_type {};
+	template <class...>
+	struct disjunction : eastl::false_type {};
 
-		template <class B>
-		struct disjunction<B> : B {};
+	template <class B>
+	struct disjunction<B> : B {};
 
-	    template <class B, class... Bn>
-	    struct disjunction<B, Bn...> : conditional<bool(B::value), B, disjunction<Bn...>>::type {};
+	template <class B, class... Bn>
+	struct disjunction<B, Bn...> : conditional<bool(B::value), B, disjunction<Bn...>>::type {};
 
-        #if EASTL_VARIABLE_TEMPLATES_ENABLED
-			#if EASTL_INLINE_VARIABLE_ENABLED
-				template<class... B>
-				inline constexpr bool disjunction_v = disjunction<B...>::value;
-			#else
-				template<class... B>
-				static const constexpr bool disjunction_v = disjunction<B...>::value;
-			#endif
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		#if EASTL_INLINE_VARIABLE_ENABLED
+			template<class... B>
+			inline constexpr bool disjunction_v = disjunction<B...>::value;
+		#else
+			template<class... B>
+			static const constexpr bool disjunction_v = disjunction<B...>::value;
 		#endif
-    #endif
+	#endif
 
 
 
@@ -581,13 +573,8 @@ namespace eastl
 	// Dinkumware has an identity, but adds a member function to it:
 	//     const T& operator()(const T& t) const{ return t; }
 	//
-	#if (EABASE_VERSION_N < 20040) || defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-		template <typename T>
-		struct identity { typedef T type; };
-	#else
-		template <typename T>
-		struct identity { using type = T; };
-	#endif
+	template <typename T>
+	struct identity { using type = T; };
 
 
 
@@ -680,101 +667,40 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if 0
-		// This solution, borrowed from libc++, works by taking advantage of the fact that
-		// upon passing an argument of type function to a function, the argument decays to a function pointer.
-		// Recall that decay is when a type is converted to another type for casting or argument
-		// passing purposes, such as how T[] is converted to T* upon passing to a function.
-		// it would be better than our fallback below, but would require rearranging our headers
-		// to allow the is_class, etc. below to work. We can't use decay<T>::type below to help us
-		// because the decay type trait calls is_function.
+	#define EASTL_TYPE_TRAIT_is_function_CONFORMANCE 1    // is_function is conforming.
 
-		#define EASTL_TYPE_TRAIT_is_function_CONFORMANCE 1
+	template <typename>
+	struct is_function
+		: public eastl::false_type {};
 
-		template <typename T> eastl::yes_type is_function_decayed_helper(T*);
-		template <typename T> eastl::no_type  is_function_decayed_helper(...);
-		template <typename T> T&  return_T_reference();
+	#if EA_PLATFORM_PTR_SIZE == 4 && defined(EA_PLATFORM_MICROSOFT) && defined(_MSC_EXTENSIONS)
+		// __cdecl specialization
+		template <typename ReturnValue, typename... ArgPack>
+		struct is_function<ReturnValue __cdecl (ArgPack...)>
+			: public eastl::true_type {};
 
-		template <typename T, bool = eastl::is_class<T>::value     || // I don't see why an is_class check here is necessary.
-									 eastl::is_union<T>::value     || // I don't see why an is_union check here is necessary.
-									 eastl::is_void<T>::value      ||
-									 eastl::is_reference<T>::value ||
-									 eastl::is_null_pointer<T>::value >
-		struct is_function_helper
-			: public integral_constant<bool, sizeof(is_function_decayed_helper<T>(return_T_reference<T>())) == sizeof(eastl::yes_type)> {};
+		template <typename ReturnValue, typename... ArgPack>
+		struct is_function<ReturnValue __cdecl (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+			: public eastl::true_type {};
 
-		template <typename T> struct is_function_helper<T, true>
-			: public false_type {};
+		// __stdcall specialization
+		template <typename ReturnValue, typename... ArgPack>
+		struct is_function<ReturnValue __stdcall (ArgPack...)>
+			: public eastl::true_type {};
 
-		template <typename T> struct is_function
-			: public is_function_helper<T> {};
-
-	#elif  defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
-		#define EASTL_TYPE_TRAIT_is_function_CONFORMANCE 0    // Can't handle functions with ellipsis arguments, like int printf(const char*, ...). Could be fixed with yet more specializations below.
-
-		template <typename R> struct is_function_ptr_helper : public eastl::false_type{};
-		template <typename R> struct is_function_ptr_helper<R (*)()> : public eastl::true_type{};
-		template <typename R, typename Arg0> struct is_function_ptr_helper<R (*)(Arg0)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1> struct is_function_ptr_helper<R (*)(Arg0, Arg1)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2, typename Arg3> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2, Arg3)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2, Arg3, Arg4)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2, Arg3, Arg4, Arg5)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)> : public eastl::true_type{};
-		template <typename R, typename Arg0, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5, typename Arg6, typename Arg7> struct is_function_ptr_helper<R (*)(Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7)> : public eastl::true_type{};
-
-		template <bool is_ref = true>
-		struct is_function_chooser
-			{ template <typename T> struct result_ : public eastl::false_type{}; };
-
-		template <>
-		struct is_function_chooser<false>
-			{ template <typename T> struct result_ : public eastl::is_function_ptr_helper<T*>{}; };
-
-		template <typename T>
-		struct is_function_value
-			: public eastl::is_function_chooser<eastl::is_reference<T>::value>::template result_<T>{};
-
-		template <typename T>
-		struct is_function
-			: public eastl::integral_constant<bool, is_function_value<T>::value>{};
-
+		// When functions use a variable number of arguments, it is the caller that cleans the stack (cf. cdecl).
+		//
+		// template <typename ReturnValue, typename... ArgPack>
+		// struct is_function<ReturnValue __stdcall (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+		//     : public eastl::true_type {};
 	#else
-		#define EASTL_TYPE_TRAIT_is_function_CONFORMANCE 1    // is_function is conforming.
+		template <typename ReturnValue, typename... ArgPack>
+		struct is_function<ReturnValue (ArgPack...)>
+			: public eastl::true_type {};
 
-		template <typename>
-		struct is_function
-			: public eastl::false_type {};
-
-		#if EA_PLATFORM_PTR_SIZE == 4 && defined(EA_PLATFORM_MICROSOFT) && defined(_MSC_EXTENSIONS)
-			// __cdecl specialization
-			template <typename ReturnValue, typename... ArgPack>
-			struct is_function<ReturnValue __cdecl (ArgPack...)>
-				: public eastl::true_type {};
-
-			template <typename ReturnValue, typename... ArgPack>
-			struct is_function<ReturnValue __cdecl (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
-				: public eastl::true_type {};
-
-			// __stdcall specialization
-			template <typename ReturnValue, typename... ArgPack>
-			struct is_function<ReturnValue __stdcall (ArgPack...)>
-				: public eastl::true_type {};
-
-			// When functions use a variable number of arguments, it is the caller that cleans the stack (cf. cdecl).
-			//
-			// template <typename ReturnValue, typename... ArgPack>
-			// struct is_function<ReturnValue __stdcall (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
-			//     : public eastl::true_type {};
-		#else
-			template <typename ReturnValue, typename... ArgPack>
-			struct is_function<ReturnValue (ArgPack...)>
-				: public eastl::true_type {};
-
-			template <typename ReturnValue, typename... ArgPack>
-			struct is_function<ReturnValue (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
-				: public eastl::true_type {};
-		#endif
+		template <typename ReturnValue, typename... ArgPack>
+		struct is_function<ReturnValue (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
+			: public eastl::true_type {};
 	#endif
 
 
@@ -986,23 +912,14 @@ namespace eastl
 	//      T&&  + &&  -> T&&
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_NO_RVALUE_REFERENCES
-		#define EASTL_TYPE_TRAIT_add_rvalue_reference_CONFORMANCE 0     // Arguably this could be 1 since it's never wrong, as rvalue references don't exist for this compiler.
+	#define EASTL_TYPE_TRAIT_add_rvalue_reference_CONFORMANCE 1
 
-		// We make it be the same as add_lvalue_reference.
-		template <typename T>
-		struct add_rvalue_reference { typedef typename add_lvalue_reference<T>::type type; };
-
-	#else
-		#define EASTL_TYPE_TRAIT_add_rvalue_reference_CONFORMANCE 1
-
-		template <typename T> struct add_rvalue_reference                      { typedef T&& type;                 }; // Dinkumware has this as { typedef typename eastl::remove_reference<T>::type&& type; }, but that doesn't seem right to me.
-		template <typename T> struct add_rvalue_reference<T&>                  { typedef T& type;                  }; // The Standard section 20.7.9.2 specifies that we do this, though it seems like the compiler ought to not require this, as C++11 stipulates that & + && -> &.
-		template <>           struct add_rvalue_reference<void>                { typedef void type;                };
-		template <>           struct add_rvalue_reference<const void>          { typedef const void type;          };
-		template <>           struct add_rvalue_reference<volatile void>       { typedef volatile void type;       };
-		template <>           struct add_rvalue_reference<const volatile void> { typedef const volatile void type; };
-	#endif
+	template <typename T> struct add_rvalue_reference                      { typedef T&& type;                 }; // Dinkumware has this as { typedef typename eastl::remove_reference<T>::type&& type; }, but that doesn't seem right to me.
+	template <typename T> struct add_rvalue_reference<T&>                  { typedef T& type;                  }; // The Standard section 20.7.9.2 specifies that we do this, though it seems like the compiler ought to not require this, as C++11 stipulates that & + && -> &.
+	template <>           struct add_rvalue_reference<void>                { typedef void type;                };
+	template <>           struct add_rvalue_reference<const void>          { typedef const void type;          };
+	template <>           struct add_rvalue_reference<volatile void>       { typedef volatile void type;       };
+	template <>           struct add_rvalue_reference<const volatile void> { typedef const volatile void type; };
 
 	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		// To do: define macro.
@@ -1026,17 +943,10 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_NO_RVALUE_REFERENCES
-		#define EASTL_TYPE_TRAIT_declval_CONFORMANCE 0
+	#define EASTL_TYPE_TRAIT_declval_CONFORMANCE 1
 
-		template <typename T>
-		typename eastl::add_lvalue_reference<T>::type declval() EA_NOEXCEPT;
-	#else
-		#define EASTL_TYPE_TRAIT_declval_CONFORMANCE 1
-
-		template <typename T>
-		typename eastl::add_rvalue_reference<T>::type declval() EA_NOEXCEPT;
-	#endif
+	template <typename T>
+	typename eastl::add_rvalue_reference<T>::type declval() EA_NOEXCEPT;
 
 	#if !defined(EA_COMPILER_NO_DECLTYPE) && !EASTL_TYPE_TRAIT_declval_CONFORMANCE
 		#error decltype is supported by the compiler but declval is not. A lot of our type trait code assumes that if the compiler supports decltype then it supports rvalue references.

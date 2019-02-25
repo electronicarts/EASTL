@@ -1346,7 +1346,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::swap(this_type& x)
 	{
-	#if EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+	#if defined(EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
 			DoSwap(x);
 		else // else swap the contents.

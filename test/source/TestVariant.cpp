@@ -760,6 +760,22 @@ int TestVariantAssignment()
 	return nErrorCount;
 }
 
+
+int TestVariantMoveOnly()
+{
+	using namespace eastl;
+	int nErrorCount = 0;
+
+	{
+		variant<int, MoveOnlyType> v = MoveOnlyType(1337);
+		VERIFY(get<MoveOnlyType>(v).mVal == 1337);
+	}
+
+	return nErrorCount;
+}
+
+
+
 int TestVariant()
 {
 	int nErrorCount = 0;
@@ -777,6 +793,7 @@ int TestVariant()
 	nErrorCount += TestVariantInplaceCtors();
 	nErrorCount += TestVariantVisitor();
 	nErrorCount += TestVariantAssignment();
+	nErrorCount += TestVariantMoveOnly();
 	return nErrorCount;
 }
 #else

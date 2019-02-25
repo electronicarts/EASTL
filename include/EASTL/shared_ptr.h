@@ -1209,7 +1209,7 @@ namespace eastl
 	shared_ptr<T> make_shared(Args&&... args)
 	{
 		// allocate with the default allocator.
-		return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<Args>(args)...);
+		return eastl::allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<Args>(args)...);
 	}
 
 
