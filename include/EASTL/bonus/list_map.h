@@ -66,7 +66,7 @@ namespace eastl
 		typedef list_map_iterator<T, Pointer, Reference>    this_type;
 		typedef list_map_iterator<T, T*, T&>                iterator;
 		typedef list_map_iterator<T, const T*, const T&>    const_iterator;
-		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                   difference_type;
 		typedef T                                           value_type;
 		typedef list_map_data_base                          base_node_type;

@@ -132,7 +132,7 @@ namespace eastl
 	{
 	public:
 		typedef sparse_matrix_row_iterator<T>           this_type;
-		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                               difference_type;
 		typedef T                                       value_type;
 		typedef T&                                      reference;
@@ -234,7 +234,7 @@ namespace eastl
 	{
 	public:
 		typedef sparse_matrix_col_iterator<T>           this_type;
-		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                               difference_type;
 		typedef T                                       value_type;
 		typedef T&                                      reference;
@@ -359,7 +359,7 @@ namespace eastl
 	{
 	public:
 		typedef sparse_matrix_iterator<T>               this_type;
-		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                            size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                               difference_type;
 		typedef T                                       value_type;
 		typedef T&                                      reference;
@@ -468,7 +468,7 @@ namespace eastl
 		typedef value_type&                                 reference;
 		typedef const value_type&                           const_reference;
 		typedef ptrdiff_t                                   difference_type;
-		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef sparse_matrix_row_iterator<T>               row_iterator;
 		typedef sparse_matrix_col_iterator<T>               col_iterator;
 		typedef sparse_matrix_iterator<T>                   iterator;

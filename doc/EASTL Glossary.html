@@ -357,7 +357,7 @@ efficiency of the size function differs between containers.</td>
 <tr>
 <td>size_type</td>
 <td>The type that a container uses to define its size and counts. This is similar to the C/C++ size_t type but may be
-specialized for the container.</td>
+specialized for the container. It defaults to size_t, but it is possible to force it to be 4 bytes for 64 bit machines by defining EASTL_SIZE_T_32BIT.</td>
 </tr>
 <tr>
 <td>skip list</td>

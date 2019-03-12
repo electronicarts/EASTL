@@ -626,8 +626,7 @@ and 16 bytes of overhead per allocation, depending on the heap.</li>
 <li>Some overhead values are dependent on the structure alignment characteristics in effect. The values reported here
 are those that would be in effect for a system that requires pointers to be aligned on boundaries of their size and
 allocations with a minimum of 4 bytes (thus one byte values get rounded up to 4).</li>
-<li>Some overhead values are dependent on the size_type used by containers. We assume a size_type of 4 bytes, even for
-64 bit machines, as this is the EASTL default.</li>
+<li>Some overhead values are dependent on the size_type used by containers. size_type defaults to size_t, but it is possible to force it to be 4 bytes for 64 bit machines by defining EASTL_SIZE_T_32BIT.</li>
 <li>Inserting at the end of a vector may cause the vector to be resized; resizing a vector is O(n). However, the
 amortized time complexity for vector insertions at the end is constant.</li>
 <li>Sort assumes the usage of the best possible sort for a large container of random data. Some sort algorithms (e.g.

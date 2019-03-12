@@ -83,7 +83,7 @@ namespace eastl
 		typedef IntrusiveSDListIterator<T, Pointer, Reference>   this_type;
 		typedef IntrusiveSDListIterator<T, T*, T&>               iterator;
 		typedef IntrusiveSDListIterator<T, const T*, const T&>   const_iterator;
-		typedef eastl_size_t                                     size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                     size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                        difference_type;
 		typedef T                                                value_type;
 		typedef T                                                node_type;
@@ -117,7 +117,7 @@ namespace eastl
 	class intrusive_sdlist_base
 	{
 	public:
-		typedef eastl_size_t size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t    difference_type;
 
 	protected:
