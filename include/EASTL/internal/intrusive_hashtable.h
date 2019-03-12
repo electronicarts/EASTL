@@ -271,7 +271,7 @@ namespace eastl
 		typedef uint32_t                                                                  hash_code_t;
 		typedef Equal                                                                     key_equal;
 		typedef ptrdiff_t                                                                 difference_type;
-		typedef eastl_size_t                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef value_type&                                                               reference;
 		typedef const value_type&                                                         const_reference;
 		typedef intrusive_node_iterator<value_type, bConstIterators>                      local_iterator;

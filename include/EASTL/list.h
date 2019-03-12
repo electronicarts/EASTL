@@ -162,7 +162,7 @@ namespace eastl
 		typedef ListIterator<T, Pointer, Reference>         this_type;
 		typedef ListIterator<T, T*, T&>                     iterator;
 		typedef ListIterator<T, const T*, const T&>         const_iterator;
-		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                   difference_type;
 		typedef T                                           value_type;
 		typedef ListNode<T>                                 node_type;
@@ -207,7 +207,7 @@ namespace eastl
 		typedef T                                    value_type;
 		typedef Allocator                            allocator_type;
 		typedef ListNode<T>                          node_type;
-		typedef eastl_size_t                         size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                         size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                            difference_type;
 		#if EASTL_LIST_PROXY_ENABLED
 			typedef ListNodeBaseProxy< ListNode<T> > base_node_type;

@@ -121,7 +121,7 @@ namespace eastl
 
 			Value        mValue;
 			hash_node*   mpNext;
-			eastl_size_t mnHashCode;      // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+			eastl_size_t mnHashCode;      // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		} EASTL_MAY_ALIAS;
 
 		template <typename Value>
@@ -839,7 +839,7 @@ namespace eastl
 		typedef Allocator                                                                           allocator_type;
 		typedef Equal                                                                               key_equal;
 		typedef ptrdiff_t                                                                           difference_type;
-		typedef eastl_size_t                                                                        size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                                                        size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
 		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode>                       local_iterator;

@@ -274,7 +274,7 @@ namespace eastl
 		typedef const T*                                        const_iterator;
 		typedef eastl::reverse_iterator<iterator>               reverse_iterator;
 		typedef eastl::reverse_iterator<const_iterator>         const_reverse_iterator;
-		typedef eastl_size_t                                    size_type;          // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                    size_type;          // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                       difference_type;
 		typedef Allocator                                       allocator_type;
 

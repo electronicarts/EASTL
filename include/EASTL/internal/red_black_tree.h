@@ -155,7 +155,7 @@ namespace eastl
 		typedef rbtree_iterator<T, Pointer, Reference>      this_type;
 		typedef rbtree_iterator<T, T*, T&>                  iterator;
 		typedef rbtree_iterator<T, const T*, const T&>      const_iterator;
-		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                   difference_type;
 		typedef T                                           value_type;
 		typedef rbtree_node_base                            base_node_type;
@@ -334,7 +334,7 @@ namespace eastl
 	{
 	public:
 		typedef ptrdiff_t                                                                       difference_type;
-		typedef eastl_size_t                                                                    size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                                                    size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef Key                                                                             key_type;
 		typedef Value                                                                           value_type;
 		typedef rbtree_node<value_type>                                                         node_type;

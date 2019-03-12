@@ -259,7 +259,7 @@ namespace eastl
 	{
 		typedef T                                                        value_type;
 		typedef Allocator                                                allocator_type;
-		typedef eastl_size_t                                             size_type;     // See config.h for the definition of eastl_size_t, which defaults to uint32_t.
+		typedef eastl_size_t                                             size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                                difference_type;
 		typedef DequeIterator<T, T*, T&, kDequeSubarraySize>             iterator;
 		typedef DequeIterator<T, const T*, const T&, kDequeSubarraySize> const_iterator;
