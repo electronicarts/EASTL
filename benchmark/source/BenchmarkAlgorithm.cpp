@@ -705,7 +705,7 @@ void BenchmarkAlgorithm2(EASTLTest_Rand& rng, EA::StdC::Stopwatch& stopwatch1, E
 				std::sort(stdVectorUint64.begin(), stdVectorUint64.end());
 				eaVectorUint64.assign(&stdVectorUint64[0], &stdVectorUint64[0] + stdVectorUint64.size());
 
-				TestEqualRangeStd(stopwatch1, stdVectorUint32, &stdVectorUint32[0], &stdVectorUint32[0] + stdVectorUint32.size());
+				TestEqualRangeStd(stopwatch1, stdVectorUint64, &stdVectorUint64[0], &stdVectorUint64[0] + stdVectorUint64.size());
 				TestEqualRangeEa (stopwatch2,  eaVectorUint64,  &eaVectorUint64[0],  &eaVectorUint64[0] +  eaVectorUint64.size());
 
 				if(i == 1)
