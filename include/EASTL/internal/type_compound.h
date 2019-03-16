@@ -54,6 +54,11 @@ namespace eastl
 	template<typename T, unsigned N = 0> // extent uses unsigned instead of size_t.
 	struct extent : public eastl::extent_help<T, N> { };
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T, unsigned N = 0> 
+		EA_CONSTEXPR auto extent_v = extent<T, N>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_array
@@ -324,11 +329,23 @@ namespace eastl
 
 	#endif
 
-
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename From, typename To>
 		EA_CONSTEXPR bool is_convertible_v = is_convertible<From, To>::value;
 	#endif
+
+
+	///////////////////////////////////////////////////////////////////////
+	// is_nothrow_convertible
+	// 
+	// https://en.cppreference.com/w/cpp/types/is_convertible
+	//
+	// template<typename From, typename To>
+	// struct is_explicitly_convertible
+	//     : public is_constructible<To, From> {};
+	///////////////////////////////////////////////////////////////////////
+	// TODO(rparolin):  implement type-trait
+
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -367,6 +384,10 @@ namespace eastl
 
 	#define EASTL_DECLARE_UNION(T) namespace eastl{ template <> struct is_union<T> : public true_type{}; template <> struct is_union<const T> : public true_type{}; }
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_union_v = is_union<T>::value;
+	#endif
 
 
 
@@ -724,7 +745,7 @@ namespace eastl
 		template <typename T>
 		struct is_final : public integral_constant<bool, __is_final(T)> {};
 	#else
-		// compiler support so we always return false
+		// no compiler support so we always return false
 		template <typename T>
 		struct is_final : public false_type {};
 	#endif
@@ -732,6 +753,42 @@ namespace eastl
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		EA_CONSTEXPR bool is_final_v = is_final<T>::value;
+	#endif
+
+
+	///////////////////////////////////////////////////////////////////////
+	// is_aggregate
+	//
+	// https://en.cppreference.com/w/cpp/language/aggregate_initialization
+	//
+	// An aggregate is one of the following types:
+	// * array type
+	// * class type (typically, struct or union), that has
+	//     * no private or protected non-static data members
+	//     * no user-provided constructors (explicitly defaulted or deleted constructors are allowed)
+	//     * no user-provided, inherited, or explicit constructors 
+	//         * (explicitly defaulted or deleted constructors are allowed)
+	//     * no virtual, private, or protected (since C++17) base classes
+	//     * no virtual member functions
+	//     * no default member initializers
+	//
+	///////////////////////////////////////////////////////////////////////
+	#if EA_COMPILER_HAS_FEATURE(is_aggregate) || defined(_MSC_VER) && (_MSC_VER >= 1916)  // VS2017 15.9+
+		#define EASTL_TYPE_TRAIT_is_aggregate_CONFORMANCE 1  
+
+		template <typename T>
+		struct is_aggregate : public integral_constant<bool, __is_aggregate(T)> {};
+	#else
+		#define EASTL_TYPE_TRAIT_is_aggregate_CONFORMANCE 0 
+
+		// no compiler support so we always return false
+		template <typename T>
+		struct is_aggregate : public false_type {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <typename T>
+		EA_CONSTEXPR bool is_aggregate_v = is_aggregate<T>::value;
 	#endif
 } // namespace eastl
 

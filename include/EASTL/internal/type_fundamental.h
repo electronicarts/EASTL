@@ -208,6 +208,11 @@ namespace eastl
 	struct is_arithmetic 
 		: public integral_constant<bool, is_integral<T>::value || is_floating_point<T>::value> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_arithmetic_v = is_arithmetic<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_fundamental
@@ -224,6 +229,11 @@ namespace eastl
 	template <typename T>
 	struct is_fundamental
 		: public bool_constant<is_void_v<T> || is_integral_v<T> || is_floating_point_v<T> || is_null_pointer_v<T>> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_fundamental_v = is_fundamental<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -242,6 +252,11 @@ namespace eastl
 
 	template <typename T>
 	struct is_hat_type : public eastl::is_hat_type_helper<T> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_hat_type_v = is_hat_type<T>::value;
+	#endif
 
 } // namespace eastl
 

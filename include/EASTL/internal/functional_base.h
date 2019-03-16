@@ -19,8 +19,8 @@ namespace eastl
 {
 	// foward declaration for swap
 	template <typename T>
-	inline void swap(T& a, T& b) EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value &&
-	eastl::is_nothrow_move_assignable<T>::value);
+	inline void swap(T& a, T& b)
+	    EA_NOEXCEPT_IF(eastl::is_nothrow_move_constructible<T>::value&& eastl::is_nothrow_move_assignable<T>::value);
 
 
 	/// invoke
@@ -40,10 +40,8 @@ namespace eastl
 	///
 	template <typename R, typename C, typename T, typename... Args>
 	auto invoke_impl(R C::*func, T&& obj, Args&&... args) ->
-	typename enable_if<
-		is_base_of<C, decay_t<decltype(obj)>>::value,
-		decltype((eastl::forward<T>(obj).*func)(eastl::forward<Args>(args)...))
-	>::type
+	    typename enable_if<is_base_of<C, decay_t<decltype(obj)>>::value,
+	                       decltype((eastl::forward<T>(obj).*func)(eastl::forward<Args>(args)...))>::type
 	{
 		return (eastl::forward<T>(obj).*func)(eastl::forward<Args>(args)...);
 	}

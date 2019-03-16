@@ -47,7 +47,7 @@
 
 #if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 	#include <thr/xtimec.h>
-#elif defined(EA_PLATFORM_PS4)
+#elif defined(EA_PLATFORM_SONY)
 	#include <Dinkum/threads/xtimec.h>
 	#include <kernel.h>
 #elif defined(EA_PLATFORM_APPLE)
@@ -544,7 +544,7 @@ namespace chrono
 	{
 		#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 			#define EASTL_NS_PER_TICK 1 
-		#elif defined EA_PLATFORM_PS4
+		#elif defined EA_PLATFORM_SONY
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
 		#elif defined EA_PLATFORM_POSIX
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
@@ -585,7 +585,7 @@ namespace chrono
 			static auto frequency = queryFrequency(); // cache cpu frequency on first call
 			EA_RESTORE_VC_WARNING()
 			return uint64_t(frequency * queryCounter());
-        #elif defined EA_PLATFORM_PS4
+        #elif defined EA_PLATFORM_SONY
 			return sceKernelGetProcessTimeCounter();
 		#elif defined(EA_PLATFORM_APPLE)
 		   return mach_absolute_time();

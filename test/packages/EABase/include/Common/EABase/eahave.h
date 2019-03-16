@@ -225,7 +225,7 @@
 
 // #include <signal.h>
 #if !defined(EA_HAVE_SIGNAL_H) && !defined(EA_NO_HAVE_SIGNAL_H)
-	#if !defined(EA_PLATFORM_BSD) && !defined(EA_PLATFORM_SONY)
+	#if !defined(EA_PLATFORM_BSD) && !defined(EA_PLATFORM_SONY) && !defined(CS_UNDEFINED_STRING)
 		#define EA_HAVE_SIGNAL_H 1
 	#else
 		#define EA_NO_HAVE_SIGNAL_H 1

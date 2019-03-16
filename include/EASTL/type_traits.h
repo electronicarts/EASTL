@@ -573,8 +573,35 @@ namespace eastl
 	// Dinkumware has an identity, but adds a member function to it:
 	//     const T& operator()(const T& t) const{ return t; }
 	//
+	// NOTE(rparolin): Use 'eastl::type_identity' it was included in the C++20
+	// standard. This is a legacy EASTL type we continue to support for
+	// backwards compatibility. 
+	//
 	template <typename T>
 	struct identity { using type = T; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <typename T>
+		using identity_t = typename identity<T>::type;
+	#endif
+
+
+	///////////////////////////////////////////////////////////////////////
+	// type_identity
+	//
+	// The purpose of this is typically to deal with non-deduced template
+	// contexts. See the C++11 Standard, 14.8.2.5 p5.
+	// Also: http://cppquiz.org/quiz/question/109?result=CE&answer=&did_answer=Answer
+	//
+	// https://en.cppreference.com/w/cpp/types/type_identity
+	//
+	template <typename T>
+	struct type_identity { using type = T; };
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <typename T>
+		using type_identity_t = typename type_identity<T>::type;
+	#endif
 
 
 
@@ -657,6 +684,10 @@ namespace eastl
 	template <typename T> struct is_reference     : public eastl::false_type{};
 	template <typename T> struct is_reference<T&> : public eastl::true_type{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_reference_v = is_reference<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -701,6 +732,11 @@ namespace eastl
 		template <typename ReturnValue, typename... ArgPack>
 		struct is_function<ReturnValue (ArgPack..., ...)>    // The second ellipsis handles the case of a function that takes ellipsis, like printf.
 			: public eastl::true_type {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_function_v = is_function<T>::value;
 	#endif
 
 

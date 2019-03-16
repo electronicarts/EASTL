@@ -215,5 +215,70 @@ int TestStringHashMap()
 
 	}
 
+	// pair<iterator, bool> insert_or_assign(const char* key, const T& value);
+	{
+		{
+			string_hash_map<int> m;
+
+			m.insert_or_assign("hello", 0);
+			EATEST_VERIFY(m["hello"] == 0);
+
+			m.insert_or_assign("hello", 42);
+			EATEST_VERIFY(m["hello"] == 42);
+
+			m.insert_or_assign("hello", 43);
+			EATEST_VERIFY(m["hello"] == 43);
+
+			m.insert_or_assign("hello", 1143);
+			EATEST_VERIFY(m["hello"] == 1143);
+
+			EATEST_VERIFY(m.size() == 1);
+			m.clear(); 
+			EATEST_VERIFY(m.size() == 0);
+		}
+
+		{
+			string_hash_map<int> m;
+			m.insert_or_assign("hello", 0);
+			m.insert_or_assign("hello2", 0);
+
+			EATEST_VERIFY(m.size() == 2);
+			m.clear(); 
+			EATEST_VERIFY(m.size() == 0);
+		}
+
+		{
+			string_hash_map<int> m;
+			m.insert_or_assign("hello", 0);
+			m.insert_or_assign("hello2", 0);
+
+			EATEST_VERIFY(m.size() == 2);
+			m.clear(true); 
+			EATEST_VERIFY(m.size() == 0);
+		}
+
+		{
+			string_hash_map<int> m;
+			m.insert_or_assign("hello", 0);
+			m.insert_or_assign("hello2", 0);
+
+			EATEST_VERIFY(m.size() == 2);
+			m.clear(false); 
+			EATEST_VERIFY(m.size() == 0);
+		}
+
+		{
+			string_hash_map<TestObject> m;
+
+			m.insert_or_assign("hello", TestObject(42));
+			EATEST_VERIFY(m["hello"].mX == 42);
+
+			m.insert_or_assign("hello", TestObject(43));
+			EATEST_VERIFY(m["hello"].mX == 43);
+
+			EATEST_VERIFY(m.size() == 1);
+		}
+	}
+
 	return nErrorCount;
 }

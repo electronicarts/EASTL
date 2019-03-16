@@ -127,6 +127,10 @@ namespace eastl
 	template <typename T>
 	struct is_signed : public eastl::is_signed_helper<typename eastl::remove_cv<T>::type>{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_signed_v = is_signed<T>::value;
+	#endif
 
 	#define EASTL_DECLARE_SIGNED(T)                                             \
 	namespace eastl{                                                            \
@@ -176,6 +180,11 @@ namespace eastl
 
 	template <typename T>
 	struct is_unsigned : public eastl::is_unsigned_helper<typename eastl::remove_cv<T>::type>{};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_unsigned_v = is_unsigned<T>::value;
+	#endif
 
 	#define EASTL_DECLARE_UNSIGNED(T)                                             \
 	namespace eastl{                                                              \
@@ -255,6 +264,11 @@ namespace eastl
 	template<typename T, size_t N>
 	struct rank<T[N]> : public eastl::integral_constant<size_t, rank<T>::value + 1> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR auto rank_v = rank<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_base_of
@@ -295,21 +309,25 @@ namespace eastl
 	template<typename T> struct is_lvalue_reference     : public eastl::false_type {};
 	template<typename T> struct is_lvalue_reference<T&> : public eastl::true_type {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_lvalue_reference_v = is_lvalue_reference<T>::value;
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// is_rvalue_reference
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_NO_RVALUE_REFERENCES
-		#define EASTL_TYPE_TRAIT_is_rvalue_reference_CONFORMANCE 0    // Given that the compiler doesn't support rvalue references, maybe the conformance here should be 1, since the result of this is always correct.
+	#define EASTL_TYPE_TRAIT_is_rvalue_reference_CONFORMANCE 1    // is_rvalue_reference is conforming.
 
-		template <typename T> struct is_rvalue_reference      : public eastl::false_type {};
-	#else
-		#define EASTL_TYPE_TRAIT_is_rvalue_reference_CONFORMANCE 1    // is_rvalue_reference is conforming.
+	template <typename T> struct is_rvalue_reference      : public eastl::false_type {};
+	template <typename T> struct is_rvalue_reference<T&&> : public eastl::true_type {};
 
-		template <typename T> struct is_rvalue_reference      : public eastl::false_type {};
-		template <typename T> struct is_rvalue_reference<T&&> : public eastl::true_type {};
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
 	#endif
 
 
