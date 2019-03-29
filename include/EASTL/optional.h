@@ -33,6 +33,12 @@
 #include <EASTL/memory.h> // eastl::addressof
 #include <EASTL/internal/in_place_t.h> // eastl::in_place_t
 
+#if EASTL_EXCEPTIONS_ENABLED
+	EA_DISABLE_ALL_VC_WARNINGS()
+	#include <stdexcept> // std::logic_error.
+	EA_RESTORE_ALL_VC_WARNINGS()
+#endif
+
 #if defined(EASTL_OPTIONAL_ENABLED) && EASTL_OPTIONAL_ENABLED
 
 EA_DISABLE_VC_WARNING(4582 4583) // constructor/destructor is not implicitly called
