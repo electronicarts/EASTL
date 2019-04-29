@@ -52,6 +52,7 @@ int TestIntrusiveSList();
 int TestIterator();
 int TestList();
 int TestListMap();
+int TestLruCache();
 int TestMap();
 int TestMemory();
 int TestMeta();
@@ -144,37 +145,6 @@ int TestTupleVector();
 //
 #include <EASTL/iterator.h>
 #include <EASTL/algorithm.h>
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EA_CHAR16
-//
-// EA_CHAR16 is defined in EABase 2.0.20 and later. If we are using an earlier
-// version of EABase then we replicate what EABase 2.0.20 does.
-//
-//
-#ifndef EA_WCHAR
-	 #define EA_WCHAR(s) L ## s
-#endif
-
-#ifndef EA_CHAR16
-	#if !defined(EA_CHAR16_NATIVE)
-		#if defined(_MSC_VER) && (_MSC_VER >= 1600) && defined(_HAS_CHAR16_T_LANGUAGE_SUPPORT) // VS2010+
-			#define EA_CHAR16_NATIVE 1
-		#elif defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 404) && (defined(__GXX_EXPERIMENTAL_CXX0X__) || defined(__STDC_VERSION__)) // g++ (C++ compiler) 4.4+ with -std=c++0x or gcc (C compiler) 4.4+ with -std=gnu99
-			#define EA_CHAR16_NATIVE 1
-		#else
-			#define EA_CHAR16_NATIVE 0
-		#endif
-	#endif
-
-	#if EA_CHAR16_NATIVE && !defined(_MSC_VER) // Microsoft doesn't support char16_t string literals.
-		#define EA_CHAR16(s) u ## s
-	#elif (EA_WCHAR_SIZE == 2)
-		#define EA_CHAR16(s) L ## s
-	#endif
-#endif
 
 
 

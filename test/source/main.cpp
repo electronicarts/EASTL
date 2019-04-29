@@ -112,6 +112,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Iterator",				TestIterator);
 	testSuite.AddTest("List",					TestList);
 	testSuite.AddTest("ListMap",				TestListMap);
+	testSuite.AddTest("LRUCache",				TestLruCache);
 	testSuite.AddTest("Map",					TestMap);
 	testSuite.AddTest("Memory",					TestMemory);
 	testSuite.AddTest("Meta",				    TestMeta);

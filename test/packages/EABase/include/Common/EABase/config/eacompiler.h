@@ -298,6 +298,8 @@
 	#if !defined(EA_COMPILER_CPP17_ENABLED) && defined(__cplusplus)
 		#if (__cplusplus >= 201703L) 
 			#define EA_COMPILER_CPP17_ENABLED 1
+		#elif defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) // C++17+
+			#define EA_COMPILER_CPP17_ENABLED 1
 		#endif
 	#endif
 

@@ -14,7 +14,9 @@
 #ifndef EASTL_CHAR_TRAITS_H
 #define EASTL_CHAR_TRAITS_H
 
-EA_ONCE()
+#if defined(EA_PRAGMA_ONCE_SUPPORTED)
+	#pragma once
+#endif
 
 #include <EASTL/internal/config.h>
 #include <EASTL/type_traits.h>
@@ -132,31 +134,17 @@ namespace eastl
 	inline char8_t CharToLower(char8_t c)
 		{ return (char8_t)tolower((uint8_t)c); }
 
-	inline char16_t CharToLower(char16_t c)
-		{ if((unsigned)c <= 0xff) return (char16_t)tolower((uint8_t)c); return c; }
-
-	inline char32_t CharToLower(char32_t c)
-		{ if((unsigned)c <= 0xff) return (char32_t)tolower((uint8_t)c); return c; }
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline wchar_t CharToLower(wchar_t c)
-			{ if((unsigned)c <= 0xff) return (wchar_t)tolower((uint8_t)c); return c; }
-	#endif
+	template<typename T>
+	inline T CharToLower(T c)
+		{ if((unsigned)c <= 0xff) return (T)tolower((uint8_t)c); return c; }
 
 
 	inline char8_t CharToUpper(char8_t c)
 		{ return (char8_t)toupper((uint8_t)c); }
 
-	inline char16_t CharToUpper(char16_t c)
-		{ if((unsigned)c <= 0xff) return (char16_t)toupper((uint8_t)c); return c; }
-
-	inline char32_t CharToUpper(char32_t c)
-		{ if((unsigned)c <= 0xff) return (char32_t)toupper((uint8_t)c); return c; }
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline wchar_t CharToUpper(wchar_t c)
-			{ if((unsigned)c <= 0xff) return (wchar_t)toupper((uint8_t)c); return c; }
-	#endif
+	template<typename T>
+	inline T CharToUpper(T c)
+		{ if((unsigned)c <= 0xff) return (T)toupper((uint8_t)c); return c; }
 
 
 	template <typename T>
@@ -176,6 +164,7 @@ namespace eastl
 		return memcmp(p1, p2, n);
 	}
 
+
 	template <typename T>
 	inline int CompareI(const T* p1, const T* p2, size_t n)
 	{
@@ -192,79 +181,33 @@ namespace eastl
 	}
 
 
+	template<typename T>
+	inline const T* Find(const T* p, T c, size_t n)
+	{
+		for(; n > 0; --n, ++p)
+		{
+			if(*p == c)
+				return p;
+		}
+
+		return NULL;
+	}
+
 	inline const char8_t* Find(const char8_t* p, char8_t c, size_t n)
 	{
 		return (const char8_t*)memchr(p, c, n);
 	}
 
-	inline const char16_t* Find(const char16_t* p, char16_t c, size_t n)
+
+	template<typename T>
+	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const T* p)
 	{
-		for(; n > 0; --n, ++p)
-		{
-			if(*p == c)
-				return p;
-		}
-
-		return NULL;
-	}
-
-	inline const char32_t* Find(const char32_t* p, char32_t c, size_t n)
-	{
-		for(; n > 0; --n, ++p)
-		{
-			if(*p == c)
-				return p;
-		}
-
-		return NULL;
-	}
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline const wchar_t* Find(const wchar_t* p, wchar_t c, size_t n)
-		{
-			for(; n > 0; --n, ++p)
-			{
-				if(*p == c)
-					return p;
-			}
-
-			return NULL;
-		}
-	#endif
-
-	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char8_t* p)
-	{
-		const char8_t* pCurrent = p;
+		const auto* pCurrent = p;
 		while(*pCurrent)
 			++pCurrent;
 		return (size_t)(pCurrent - p);
 	}
 
-	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char16_t* p)
-	{
-		const char16_t* pCurrent = p;
-		while(*pCurrent)
-			++pCurrent;
-		return (size_t)(pCurrent - p);
-	}
-
-	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const char32_t* p)
-	{
-		const char32_t* pCurrent = p;
-		while(*pCurrent)
-			++pCurrent;
-		return (size_t)(pCurrent - p);
-	}
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline EA_CPP14_CONSTEXPR size_t CharStrlen(const wchar_t* p)
-		{
-			const wchar_t* pCurrent = p;
-			while(*pCurrent)
-				++pCurrent;
-			return (size_t)(pCurrent - p);
-		}
-	#endif
 
 	template <typename T>
 	inline T* CharStringUninitializedCopy(const T* pSource, const T* pSourceEnd, T* pDestination)
@@ -272,6 +215,7 @@ namespace eastl
 		memmove(pDestination, pSource, (size_t)(pSourceEnd - pSource) * sizeof(T));
 		return pDestination + (pSourceEnd - pSource);
 	}
+
 
 	template <typename T>
 	const T* CharTypeStringFindEnd(const T* pBegin, const T* pEnd, T c)
@@ -285,6 +229,7 @@ namespace eastl
 
 		return pEnd;
 	}
+
     
 	template <typename T>
 	const T* CharTypeStringRSearch(const T* p1Begin, const T* p1End, 
@@ -331,6 +276,7 @@ namespace eastl
 		return p1End;
 	}
 
+
 	template <typename T>
 	inline const T* CharTypeStringFindFirstOf(const T* p1Begin, const T* p1End, const T* p2Begin, const T* p2End)
 	{
@@ -344,6 +290,7 @@ namespace eastl
 		}
 		return p1End;
 	}
+
 
 	template <typename T>
 	inline const T* CharTypeStringRFindFirstNotOf(const T* p1RBegin, const T* p1REnd, const T* p2Begin, const T* p2End)
@@ -362,6 +309,7 @@ namespace eastl
 		return p1REnd;
 	}
 
+
 	template <typename T>
 	inline const T* CharTypeStringFindFirstNotOf(const T* p1Begin, const T* p1End, const T* p2Begin, const T* p2End)
 	{
@@ -379,6 +327,7 @@ namespace eastl
 		return p1End;
 	}
 
+
 	template <typename T>
 	inline const T* CharTypeStringRFindFirstOf(const T* p1RBegin, const T* p1REnd, const T* p2Begin, const T* p2End)
 	{
@@ -392,6 +341,7 @@ namespace eastl
 		}
 		return p1REnd;
 	}
+
 
 	template <typename T>
 	inline const T* CharTypeStringRFind(const T* pRBegin, const T* pREnd, const T c)
@@ -413,34 +363,16 @@ namespace eastl
 		return pDestination + n;
 	}
 
-	inline char16_t* CharStringUninitializedFillN(char16_t* pDestination, size_t n, const char16_t c)
+	template<typename T>
+	inline T* CharStringUninitializedFillN(T* pDestination, size_t n, const T c)
 	{
-		char16_t* pDest16          = pDestination;
-		const char16_t* const pEnd = pDestination + n;
-		while(pDest16 < pEnd)
-			*pDest16++ = c;
+		T * pDest           = pDestination;
+		const T* const pEnd = pDestination + n;
+		while(pDest < pEnd)
+			*pDest++ = c;
 		return pDestination + n;
 	}
 
-	inline char32_t* CharStringUninitializedFillN(char32_t* pDestination, size_t n, const char32_t c)
-	{
-		char32_t* pDest32          = pDestination;
-		const char32_t* const pEnd = pDestination + n;
-		while(pDest32 < pEnd)
-			*pDest32++ = c;
-		return pDestination + n;
-	}
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline wchar_t* CharStringUninitializedFillN(wchar_t* pDestination, size_t n, const wchar_t c)
-		{
-			wchar_t* pDest32          = pDestination;
-			const wchar_t* const pEnd = pDestination + n;
-			while(pDest32 < pEnd)
-				*pDest32++ = c;
-			return pDestination + n;
-		}
-	#endif
 
 	inline char8_t* CharTypeAssignN(char8_t* pDestination, size_t n, char8_t c)
 	{
@@ -449,34 +381,15 @@ namespace eastl
 		return pDestination;
 	}
 
-	inline char16_t* CharTypeAssignN(char16_t* pDestination, size_t n, char16_t c)
+	template<typename T>
+	inline T* CharTypeAssignN(T* pDestination, size_t n, T c)
 	{
-		char16_t* pDest16          = pDestination;
-		const char16_t* const pEnd = pDestination + n;
-		while(pDest16 < pEnd)
-			*pDest16++ = c;
+		T* pDest            = pDestination;
+		const T* const pEnd = pDestination + n;
+		while(pDest < pEnd)
+			*pDest++ = c;
 		return pDestination;
 	}
-
-	inline char32_t* CharTypeAssignN(char32_t* pDestination, size_t n, char32_t c)
-	{
-		char32_t* pDest32          = pDestination;
-		const char32_t* const pEnd = pDestination + n;
-		while(pDest32 < pEnd)
-			*pDest32++ = c;
-		return pDestination;
-	}
-
-	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		inline wchar_t* CharTypeAssignN(wchar_t* pDestination, size_t n, wchar_t c)
-		{
-			wchar_t* pDest32          = pDestination;
-			const wchar_t* const pEnd = pDestination + n;
-			while(pDest32 < pEnd)
-				*pDest32++ = c;
-			return pDestination;
-		}
-	#endif
 } // namespace eastl
 
 #endif // EASTL_CHAR_TRAITS_H
