@@ -415,6 +415,8 @@ namespace eastl
 	inline void
 	segmented_vector<T, Count, Allocator>::erase_unsorted(segment_type& segment, typename segment_type::iterator it)
 	{
+		EA_UNUSED(segment);
+
 		*it = back();
 		pop_back();
 	}

@@ -236,9 +236,9 @@ void swap(NoThrowSwappable& x, NoThrowSwappable& y) EA_NOEXCEPT_IF(true)
 struct Swappable1 {};
 struct Swappable2 {};
 struct Swappable3 {};
-void swap(Swappable1& x, Swappable2& y) {} 
-void swap(Swappable2& x, Swappable1& y) {} 
-void swap(Swappable1& x, Swappable3& y) {} // intentionally missing 'swap(Swappable3, Swappable1)'
+void swap(Swappable1&, Swappable2&) {} 
+void swap(Swappable2&, Swappable1&) {} 
+void swap(Swappable1&, Swappable3&) {} // intentionally missing 'swap(Swappable3, Swappable1)'
 
 
 static int TestUtilitySwap()

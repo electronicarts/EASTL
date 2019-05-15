@@ -241,7 +241,7 @@ namespace Internal
     inline double GetPlatformCycleFrequency()
     {
         using namespace std::chrono;
-#if EA_PLATFORM_MINGW
+#ifdef EA_PLATFORM_MINGW
         using clock = steady_clock;
 #else
         using clock = high_resolution_clock;
@@ -296,7 +296,7 @@ inline double EA::StdC::Stopwatch::GetUnitsPerStopwatchCycle(EA::StdC::Stopwatch
 inline uint64_t EA::StdC::Stopwatch::GetCPUCycle()
 {
     using namespace std::chrono;
-#if EA_PLATFORM_MINGW
+#ifdef EA_PLATFORM_MINGW
         using clock = steady_clock;
 #else
         using clock = high_resolution_clock;

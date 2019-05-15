@@ -595,7 +595,7 @@ namespace eastl
 		{ return bool(opt); }
 
     template <class T>
-    inline EA_CONSTEXPR bool operator<(const optional<T>& opt, eastl::nullopt_t) EA_NOEXCEPT
+    inline EA_CONSTEXPR bool operator<(const optional<T>&, eastl::nullopt_t) EA_NOEXCEPT
 		{ return false; }
 
     template <class T>
@@ -607,7 +607,7 @@ namespace eastl
 		{ return !opt; }
 
     template <class T>
-    inline EA_CONSTEXPR bool operator<=(eastl::nullopt_t, const optional<T>& opt) EA_NOEXCEPT
+    inline EA_CONSTEXPR bool operator<=(eastl::nullopt_t, const optional<T>&) EA_NOEXCEPT
 		{ return true; }
 
     template <class T>
@@ -615,11 +615,11 @@ namespace eastl
 		{ return bool(opt); }
 
     template <class T>
-    inline EA_CONSTEXPR bool operator>(eastl::nullopt_t, const optional<T>& opt) EA_NOEXCEPT
+    inline EA_CONSTEXPR bool operator>(eastl::nullopt_t, const optional<T>&) EA_NOEXCEPT
 		{ return false; }
 
     template <class T>
-    inline EA_CONSTEXPR bool operator>=(const optional<T>& opt, eastl::nullopt_t) EA_NOEXCEPT
+    inline EA_CONSTEXPR bool operator>=(const optional<T>&, eastl::nullopt_t) EA_NOEXCEPT
 		{ return true; }
 
     template <class T>

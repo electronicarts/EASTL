@@ -37,7 +37,7 @@ EASTDC_API int Stricmp(const T*  pString1, const T*  pString2)
 {
 	T c1, c2;
 
-	while((c1 = std::tolower(*pString1++)) == (c2 = std::tolower(*pString2++)))
+	while((c1 = static_cast<T>(std::tolower(*pString1++))) == (c2 = static_cast<T>(std::tolower(*pString2++))))
 	{
 		if(c1 == 0)
 			return 0;

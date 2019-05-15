@@ -209,7 +209,7 @@ int TestLruCache()
 
 		FooCreator fooCreator;
 
-		auto createCallback = [&fooCreator](int k) { return fooCreator.Create(); };
+		auto createCallback = [&fooCreator](int) { return fooCreator.Create(); };
 		auto deleteCallback = [&fooCreator](Foo *f) { fooCreator.Destroy(f); };
 
 		eastl::lru_cache<int, Foo*> lruCache(3, EASTLAllocatorType("eastl lru_cache"), createCallback, deleteCallback);

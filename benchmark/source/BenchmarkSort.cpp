@@ -1213,7 +1213,7 @@ static int CompareSmallInputSortPerformance()
 
 	EA::UnitTest::ReportVerbosity(2, "Small Sub-array Sort comparison: Regular speed test\n");
 	nErrorCount += CompareSmallInputSortPerformanceHelper<uint32_t, eastl::less<uint32_t>>(
-	    arraySizes, sortFunctions, PreExecuteCallback([]() {}), PostExecuteCallback([](BenchmarkResult& result) {}),
+	    arraySizes, sortFunctions, PreExecuteCallback([]() {}), PostExecuteCallback([](BenchmarkResult&) {}),
 	    OutputResultCallback([](eastl::string& output, const char* sortFunction, const char* randomizationType,
 	                            size_t size, size_t numSubArrays, const BenchmarkResult& result) {
 		    output.append_sprintf("%25s, %14s, Size: %8u, Time: %0.1f ticks %0.2f ticks/elem\n", sortFunction,

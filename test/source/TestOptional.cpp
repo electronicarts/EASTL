@@ -37,14 +37,14 @@ bool destructor_test::destructor_ran = false;
 struct move_test
 {
     move_test() = default;
-	move_test(move_test&& other)      { was_moved = true; }
+	move_test(move_test&&)            { was_moved = true; }
 	move_test& operator=(move_test&&) { was_moved = true; return *this;}
 
 	// issue a compiler error is container tries to copy
-    move_test(move_test const &other)  = delete;
-	move_test& operator=(const move_test&) = delete;  
+	move_test(move_test const&) = delete;
+	move_test& operator=(const move_test&) = delete;
 
-    static bool was_moved;
+	static bool was_moved;
 };
 
 bool move_test::was_moved = false;

@@ -24,6 +24,8 @@ namespace Thread {
 
     inline bool SetThreadPriority(int priority) 
     {
+		(void)priority;
+
     #if defined(EA_PLATFORM_LINUX)
         pid_t pid = getpid();
         int scheduler = sched_getscheduler(pid);

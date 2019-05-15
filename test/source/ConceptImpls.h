@@ -167,19 +167,19 @@ struct MoveAndDefaultConstructible
 struct MissingMoveConstructor
 {
 	MissingMoveConstructor() {}
-	MissingMoveConstructor(const MissingMoveConstructor& other) {}
-	MissingMoveConstructor& operator=(MissingMoveConstructor&& other) { return *this; }
-	MissingMoveConstructor& operator=(const MissingMoveConstructor& other) { return *this; }
-	bool operator<(const MissingMoveConstructor& other) const { return true; }
+	MissingMoveConstructor(const MissingMoveConstructor&) {}
+	MissingMoveConstructor& operator=(MissingMoveConstructor&&) { return *this; }
+	MissingMoveConstructor& operator=(const MissingMoveConstructor&) { return *this; }
+	bool operator<(const MissingMoveConstructor&) const { return true; }
 };
 
 struct MissingMoveAssignable
 {
 	MissingMoveAssignable() {}
-	MissingMoveAssignable(const MissingMoveAssignable& other) {}
-	MissingMoveAssignable(MissingMoveAssignable&& other) {}
-	MissingMoveAssignable& operator=(const MissingMoveAssignable& other) { return *this; }
-	bool operator<(const MissingMoveAssignable& other) const { return true; }
+	MissingMoveAssignable(const MissingMoveAssignable&) {}
+	MissingMoveAssignable(MissingMoveAssignable&&) {}
+	MissingMoveAssignable& operator=(const MissingMoveAssignable&) { return *this; }
+	bool operator<(const MissingMoveAssignable&) const { return true; }
 };
 
 struct MissingEquality

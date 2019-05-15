@@ -23,8 +23,8 @@ int TEST_STRING_NAME()
 		Failocator() = default;
 		Failocator(const char*) {}
 
-		void* allocate(size_t n) { EA_FAIL(); return nullptr; }
-		void deallocate(void* p, size_t) { EA_FAIL(); }
+		void* allocate(size_t) { EA_FAIL(); return nullptr; }
+		void deallocate(void*, size_t) { EA_FAIL(); }
 	};
 
 	#if defined(EA_PLATFORM_ANDROID)
@@ -61,10 +61,10 @@ int TEST_STRING_NAME()
 			VERIFY(str.IsSSO());
 		}
 
-		if(EA_PLATFORM_WORD_SIZE == 8)
+		EA_CONSTEXPR_IF(EA_PLATFORM_WORD_SIZE == 8)
 		{
 			// test SSO size on 64 bit platforms
-			if(sizeof(typename StringType::value_type) == 1)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 1)
 			{
 				// we can fit 23 characters on 64bit system with 1 byte chars
 				const auto* pLiteral = LITERAL("aaaaaaaaaaaaaaaaaaaaaaa");
@@ -76,7 +76,7 @@ int TEST_STRING_NAME()
 				VERIFY(str.IsSSO());
 			}
 
-			if(sizeof(typename StringType::value_type) == 2)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 2)
 			{
 				// we can fit 11 characters on 64 bit system with 2 byte chars
 				const auto* pLiteral = LITERAL("aaaaaaaaaaa");
@@ -88,7 +88,7 @@ int TEST_STRING_NAME()
 				VERIFY(str.IsSSO());
 			}
 
-			if(sizeof(typename StringType::value_type) == 4)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 4)
 			{
 				// we can fit 5 characters on 64 bit system with 4 byte chars
 				const auto* pLiteral = LITERAL("aaaaa");
@@ -101,10 +101,10 @@ int TEST_STRING_NAME()
 			}
 		}
 
-		if(EA_PLATFORM_WORD_SIZE == 4)
+		EA_CONSTEXPR_IF(EA_PLATFORM_WORD_SIZE == 4)
 		{
 			// test SSO size on 32 bit platforms
-			if(sizeof(typename StringType::value_type) == 1)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 1)
 			{
 				// we can fit 11 characters on 32bit system with 1 byte chars
 				const auto* pLiteral = LITERAL("aaaaaaaaaaa");
@@ -116,7 +116,7 @@ int TEST_STRING_NAME()
 				VERIFY(str.IsSSO());
 			}
 
-			if(sizeof(typename StringType::value_type) == 2)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 2)
 			{
 				// we can fit 5 characters on 32 bit system with 2 byte chars
 				const auto* pLiteral = LITERAL("aaaaa");
@@ -128,7 +128,7 @@ int TEST_STRING_NAME()
 				VERIFY(str.IsSSO());
 			}
 
-			if(sizeof(typename StringType::value_type) == 4)
+			EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 4)
 			{
 				// we can fit 2 characters on 32 bit system with 4 byte chars
 				const auto* pLiteral = LITERAL("aa");

@@ -144,9 +144,9 @@ public:
 
 struct TestMoveAssignToSelf
 {
-	TestMoveAssignToSelf() EA_NOEXCEPT : mMovedToSelf(false) {}
+	TestMoveAssignToSelf() EA_NOEXCEPT : mMovedToSelf(false)      {}
 	TestMoveAssignToSelf(const TestMoveAssignToSelf& other)       { mMovedToSelf = other.mMovedToSelf; }
-	TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&& other) { mMovedToSelf = true; return *this; }
+	TestMoveAssignToSelf& operator=(TestMoveAssignToSelf&&)       { mMovedToSelf = true; return *this; }
 	TestMoveAssignToSelf& operator=(const TestMoveAssignToSelf&) = delete;
 
 	bool mMovedToSelf;
@@ -1643,10 +1643,10 @@ int TestVector()
 				typedef int* pointer;
 				typedef int& reference;
 
-				bool operator!=(const iterator& rhs) const { return false; }
-				iterator& operator++()                     { return *this; }
-				iterator operator++(int)                   { return *this; }
-				container_value_type operator*()           { return {}; }
+				bool operator!=(const iterator&) const { return false; }
+				iterator& operator++()                 { return *this; }
+				iterator operator++(int)               { return *this; }
+				container_value_type operator*()       { return {};    }
 			};
 
 			container_with_custom_iterator() EA_NOEXCEPT {}

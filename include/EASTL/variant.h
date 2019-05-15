@@ -100,7 +100,7 @@ namespace eastl
 		template<typename T>
 		struct default_construct_if_supported<T, false>
 		{
-			static void call(T* pThis) {} // intentionally blank
+			static void call(T*) {} // intentionally blank
 		};
 
 		///////////////////////////////////////////////////////////////////////////
@@ -201,6 +201,7 @@ namespace eastl
 	//
 	inline void CheckVariantCondition(bool b)
 	{
+		EA_UNUSED(b);
 	#if EASTL_EXCEPTIONS_ENABLED
 		if (!b)
 			throw bad_variant_access();
