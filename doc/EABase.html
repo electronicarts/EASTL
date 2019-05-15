@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>EABase Future Plans</title>
+  <style type="text/css">
+    .SmallBody{
+        font-size: 10pt
+    }
+    
+    body 
+    {
+	    font-family: Palatino Linotype, Book Antiqua, Times New Roman;
+	    font-size: 11pt;
+    }
+
+    h1
+    {
+	    font-family: Verdana;
+	    display: block;
+	    background-color: #FFF0B0;
+	    border: solid 2px black;
+	    font-size: 16pt;
+	    font-weight: bold;
+	    padding: 6px;
+    }
+
+    h2 
+    {
+	    font-size: 14pt;
+    	font-family: Verdana;
+    	border-bottom: 2px solid black;
+    }
+
+    h3
+    {
+    	font-family: Verdana;
+    	font-size: 13pt;
+    	font-weight: bold;
+    }
+
+    .code-example 
+    {
+    	display: block;
+    	background-color: #e0e0f0;
+    	margin-left: 3em;
+    	margin-right: 3em;
+	    margin-top: 1em;
+	    margin-bottom: 1em;
+	    padding: 8px;
+	    border: solid 2px #a0a0d0;
+	    font-family: monospace;
+	    font-size: 10pt;
+	    white-space: pre;
+    }
+
+    .code-example-span 
+    {
+    	font-family: monospace;
+    	font-size: 10pt;
+    	white-space: pre;
+    }
+
+    .code-example-comment
+    {
+    	background-color: #e0e0f0; 
+    	padding: 0px 0px; 
+    	font-family: monospace; 
+    	font-size: 10pt; 
+    	white-space: pre; 
+	    color: #999999; 
+	    margin: auto auto; 
+    }
+
+
+    .faq-question
+    {
+    	background-color: #D0E0D0;
+    	font-size: 12pt;
+	    font-weight: bold;
+	    margin-bottom: 0.5em;
+	    margin-top: 0em;
+	    padding-left:8px;
+	    padding-right:8px;
+	    padding-top:2px;
+	    padding-bottom:2px
+    }
+
+    .faq-answer
+    {
+    	display: block;
+    	margin: 4pt 1em 0.5em 1em;
+    }
+</style>
+</head>
+
+<body>
+<h1>EABase
+</h1>
+<h3>What is EABase?
+</h3>
+<p>EABase is a small set of header files that define platform-independent
+data types and macros. As such it is similar to many projects that have
+a platform.h, system.h, defines.h, etc. file. The difference is that
+EABase is very comprehensive and is the annointed Electronic Arts
+worldwide standard for new projects. </p>
+<p>With respect to the base types and definitions, many of these are
+already present in the most recent C language standard, though the C++
+standard has yet to formally adopt them. EABase bridges the gap and
+defines these values if they aren't already defined. With respect to
+compiler and platform definitions, EABase provides a standard reliable
+means of identifying or specifying compilers, platforms, endian-ness,
+alignment attributes, etc. </p>
+<h3>Usage notes </h3>
+<p>You probably don't want to use float_t and double_t. They are there for C99 compatibility but are rarely what you want to use, since their size is variable.</p>
+<p>Prid8, etc. are somewhat painful and ugly to use and you may find you don't like them. They too are for C99 compatibility.</p>
+<p>intptr_t is not a pointer to an int; it's an int with the same size as a pointer, so you can safely store pointers in it.</p>
+<p>EA::result_type is rarely used and exists for backwards compatibility.</p>
+<h3>What specifically does EABase define?</h3>
+<p>Here we list the things EABase defines, grouped by category. These
+defines are up to date as of the file modification date listed at the
+top of this file.</p>
+<h4>Base Types and Definitions<br>
+
+</h4>
+
+<div style="margin-left: 40px;">bool8_t, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float_t, double_t, (EAStdC package implements int128_t)<br>
+
+intptr_t, uintptr_t, intmax_t, uintmax_t, ssize_t<br>
+
+char8_t, char16_t, char32_t<br>
+
+INT8_C(), UINT8_C(), etc.<br>
+
+INT8_MIN, INT8_MAX, UINT8_MAX, etc.<br>
+
+PRId8, PRId16, PRId32, etc, SCNd8, SCNd16, SCNd32, etc.</div>
+
+<h4>Result Types and Definitions<br>
+
+</h4>
+
+<div style="margin-left: 40px;">EA::result_type<br>
+
+EA::SUCCESS, EA::FAILURE<br>
+
+EA_SUCCEEDED(), EA_FAILED()</div>
+
+<h4>Compiler Definitions<br>
+
+</h4>
+
+<div style="margin-left: 40px;">EA_COMPILER_GNUC<br>
+
+EA_COMPILER_SN<br>
+
+EA_COMPILER_MSVC<br>
+
+EA_COMPILER_METROWERKS<br>
+
+EA_COMPILER_INTEL<br>
+
+EA_COMPILER_BORLANDC<br>
+
+<br>
+
+EA_COMPILER_VERSION = &lt;integer&gt;<br>
+
+EA_COMPILER_NAME = &lt;string&gt;<br>
+
+EA_COMPILER_STRING = &lt;string&gt;<br>
+
+<br>
+
+EA_COMPILER_NO_STATIC_CONSTANTS<br>
+
+EA_COMPILER_NO_TEMPLATE_SPECIALIZATION<br>
+
+EA_COMPILER_NO_TEMPLATE_PARTIAL_SPECIALIZATION<br>
+
+EA_COMPILER_NO_MEMBER_TEMPLATES<br>
+
+EA_COMPILER_NO_MEMBER_TEMPLATE_SPECIALIZATION<br>
+
+EA_COMPILER_NO_TEMPLATE_TEMPLATES<br>
+
+EA_COMPILER_NO_MEMBER_TEMPLATE_FRIENDS<br>
+
+EA_COMPILER_NO_VOID_RETURNS<br>
+
+EA_COMPILER_NO_COVARIANT_RETURN_TYPE<br>
+
+EA_COMPILER_NO_DEDUCED_TYPENAME<br>
+
+EA_COMPILER_NO_ARGUMENT_DEPENDENT_LOOKUP<br>
+
+EA_COMPILER_NO_EXCEPTION_STD_NAMESPACE<br>
+
+EA_COMPILER_NO_EXPLICIT_FUNCTION_TEMPLATE_ARGUMENTS<br>
+
+EA_COMPILER_NO_EXCEPTIONS<br>
+
+EA_COMPILER_NO_UNWIND<br>
+
+<br>
+
+EA_COMPILER_IS_ANSIC<br>
+
+EA_COMPILER_IS_C99<br>
+
+EA_COMPILER_HAS_C99_TYPES<br>
+EA_COMPILER_IS_CPLUSPLUS<br>
+
+EA_COMPILER_MANAGED_CPP</div>
+<h4>Utilities<br>
+</h4>
+<div style="margin-left: 40px;">
+
+  <p>EA_ALIGN_OF()<br>
+  EA_PREFIX_ALIGN()<br>
+  
+EA_POSTFIX_ALIGN()<br>
+	  EA_ALIGNED()<br>
+  
+EA_PACKED()<br>
+  EA_LIKELY()<br>
+  EA_UNLIKELY()<br>
+	  EA_ASSUME()<br>
+	  EA_PURE<br>
+  EA_WCHAR_T_NON_NATIVE<br>
+  
+EA_WCHAR_SIZE<br>
+  EA_RESTRICT<br>
+  EA_DEPRECATED<br>
+EA_PREFIX_DEPRECATED<br>
+EA_POSTFIX_DEPRECATED  <br>
+  EA_FORCE_INLINE<br>
+  EA_NO_INLINE<br>
+  EA_PREFIX_NO_INLINE<br>
+  EA_POSTFIX_NO_INLINE  <br>
+  EA_PASCAL<br>
+  
+EA_PASCAL_FUNC()<br>
+  
+EA_SSE = [0 | 1]<br>
+  
+EA_IMPORT<br>
+  
+EA_EXPORT<br>
+EA_OVERRIDE<br>
+EA_INIT_PRIORITY<br>
+EA_MAY_ALIAS<br>
+</p>
+</div>
+
+<h4>Platform Definitions<br>
+
+</h4>
+
+<div style="margin-left: 40px;"><br>
+
+
+EA_PLATFORM_MAC<br>
+
+EA_PLATFORM_OSX<br>
+EA_PLATFORM_IPHONE<br>
+EA_PLATFORM_ANDROID<br>
+EA_PLATFORM_LINUX<br>
+
+EA_PLATFORM_WINDOWS<br>
+
+EA_PLATFORM_WIN32<br>
+
+EA_PLATFORM_WIN64<br>
+
+EA_PLATFORM_HPUX<br>
+
+EA_PLATFORM_SUN<br>
+
+<br>
+
+EA_PLATFORM_NAME<br>
+
+EA_PLATFORM_DESCRIPTION<br>
+
+EA_PROCESSOR_POWERPC, EA_PROCESSOR_X86, EA_PROCESSOR_ARM, etc.<br>
+
+EA_SYSTEM_LITTLE_ENDIAN, EA_SYSTEM_BIG_ENDIAN<br>
+
+EA_ASM_STYLE_ATT, EA_ASM_STYLE_INTEL, EA_ASM_STYLE_MOTOROLA<br>
+
+EA_PLATFORM_PTR_SIZE<br>
+EA_PLATFORM_WORD_SIZE</div>
+
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<br>
+
+<br>
+<br>
+<br>
+<br>
+
+
+
+</body>
+</html>
