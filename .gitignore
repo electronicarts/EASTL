@@ -1,2 +1,4 @@
 tags
-
+/build/
+build.bat
+build.sh
