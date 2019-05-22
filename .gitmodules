@@ -1,3 +1,6 @@
 [submodule "test/packages/EAMain"]
 	path = test/packages/EAMain
 	url = git@github.com:electronicarts/EAMain.git
+[submodule "test/packages/EATest"]
+	path = test/packages/EATest
+	url = git@github.com:electronicarts/EATest.git
