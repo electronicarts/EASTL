@@ -20,6 +20,12 @@ add_definitions(-D_CHAR16T)
 file(GLOB EABASE_SOURCES "include/Common/EABase/*.h" "include/Common/EABase/config/*.h")
 
 if(EABASE_BUILD_TESTS)
+    # add_subdirectory(test/packages/EAAssert)
+    # add_subdirectory(test/packages/EAStdC)
+    add_subdirectory(test/packages/EAMain)
+    # add_subdirectory(test/packages/EATest)
+    # add_subdirectory(test/packages/EAThread)
+
     add_subdirectory(test)
 endif()
 
