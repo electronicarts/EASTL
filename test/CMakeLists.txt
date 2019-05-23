@@ -14,7 +14,6 @@ include(CTest)
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
 
 #-------------------------------------------------------------------------------------------
@@ -25,7 +24,7 @@ include_directories(source "../include/Common")
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-file(GLOB EABASETEST_SOURCES "source/*.cpp" "source/*.inl" "source/*.h")
+file(GLOB EABASETEST_SOURCES "source/TestEABase.cpp" "source/TestEABase.h")
 set(SOURCES ${EABASETEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------
@@ -34,14 +33,21 @@ set(SOURCES ${EABASETEST_SOURCES})
 add_executable(EABaseTest ${SOURCES})
 
 #-------------------------------------------------------------------------------------------
-# Dependency include paths
-# NOTE(rparolin): Why can't this be in the package build script?
+# Dependencies 
 #-------------------------------------------------------------------------------------------
-target_include_directories(EABaseTest PRIVATE packages/EAAssert/include)
-target_include_directories(EABaseTest PRIVATE packages/EAMain/include)
-target_include_directories(EABaseTest PRIVATE packages/EASTL/include)
-target_include_directories(EABaseTest PRIVATE packages/EAStdC/include)
-target_include_directories(EABaseTest PRIVATE packages/EATest/include)
+add_subdirectory(packages/EAAssert)
+add_subdirectory(packages/EAMain)
+add_subdirectory(packages/EASTL)
+add_subdirectory(packages/EAStdC)
+add_subdirectory(packages/EATest)
+add_subdirectory(packages/EAThread)
+
+target_link_libraries(EABaseTest EAAssert)
+target_link_libraries(EABaseTest EAMain)
+target_link_libraries(EABaseTest EASTL)
+target_link_libraries(EABaseTest EAStdC)
+target_link_libraries(EABaseTest EATest)
+target_link_libraries(EABaseTest EAThread)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
