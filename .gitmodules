@@ -4,3 +4,12 @@
 [submodule "test/packages/EATest"]
 	path = test/packages/EATest
 	url = git@github.com:electronicarts/EATest.git
+[submodule "test/packages/EAStdC"]
+	path = test/packages/EAStdC
+	url = git@github.com:electronicarts/EAStdC.git
+[submodule "test/packages/EAAssert"]
+	path = test/packages/EAAssert
+	url = git@github.com:electronicarts/EAAssert.git
+[submodule "test/packages/EAThread"]
+	path = test/packages/EAThread
+	url = git@github.com:electronicarts/EAThread.git
