@@ -26,5 +26,5 @@ endif()
 #-------------------------------------------------------------------------------------------
 # exported include directories 
 #-------------------------------------------------------------------------------------------
-target_include_directories(EABase INTERFACE include/Common)
+# target_include_directories(EABase INTERFACE include/Common)
 
