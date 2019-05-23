@@ -17,6 +17,12 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-D_CHAR16T)
 
 #-------------------------------------------------------------------------------------------
+# Compiler Flags
+#-------------------------------------------------------------------------------------------
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../EASTL/scripts/CMake")
+include(CommonCppFlags)
+
+#-------------------------------------------------------------------------------------------
 # Include directories
 #-------------------------------------------------------------------------------------------
 include_directories(source "../include/Common")
