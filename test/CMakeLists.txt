@@ -34,6 +34,15 @@ set(SOURCES ${EABASETEST_SOURCES})
 add_executable(EABaseTest ${SOURCES})
 
 #-------------------------------------------------------------------------------------------
+# Dependency include paths
+# NOTE(rparolin): Why can't this be in the package build script?
+#-------------------------------------------------------------------------------------------
+target_include_directories(EABaseTest PRIVATE packages/EAMain/include)
+target_include_directories(EABaseTest PRIVATE packages/EAStdC/include)
+target_include_directories(EABaseTest PRIVATE packages/EATest/include)
+target_include_directories(EABaseTest PRIVATE packages/EAAssert/include)
+
+#-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
 #-------------------------------------------------------------------------------------------
 add_test(EABaseTestRuns EABaseTest)
