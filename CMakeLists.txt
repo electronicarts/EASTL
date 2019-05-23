@@ -26,6 +26,7 @@ if(EABASE_BUILD_TESTS)
     add_subdirectory(test/packages/EATest)
     add_subdirectory(test/packages/EAThread)
     add_subdirectory(test)
+
 endif()
 
 #-------------------------------------------------------------------------------------------
