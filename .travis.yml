@@ -1,0 +1,62 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+env:
+  - EA_CONFIG=Debug
+  - EA_CONFIG=Release
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports
+      - llvm-toolchain-trusty-5.0
+    packages:
+      - cmake
+      - cmake-data
+      - g++-7
+      - clang-5.0
+
+matrix:
+    include:
+        - compiler: clang "release build with clang to trigger MOJI check"
+          env: EA_CONFIG=Release USE_MOJI_CHECK=yes
+          os: linux
+
+    exclude:
+      - os: osx
+        compiler: gcc
+
+install:
+# MOJI check; exit 1 if non-ascii characters detected in C++
+  - if [[ -n "$USE_MOJI_CHECK" && -n `git grep -P "[^[:ascii:]]" source test` ]]; then echo "Moji Detected" && exit 1   ;fi
+  - if [[ -n "$USE_MOJI_CHECK" ]]; then exit 0                                                                          ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"                                                                    ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7"                                                                   ;fi
+
+# Universal Setup
+before_script:
+  - mkdir build_$EA_CONFIG
+  - cd build_$EA_CONFIG
+  - cmake .. -DEABASE_BUILD_TESTS:BOOL=ON
+  - cmake --build . --config $EA_CONFIG
+
+script:
+  # Run Tests
+  - cd $TRAVIS_BUILD_DIR/build_$EA_CONFIG/test
+  - ctest -C $EA_CONFIG -V || exit 1
+
+  # Run Benchmarks
+  - cd $TRAVIS_BUILD_DIR/build_$EA_CONFIG/benchmark
+  - ctest -C $EA_CONFIG -V || exit 1
+
+branches:
+  except:
+    - gh-pages
