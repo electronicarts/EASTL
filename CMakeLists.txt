@@ -10,21 +10,18 @@ project(EABase CXX)
 option(EABASE_BUILD_TESTS "Enable generation of build files for tests" OFF)
 
 #-------------------------------------------------------------------------------------------
-# Defines 
+# Package Tests 
 #-------------------------------------------------------------------------------------------
-add_definitions(-D_CHAR16T)
-
-#-------------------------------------------------------------------------------------------
-# Source files
-#-------------------------------------------------------------------------------------------
-file(GLOB EABASE_SOURCES "include/Common/EABase/*.h" "include/Common/EABase/config/*.h")
-
 if(EABASE_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
 #-------------------------------------------------------------------------------------------
-# exported include directories 
+# Defines 
 #-------------------------------------------------------------------------------------------
-# target_include_directories(EABase INTERFACE include/Common)
+add_definitions(-D_CHAR16T)
 
+#-------------------------------------------------------------------------------------------
+# Export Include Directories
+#-------------------------------------------------------------------------------------------
+target_include_directories(EABase INTERFACE include/Common)

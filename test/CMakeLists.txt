@@ -23,11 +23,6 @@ set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../E
 include(CommonCppFlags)
 
 #-------------------------------------------------------------------------------------------
-# Include directories
-#-------------------------------------------------------------------------------------------
-include_directories(source "../include/Common")
-
-#-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EABASETEST_SOURCES "source/TestEABase.cpp" "source/TestEABase.h")
