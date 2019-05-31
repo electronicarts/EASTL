@@ -280,6 +280,18 @@ int TestIterator()
 		EATEST_VERIFY(eastl::size(intCArray) == 34);
 	}
 
+	// eastl::ssize
+	{
+		eastl::vector<int> intVector;
+		intVector.push_back();
+		intVector.push_back();
+		intVector.push_back();
+		EATEST_VERIFY(eastl::ssize(intVector) == (signed)3);
+
+		int intCArray[34];
+		EATEST_VERIFY(eastl::ssize(intCArray) == (signed)34);
+	}
+
 	// eastl::empty
 	{
 		eastl::vector<int> intVector;

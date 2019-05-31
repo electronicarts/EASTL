@@ -157,7 +157,7 @@ struct TupleRecurser<>
 
 	static EA_CONSTEXPR size_type GetTotalAllocationSize(size_type capacity, size_type offset)
 	{
-		(void)capacity;
+		EA_UNUSED(capacity);
 		return offset;
 	}
 

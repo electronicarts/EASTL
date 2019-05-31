@@ -428,6 +428,44 @@ int TestAny()
 		VERIFY((*r) == 3);
 	}
 
+	// user regression when calling the assignment operator
+	{
+		{
+			eastl::any a1;
+			eastl::any a2;
+			VERIFY(a1.has_value() == false);
+			VERIFY(a2.has_value() == false);
+
+			a1 = a2;
+			VERIFY(a1.has_value() == false);
+			VERIFY(a2.has_value() == false);
+		}
+
+		{
+			eastl::any a1 = 42;
+			eastl::any a2;
+			VERIFY(a1.has_value() == true);
+			VERIFY(a2.has_value() == false);
+
+			a1 = a2;
+			VERIFY(a1.has_value() == false);
+			VERIFY(a2.has_value() == false);
+		}
+
+		{
+			eastl::any a1;
+			eastl::any a2 = 42;
+			VERIFY(a1.has_value() == false);
+			VERIFY(a2.has_value() == true);
+
+			a1 = a2;
+			VERIFY(a1.has_value() == true);
+			VERIFY(a2.has_value() == true);
+			VERIFY(any_cast<int>(a1) == 42);
+			VERIFY(any_cast<int>(a2) == 42);
+		}
+	}
+
 	return nErrorCount;
 }
 

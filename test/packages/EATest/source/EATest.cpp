@@ -30,11 +30,11 @@
 #include <stdarg.h>
 
 #if defined(EA_PLATFORM_MICROSOFT)
-        #ifndef WIN32_LEAN_AND_MEAN
-            #define WIN32_LEAN_AND_MEAN
-        #endif
-        #include <Windows.h>
-        extern "C" WINBASEAPI BOOL WINAPI IsDebuggerPresent();
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <Windows.h>
+    extern "C" WINBASEAPI BOOL WINAPI IsDebuggerPresent();
 
     #if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP) && !defined(EA_COMPILER_CLANG)
         #pragma comment(lib, "Advapi32.lib"); // For CheckTokenMembership and friends.
@@ -47,14 +47,11 @@
     #include <sys/sysctl.h>
     #import <mach/mach.h>
     #import <mach/mach_host.h>
-#elif defined(EA_PLATFORM_KETTLE)
+#elif defined(EA_PLATFORM_PS4)
     #include <unistd.h>
     #include <sys/types.h>
     #include <sdk_version.h>
-    #if (SCE_ORBIS_SDK_VERSION >= 0x00930000u) // SDK 930+
-        #include <libdbg.h>
-    #endif
-
+    #include <libdbg.h>
 #elif defined(EA_PLATFORM_BSD)
     #include <sys/types.h>
     #include <sys/ptrace.h>
@@ -273,9 +270,9 @@ EATEST_API int& WriteToEnsureFunctionCalled()
 EATEST_API bool IsDebuggerPresent()
 {
     #if defined(EA_PLATFORM_MICROSOFT)
-            return ::IsDebuggerPresent() != 0;
+        return ::IsDebuggerPresent() != 0;
 
-    #elif defined(EA_PLATFORM_KETTLE) && (SCE_ORBIS_SDK_VERSION >= 0x00930000u)
+    #elif defined(EA_PLATFORM_PS4)
         return (sceDbgIsDebuggerAttached() != 0);
 
     #elif defined(__APPLE__) // OS X, iPhone, iPad, etc.

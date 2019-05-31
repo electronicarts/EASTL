@@ -393,14 +393,24 @@ namespace eastl
 		template <class... Args>
 		void emplace(Args&&... args)
 		{
-			construct_value(eastl::move(T(eastl::forward<Args>(args)...)));
+			if (engaged)
+			{
+				destruct_value();
+				engaged = false;
+			}
+			construct_value(eastl::forward<Args>(args)...);
 			engaged = true;
 		}
 
 		template <class U, class... Args>
 		void emplace(std::initializer_list<U> ilist, Args&&... args)
 		{
-			construct_value(eastl::move(T(ilist, eastl::forward<Args>(args)...)));
+			if (engaged)
+			{
+				destruct_value();
+				engaged = false;
+			}
+			construct_value(ilist, eastl::forward<Args>(args)...);
 			engaged = true;
 		}
 
@@ -440,11 +450,9 @@ namespace eastl
 
 	private:
 
-	    inline void construct_value(const value_type& v)
-			{ ::new (eastl::addressof(val)) value_type(v); }
-
-	    inline void construct_value(value_type&& v)
-			{ ::new (eastl::addressof(val)) value_type(eastl::move(v)); }
+		template <class... Args>
+		inline void construct_value(Args&&... args)
+		{ ::new (eastl::addressof(val)) value_type(eastl::forward<Args>(args)...); }
 
 	    inline T* get_value_address() EASTL_OPTIONAL_NOEXCEPT
 	    {

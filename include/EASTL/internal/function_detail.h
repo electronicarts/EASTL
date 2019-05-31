@@ -101,6 +101,9 @@ namespace eastl
 			    (eastl::alignment_of_v<functor_storage<SIZE_IN_BYTES>> % eastl::alignment_of_v<Functor>) == 0;
 		};
 
+
+		/// function_base_detail
+		///
 		template <int SIZE_IN_BYTES>
 		class function_base_detail
 		{
@@ -328,6 +331,9 @@ namespace eastl
 		#define EASTL_INTERNAL_FUNCTION_DETAIL_VALID_FUNCTION_ARGS(FUNCTOR, RET, ARGS, MYSELF) \
 			EASTL_INTERNAL_FUNCTION_VALID_FUNCTION_ARGS(FUNCTOR, RET, ARGS, MYSELF, MYSELF)
 
+
+		/// function_detail
+		///
 		template <int, typename>
 		class function_detail;
 

@@ -13,9 +13,13 @@
 
 namespace eastl
 {
+	#define EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(TYPE)                    \
+		static_assert(sizeof(TYPE) <= sizeof(typename Base::FunctorStorageType), \
+					  "fixed_function local buffer is not large enough to hold the callable object.")
 
-	#define EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(TYPE) \
-		static_assert(sizeof(TYPE) <= sizeof(typename Base::FunctorStorageType), "fixed_function local buffer is not large enough to hold the callable object.")
+    #define EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES) \
+		static_assert(SIZE_IN_BYTES >= NEW_SIZE_IN_BYTES,                           \
+					  "fixed_function local buffer is not large enough to hold the new fixed_function type.")
 
 	template <int, typename>
 	class fixed_function;
@@ -23,8 +27,8 @@ namespace eastl
 	template <int SIZE_IN_BYTES, typename R, typename... Args>
 	class fixed_function<SIZE_IN_BYTES, R(Args...)> : public internal::function_detail<SIZE_IN_BYTES, R(Args...)>
 	{
-	private:
 		using Base = internal::function_detail<SIZE_IN_BYTES, R(Args...)>;
+
 	public:
 		using typename Base::result_type;
 
@@ -50,6 +54,20 @@ namespace eastl
 		{
 			EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(Functor);
 		}
+		
+		template<int NEW_SIZE_IN_BYTES>
+		fixed_function(const fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>& other)
+			: Base(other)
+		{
+			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+		}
+
+		template<int NEW_SIZE_IN_BYTES>
+		fixed_function(fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>&& other)
+			: Base(eastl::move(other))
+		{
+			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+		}
 
 		~fixed_function() EA_NOEXCEPT = default;
 
@@ -68,6 +86,24 @@ namespace eastl
 		fixed_function& operator=(std::nullptr_t p) EA_NOEXCEPT
 		{
 			Base::operator=(p);
+			return *this;
+		}
+
+		template<int NEW_SIZE_IN_BYTES>
+		fixed_function& operator=(const fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>& other)
+		{
+			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+
+			Base::operator=(other);
+			return *this;
+		}
+
+		template<int NEW_SIZE_IN_BYTES>
+		fixed_function& operator=(fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>&& other)
+		{
+			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+
+			Base::operator=(eastl::move(other));
 			return *this;
 		}
 
@@ -103,7 +139,6 @@ namespace eastl
 		}
 
 	#if EASTL_RTTI_ENABLED
-
 		const std::type_info& target_type() const EA_NOEXCEPT
 		{
 			return Base::target_type();
@@ -120,7 +155,6 @@ namespace eastl
 		{
 			return Base::target();
 		}
-
 	#endif
 	};
 

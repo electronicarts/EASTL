@@ -444,50 +444,15 @@ namespace eastl
 		}
 	
 		template <typename T>
-		inline typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
+		inline EA_CONSTEXPR typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
 		min(const T& a, const T& b)
 		{
 			return b < a ? b : a;
 		}
 
-		#if defined(_MSC_VER) && defined(EA_PROCESSOR_POWERPC)
-			inline float
-			min(float a, float b)  
-			{
-				return (float)__fsel(a - b, b, a);
-			}
-
-			inline double
-			min(double a, double b)  
-			{
-				return (double)__fsel(a - b, b, a);
-			}
-
-		#elif defined(_MSC_VER) && defined(EA_PROCESSOR_X86)
-
-			// We used to have x86 asm here, but it didn't improve performance.
-
-		#elif defined(__GNUC__) && defined(EA_PROCESSOR_POWERPC)
-			inline float
-			min(float a, float b)  
-			{
-				float result, test(a - b);
-				__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (b), "f" (a));
-				return result;
-			}
-
-			inline double
-			min(double a, double b)  
-			{
-				double result, test(a - b);
-				__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (b), "f" (a));
-				return result;
-			}
-		#else
-			inline EA_CONSTEXPR float       min(float  a, float   b)           { return b < a ? b : a; }
-			inline EA_CONSTEXPR double      min(double a, double  b)           { return b < a ? b : a; }
-			inline EA_CONSTEXPR long double min(long double a, long double  b) { return b < a ? b : a; }
-		#endif
+		inline EA_CONSTEXPR float       min(float  a, float   b)           { return b < a ? b : a; }
+		inline EA_CONSTEXPR double      min(double a, double  b)           { return b < a ? b : a; }
+		inline EA_CONSTEXPR long double min(long double a, long double  b) { return b < a ? b : a; }
 
 	#endif // EASTL_MINMAX_ENABLED
 
@@ -513,48 +478,13 @@ namespace eastl
 		return b < a ? b : a;
 	}
 
-
-	#if defined(_MSC_VER) && defined(EA_PROCESSOR_POWERPC)
-		inline float
-		min_alt(float a, float b)  
-		{
-			return (float)__fsel(a - b, b, a);
-		}
-
-		inline double
-		min_alt(double a, double b)  
-		{
-			return (double)__fsel(a - b, b, a);
-		}
-
-	#elif defined(_MSC_VER) && defined(EA_PROCESSOR_X86)
-
-		// We used to have x86 asm here, but it didn't improve performance.
-
-	#elif defined(__GNUC__) && defined(EA_PROCESSOR_POWERPC)
-		inline float
-		min_alt(float a, float b)  
-		{
-			float result, test(a - b);
-			__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (b), "f" (a));
-			return result;
-		}
-
-		inline double
-		min_alt(double a, double b)  
-		{
-			double result, test(a - b);
-			__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (b), "f" (a));
-			return result;
-		}
-	#else
-		inline EA_CONSTEXPR float       min_alt(float  a, float   b)           { return b < a ? b : a; }
-		inline EA_CONSTEXPR double      min_alt(double a, double  b)           { return b < a ? b : a; }
-		inline EA_CONSTEXPR long double min_alt(long double a, long double  b) { return b < a ? b : a; }
-	#endif
+	inline EA_CONSTEXPR float       min_alt(float  a, float   b)           { return b < a ? b : a; }
+	inline EA_CONSTEXPR double      min_alt(double a, double  b)           { return b < a ? b : a; }
+	inline EA_CONSTEXPR long double min_alt(long double a, long double  b) { return b < a ? b : a; }
 
 
 	#if EASTL_MINMAX_ENABLED
+
 		/// min
 		///
 		/// Min returns the lesser of its two arguments; it returns the first 
@@ -605,6 +535,7 @@ namespace eastl
 
 
 	#if EASTL_MINMAX_ENABLED
+
 		/// max
 		///
 		/// Max returns the greater of its two arguments; it returns the first 
@@ -627,51 +558,15 @@ namespace eastl
 		}
 
 		template <typename T>
-		inline typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
+		inline EA_CONSTEXPR typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
 		max(const T& a, const T& b)
 		{
 			return a < b ? b : a;
 		}
 
-
-		#if defined(_MSC_VER) && defined(EA_PROCESSOR_POWERPC)
-			inline float
-			max(float a, float b)  
-			{
-				return (float)__fsel(a - b, a, b);
-			}
-
-			inline double
-			max(double a, double b)  
-			{
-				return (double)__fsel(a - b, a, b);
-			}
-
-		#elif defined(_MSC_VER) && defined(EA_PROCESSOR_X86)
-
-			// We used to have x86 asm here, but it didn't improve performance.
-
-		#elif defined(__GNUC__) && defined(EA_PROCESSOR_POWERPC)
-			inline float
-			max(float a, float b)  
-			{
-				float result, test(a - b);
-				__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (a), "f" (b));
-				return result;
-			}
-
-			inline double
-			max(double a, double b)  
-			{
-				double result, test(a - b);
-				__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (a), "f" (b));
-				return result;
-			}
-		#else
-			inline EA_CONSTEXPR float       max(float       a, float       b) { return a < b ? b : a; }
-			inline EA_CONSTEXPR double      max(double      a, double      b) { return a < b ? b : a; }
-			inline EA_CONSTEXPR long double max(long double a, long double b) { return a < b ? b : a; }
-		#endif
+		inline EA_CONSTEXPR float       max(float       a, float       b) { return a < b ? b : a; }
+		inline EA_CONSTEXPR double      max(double      a, double      b) { return a < b ? b : a; }
+		inline EA_CONSTEXPR long double max(long double a, long double b) { return a < b ? b : a; }
 
 	#endif // EASTL_MINMAX_ENABLED
 
@@ -689,50 +584,15 @@ namespace eastl
 	}
 
 	template <typename T>
-	inline typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
+	inline EA_CONSTEXPR typename eastl::enable_if<!eastl::is_scalar<T>::value, const T&>::type
 	max_alt(const T& a, const T& b)
 	{
 		return a < b ? b : a;
 	}
 
-	#if defined(_MSC_VER) && defined(EA_PROCESSOR_POWERPC)
-		inline float
-		max_alt(float a, float b)  
-		{
-			return (float)__fsel(a - b, a, b);
-		}
-
-		inline double
-		max_alt(double a, double b)  
-		{
-			return (double)__fsel(a - b, a, b);
-		}
-
-	#elif defined(_MSC_VER) && defined(EA_PROCESSOR_X86)
-
-		// We used to have x86 asm here, but it didn't improve performance.
-
-	#elif defined(__GNUC__) && defined(EA_PROCESSOR_POWERPC)
-		inline float
-		max_alt(float a, float b)  
-		{
-			float result, test(a - b);
-			__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (a), "f" (b));
-			return result;
-		}
-
-		inline double
-		max_alt(double a, double b)  
-		{
-			double result, test(a - b);
-			__asm__ ("fsel %0, %1, %2, %3" : "=f" (result) : "f" (test), "f" (a), "f" (b));
-			return result;
-		}
-		#else
-			inline EA_CONSTEXPR float       max_alt(float       a, float       b) { return a < b ? b : a; }
-			inline EA_CONSTEXPR double      max_alt(double      a, double      b) { return a < b ? b : a; }
-			inline EA_CONSTEXPR long double max_alt(long double a, long double b) { return a < b ? b : a; }
-	#endif
+	inline EA_CONSTEXPR float       max_alt(float       a, float       b) { return a < b ? b : a; }
+	inline EA_CONSTEXPR double      max_alt(double      a, double      b) { return a < b ? b : a; }
+	inline EA_CONSTEXPR long double max_alt(long double a, long double b) { return a < b ? b : a; }
 
 
 	#if EASTL_MINMAX_ENABLED

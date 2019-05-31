@@ -367,6 +367,35 @@ int TestOptional()
 			o.emplace(42);
 			VERIFY(*o == 42);
 		}
+
+		struct nonCopyableNonMovable
+		{
+			nonCopyableNonMovable(int v) : val(v) {}
+
+			nonCopyableNonMovable(const nonCopyableNonMovable&) = delete;
+			nonCopyableNonMovable(nonCopyableNonMovable&&) = delete;
+			nonCopyableNonMovable& operator=(const nonCopyableNonMovable&) = delete;
+
+			int val = 0;
+		};
+
+		{
+			optional<nonCopyableNonMovable> o;
+			o.emplace(42);
+			VERIFY(o->val == 42);
+		}
+
+		{
+			// Verify emplace will destruct object if it has been engaged.
+			destructor_test::reset();
+			optional<destructor_test> o;
+			o.emplace();
+			VERIFY(!destructor_test::destructor_ran);
+
+			destructor_test::reset();
+			o.emplace();
+			VERIFY(destructor_test::destructor_ran);
+		}
 	}
 	#endif
 

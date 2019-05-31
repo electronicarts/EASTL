@@ -985,7 +985,7 @@ namespace eastl
 	EA_CPP14_CONSTEXPR auto data(const Container& c) -> decltype(c.data())
 		{ return c.data(); }
 
-	template <class T, std::size_t N>
+	template <class T, size_t N>
 	EA_CPP14_CONSTEXPR T* data(T(&array)[N]) EA_NOEXCEPT 
 		{ return array; }
 
@@ -1002,9 +1002,26 @@ namespace eastl
 	EA_CPP14_CONSTEXPR auto size(const C& c) -> decltype(c.size())
 		{ return c.size(); }
 
-	template <class T, std::size_t N>
-	EA_CPP14_CONSTEXPR std::size_t size(const T (&)[N]) EA_NOEXCEPT
+	template <class T, size_t N>
+	EA_CPP14_CONSTEXPR size_t size(const T (&)[N]) EA_NOEXCEPT
 		{ return N; }
+
+
+	// eastl::ssize
+	//
+	// https://en.cppreference.com/w/cpp/iterator/size
+	//
+	template <class T, ptrdiff_t N>
+	EA_CPP14_CONSTEXPR ptrdiff_t ssize(const T(&)[N]) EA_NOEXCEPT
+		{ return N; }
+
+	template <class C>
+	EA_CPP14_CONSTEXPR auto ssize(const C& c)
+	    -> eastl::common_type_t<ptrdiff_t, eastl::make_signed_t<decltype(c.size())>>
+	{
+		using R = eastl::common_type_t<ptrdiff_t, eastl::make_signed_t<decltype(c.size())>>;
+		return static_cast<R>(c.size());
+	}
 
 
 	// eastl::empty
@@ -1015,7 +1032,7 @@ namespace eastl
 	EA_CPP14_CONSTEXPR auto empty(const Container& c) -> decltype(c.empty())
 		{ return c.empty(); }
 
-	template <class T, std::size_t N>
+	template <class T, size_t N>
 	EA_CPP14_CONSTEXPR bool empty(const T (&)[N]) EA_NOEXCEPT
 		{ return false; }
 
