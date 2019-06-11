@@ -19,7 +19,7 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
-set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../EASTL/scripts/CMake")
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/packages/EASTL/scripts/CMake")
 include(CommonCppFlags)
 
 #-------------------------------------------------------------------------------------------
@@ -49,6 +49,15 @@ target_link_libraries(EABaseTest EASTL)
 target_link_libraries(EABaseTest EAStdC)
 target_link_libraries(EABaseTest EATest)
 target_link_libraries(EABaseTest EAThread)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+if((NOT APPLE) AND (NOT WIN32))
+    target_link_libraries(EABaseTest ${EASTLTest_Libraries} Threads::Threads rt)
+else()
+    target_link_libraries(EABaseTest ${EASTLTest_Libraries} Threads::Threads)
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.

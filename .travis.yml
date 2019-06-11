@@ -11,7 +11,7 @@ compiler:
 env:
   - EA_CONFIG=Debug
   - EA_CONFIG=Release
-
+  
 addons:
   apt:
     sources:
@@ -25,11 +25,6 @@ addons:
       - clang-5.0
 
 matrix:
-    include:
-        - compiler: clang "release build with clang to trigger MOJI check"
-          env: EA_CONFIG=Release USE_MOJI_CHECK=yes
-          os: linux
-
     exclude:
       - os: osx
         compiler: gcc
@@ -40,15 +35,12 @@ git:
 
 # Use sed to replace the SSH URL with the public URL, then initialize submodules
 before_install:
-    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-    - git submodule update --init --recursive
+    - sed --version >/dev/null 2>&1 && sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules || sed -i "" 's/git@github.com:/https:\/\/github.com\//'  .gitmodules
+    - git submodule update --init 
 
 install:
-# MOJI check; exit 1 if non-ascii characters detected in C++
-  - if [[ -n "$USE_MOJI_CHECK" && -n `git grep -P "[^[:ascii:]]" source test` ]]; then echo "Moji Detected" && exit 1   ;fi
-  - if [[ -n "$USE_MOJI_CHECK" ]]; then exit 0                                                                          ;fi
-  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"                                                                    ;fi
-  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7"                                                                   ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"  ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7" ;fi
 
 # Universal Setup
 before_script:
@@ -62,10 +54,3 @@ script:
   - cd $TRAVIS_BUILD_DIR/build_$EA_CONFIG/test
   - ctest -C $EA_CONFIG -V || exit 1
 
-  # Run Benchmarks
-  - cd $TRAVIS_BUILD_DIR/build_$EA_CONFIG/benchmark
-  - ctest -C $EA_CONFIG -V || exit 1
-
-branches:
-  except:
-    - gh-pages
