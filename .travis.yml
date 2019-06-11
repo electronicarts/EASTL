@@ -3,10 +3,12 @@ language: cpp
 os:
   - linux
   - osx
+  - windows
 
 compiler:
   - gcc
   - clang
+  - msvc
 
 env:
   - EA_CONFIG=Debug
@@ -27,6 +29,14 @@ addons:
 matrix:
     exclude:
       - os: osx
+        compiler: gcc
+      - os: osx
+        compiler: msvc
+      - os: linux 
+        compiler: msvc
+      - os: windows
+        compiler: clang
+      - os: windows
         compiler: gcc
 
 # Handle git submodules yourself
