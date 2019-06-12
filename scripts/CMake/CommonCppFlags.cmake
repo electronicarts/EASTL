@@ -7,6 +7,9 @@ endif()
 
 # NOT LESS == GREATER_OR_EQUAL; CMake doesn't support this out of the box.
 if(CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+    if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "6.2"))
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    endif()
     if(NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "6.1"))
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
     endif()
