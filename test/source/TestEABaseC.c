@@ -210,9 +210,7 @@ struct InitPriorityTestClass
 
 
 // EA_MAY_ALIAS
-#ifndef __SNC__ // SNC doesn't support this usage.
 void* EA_MAY_ALIAS gPtr0 = NULL;
-#endif
 
 typedef void* EA_MAY_ALIAS pvoid_may_alias;
 pvoid_may_alias gPtr1 = NULL;

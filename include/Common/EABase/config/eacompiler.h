@@ -258,10 +258,6 @@
 			#define EA_COMPILER_CPP11_ENABLED 1
 		#elif defined(_MSC_VER) && _MSC_VER >= 1600         // Microsoft unilaterally enables its C++11 support; there is no way to disable it.
 			#define EA_COMPILER_CPP11_ENABLED 1
-		#elif defined(__SN_VER__) && (__SN_VER__ >= 43001)
-			#if __option(cpp11)
-				#define EA_COMPILER_CPP11_ENABLED 1
-			#endif
 		#elif defined(__EDG_VERSION__) // && ???
 			// To do: Is there a generic way to determine this?
 		#endif
@@ -1718,13 +1714,12 @@
 	// specifically to full C++11 thread_local support. The EAThread package provides a wrapper for 
 	// __thread via EA_THREAD_LOCAL (which unfortunately sounds like C++ thread_local). 
 	//
+	// https://en.cppreference.com/w/cpp/keyword/thread_local
+	//
 	#if !defined(EA_COMPILER_NO_THREAD_LOCAL)
-		// Not supported by VC++ as of VS2013, though all VC++ versions have partial support via __thread.
-
-		//#if defined(EA_COMPILER_CPP11_ENABLED) && defined(__clang__) && __has_feature(cxx_thread_local) && _______
-		//    // thread_local requires a cooperating standard library, and we yet don't have a means to identify such a thing.
-
-		#if defined(EA_COMPILER_CPP11_ENABLED) && defined(_MSC_VER) && (EA_COMPILER_VERSION >= 1900)     // VS2015+
+		#if defined(EA_COMPILER_CPP11_ENABLED) && defined(__clang__) && EA_COMPILER_HAS_FEATURE(cxx_thread_local)
+			// supported.
+		#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(_MSC_VER) && (EA_COMPILER_VERSION >= 1900)     // VS2015+
 			// supported.
 		#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(__GNUC__) && (EA_COMPILER_VERSION >= 4008)   // GCC 4.8+
 			// supported.

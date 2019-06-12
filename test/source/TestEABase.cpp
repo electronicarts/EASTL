@@ -1805,7 +1805,7 @@ int TestEACompiler()
 
 
 	// Test EA_COMPILER_NO_NORETURN / EA_NORETURN
-	#if !defined(EA_COMPILER_NO_NORETURN) && !defined(EA_PLATFORM_KETTLE) // Kettle SDK up to at least v.915 has a broken definition of the exit() function and fails to compile the valid code below.
+	#if !defined(EA_COMPILER_NO_NORETURN) && !defined(EA_PLATFORM_PS4) // Kettle SDK up to at least v.915 has a broken definition of the exit() function and fails to compile the valid code below.
 	{
 		struct NoReturnTest
 		{
