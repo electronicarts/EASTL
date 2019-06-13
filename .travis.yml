@@ -1,5 +1,8 @@
 language: cpp
 
+cache:
+  - ccache: true
+
 os:
   - linux
   - osx
