@@ -5,7 +5,7 @@ You can sign here: [Go to CLA](https://electronicarts.na1.echosign.com/public/es
 
 ### Pull Request Policy
 
-All code contributions to EASTL are submitted as [Github pull requests](https://help.github.com/articles/using-pull-requests/).  All pull requests will be reviewed by an EASTL maintainer according to the guidelines found in the next section.
+All code contributions are submitted as [Github pull requests](https://help.github.com/articles/using-pull-requests/).  All pull requests will be reviewed by a maintainer according to the guidelines found in the next section.
 
 Your pull request should:
 
@@ -26,7 +26,7 @@ EAAssert uses CMake as its build system.
 * Create and navigate to "your_build_folder":
 	* mkdir your_build_folder && cd your_build_folder
 * Generate build scripts:
-	* cmake eastl_source_folder -DEABASE_BUILD_TESTS:BOOL=ON
+	* cmake source_folder -DEABASE_BUILD_TESTS:BOOL=ON
 * Build unit tests for "your_config":
 	* cmake --build . --config your_config
 * Run the unit tests for "your_config" from the test folder:
