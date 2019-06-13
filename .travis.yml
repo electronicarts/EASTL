@@ -55,19 +55,6 @@ git:
 before_install:
     - sed --version >/dev/null 2>&1 && sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules || sed -i "" 's/git@github.com:/https:\/\/github.com\//'  .gitmodules
     - git submodule update --init 
-# WORKAROUND: Until we can move the cmake flags script into a central place
-    - mkdir -p test/packages/EABase/test/packages/EASTL/scripts/CMake/
-    - mkdir -p test/packages/EAAssert/test/packages/EASTL/scripts/CMake/
-    - mkdir -p test/packages/EAStdC/test/packages/EASTL/scripts/CMake/
-    - mkdir -p test/packages/EAMain/test/packages/EASTL/scripts/CMake/
-    - mkdir -p test/packages/EATest/test/packages/EASTL/scripts/CMake/
-    - mkdir -p test/packages/EAThread/test/packages/EASTL/scripts/CMake/
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EABase/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EAAssert/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EAStdC/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EAMain/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EATest/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
-    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EAThread/test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
 
 install:
 # MOJI check; exit 1 if non-ascii characters detected in C++
@@ -94,6 +81,3 @@ script:
   - cd $TRAVIS_BUILD_DIR/build_$EASTL_CONFIG/benchmark
   - ctest -C $EASTL_CONFIG -V || exit 1
 
-branches:
-  except:
-    - gh-pages
