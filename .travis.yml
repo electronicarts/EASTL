@@ -55,8 +55,8 @@ git:
 before_install:
     - sed --version >/dev/null 2>&1 && sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules || sed -i "" 's/git@github.com:/https:\/\/github.com\//'  .gitmodules
     - git submodule update --init 
-	- mkdir -p test/packages/EASTL/scripts/CMake/
-	- cp scripts/CMake/CommonCppFlags.cmake test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
+    - mkdir -p test/packages/EASTL/scripts/CMake/
+    - cp scripts/CMake/CommonCppFlags.cmake test/packages/EASTL/scripts/CMake/CommonCppFlags.cmake
 
 install:
 # MOJI check; exit 1 if non-ascii characters detected in C++
