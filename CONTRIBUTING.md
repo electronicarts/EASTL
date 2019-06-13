@@ -18,3 +18,56 @@ Your pull request should:
 	* limit using clang format on new code
 	* do not deviate from style already established in the files
 
+
+### Running the Unit Tests
+
+EAAssert uses CMake as its build system.
+
+* Create and navigate to "your_build_folder":
+	* mkdir your_build_folder && cd your_build_folder
+* Generate build scripts:
+	* cmake eastl_source_folder -DEABASE_BUILD_TESTS:BOOL=ON
+* Build unit tests for "your_config":
+	* cmake --build . --config your_config
+* Run the unit tests for "your_config" from the test folder:
+	* cd test && ctest -C your_config
+
+
+Here is an example batch file.
+```batch
+set build_folder=out
+mkdir %build_folder%
+pushd %build_folder%
+call cmake .. -DEABASE_BUILD_TESTS:BOOL=ON
+call cmake --build . --config Release
+call cmake --build . --config Debug
+call cmake --build . --config RelWithDebInfo
+call cmake --build . --config MinSizeRel
+pushd test
+call ctest -C Release
+call ctest -C Debug
+call ctest -C RelWithDebInfo
+call ctest -C MinSizeRel
+popd
+popd
+```
+
+Here is an example bash file
+```bash
+build_folder=out
+mkdir $build_folder
+pushd $build_folder
+cmake .. -DEABASE_BUILD_TESTS:BOOL=ON
+cmake --build . --config Release
+cmake --build . --config Debug
+cmake --build . --config RelWithDebInfo
+cmake --build . --config MinSizeRel
+pushd test
+ctest -C Release
+ctest -C Debug
+ctest -C RelWithDebInfo
+ctest -C MinSizeRel
+popd
+popd
+```
+
