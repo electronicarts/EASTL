@@ -7,7 +7,7 @@ EABase is a small set of header files that define platform-independent data type
 
 ## Documentation
 
-Please see [Introduction](https://rawgit.com/electronicarts/EABase/master/doc/EABase.html).
+Please see [Introduction](doc/EABase.html).
 
 
 ## Compiling sources
