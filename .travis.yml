@@ -65,7 +65,6 @@ install:
   - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-7"                              ;fi
   - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-7"                           ;fi
 
-# Universal Setup
 before_script:
   - mkdir build_$EASTL_CONFIG
   - cd build_$EASTL_CONFIG
