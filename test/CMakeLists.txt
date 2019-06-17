@@ -10,9 +10,13 @@ project(EASTLTest CXX)
 include(CTest)
 
 #-------------------------------------------------------------------------------------------
-# Include directories
+# Defines
 #-------------------------------------------------------------------------------------------
-include_directories(source "../include")
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-DEASTL_OPENSOURCE=1)
+add_definitions(-D_CHAR16T)
+add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -34,24 +38,38 @@ endif()
 file(GLOB EASTLTEST_SOURCES "source/*.cpp" "source/*.inl" "source/*.h")
 set(SOURCES ${EASTLTEST_SOURCES})
 
-#-------------------------------------------------------------------------------------------
-# Defines
-#-------------------------------------------------------------------------------------------
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE=1)
-add_definitions(-D_CHAR16T)
-add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
 add_executable(EASTLTest ${SOURCES})
 
+#-------------------------------------------------------------------------------------------
+# Include directories
+#-------------------------------------------------------------------------------------------
+target_include_directories(EASTLTest PUBLIC include)
+
+#-------------------------------------------------------------------------------------------
+# Dependencies 
+#-------------------------------------------------------------------------------------------
+add_subdirectory(packages/EABase)
+add_subdirectory(packages/EAAssert)
+add_subdirectory(packages/EAStdC)
+add_subdirectory(packages/EAMain)
+add_subdirectory(packages/EATest)
+add_subdirectory(packages/EAThread)
+
+target_link_libraries(EASTLTest EABase)
+target_link_libraries(EASTLTest EAAssert)
+target_link_libraries(EASTLTest EAMain)
+target_link_libraries(EASTLTest EASTL)
+target_link_libraries(EASTLTest EAStdC)
+target_link_libraries(EASTLTest EATest)
+target_link_libraries(EASTLTest EAThread)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-set(EASTLTest_Libraries EASTL EATest)
 if((NOT APPLE) AND (NOT WIN32))
     target_link_libraries(EASTLTest ${EASTLTest_Libraries} Threads::Threads rt)
 else()
