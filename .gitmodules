@@ -1,18 +1,18 @@
 [submodule "test/packages/EABase"]
 	path = test/packages/EABase
-	url = git@github.com:electronicarts/EABase.git
+	url = ../EABase.git
 [submodule "test/packages/EAAssert"]
 	path = test/packages/EAAssert
-	url = git@github.com:electronicarts/EAAssert.git
+	url = ../EAAssert.git
 [submodule "test/packages/EAMain"]
 	path = test/packages/EAMain
-	url = git@github.com:electronicarts/EAMain.git
+	url = ../EAMain.git
 [submodule "test/packages/EAStdC"]
 	path = test/packages/EAStdC
-	url = git@github.com:electronicarts/EAStdC.git
+	url = ../EAStdC.git
 [submodule "test/packages/EATest"]
 	path = test/packages/EATest
-	url = git@github.com:electronicarts/EATest.git
+	url = ../EATest.git
 [submodule "test/packages/EAThread"]
 	path = test/packages/EAThread
-	url = git@github.com:electronicarts/EAThread.git
+	url = ../EAThread.git
