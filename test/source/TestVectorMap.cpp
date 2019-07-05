@@ -111,6 +111,13 @@ int TestVectorMap()
 	}
 
 
+    {
+        // insert at the upper bound of a range
+        VMM1 vmm = {{0, 0}};
+        VERIFY(vmm.emplace(0, 0) != vmm.begin());
+    }
+
+
 	{ // Misc tests
 
 		// const key_compare& key_comp() const;
