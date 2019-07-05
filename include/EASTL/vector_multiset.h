@@ -421,8 +421,8 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::iterator
 	vector_multiset<K, C, A, RAC>::insert(const value_type& value)
 	{
-		const iterator itLB(lower_bound(value));
-		return base_type::insert(itLB, value);
+		const iterator itUB(upper_bound(value));
+		return base_type::insert(itUB, value);
 	}
 
 
@@ -432,8 +432,8 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::insert(P&& otherValue)
 	{
 		value_type value(eastl::forward<P>(otherValue));
-		const iterator itLB(lower_bound(value));
-		return base_type::insert(itLB, eastl::move(value));
+		const iterator itUB(upper_bound(value));
+		return base_type::insert(itUB, eastl::move(value));
 	}
 
 
@@ -492,7 +492,7 @@ namespace eastl
 		//              like this container, use the property that they are 
 		//              known to be sorted and speed up the inserts here.
 		for(; first != last; ++first)                               
-			base_type::insert(lower_bound(*first), *first);
+			base_type::insert(upper_bound(*first), *first);
 	}
 
 

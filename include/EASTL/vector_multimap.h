@@ -458,8 +458,8 @@ namespace eastl
 	inline typename vector_multimap<K, T, C, A, RAC>::iterator
 	vector_multimap<K, T, C, A, RAC>::insert(const value_type& value)
 	{
-		const iterator itLB(lower_bound(value.first));
-		return base_type::insert(itLB, value);
+		const iterator itUB(upper_bound(value.first));
+		return base_type::insert(itUB, value);
 	}
 
 
@@ -469,8 +469,8 @@ namespace eastl
 	vector_multimap<K, T, C, A, RAC>::insert(P&& otherValue)
 	{
 		value_type value(eastl::forward<P>(otherValue));
-		const iterator itLB(lower_bound(value.first));
-		return base_type::insert(itLB, eastl::move(value));
+		const iterator itUB(upper_bound(value.first));
+		return base_type::insert(itUB, eastl::move(value));
 	}
 
 
@@ -479,8 +479,8 @@ namespace eastl
 	vector_multimap<K, T, C, A, RAC>::insert(const key_type& otherValue)
 	{
 		value_type value(eastl::pair_first_construct, otherValue);
-		const iterator itLB(lower_bound(value.first));
-		return base_type::insert(itLB, eastl::move(value));
+		const iterator itUB(upper_bound(value.first));
+		return base_type::insert(itUB, eastl::move(value));
 	}
 
 
@@ -489,8 +489,8 @@ namespace eastl
 	vector_multimap<K, T, C, A, RAC>::insert(key_type&& otherValue)
 	{
 		value_type value(eastl::pair_first_construct, eastl::move(otherValue));
-		const iterator itLB(lower_bound(value.first));
-		return base_type::insert(itLB, eastl::move(value));
+		const iterator itUB(upper_bound(value.first));
+		return base_type::insert(itUB, eastl::move(value));
 	}
 
 
@@ -549,7 +549,7 @@ namespace eastl
 		//              like this container, use the property that they are 
 		//              known to be sorted and speed up the inserts here.
 		for(; first != last; ++first)
-			base_type::insert(lower_bound((*first).first), *first);
+			base_type::insert(upper_bound((*first).first), *first);
 	}
 
 
