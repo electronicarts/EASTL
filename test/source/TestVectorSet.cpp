@@ -105,6 +105,13 @@ int TestVectorSet()
 	}
 
 
+    {
+        // insert at the upper bound of a range
+        VMS1 vms = {0};
+        VERIFY(vms.insert(0) != vms.begin());
+    }
+
+
 	{ // Misc tests
 		{
 			// const key_compare& key_comp() const;
