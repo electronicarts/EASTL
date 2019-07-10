@@ -685,7 +685,7 @@ static int TestStack()
 		EATEST_VERIFY((toS_C.size() == toVector.size()) && toVectorM.empty());
 
 		// template <class... Args>
-		// void emplace_back(Args&&... args);
+		// void emplace(Args&&... args);
 		stack<TestObject, vector<TestObject> > toS_D;
 		toS_D.emplace(0, 1, 2);
 		EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
