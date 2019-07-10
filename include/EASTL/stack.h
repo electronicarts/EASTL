@@ -115,7 +115,7 @@ namespace eastl
 		void push(value_type&& x);
 
 		template <class... Args>
-		void emplace_back(Args&&... args);
+		void emplace(Args&&... args);
 
 		void pop();
 
@@ -222,7 +222,7 @@ namespace eastl
 
 	template <typename T, typename Container>
 	template <class... Args> 
-	inline void stack<T, Container>::emplace_back(Args&&... args)
+	inline void stack<T, Container>::emplace(Args&&... args)
 	{
 		c.emplace_back(eastl::forward<Args>(args)...);
 	}
