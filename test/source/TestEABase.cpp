@@ -29,6 +29,7 @@
 #include <EASTL/fixed_vector.h>
 #include <EASTL/string.h>
 #include <EASTL/sort.h>
+#include <EASTL/numeric_limits.h>
 #include <EAStdC/EAString.h>
 #if !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -38,13 +39,8 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 #if defined(EA_COMPILER_MSVC) && defined(EA_PLATFORM_MICROSOFT)
 	EA_DISABLE_ALL_VC_WARNINGS()
-	#if defined(EA_PLATFORM_XENON)
-		#define NOD3D
-		#define NONET
-		#include <Xtl.h>
-	#else
+		#define NOMINMAX
 		#include <Windows.h>
-	#endif
 	EA_RESTORE_ALL_VC_WARNINGS()
 #elif defined(EA_PLATFORM_ANDROID)
 	#include <android/log.h>
@@ -1023,6 +1019,17 @@ int TestEABase()
 		if(resultUint64 != UINT64_C(9223372036854775807))
 			DoError(nErrorCount, "UINT64_MAX error");
 		EA_RESTORE_VC_WARNING()
+	}
+
+	{
+		static_assert(INTPTR_MIN  == eastl::numeric_limits<intptr_t>::min(),  "INTPTR_MIN failure");
+		static_assert(INTPTR_MAX  == eastl::numeric_limits<intptr_t>::max(),  "INTPTR_MAX failure");
+	  //static_assert(UINTPTR_MIN == eastl::numeric_limits<uintptr_t>::min(), "UINTPTR_MIN failure"); // not specified by the standard
+		static_assert(UINTPTR_MAX == eastl::numeric_limits<uintptr_t>::max(), "UINTPTR_MAX failure");
+		static_assert(INTMAX_MIN  == eastl::numeric_limits<intmax_t>::min(),  "INTMAX_MIN failure");
+		static_assert(INTMAX_MAX  == eastl::numeric_limits<intmax_t>::max(),  "INTMAX_MAX failure");
+	  //static_assert(UINTMAX_MIN == eastl::numeric_limits<uintmax_t>::MIN(), "UINTMAX_MIN failure"); // not specified by the standard
+		static_assert(UINTMAX_MAX == eastl::numeric_limits<uintmax_t>::max(), "UINTMAX_MAX failure");
 	}
 
 	//Test sized printf format specifiers
