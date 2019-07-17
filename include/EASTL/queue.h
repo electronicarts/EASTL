@@ -120,9 +120,12 @@ namespace eastl
 
 		void push(const value_type& value);
 		void push(value_type&& x);
+		
+		template <class... Args>
+		void emplace(Args&&... args);
 
 		template <class... Args>
-		void emplace_back(Args&&... args);
+		EA_DEPRECATED_MESSAGE("Use 'emplace' instead") void emplace_back(Args&&... args);
 
 		void pop();
 
@@ -240,6 +243,14 @@ namespace eastl
 	inline void queue<T, Container>::push(value_type&& x) 
 	{
 		c.push_back(eastl::move(x));
+	}
+	
+	
+	template <typename T, typename Container>
+	template <class... Args> 
+	inline void queue<T, Container>::emplace(Args&&... args)
+	{
+		c.emplace_back(eastl::forward<Args>(args)...);
 	}
 
 
