@@ -592,7 +592,7 @@
 #endif
 
 #if !defined(EA_HAVE_nanosleep_DECL) && !defined(EA_NO_HAVE_nanosleep_DECL)
-	#if (defined(EA_PLATFORM_UNIX) && !defined(EA_PLATFORM_SONY)) || defined(EA_PLATFORM_IPHONE) || defined(EA_PLATFORM_OSX) || defined(EA_PLATFORM_PS4)
+	#if (defined(EA_PLATFORM_UNIX) && !defined(EA_PLATFORM_SONY)) || defined(EA_PLATFORM_IPHONE) || defined(EA_PLATFORM_OSX) || defined(EA_PLATFORM_PS4) || defined(CS_UNDEFINED_STRING)
 		#define EA_HAVE_nanosleep_DECL 1
 	#else
 		#define EA_NO_HAVE_nanosleep_DECL 1

@@ -125,7 +125,7 @@
 	#endif
 
 
-#elif defined(EA_PLATFORM_XBOXONE) || defined(_DURANGO) || defined(EA_PLATFORM_CAPILANO) || (defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_GAMES || WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE))
+#elif defined(EA_PLATFORM_XBOXONE) || defined(_DURANGO) || defined(_XBOX_ONE) || defined(EA_PLATFORM_CAPILANO) || defined(_GAMING_XBOX)
 	// XBox One
 	// Durango was Microsoft's code-name for the platform, which is now obsolete.
 	// Microsoft uses _DURANGO instead of some variation of _XBOX, though it's not natively defined by the compiler.
@@ -170,11 +170,11 @@
 	
 	#if defined(WINAPI_FAMILY) 
 		#include <winapifamily.h>
-		#if WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
+		#if defined(WINAPI_FAMILY_TV_TITLE) && WINAPI_FAMILY == WINAPI_FAMILY_TV_TITLE
 			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_TV_TITLE
-		#elif WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+		#elif defined(WINAPI_FAMILY_DESKTOP_APP) && WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
 			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_DESKTOP_APP
-		#elif WINAPI_FAMILY == WINAPI_FAMILY_GAMES
+		#elif defined(WINAPI_FAMILY_GAMES) && WINAPI_FAMILY == WINAPI_FAMILY_GAMES
 			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_GAMES
 		#else
 			#error Unsupported WINAPI_FAMILY
