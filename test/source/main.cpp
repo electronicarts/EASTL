@@ -24,7 +24,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 // Required by EASTL.
 //
 #if !EASTL_EASTDC_VSNPRINTF
-	int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t*  pFormat, va_list arguments)
+	int Vsnprintf8(char* pDestination, size_t n, const char*  pFormat, va_list arguments)
 	{
 		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
 	}
@@ -38,6 +38,13 @@ EA_RESTORE_ALL_VC_WARNINGS()
 	{
 		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
 	}
+
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t*  pFormat, va_list arguments)
+		{
+			return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
+		}
+	#endif
 
 	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 		int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)

@@ -172,7 +172,7 @@ int TestFunctional()
 
 	{
 		// str_less<const char8_t*>
-		Results<char8_t> results8[] =
+		Results<char> results8[] =
 		{
 			{      "",          "", false },
 			{      "",         "a",  true },
@@ -186,7 +186,7 @@ int TestFunctional()
 			{     "_a",    "_\xff",  true }
 		};
 
-		str_less<const char8_t*> sl8;
+		str_less<const char*> sl8;
 		for(size_t i = 0; i < EAArrayCount(results8); i++)
 		{
 			// Verify that our test is in line with the strcmp function.

@@ -122,7 +122,10 @@ namespace eastl
 		void push(value_type&& x);
 
 		template <class... Args>
-		void emplace_back(Args&&... args);
+		EA_DEPRECATED void emplace_back(Args&&... args); // backwards compatibility
+
+		template <class... Args>
+		decltype(auto) emplace(Args&&... args);
 
 		void pop();
 
@@ -247,7 +250,14 @@ namespace eastl
 	template <class... Args> 
 	inline void queue<T, Container>::emplace_back(Args&&... args)
 	{
-		c.emplace_back(eastl::forward<Args>(args)...);
+		emplace(eastl::forward<Args>(args)...);
+	}
+
+	template <typename T, typename Container>
+	template <class... Args> 
+	inline decltype(auto) queue<T, Container>::emplace(Args&&... args)
+	{
+		return c.emplace_back(eastl::forward<Args>(args)...);
 	}
 
 

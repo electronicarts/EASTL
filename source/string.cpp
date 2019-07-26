@@ -21,44 +21,44 @@ namespace eastl
 
 	// Requires that pDest have a capacity of at least 6 chars.
 	// Sets pResult to '\1' in the case that c is an invalid UCS4 char.
-	bool UCS4ToUTF8(uint32_t c, char8_t*& pResult)
+	bool UCS4ToUTF8(uint32_t c, char*& pResult)
 	{
 		if(c < 0x00000080)
-			*pResult++ = (char8_t)(uint8_t)c;
+			*pResult++ = (char)(uint8_t)c;
 		else if(c < 0x0800)
 		{
-			*pResult++ = (char8_t)(uint8_t)(0xC0 | (c >> 6));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c & 0x3F));
+			*pResult++ = (char)(uint8_t)(0xC0 | (c >> 6));
+			*pResult++ = (char)(uint8_t)(0x80 | (c & 0x3F));
 		}
 		else if(c <= 0x0000FFFF)
 		{
-			*pResult++ = (char8_t)(uint8_t)(0xE0 | (c >> 12));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c & 0x3F));
+			*pResult++ = (char)(uint8_t)(0xE0 | (c >> 12));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | (c & 0x3F));
 		}
 		else if(c <= 0x001FFFFF)
 		{
-			*pResult++ = (char8_t)(uint8_t)(0xF0 | (c >> 18));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c & 0x3F));
+			*pResult++ = (char)(uint8_t)(0xF0 | (c >> 18));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | (c & 0x3F));
 		}
 		else if(c <= 0x003FFFFFF)
 		{
-			*pResult++ = (char8_t)(uint8_t)(0xF8 | (c >> 24));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c >> 18));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c & 0x3F));
+			*pResult++ = (char)(uint8_t)(0xF8 | (c >> 24));
+			*pResult++ = (char)(uint8_t)(0x80 | (c >> 18));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | (c & 0x3F));
 		}
 		else if(c <= 0x7FFFFFFF)
 		{
-			*pResult++ = (char8_t)(uint8_t)(0xFC | (c >> 30));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 24) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 18) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
-			*pResult++ = (char8_t)(uint8_t)(0x80 | (c & 0x3F));
+			*pResult++ = (char)(uint8_t)(0xFC | (c >> 30));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 24) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 18) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 12) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | ((c >> 6) & 0x3F));
+			*pResult++ = (char)(uint8_t)(0x80 | (c & 0x3F));
 		}
 		else
 		{
@@ -73,7 +73,7 @@ namespace eastl
 
 	// Requires that pResult have a capacity of at least 3 chars.
 	// Sets pResult to '\1' in the case that c is an invalid UCS4 char.
-	bool UCS2ToUTF8(uint16_t c, char8_t*& pResult)
+	bool UCS2ToUTF8(uint16_t c, char*& pResult)
 	{
 		return UCS4ToUTF8(c, pResult);
 	}
@@ -81,13 +81,13 @@ namespace eastl
 
 	// Sets result to 0xffff in the case that the input UTF8 sequence is bad.
 	// 32 bit 0xffffffff is an invalid UCS4 code point, so we can't use that as an error return value.
-	bool UTF8ToUCS4(const char8_t*& p, const char8_t* pEnd, uint32_t& result)
+	bool UTF8ToUCS4(const char*& p, const char* pEnd, uint32_t& result)
 	{
 		// This could likely be implemented in a faster-executing way that uses tables.
 
 		bool           success = true;
 		uint32_t       c = 0xffff;
-		const char8_t* pNext = NULL;
+		const char* pNext = NULL;
 
 		if(p < pEnd)
 		{
@@ -257,7 +257,7 @@ namespace eastl
 	// such codepoints to 0xffff. EASTL doesn't have a concept of setting or maintaining 
 	// error state for string conversions, though it does have a policy of converting 
 	// impossible values to something without generating invalid strings or throwing exceptions.
-	bool UTF8ToUCS2(const char8_t*& p, const char8_t* pEnd, uint16_t& result)
+	bool UTF8ToUCS2(const char*& p, const char* pEnd, uint16_t& result)
 	{
 		uint32_t u32;
 
@@ -280,7 +280,7 @@ namespace eastl
 	// DecodePart
 	///////////////////////////////////////////////////////////////////////////
 
-	EASTL_API bool DecodePart(const char8_t*& pSrc, const char8_t* pSrcEnd, char8_t*& pDest, char8_t* pDestEnd)
+	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -296,7 +296,7 @@ namespace eastl
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const char8_t*& pSrc, const char8_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
+	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
 	{
 		bool success = true;
 
@@ -306,7 +306,7 @@ namespace eastl
 		return success;
 	}
 
-	EASTL_API bool DecodePart(const char8_t*& pSrc, const char8_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
+	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
 	{
 		bool success = true;
 
@@ -317,7 +317,7 @@ namespace eastl
 	}
 
 
-	EASTL_API bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char8_t*& pDest, char8_t* pDestEnd)
+	EASTL_API bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		bool success = true;
 
@@ -361,7 +361,7 @@ namespace eastl
 	}
 
 
-	EASTL_API bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char8_t*& pDest, char8_t* pDestEnd)
+	EASTL_API bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		bool success = true;
 
@@ -404,7 +404,7 @@ namespace eastl
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const int*& pSrc, const int* pSrcEnd, char8_t*&  pDest, char8_t* pDestEnd)
+	EASTL_API bool DecodePart(const int*& pSrc, const int* pSrcEnd, char*&  pDest, char* pDestEnd)
 	{
 		bool success = true;
 

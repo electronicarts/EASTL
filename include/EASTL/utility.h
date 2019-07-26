@@ -386,8 +386,8 @@ namespace eastl
 		}
 
 	#if EASTL_ENABLE_PAIR_FIRST_ELEMENT_CONSTRUCTOR
-		template <typename TT2 = T2, typename = eastl::enable_if_t<eastl::is_default_constructible_v<TT2>>>
-		EA_CPP14_CONSTEXPR pair(const T1& x)
+		template <typename TT1 = T1, typename TT2 = T2, typename = eastl::enable_if_t<eastl::is_default_constructible_v<TT2>>>
+		EA_CPP14_CONSTEXPR pair(const TT1& x)
 		    : first(x), second()
 		{
 		}
@@ -421,8 +421,8 @@ namespace eastl
 		using single_pair_ctor_sfinae = void;
 	#endif
 
-		template <typename TT2 = T2, typename = single_pair_ctor_sfinae<TT2>>
-		EA_CPP14_CONSTEXPR pair(pair_first_construct_t, const T1& x)
+		template <typename TT1 = T1, typename TT2 = T2, typename = single_pair_ctor_sfinae<TT2>>
+		EA_CPP14_CONSTEXPR pair(pair_first_construct_t, const TT1& x)
 		    : first(x), second()
 		{
 		}

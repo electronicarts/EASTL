@@ -267,12 +267,27 @@ namespace eastl
 		mapped_type& operator[](const key_type& k);
 		mapped_type& operator[](key_type&& k);
 
-		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at
-		// compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
+		// Functions which are disallowed due to being unsafe. 
+		void      push_back(const value_type& value) = delete;
+		reference push_back()                        = delete;
+		void*     push_back_uninitialized()          = delete;
+		template <class... Args>
+		reference emplace_back(Args&&...)            = delete;
+
+		// NOTE(rparolin): It is undefined behaviour if user code fails to ensure the container
+		// invariants are respected by performing an explicit call to 'sort' before any other
+		// operations on the container are performed that do not clear the elements.
 		//
-		// void      push_back(const value_type& value);
-		// reference push_back();
-		// void*     push_back_uninitialized();
+		// 'push_back_unsorted' and 'emplace_back_unsorted' do not satisfy container invariants
+		// for being sorted. We provide these overloads explicitly labelled as '_unsorted' as an
+		// optimization opportunity when batch inserting elements so users can defer the cost of
+		// sorting the container once when all elements are contained. This was done to clarify
+		// the intent of code by leaving a trace that a manual call to sort is required.
+		// 
+		template <typename... Args> decltype(auto) push_back_unsorted(Args&&... args)    
+			{ return base_type::push_back(eastl::forward<Args>(args)...); }
+		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
+			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
 
 	}; // vector_map
 

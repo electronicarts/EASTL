@@ -207,8 +207,8 @@ namespace eastl
 		using value_type   = T;
 		using storage_type = eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>>;
 
-		late_constructed() EA_NOEXCEPT  // In the case of the late_constructed instance being at global scope, we rely on the 
-		  : mpValue(nullptr) {}            // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
+		late_constructed() EA_NOEXCEPT       // In the case of the late_constructed instance being at global scope, we rely on the 
+		  : mStorage(), mpValue(nullptr) {}  // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
 
 		~late_constructed()
 		{

@@ -278,8 +278,8 @@ static int TestQueue()
 
 	{
 		// queue(const Sequence& x = Sequence());
-		queue<TestObject, list<TestObject> > toListQueue;
-		queue<TestObject, list<TestObject> > toListQueue2;
+		queue<TestObject, list<TestObject>> toListQueue;
+		queue<TestObject, list<TestObject>> toListQueue2;
 
 
 		// global operators
@@ -331,6 +331,13 @@ static int TestQueue()
 		EATEST_VERIFY(toListQueue.size() == 0);
 
 
+		// decltype(auto) emplace(Args&&... args);
+		toListQueue.emplace(1);
+		EATEST_VERIFY(!toListQueue.empty());
+		EATEST_VERIFY(toListQueue.front() == TestObject(1));
+		EATEST_VERIFY(toListQueue.size() == 1);
+
+
 		// container_type&       get_container();
 		// const container_type& get_container() const;
 		list<TestObject>& ref = toListQueue.get_container();
@@ -338,17 +345,14 @@ static int TestQueue()
 
 
 		// queue(std::initializer_list<value_type> ilist);
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-			queue<int> intQueue = { 3, 4, 5 };
-			EATEST_VERIFY(intQueue.size() == 3);
-			EATEST_VERIFY(intQueue.front() == 3);
-			intQueue.pop();
-			EATEST_VERIFY(intQueue.front() == 4);
-			intQueue.pop();
-			EATEST_VERIFY(intQueue.front() == 5);
-		#endif
+		queue<int> intQueue = { 3, 4, 5 };
+		EATEST_VERIFY(intQueue.size() == 3);
+		EATEST_VERIFY(intQueue.front() == 3);
+		intQueue.pop();
+		EATEST_VERIFY(intQueue.front() == 4);
+		intQueue.pop();
+		EATEST_VERIFY(intQueue.front() == 5);
 	}
-
 
 	{
 		vector<TestObject> toVector;
@@ -379,7 +383,7 @@ static int TestQueue()
 		// void emplace_back(Args&&... args);
 
 		queue<TestObject, vector<TestObject> > toQ_D;
-		toQ_D.emplace_back(0, 1, 2);
+		toQ_D.emplace(0, 1, 2);
 		EATEST_VERIFY(toQ_D.size() == 1) && (toQ_D.back() == TestObject(0, 1, 2));
 	}
 
@@ -684,11 +688,22 @@ static int TestStack()
 		stack<TestObject, vector<TestObject> > toS_C(eastl::move(toVectorM));
 		EATEST_VERIFY((toS_C.size() == toVector.size()) && toVectorM.empty());
 
-		// template <class... Args>
-		// void emplace_back(Args&&... args);
-		stack<TestObject, vector<TestObject> > toS_D;
-		toS_D.emplace_back(0, 1, 2);
-		EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
+		{
+			// template <class... Args>
+			// void emplace_back(Args&&... args);
+			stack<TestObject, vector<TestObject>> toS_D;
+			toS_D.emplace_back(0, 1, 2);
+			EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
+		}
+
+		{
+			// template <class... Args>
+			// decltype(auto) emplace(Args&&... args);
+			stack<TestObject, vector<TestObject>> toS_D;
+			auto it = toS_D.emplace(0, 1, 2);
+			EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
+			EATEST_VERIFY(it == TestObject(0, 1, 2));
+		}
 	}
 
 

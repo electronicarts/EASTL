@@ -862,12 +862,9 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_remove_reference_CONFORMANCE 1
 
-	template <typename T> struct remove_reference    { typedef T type; };
-	template <typename T> struct remove_reference<T&>{ typedef T type; };
-
-	#if !EASTL_NO_RVALUE_REFERENCES
-		template <typename T> struct remove_reference<T&&>{ typedef T type; };
-	#endif
+	template <typename T> struct remove_reference     { typedef T type; };
+	template <typename T> struct remove_reference<T&> { typedef T type; };
+	template <typename T> struct remove_reference<T&&>{ typedef T type; };
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>

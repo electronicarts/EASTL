@@ -166,9 +166,12 @@ EA_RESTORE_ALL_VC_WARNINGS()
 		namespace StdC
 		{
 			// Provided by the EAStdC package or by the user.
-			EASTL_EASTDC_API int Vsnprintf(char8_t*  EA_RESTRICT pDestination, size_t n, const char8_t*  EA_RESTRICT pFormat, va_list arguments);
+			EASTL_EASTDC_API int Vsnprintf(char*  EA_RESTRICT pDestination, size_t n, const char*  EA_RESTRICT pFormat, va_list arguments);
 			EASTL_EASTDC_API int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments);
 			EASTL_EASTDC_API int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments);
+			#if EA_CHAR8_UNIQUE
+				EASTL_EASTDC_API int Vsnprintf(char8_t*  EA_RESTRICT pDestination, size_t n, const char8_t*  EA_RESTRICT pFormat, va_list arguments);
+			#endif
 			#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 				EASTL_EASTDC_API int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments);
 			#endif
@@ -177,7 +180,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 	namespace eastl
 	{
-		inline int Vsnprintf(char8_t* EA_RESTRICT pDestination, size_t n, const char8_t* EA_RESTRICT pFormat, va_list arguments)
+		inline int Vsnprintf(char* EA_RESTRICT pDestination, size_t n, const char* EA_RESTRICT pFormat, va_list arguments)
 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
 
 		inline int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments)
@@ -186,6 +189,11 @@ EA_RESTORE_ALL_VC_WARNINGS()
 		inline int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments)
 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
 
+		#if EA_CHAR8_UNIQUE
+			inline int Vsnprintf(char8_t* EA_RESTRICT pDestination, size_t n, const char8_t* EA_RESTRICT pFormat, va_list arguments)
+				{ return EA::StdC::Vsnprintf((char*)pDestination, n, (const char*)pFormat, arguments); }
+		#endif
+
 		#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 			inline int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments)
 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
@@ -193,16 +201,19 @@ EA_RESTORE_ALL_VC_WARNINGS()
 	}
 #else
 	// User-provided functions.
-	extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
+	extern int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arguments);
 	extern int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments);
 	extern int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments);
+	#if EA_CHAR8_UNIQUE
+		extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
+	#endif
 	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 		extern int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments);
 	#endif
 
 	namespace eastl
 	{
-		inline int Vsnprintf(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
+		inline int Vsnprintf(char* pDestination, size_t n, const char* pFormat, va_list arguments)
 			{ return Vsnprintf8(pDestination, n, pFormat, arguments); }
 
 		inline int Vsnprintf(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
@@ -210,6 +221,11 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 		inline int Vsnprintf(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
 			{ return Vsnprintf32(pDestination, n, pFormat, arguments); }
+
+		#if EA_CHAR8_UNIQUE
+			inline int Vsnprintf(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
+				{ return Vsnprintf8(pDestination, n, pFormat, arguments); }
+		#endif
 
 		#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 			inline int Vsnprintf(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)
@@ -586,7 +602,8 @@ namespace eastl
 		void shrink_to_fit();
 
 		// Raw access
-		const value_type* data() const EA_NOEXCEPT;
+		const value_type* data() const  EA_NOEXCEPT;
+		      value_type* data()        EA_NOEXCEPT;
 		const value_type* c_str() const EA_NOEXCEPT;
 
 		// Element access
@@ -1013,6 +1030,12 @@ namespace eastl
 		return internalLayout().BeginPtr();
 	}
 
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::value_type*
+	basic_string<T, Allocator>::data() EA_NOEXCEPT
+	{
+		return internalLayout().BeginPtr();
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
@@ -1772,8 +1795,7 @@ namespace eastl
 			va_copy(arguments, argumentsSaved);
 		#endif
 
-			nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1),
-											pFormat, arguments);
+			nReturnValue = eastl::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, static_cast<size_t>(nReturnValue) + 1, pFormat, arguments);
 		}
 
 		if (nReturnValue >= 0)

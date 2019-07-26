@@ -39,10 +39,10 @@ namespace TestSDListLocal
 	typedef intrusive_sdlist<IntNode> IntrusiveSDList;
 
 	template <class T>
-	eastl::string8 IntListToString8(const T& cont)
+	eastl::string IntListToString8(const T& cont)
 	{
-		eastl::string8 s("<");
-		char8_t        buf[64];
+		eastl::string s("<");
+		char          buf[64];
 
 		for(typename T::const_iterator it(cont.begin()), itEnd(cont.end()); it != itEnd; ++it)
 		{

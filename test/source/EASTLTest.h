@@ -1069,7 +1069,7 @@ public:
 	MallocAllocator(const MallocAllocator& x)
 		: mAllocCount(x.mAllocCount), mFreeCount(x.mFreeCount), mAllocVolume(x.mAllocVolume) {}
 
-	MallocAllocator(const MallocAllocator&, const char*) {}
+	MallocAllocator(const MallocAllocator& x, const char*) : MallocAllocator(x) {}
 
 	MallocAllocator& operator=(const MallocAllocator& x)
 	{

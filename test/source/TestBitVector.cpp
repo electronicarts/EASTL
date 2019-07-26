@@ -60,7 +60,7 @@ int TestBitVector()
 		bitvector<>::container_type         container_typeVariable;
 		bitvector<>::size_type              size_typeVariable = 0;
 
-		string8 sAddresses(string8::CtorSprintf(), "%p %p %p %p %p %p %p %p %p %p %p", 
+		string sAddresses(string::CtorSprintf(), "%p %p %p %p %p %p %p %p %p %p %p", 
 						   &this_typeVariable, &value_typeVariable, &const_referenceVariable, &iteratorVariable,
 						   &const_iteratorVariable, &reverse_iteratorVariable,&const_reverse_iteratorVariable,
 						   &allocator_typeVariable, &element_typeVariable, &container_typeVariable, &size_typeVariable);

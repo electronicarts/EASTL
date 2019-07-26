@@ -114,8 +114,8 @@ namespace eastl
 		void push(const value_type& value);
 		void push(value_type&& x);
 
-		template <class... Args>
-		void emplace_back(Args&&... args);
+		template <class... Args> void emplace_back(Args&&... args); // backwards compatibility
+		template <class... Args> decltype(auto) emplace(Args&&... args);
 
 		void pop();
 
@@ -168,9 +168,8 @@ namespace eastl
 		// c.insert(ilist.begin(), ilist.end());
 
 		// Possibly slower solution but doesn't require an insert function.
-		for(typename std::initializer_list<value_type>::iterator it = ilist.begin(); it != ilist.end(); ++it)
+		for(const auto& value : ilist)
 		{
-			const value_type& value = *it;
 			c.push_back(value);
 		}
 	}
@@ -221,10 +220,18 @@ namespace eastl
 
 
 	template <typename T, typename Container>
-	template <class... Args> 
+	template <class... Args>
 	inline void stack<T, Container>::emplace_back(Args&&... args)
 	{
-		c.emplace_back(eastl::forward<Args>(args)...);
+		emplace(eastl::forward<Args>(args)...);
+	}
+
+
+	template <typename T, typename Container>
+	template <class... Args>
+	inline decltype(auto) stack<T, Container>::emplace(Args&&... args)
+	{
+		return c.emplace_back(eastl::forward<Args>(args)...);
 	}
 
 

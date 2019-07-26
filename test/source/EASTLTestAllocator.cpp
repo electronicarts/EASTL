@@ -151,11 +151,7 @@
 		gEASTLTest_TotalAllocationCount++;
 
 		// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
-		#if (PPMALLOC_VERSION_N >= 11602)
-			const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
-		#else
-			const bool bConstructed = (EA::Allocator::gGeneralAllocator.GetTraceFunction(NULL) != NULL);
-		#endif
+		const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
 
 		void *mem;
 
@@ -189,11 +185,7 @@
 		gEASTLTest_TotalAllocationCount++;
 
 		// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
-		#if (PPMALLOC_VERSION_N >= 11602)
-			const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
-		#else
-			const bool bConstructed = (EA::Allocator::gGeneralAllocator.GetTraceFunction(NULL) != NULL);
-		#endif
+		const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
 
 		void *mem;
 
@@ -221,11 +213,7 @@
 	}
 
 
-	#ifdef EA_DEBUG
 	void* operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
-	#else
-	void* operator new[](size_t size, const char* /*name*/, int flags, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
-	#endif
 	{
 		gEASTLTest_AllocationCount++;
 		gEASTLTest_TotalAllocationCount++;
@@ -234,15 +222,15 @@
 			return EA::Allocator::gGeneralAllocator.MallocDebug(size, flags, debugFlags, name, file, line);
 		#else
 			return EA::Allocator::gGeneralAllocator.Malloc(size, flags);
-		#endif
+			EA_UNUSED(debugFlags);
+			EA_UNUSED(file);
+			EA_UNUSED(line);
+			EA_UNUSED(name);
+        #endif
 	}
 
 
-	#ifdef EA_DEBUG
 	void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* name, int flags, unsigned debugFlags, const char* file, int line)
-	#else
-	void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* /*name*/, int flags, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
-	#endif
 	{
 		gEASTLTest_AllocationCount++;
 		gEASTLTest_TotalAllocationCount++;
@@ -251,7 +239,11 @@
 			return EA::Allocator::gGeneralAllocator.MallocAlignedDebug(size, alignment, alignmentOffset, flags, debugFlags, name, file, line);
 		#else
 			return EA::Allocator::gGeneralAllocator.MallocAligned(size, alignment, alignmentOffset, flags);
-		#endif
+			EA_UNUSED(debugFlags);
+			EA_UNUSED(file);
+			EA_UNUSED(line);
+			EA_UNUSED(name);
+        #endif
 	}
 
 	// Used by GCC when you make new objects of classes with >= N bit alignment (with N depending on the compiler).
@@ -297,11 +289,7 @@
 			gEASTLTest_AllocationCount--;
 
 			// This IsConstructed functionality is needed by some mobile platforms due to some weaknesses in their application startup.
-			#if (PPMALLOC_VERSION_N >= 11602)
-				const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
-			#else
-				const bool bConstructed = (EA::Allocator::gGeneralAllocator.GetTraceFunction(NULL) != NULL); // Old hacky way to test this.
-			#endif
+			const bool bConstructed = EA::Allocator::gGeneralAllocator.IsConstructed();
 
 			if(bConstructed)
 			{
@@ -400,10 +388,10 @@
 
 	// C++14 deleter
 	void operator delete(void* p, std::size_t sz ) EA_THROW_SPEC_DELETE_NONE()
-	{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
+		{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
 
 	void operator delete[](void* p, std::size_t sz ) EA_THROW_SPEC_DELETE_NONE()
-	{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
+		{ Internal::EASTLAlignedFree(p); EA_UNUSED(sz); }
 
 	void operator delete(void* p) EA_THROW_SPEC_DELETE_NONE()
 		{ Internal::EASTLAlignedFree(p); }

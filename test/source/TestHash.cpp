@@ -950,7 +950,7 @@ int TestHash()
 			else
 				EATEST_VERIFY(it == hashSet.end());
 
-			it = hashSet.find_as(pString, hash<char*>(), equal_to_2<string, const char*>());
+			it = hashSet.find_as(pString, hash<const char*>(), equal_to_2<string, const char*>());
 			if(i < kCount)
 				EATEST_VERIFY(it != hashSet.end());
 			else

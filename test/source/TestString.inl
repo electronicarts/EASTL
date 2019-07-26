@@ -1160,15 +1160,25 @@ int TEST_STRING_NAME()
 	// const value_type* data() const EA_NOEXCEPT;
 	// const value_type* c_str() const EA_NOEXCEPT;
 	{
-		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		const StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto* pData = str.data();
-		auto* pCStr = str.c_str();
+		const typename StringType::value_type* pData = str.data();
+		const typename StringType::value_type* pCStr = str.c_str();
 
 		VERIFY(pData != nullptr);
 		VERIFY(pCStr != nullptr);
 		VERIFY(pData == pCStr);
 		VERIFY(EA::StdC::Memcmp(pData, pCStr, str.size()) == 0);
+	}
+
+	// value_type* data() EA_NOEXCEPT;
+	{
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+
+		typename StringType::value_type* pData = str.data();
+
+		VERIFY(pData != nullptr);
+		VERIFY(EA::StdC::Memcmp(pData, LITERAL("abcdefghijklmnopqrstuvwxyz"), str.size()) == 0);
 	}
 
 	// reference       operator[](size_type n);

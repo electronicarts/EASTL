@@ -1445,9 +1445,9 @@ int TestVector()
 		// Regression for failure in DoRealloc's use of uninitialize_move.
 		using namespace eastl;
 
-		const eastl::string8 str0 = "TestString0";
-		vector<eastl::string8> v(1, str0);
-		vector<eastl::string8> v_copy;
+		const eastl::string str0 = "TestString0";
+		vector<eastl::string> v(1, str0);
+		vector<eastl::string> v_copy;
 
 		// Test operator=
 		v_copy = v;

@@ -130,8 +130,8 @@ int TestStringHashMap()
 			if (i < (int)kStringCount)
 			{
 				EATEST_VERIFY(it != stringHashMap.end());
-				const char* k = (*it).first;
-				int v = (*it).second;
+				const char* k = it->first;
+				int v = it->second;
 				EATEST_VERIFY(EA::StdC::Strcmp(k, strings[i]) == 0);
 				EATEST_VERIFY(v == i);
 			}
