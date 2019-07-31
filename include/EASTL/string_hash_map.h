@@ -125,7 +125,12 @@ template<typename T, typename Hash, typename Predicate, typename Allocator>
 eastl::pair<typename string_hash_map<T, Hash, Predicate, Allocator>::iterator, bool>
 string_hash_map<T, Hash, Predicate, Allocator>::insert_or_assign(const char* key, const T& value)
 {
-	return base::base_type::insert_or_assign(strduplicate(key), value);
+	iterator i = base::base_type::find(key);
+	if (i != base::base_type::end()) {
+		return base::base_type::insert_or_assign(i->first, value);
+	} else {
+		return base::base_type::insert_or_assign(strduplicate(key), value);
+	}
 }
 
 template<typename T, typename Hash, typename Predicate, typename Allocator>
