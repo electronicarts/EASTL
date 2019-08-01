@@ -301,7 +301,9 @@ int TestStringHashMap()
 			EATEST_VERIFY(m.size() == 1);
 
 			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
-				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == 3));
+				// 1 key + 2 TestObjects = 3 objects
+				const int expectedSize = 3;
+				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == expectedSize));
 			#endif
 		}
 	}
