@@ -285,7 +285,8 @@ int TestStringHashMap()
 			typedef fixed_string_hash_map::node_type fixed_string_hash_map_node;
 			fixed_string_hash_map_node buffer[2];
 			fixed_string_hash_map m;
-			m.get_allocator().init(buffer, sizeof(buffer), sizeof(fixed_string_hash_map_node), __alignof(fixed_string_hash_map_node));
+			const size_t  kAlignmentOfNode = EA_ALIGN_OF(fixed_string_hash_map_node);
+			m.get_allocator().init(buffer, sizeof(buffer), sizeof(fixed_string_hash_map_node), kAlignmentOfNode);
 
 			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
 				fixed_allocator& a = m.get_allocator();
