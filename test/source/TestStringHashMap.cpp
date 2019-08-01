@@ -4,6 +4,7 @@
 
 
 #include "EASTLTest.h"
+#include <EASTL/fixed_allocator.h>
 #include <EASTL/string_hash_map.h>
 #include <EAStdC/EAString.h>
 
@@ -277,6 +278,31 @@ int TestStringHashMap()
 			EATEST_VERIFY(m["hello"].mX == 43);
 
 			EATEST_VERIFY(m.size() == 1);
+		}
+
+		{
+			typedef string_hash_map<TestObject, hash<const char*>, str_equal_to<const char*>, fixed_allocator> fixed_string_hash_map;
+			typedef fixed_string_hash_map::node_type fixed_string_hash_map_node;
+			fixed_string_hash_map_node buffer[2];
+			fixed_string_hash_map m;
+			m.get_allocator().init(buffer, sizeof(buffer), sizeof(fixed_string_hash_map_node), __alignof(fixed_string_hash_map_node));
+
+			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
+				fixed_allocator& a = m.get_allocator();
+				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == 0));
+			#endif
+
+			m.insert_or_assign("hello", TestObject(42));
+			EATEST_VERIFY(m["hello"].mX == 42);
+
+			m.insert_or_assign("hello", TestObject(43));
+			EATEST_VERIFY(m["hello"].mX == 43);
+
+			EATEST_VERIFY(m.size() == 1);
+
+			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
+				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == 3));
+			#endif
 		}
 	}
 
