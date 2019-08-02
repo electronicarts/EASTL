@@ -4,7 +4,6 @@
 
 
 #include "EASTLTest.h"
-#include <EASTL/fixed_allocator.h>
 #include <EASTL/string_hash_map.h>
 #include <EAStdC/EAString.h>
 
@@ -281,32 +280,23 @@ int TestStringHashMap()
 		}
 
 		{
-			typedef string_hash_map<TestObject, hash<const char*>, str_equal_to<const char*>, fixed_allocator> fixed_string_hash_map;
-			typedef fixed_string_hash_map::node_type fixed_string_hash_map_node;
-			fixed_string_hash_map_node buffer[2];
-			fixed_string_hash_map m;
-			const size_t  kAlignmentOfNode = EA_ALIGN_OF(fixed_string_hash_map_node);
-			m.get_allocator().init(buffer, sizeof(buffer), sizeof(fixed_string_hash_map_node), kAlignmentOfNode);
-
-			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
-				fixed_allocator& a = m.get_allocator();
-				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == 0));
-			#endif
+			typedef string_hash_map<TestObject, hash<const char*>, str_equal_to<const char*>, CountingAllocator> counting_string_hash_map;
+			counting_string_hash_map m;
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
 
 			m.insert_or_assign("hello", TestObject(42));
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
 			EATEST_VERIFY(m["hello"].mX == 42);
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
 
 			m.insert_or_assign("hello", TestObject(43));
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
 			EATEST_VERIFY(m["hello"].mX == 43);
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
 
 			EATEST_VERIFY(m.size() == 1);
-
-			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
-				// 1 key + 2 TestObjects = 3 objects
-				const int expectedSize = 3;
-				EATEST_VERIFY((a.mnCurrentSize == a.mnPeakSize) && (a.mnCurrentSize == expectedSize));
-			#endif
 		}
+		EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
 	}
 
 	return nErrorCount;
