@@ -99,7 +99,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Extra",					TestExtra);
 	testSuite.AddTest("FixedFunction",			TestFixedFunction);
 	testSuite.AddTest("FixedHash",				TestFixedHash);
-	testSuite.AddTest("FixedHash",				TestStringHashMap);
+	testSuite.AddTest("StringHashMap",			TestStringHashMap);
 	testSuite.AddTest("FixedList",				TestFixedList);
 	testSuite.AddTest("FixedMap",				TestFixedMap);
 	testSuite.AddTest("FixedSList",				TestFixedSList);

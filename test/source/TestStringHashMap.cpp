@@ -278,6 +278,25 @@ int TestStringHashMap()
 
 			EATEST_VERIFY(m.size() == 1);
 		}
+
+		{
+			typedef string_hash_map<TestObject, hash<const char*>, str_equal_to<const char*>, CountingAllocator> counting_string_hash_map;
+			counting_string_hash_map m;
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
+
+			m.insert_or_assign("hello", TestObject(42));
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
+			EATEST_VERIFY(m["hello"].mX == 42);
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
+
+			m.insert_or_assign("hello", TestObject(43));
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
+			EATEST_VERIFY(m["hello"].mX == 43);
+			EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 3);
+
+			EATEST_VERIFY(m.size() == 1);
+		}
+		EATEST_VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
 	}
 
 	return nErrorCount;
