@@ -17,6 +17,7 @@
 #include <EASTL/sort.h>
 #include <EASTL/bonus/sort_extra.h>
 #include <EASTL/vector.h>
+#include <EASTL/list.h>
 #include <EASTL/deque.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/allocator.h>
@@ -821,6 +822,40 @@ int TestSort()
 		EATEST_VERIFY(is_sorted(floatArray.begin(), floatArray.end(), SafeFloatCompare()));
 	}
 
+	auto test_stable_sort = [&](auto testArray, size_t count)
+	{
+		for (size_t i = 0; i < count; i++)
+			testArray.push_back((uint16_t)rng.Rand());
+
+		vector<uint16_t> evenArray;
+		vector<uint16_t> oddArray;
+
+		eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(evenArray), 
+		    [](uint16_t val) { return (val % 2) == 0; });
+		eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(oddArray),
+		    [](uint16_t val) { return (val % 2) != 0; });
+
+		auto const boundary = eastl::stable_partition(testArray.begin(), testArray.end(), [](uint16_t val) { return val % 2 == 0; });
+		auto const evenCount = eastl::distance(testArray.begin(), boundary);
+		auto const oddCount = eastl::distance(boundary, testArray.end());
+		auto const evenExpectedCount = (intptr_t)evenArray.size();
+		auto const oddExpectedCount = (intptr_t)oddArray.size();
+		EATEST_VERIFY(evenCount == evenExpectedCount);
+		EATEST_VERIFY(oddCount == oddExpectedCount);
+		EATEST_VERIFY(eastl::equal(testArray.begin(), boundary, evenArray.begin()));
+		EATEST_VERIFY(eastl::equal(boundary, testArray.end(), oddArray.begin()));
+	};
+
+	// Test stable_partition
+	test_stable_sort(vector<uint16_t>(), 1000);
+	// Test stable_partition on empty container
+	test_stable_sort(vector<uint16_t>(), 0);
+	// Test stable_partition on container of one element
+	test_stable_sort(vector<uint16_t>(), 1);
+	// Test stable_partition on container of two element
+	test_stable_sort(vector<uint16_t>(), 2);
+	// Test stable_partition on bidirectional iterator (not random access)
+	test_stable_sort(list<uint16_t>(), 0);
 
 	#if 0 // Disabled because it takes a long time and thus far seems to show no bug in quick_sort.
 	{
