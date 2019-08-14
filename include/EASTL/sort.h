@@ -724,7 +724,7 @@ namespace eastl
 
 		typedef typename iterator_traits<ForwardIterator>::value_type value_type;
 
-		auto const requested_size = eastl::distance(first, last);
+		const auto requested_size = eastl::distance(first, last);
 
 		auto allocator = *get_default_allocator(0);
 		value_type* const buffer =
