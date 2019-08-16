@@ -709,7 +709,55 @@ namespace eastl
 		return begin;
 	}
 
+	/// stable_partition
+	///
+	/// Performs the same function as @p partition() with the additional
+	/// guarantee that the relative ordering of elements in each group is
+	/// preserved.
+	template <typename ForwardIterator, typename Predicate>
+	ForwardIterator stable_partition(ForwardIterator first, ForwardIterator last, Predicate pred)
+	{
+		first = eastl::find_if_not(first, last, pred);
 
+		if (first == last)
+			return first;
+
+		typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+
+		const auto requested_size = eastl::distance(first, last);
+
+		auto allocator = *get_default_allocator(0);
+		value_type* const buffer =
+		    (value_type*)allocate_memory(allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
+		eastl::uninitialized_fill(buffer, buffer + requested_size, value_type());
+
+		ForwardIterator result1 = first;
+		value_type* result2 = buffer;
+
+		*result2 = eastl::move(*first);
+		++result2;
+		++first;
+		for (; first != last; ++first)
+		{
+			if (pred(*first))
+			{
+				*result1 = eastl::move(*first);
+				++result1;
+			}
+			else
+			{
+				*result2 = eastl::move(*first);
+				++result2;
+			}
+		}
+
+		eastl::copy(buffer, result2, result1);
+
+		eastl::destruct(buffer, buffer + requested_size);
+		EASTLFree(allocator, buffer, requested_size * sizeof(value_type));
+		
+		return result1;
+	}
 
 	/////////////////////////////////////////////////////////////////////
 	// quick_sort
