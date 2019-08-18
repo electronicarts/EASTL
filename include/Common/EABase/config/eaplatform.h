@@ -548,6 +548,10 @@
 		#define EA_PROCESSOR_ARM32 1
 		#define EA_SYSTEM_LITTLE_ENDIAN 1
 		#define EA_PLATFORM_DESCRIPTION "Windows on ARM"
+	#elif defined(_M_ARM64)
+		#define EA_PROCESSOR_ARM64 1
+		#define EA_SYSTEM_LITTLE_ENDIAN 1
+		#define EA_PLATFORM_DESCRIPTION "Windows on ARM64"
 	#else //Possibly other Windows CE variants
 		#error Unknown processor
 		#error Unknown endianness
