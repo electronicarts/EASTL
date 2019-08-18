@@ -126,9 +126,12 @@ eastl::pair<typename string_hash_map<T, Hash, Predicate, Allocator>::iterator, b
 string_hash_map<T, Hash, Predicate, Allocator>::insert_or_assign(const char* key, const T& value)
 {
 	iterator i = base::base_type::find(key);
-	if (i != base::base_type::end()) {
+	if (i != base::base_type::end())
+	{
 		return base::base_type::insert_or_assign(i->first, value);
-	} else {
+	}
+	else
+	{
 		return base::base_type::insert_or_assign(strduplicate(key), value);
 	}
 }

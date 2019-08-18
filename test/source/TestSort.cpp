@@ -822,40 +822,41 @@ int TestSort()
 		EATEST_VERIFY(is_sorted(floatArray.begin(), floatArray.end(), SafeFloatCompare()));
 	}
 
-	auto test_stable_sort = [&](auto testArray, size_t count)
 	{
-		for (size_t i = 0; i < count; i++)
-			testArray.push_back((uint16_t)rng.Rand());
+		auto test_stable_sort = [&](auto testArray, size_t count)
+		{
+			auto isEven = [](auto val) { return (val % 2) == 0; };
+			auto isOdd  = [](auto val) { return (val % 2) != 0; };
 
-		vector<uint16_t> evenArray;
-		vector<uint16_t> oddArray;
+			for (size_t i = 0; i < count; i++)
+				testArray.push_back((uint16_t)rng.Rand());
 
-		eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(evenArray), 
-		    [](uint16_t val) { return (val % 2) == 0; });
-		eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(oddArray),
-		    [](uint16_t val) { return (val % 2) != 0; });
+			vector<uint16_t> evenArray;
+			vector<uint16_t> oddArray;
 
-		auto const boundary = eastl::stable_partition(testArray.begin(), testArray.end(), [](uint16_t val) { return val % 2 == 0; });
-		auto const evenCount = eastl::distance(testArray.begin(), boundary);
-		auto const oddCount = eastl::distance(boundary, testArray.end());
-		auto const evenExpectedCount = (intptr_t)evenArray.size();
-		auto const oddExpectedCount = (intptr_t)oddArray.size();
-		EATEST_VERIFY(evenCount == evenExpectedCount);
-		EATEST_VERIFY(oddCount == oddExpectedCount);
-		EATEST_VERIFY(eastl::equal(testArray.begin(), boundary, evenArray.begin()));
-		EATEST_VERIFY(eastl::equal(boundary, testArray.end(), oddArray.begin()));
-	};
+			eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(evenArray), isEven);
+			eastl::copy_if(testArray.begin(), testArray.end(), eastl::back_inserter(oddArray), isOdd);
 
-	// Test stable_partition
-	test_stable_sort(vector<uint16_t>(), 1000);
-	// Test stable_partition on empty container
-	test_stable_sort(vector<uint16_t>(), 0);
-	// Test stable_partition on container of one element
-	test_stable_sort(vector<uint16_t>(), 1);
-	// Test stable_partition on container of two element
-	test_stable_sort(vector<uint16_t>(), 2);
-	// Test stable_partition on bidirectional iterator (not random access)
-	test_stable_sort(list<uint16_t>(), 0);
+			const auto boundary = eastl::stable_partition(testArray.begin(), testArray.end(), isEven);
+
+			const auto evenCount = eastl::distance(testArray.begin(), boundary);
+			const auto oddCount = eastl::distance(boundary, testArray.end());
+
+			const auto evenExpectedCount = (ptrdiff_t)evenArray.size();
+			const auto oddExpectedCount = (ptrdiff_t)oddArray.size();
+
+			EATEST_VERIFY(evenCount == evenExpectedCount);
+			EATEST_VERIFY(oddCount == oddExpectedCount);
+			EATEST_VERIFY(eastl::equal(testArray.begin(), boundary, evenArray.begin()));
+			EATEST_VERIFY(eastl::equal(boundary, testArray.end(), oddArray.begin()));
+		};
+
+		test_stable_sort(vector<uint16_t>(), 1000); // Test stable_partition
+		test_stable_sort(vector<uint16_t>(), 0);	// Test stable_partition on empty container
+		test_stable_sort(vector<uint16_t>(), 1);	// Test stable_partition on container of one element
+		test_stable_sort(vector<uint16_t>(), 2);	// Test stable_partition on container of two element
+		test_stable_sort(list<uint16_t>(),   0);	// Test stable_partition on bidirectional iterator (not random access)
+	}
 
 	#if 0 // Disabled because it takes a long time and thus far seems to show no bug in quick_sort.
 	{
