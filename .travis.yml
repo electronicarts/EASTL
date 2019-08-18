@@ -34,6 +34,9 @@ matrix:
         - compiler: clang "release build with clang to trigger MOJI check"
           env: EASTL_CONFIG=Release USE_MOJI_CHECK=yes
           os: linux
+        - compiler: msvc
+          env: EASTL_CONFIG=Release CXXFLAGS="/std:c++latest /Zc:char8_t"
+          os: windows 
 
     exclude:
       - os: osx
@@ -51,19 +54,17 @@ matrix:
 git:
     submodules: false
 
-# Use sed to replace the SSH URL with the public URL, then initialize submodules
 before_install:
-    - sed --version >/dev/null 2>&1 && sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules || sed -i "" 's/git@github.com:/https:\/\/github.com\//'  .gitmodules
-    - git submodule update --init 
+  - git submodule update --init 
+  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"                                                                    ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7"                                                                   ;fi
+  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-7"                              ;fi
+  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-7"                           ;fi
 
 install:
 # MOJI check; exit 1 if non-ascii characters detected in C++
   - if [[ -n "$USE_MOJI_CHECK" && -n `git grep -P "[^[:ascii:]]" source test` ]]; then echo "Moji Detected" && exit 1   ;fi
   - if [[ -n "$USE_MOJI_CHECK" ]]; then exit 0                                                                          ;fi
-  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"                                                                    ;fi
-  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7"                                                                   ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-7"                              ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-7"                           ;fi
 
 before_script:
   - mkdir build_$EASTL_CONFIG
