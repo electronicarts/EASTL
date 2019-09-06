@@ -21,7 +21,7 @@ namespace eastl
 
 	// Requires that pDest have a capacity of at least 6 chars.
 	// Sets pResult to '\1' in the case that c is an invalid UCS4 char.
-	bool UCS4ToUTF8(uint32_t c, char*& pResult)
+	inline bool UCS4ToUTF8(uint32_t c, char*& pResult)
 	{
 		if(c < 0x00000080)
 			*pResult++ = (char)(uint8_t)c;
@@ -73,7 +73,7 @@ namespace eastl
 
 	// Requires that pResult have a capacity of at least 3 chars.
 	// Sets pResult to '\1' in the case that c is an invalid UCS4 char.
-	bool UCS2ToUTF8(uint16_t c, char*& pResult)
+	inline bool UCS2ToUTF8(uint16_t c, char*& pResult)
 	{
 		return UCS4ToUTF8(c, pResult);
 	}
@@ -81,7 +81,7 @@ namespace eastl
 
 	// Sets result to 0xffff in the case that the input UTF8 sequence is bad.
 	// 32 bit 0xffffffff is an invalid UCS4 code point, so we can't use that as an error return value.
-	bool UTF8ToUCS4(const char*& p, const char* pEnd, uint32_t& result)
+	inline bool UTF8ToUCS4(const char*& p, const char* pEnd, uint32_t& result)
 	{
 		// This could likely be implemented in a faster-executing way that uses tables.
 
@@ -257,7 +257,7 @@ namespace eastl
 	// such codepoints to 0xffff. EASTL doesn't have a concept of setting or maintaining 
 	// error state for string conversions, though it does have a policy of converting 
 	// impossible values to something without generating invalid strings or throwing exceptions.
-	bool UTF8ToUCS2(const char*& p, const char* pEnd, uint16_t& result)
+	inline bool UTF8ToUCS2(const char*& p, const char* pEnd, uint16_t& result)
 	{
 		uint32_t u32;
 

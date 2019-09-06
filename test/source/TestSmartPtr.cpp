@@ -554,19 +554,17 @@ static int Test_unique_ptr()
 
 			using namespace EA::Allocator;
 
-			EASTLCoreAllocatorAdapter ta;              
-
+			EASTLCoreAllocatorAdapter ta;
 			void* pMem = ta.allocate(sizeof(A));
+
 			EATEST_VERIFY(pMem != nullptr);     
 			EATEST_VERIFY(gEASTLTest_AllocationCount > cacheAllocationCount);
 			{            
 				A* pA = new (pMem) A();
 				eastl::shared_ptr<A> foo(pA, EASTLCoreDeleterAdapter());  // Not standards complaint code.  Update EASTL implementation to provide the type of the deleter.
-				pA->~A();
 			}
-			
 			EATEST_VERIFY(gEASTLTest_AllocationCount == cacheAllocationCount);
-			EATEST_VERIFY(A::mCount == 0);      
+			EATEST_VERIFY(A::mCount == 0);
 		#endif
 	}
 

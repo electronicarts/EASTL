@@ -148,7 +148,7 @@ namespace eastl
 					EASTL_FAIL_MSG("string_view::copy -- out of range");
 			#endif
 
-			count = eastl::min(count, mnCount - pos);
+			count = eastl::min<size_type>(count, mnCount - pos);
 			auto* pResult = CharStringUninitializedCopy(mpBegin + pos, mpBegin + pos + count, pDestination);
 			// *pResult = 0; // don't write the null-terminator
 			return pResult - pDestination;
@@ -164,7 +164,7 @@ namespace eastl
 					EASTL_FAIL_MSG("string_view::substr -- out of range");
 			#endif
 
-			count = eastl::min(count, mnCount - pos);
+			count = eastl::min<size_type>(count, mnCount - pos);
 			return this_type(mpBegin + pos, count);
 		}
 
