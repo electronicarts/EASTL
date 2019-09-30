@@ -567,6 +567,7 @@
 	// WINAPI_FAMILY defines to support Windows 8 Metro Apps - mirroring winapifamily.h in the Windows 8 SDK
 	#define EA_WINAPI_FAMILY_APP         1000
 	#define EA_WINAPI_FAMILY_DESKTOP_APP 1001
+	#define EA_WINAPI_FAMILY_GAMES       1006
 
 	#if defined(WINAPI_FAMILY)
 		#if defined(_MSC_VER)
@@ -576,10 +577,12 @@
 		#if defined(_MSC_VER)
 			#pragma warning(pop)
 		#endif
-		#if WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+		#if defined(WINAPI_FAMILY_DESKTOP_APP) && WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
 			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_DESKTOP_APP
-		#elif WINAPI_FAMILY == WINAPI_FAMILY_APP
+		#elif defined(WINAPI_FAMILY_APP) && WINAPI_FAMILY == WINAPI_FAMILY_APP
 			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_APP
+		#elif defined(WINAPI_FAMILY_GAMES) && WINAPI_FAMILY == WINAPI_FAMILY_GAMES
+			#define EA_WINAPI_FAMILY EA_WINAPI_FAMILY_GAMES
 		#else
 			#error Unsupported WINAPI_FAMILY
 		#endif
@@ -589,6 +592,7 @@
 
 	#define EA_WINAPI_PARTITION_DESKTOP   1
 	#define EA_WINAPI_PARTITION_APP       1
+	#define EA_WINAPI_PARTITION_GAMES    (EA_WINAPI_FAMILY == EA_WINAPI_FAMILY_GAMES)
 
 	#define EA_WINAPI_FAMILY_PARTITION(Partition)   (Partition)
 
@@ -597,7 +601,7 @@
 	// WinRT doesn't doesn't have access to the Windows "desktop" API, but WinRT can nevertheless run on 
 	// desktop computers in addition to tablets. The Windows Phone API is a subset of WinRT and is not included
 	// in it due to it being only a part of the API.
-	#if (defined(EA_PLATFORM_WINDOWS) && !EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP))
+	#if defined(__cplusplus_winrt)
 		#define EA_PLATFORM_WINRT 1 
 	#endif
 
