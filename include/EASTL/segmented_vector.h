@@ -213,7 +213,8 @@ namespace eastl
 	segmented_vector_iterator<T, Count, Allocator>::operator++(int)
 	{
 		this_type i(*this);
-		return ++i;
+		operator++();
+		return i;
 	}
 
 

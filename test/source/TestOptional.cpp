@@ -419,6 +419,24 @@ int TestOptional()
 			VERIFY(*o1 == 24);
 			VERIFY(*o2 == 42);
 		}
+
+		{
+			optional<int> o1 = 42, o2;
+			VERIFY(*o1 == 42);
+			VERIFY(o2.has_value() == false);
+			swap(o1, o2);
+			VERIFY(o1.has_value() == false);
+			VERIFY(*o2 == 42);
+		}
+
+		{
+			optional<int> o1 = nullopt, o2 = 42;
+			VERIFY(o1.has_value() == false);
+			VERIFY(*o2 == 42);
+			swap(o1, o2);
+			VERIFY(*o1 == 42);
+			VERIFY(o2.has_value() == false);
+		}
 	}
 
 	{
@@ -585,6 +603,37 @@ int TestOptional()
 			VERIFY(!!o1->ptr == false);
 			VERIFY(!!o2->ptr == true);
 			VERIFY(o2->ptr.get() != nullptr);
+		}
+		{
+			// user regression
+			static bool copyCtorCalledWithUninitializedValue;
+			static bool moveCtorCalledWithUninitializedValue;
+			copyCtorCalledWithUninitializedValue = moveCtorCalledWithUninitializedValue = false;
+			struct local
+			{
+				int val;
+				local()
+					: val(0xabcdabcd)
+				{}
+				local(const local& other)
+					: val(other.val)
+				{
+					if (other.val != 0xabcdabcd)
+						copyCtorCalledWithUninitializedValue = true;
+				}
+				local(local&& other)
+					: val(eastl::move(other.val))
+				{
+					if (other.val != 0xabcdabcd)
+						moveCtorCalledWithUninitializedValue = true;
+				}
+				local& operator=(const local&) = delete;
+			};
+			eastl::optional<local> n;
+			eastl::optional<local> o1(n);
+			VERIFY(!copyCtorCalledWithUninitializedValue);
+			eastl::optional<local> o2(eastl::move(n));
+			VERIFY(!moveCtorCalledWithUninitializedValue);
 		}
 	}
 

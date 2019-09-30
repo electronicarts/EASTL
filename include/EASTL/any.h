@@ -596,7 +596,7 @@ namespace eastl
 	template <class ValueType>
 	inline const ValueType* any_cast(const any* pAny) EA_NOEXCEPT
 	{
-		return (pAny && pAny->m_handler //== &any::storage_handler<decay_t<ValueType>>::handler_func
+		return (pAny && pAny->m_handler EASTL_IF_NOT_DLL(== &any::storage_handler<decay_t<ValueType>>::handler_func)
 				#if EASTL_RTTI_ENABLED
 					&& pAny->type() == typeid(typename remove_reference<ValueType>::type)
 				#endif
@@ -608,7 +608,7 @@ namespace eastl
 	template <class ValueType>
 	inline ValueType* any_cast(any* pAny) EA_NOEXCEPT
 	{
-		return (pAny && pAny->m_handler //== &any::storage_handler<decay_t<ValueType>>::handler_func
+		return (pAny && pAny->m_handler EASTL_IF_NOT_DLL(== &any::storage_handler<decay_t<ValueType>>::handler_func)
 				#if EASTL_RTTI_ENABLED
 					&& pAny->type() == typeid(typename remove_reference<ValueType>::type)
 				#endif

@@ -21,13 +21,35 @@ int TestSegmentedVector()
 	TestObject::Reset();
 
 	{
-		using namespace eastl;
+		eastl::segmented_vector<int, 8> sv;
+		sv.push_back(0);
+		sv.push_back(1);
+		sv.push_back(2);
+		sv.push_back(3);
 
+		{
+			auto i = sv.begin();
+			EATEST_VERIFY(*i  == 0);
+			EATEST_VERIFY(*i++ == 0);
+			EATEST_VERIFY(*i++ == 1);
+			EATEST_VERIFY(*i++ == 2);
+			EATEST_VERIFY(*i++ == 3);
+		}
+
+		{
+			auto i = sv.begin();
+			EATEST_VERIFY(*i  == 0);
+			EATEST_VERIFY(*(++i) == 1);
+			EATEST_VERIFY(*(++i) == 2);
+			EATEST_VERIFY(*(++i) == 3);
+		}
+	}
+
+	{
 		// Construct segmented_vectors of different types.
-
-		segmented_vector<int, 8> vectorOfInt;
-		segmented_vector<TestObject, 8> vectorOfTO;
-		segmented_vector<list<TestObject>, 8> vectorOfListOfTO;
+		eastl::segmented_vector<int, 8> vectorOfInt;
+		eastl::segmented_vector<TestObject, 8> vectorOfTO;
+		eastl::segmented_vector<eastl::list<TestObject>, 8> vectorOfListOfTO;
 
 		EATEST_VERIFY(vectorOfInt.empty());
 		EATEST_VERIFY(vectorOfTO.empty());
@@ -35,11 +57,8 @@ int TestSegmentedVector()
 	}
 
 	{
-		using namespace eastl;
-		
 		// Test basic segmented_vector operations.
-
-		segmented_vector<int, 4> vectorOfInt;
+		eastl::segmented_vector<int, 4> vectorOfInt;
 
 		vectorOfInt.push_back(42);
 		EATEST_VERIFY(vectorOfInt.size() == 1);

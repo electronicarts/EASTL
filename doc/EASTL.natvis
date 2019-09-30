@@ -508,6 +508,15 @@
 	<DisplayString>{*val}</DisplayString>
 </Type>
 
+<!--
+	This implementation isn't ideal because it can't switch between showing inline value vs values stored in a heap allocation.
+	We are hitting the limit of natvis scripting that we can't workaround unless we change the implementation of eastl::any.
+-->
+<Type Name="eastl::any">
+	<DisplayString Condition="m_handler == nullptr">empty</DisplayString>
+	<DisplayString Condition="m_handler != nullptr">{m_storage.external_storage}</DisplayString>
+</Type>
+
 
 <!-- TODO eastl::tuple -->
 
