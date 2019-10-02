@@ -195,36 +195,35 @@ namespace eastl
     ///////////////////////////////////////////////////////////////////////////////
 
     template <typename Compare, bool /*isEmpty*/ = is_empty<Compare>::value>
-    struct rb_base_compare_ebo;
-
-    template <template <typename T> class Compare, typename T>
-    struct rb_base_compare_ebo<Compare<T>, false>
+    struct rb_base_compare_ebo
     {
     protected:
         rb_base_compare_ebo() : mCompare() {}
-        rb_base_compare_ebo(const Compare<T>& compare) : mCompare(compare) {}
+        rb_base_compare_ebo(const Compare& compare) : mCompare(compare) {}
 
-        Compare<T>& get_compare() { return mCompare; }
-        const Compare<T>& get_compare() const { return mCompare; }
+        Compare& get_compare() { return mCompare; }
+        const Compare& get_compare() const { return mCompare; }
 
+        template <typename T>
         bool compare(const T& lhs, const T& rhs) const { return mCompare(lhs, rhs); }
 
     private:
-        Compare<T> mCompare;
+        Compare mCompare;
     };
 
-    template <template <typename T> class Compare, typename T>
-    struct rb_base_compare_ebo<Compare<T>, true>
-        : private Compare<T>
+    template <typename Compare>
+    struct rb_base_compare_ebo<Compare, true>
+        : private Compare
     {
     protected:
         rb_base_compare_ebo() {}
-        rb_base_compare_ebo(const Compare<T>& compare) : Compare<T>(compare) {}
+        rb_base_compare_ebo(const Compare& compare) : Compare(compare) {}
 
-        Compare<T>& get_compare() { return *this; }
-        const Compare<T>& get_compare() const { return *this; }
+        Compare& get_compare() { return *this; }
+        const Compare& get_compare() const { return *this; }
 
-        bool compare(const T& lhs, const T& rhs) const { return Compare<T>::operator()(lhs, rhs); }
+        template <typename T>
+        bool compare(const T& lhs, const T& rhs) const { return Compare::operator()(lhs, rhs); }
     };
 
 
