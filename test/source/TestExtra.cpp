@@ -14,6 +14,8 @@ namespace eastl
 	template <typename T, typename Allocator> class basic_string;
 	typedef basic_string<char, allocator> local_string8;  // collides with eastl::string8 in bulkbuilds
 
+    template <typename T> struct local_less {};
+
 	static void UseForwardDeclaredString(local_string8*)
 	{
 	}
@@ -28,7 +30,7 @@ namespace eastl
 
 
 	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode> class hash_set;
-	typedef hash_set<char, char, char, allocator, false> hash_set8;
+	typedef hash_set<char, char, local_less<char>, allocator, false> hash_set8;
 
 	static void UseForwardDeclaredHashSet(hash_set8*)
 	{
@@ -36,7 +38,7 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator> class map;
-	typedef map<char, char, char, allocator> map8;
+	typedef map<char, char, local_less<char>, allocator> map8;
 
 	static void UseForwardDeclaredMap(map8*)
 	{
