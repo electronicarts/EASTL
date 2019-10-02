@@ -101,7 +101,10 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
-		using base_type::mCompare;
+
+	protected:
+		using base_type::compare;
+		using base_type::get_compare;
 
 	public:
 		set(const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
@@ -181,7 +184,10 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
-		using base_type::mCompare;
+
+	protected:
+		using base_type::compare;
+		using base_type::get_compare;
 
 	public:
 		multiset(const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
@@ -283,7 +289,7 @@ namespace eastl
 	inline typename set<Key, Compare, Allocator>::value_compare
 	set<Key, Compare, Allocator>::value_comp() const
 	{
-		return mCompare;
+		return get_compare();
 	}
 
 
@@ -365,7 +371,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || compare(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<iterator, iterator>(itLower, itLower);
 
 		iterator itUpper(itLower);
@@ -381,7 +387,7 @@ namespace eastl
 		// See equal_range above for comments.
 		const const_iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || compare(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
 
 		const_iterator itUpper(itLower);
@@ -449,7 +455,7 @@ namespace eastl
 	inline typename multiset<Key, Compare, Allocator>::value_compare
 	multiset<Key, Compare, Allocator>::value_comp() const
 	{
-		return mCompare;
+		return get_compare();
 	}
 
 
@@ -556,7 +562,7 @@ namespace eastl
 		const iterator itLower(lower_bound(k));
 		iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, itUpper.mpNode->mValue))
+		while((itUpper != end()) && !compare(k, itUpper.mpNode->mValue))
 			++itUpper;
 
 		return eastl::pair<iterator, iterator>(itLower, itUpper);
@@ -573,7 +579,7 @@ namespace eastl
 		const const_iterator itLower(lower_bound(k));
 		const_iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, *itUpper))
+		while((itUpper != end()) && !compare(k, *itUpper))
 			++itUpper;
 
 		return eastl::pair<const_iterator, const_iterator>(itLower, itUpper);
