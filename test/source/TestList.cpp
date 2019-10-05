@@ -959,6 +959,17 @@ int TestList()
 		VERIFY(a == ref);
 	}
 
+    { //Test empty base-class optimization
+        struct UnemptyDummyAllocator : eastl::dummy_allocator {
+            int foo;
+        };
+
+        typedef eastl::list<int, eastl::dummy_allocator> list1;
+        typedef eastl::list<int, UnemptyDummyAllocator> list2;
+
+        EATEST_VERIFY(sizeof(list1) < sizeof(list2));
+    }
+
 
 	return nErrorCount;
 }
