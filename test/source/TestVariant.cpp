@@ -775,6 +775,10 @@ int TestVariantMoveOnly()
 }
 
 
+//compilation test related to PR #315: converting constructor and assignment operator compilation error
+void add(const double e) { eastl::variant<double> v{e}; }
+
+
 
 int TestVariant()
 {
