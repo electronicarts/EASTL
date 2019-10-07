@@ -85,7 +85,7 @@ namespace eastl
 	protected:
 		char mBuffer[fixed_allocator_type::kBufferSize]; // kBufferSize will take into account alignment requirements.
 
-		using base_type::mAllocator;
+		using base_type::internalAllocator;
 
 	public:
 		fixed_slist();
@@ -129,7 +129,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 	}
 
@@ -139,7 +139,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 	}
 
@@ -149,7 +149,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 
 		resize(n);
@@ -161,7 +161,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 
 		resize(n, value);
@@ -172,10 +172,10 @@ namespace eastl
 	inline fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_slist(const this_type& x)
 		: base_type(fixed_allocator_type(mBuffer))
 	{
-		mAllocator.copy_overflow_allocator(x.mAllocator);
+		internalAllocator().copy_overflow_allocator(x.internalAllocator());
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+			internalAllocator().set_name(x.internalAllocator().get_name());
 		#endif
 
 		assign(x.begin(), x.end());
@@ -195,10 +195,10 @@ namespace eastl
 
 		// The following is currently identical to the fixed_vector(const this_type& x) code above. If it stays that
 		// way then we may want to make a shared implementation.
-		mAllocator.copy_overflow_allocator(x.mAllocator);
+		internalAllocator().copy_overflow_allocator(x.internalAllocator());
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+			internalAllocator().set_name(x.internalAllocator().get_name());
 		#endif
 
 		assign(x.begin(), x.end());
@@ -209,10 +209,10 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
 		// See comments above.
-		mAllocator.copy_overflow_allocator(x.mAllocator);
+		internalAllocator().copy_overflow_allocator(x.internalAllocator());
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+			internalAllocator().set_name(x.internalAllocator().get_name());
 		#endif
 
 		assign(x.begin(), x.end());
@@ -224,7 +224,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 
 		assign(ilist.begin(), ilist.end());
@@ -237,7 +237,7 @@ namespace eastl
 		: base_type(fixed_allocator_type(mBuffer))
 	{
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
+			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
 		#endif
 
 		assign(first, last);
@@ -253,7 +253,7 @@ namespace eastl
 			base_type::clear();
 
 			#if EASTL_ALLOCATOR_COPY_ENABLED
-				mAllocator = x.mAllocator; // The primary effect of this is to copy the overflow allocator.
+				internalAllocator() = x.internalAllocator(); // The primary effect of this is to copy the overflow allocator.
 			#endif
 
 			base_type::assign(x.begin(), x.end()); // It would probably be better to implement this like slist::operator=.
@@ -310,7 +310,7 @@ namespace eastl
 		// Note: This implementation isn't right in the case of bEnableOverflow = true because it will return 
 		// false for the case that  there are free nodes from the buffer but also nodes from the dynamic heap. 
 		// This can happen if the container exceeds the fixed size and then frees some of the nodes from the fixed buffer.
-		return !mAllocator.can_allocate(); // This is the quickest way of detecting this. has_overflowed uses a different method because it can't use this quick method.
+		return !internalAllocator().can_allocate(); // This is the quickest way of detecting this. has_overflowed uses a different method because it can't use this quick method.
 	}
 
 
@@ -318,7 +318,7 @@ namespace eastl
 	inline bool fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::has_overflowed() const
 	{
 		#if EASTL_FIXED_SIZE_TRACKING_ENABLED // If we can use this faster pathway (as size() may be slow)...
-			return (mAllocator.mPool.mnPeakSize > kMaxSize);
+			return (internalAllocator().mPool.mnPeakSize > kMaxSize);
 		#else
 			return (size() > kMaxSize);
 		#endif
@@ -336,7 +336,7 @@ namespace eastl
 	inline const typename fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::overflow_allocator_type& 
 	fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::get_overflow_allocator() const EA_NOEXCEPT
 	{
-		return mAllocator.get_overflow_allocator();
+		return internalAllocator().get_overflow_allocator();
 	}
 
 
@@ -344,7 +344,7 @@ namespace eastl
 	inline typename fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::overflow_allocator_type& 
 	fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::get_overflow_allocator() EA_NOEXCEPT
 	{
-		return mAllocator.get_overflow_allocator();
+		return internalAllocator().get_overflow_allocator();
 	}
 
 
@@ -352,7 +352,7 @@ namespace eastl
 	inline void 
 	fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::set_overflow_allocator(const overflow_allocator_type& allocator)
 	{
-		mAllocator.set_overflow_allocator(allocator);
+		internalAllocator().set_overflow_allocator(allocator);
 	}
 
 
