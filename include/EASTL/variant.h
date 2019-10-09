@@ -712,7 +712,7 @@ namespace eastl
 			static_assert((meta::type_count_v<T_j, Types...> == 1), "function overload is not unique - duplicate types in type list");
 
 			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T_j>(t));
+			mStorage.template set_as<T_j>(eastl::forward<T>(t));
 		}
 
 
@@ -857,7 +857,7 @@ namespace eastl
 				mStorage.destroy();
 
 			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T_j>(t));
+			mStorage.template set_as<T_j>(eastl::forward<T>(t));
 			return *this;
 		}
 
