@@ -33,6 +33,7 @@ int TestChrono();
 int TestCppCXTypeTraits();
 int TestDeque();
 int TestExtra();
+int TestFinally();
 int TestFixedFunction();
 int TestFixedHash();
 int TestFixedList();
@@ -73,13 +74,13 @@ int TestStringHashMap();
 int TestStringMap();
 int TestStringView();
 int TestTuple();
+int TestTupleVector();
 int TestTypeTraits();
 int TestUtility();
 int TestVariant();
 int TestVector();
 int TestVectorMap();
 int TestVectorSet();
-int TestTupleVector();
 
 
 // Now enable warnings as desired.

@@ -14,7 +14,7 @@ namespace eastl
 	template <typename T, typename Allocator> class basic_string;
 	typedef basic_string<char, allocator> local_string8;  // collides with eastl::string8 in bulkbuilds
 
-    template <typename T> struct local_less {};
+	template <typename T> struct local_less {};
 
 	static void UseForwardDeclaredString(local_string8*)
 	{

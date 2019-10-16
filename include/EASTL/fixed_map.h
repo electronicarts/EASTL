@@ -150,7 +150,7 @@ namespace eastl
 		char mBuffer[fixed_allocator_type::kBufferSize]; // kBufferSize will take into account alignment requirements.
 
 		using base_type::mAllocator;
-        using base_type::get_compare;
+		using base_type::get_compare;
 
 	public:
 		fixed_multimap();

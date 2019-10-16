@@ -196,17 +196,17 @@ int TestMap()
 //        EATEST_VERIFY(p1 == p2); 
 //    }
 
-    { //Test empty base-class optimization
-        struct UnemptyLess : eastl::less<int> {
-            int foo;
-        };
+	{ // Test empty base-class optimization
+		struct UnemptyLess : eastl::less<int>
+		{
+			int foo;
+		};
 
-        typedef eastl::map<int, int, eastl::less<int>> VM1;
-        typedef eastl::map<int, int, UnemptyLess> VM2;
+		typedef eastl::map<int, int, eastl::less<int>> VM1;
+		typedef eastl::map<int, int, UnemptyLess> VM2;
 
-        EATEST_VERIFY(sizeof(VM1) < sizeof(VM2));
-    }
-
+		EATEST_VERIFY(sizeof(VM1) < sizeof(VM2));
+	}
 
 	return nErrorCount;
 }

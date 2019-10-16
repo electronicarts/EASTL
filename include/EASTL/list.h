@@ -217,15 +217,15 @@ namespace eastl
 		#endif
 
 	protected:
-        eastl::compressed_pair<base_node_type, allocator_type>  mNodeAllocator;
+		eastl::compressed_pair<base_node_type, allocator_type>  mNodeAllocator;
 		#if EASTL_LIST_SIZE_CACHE
 			size_type  mSize;
 		#endif
 
-        base_node_type& internalNode() EA_NOEXCEPT { return mNodeAllocator.first(); }
-        base_node_type const& internalNode() const EA_NOEXCEPT { return mNodeAllocator.first(); }
-        allocator_type& internalAllocator() EA_NOEXCEPT { return mNodeAllocator.second(); }
-        const allocator_type& internalAllocator() const EA_NOEXCEPT { return mNodeAllocator.second(); }
+		base_node_type& internalNode() EA_NOEXCEPT { return mNodeAllocator.first(); }
+		base_node_type const& internalNode() const EA_NOEXCEPT { return mNodeAllocator.first(); }
+		allocator_type& internalAllocator() EA_NOEXCEPT { return mNodeAllocator.second(); }
+		const allocator_type& internalAllocator() const EA_NOEXCEPT { return mNodeAllocator.second(); }
 
 	public:
 		const allocator_type& get_allocator() const EA_NOEXCEPT;
@@ -304,8 +304,8 @@ namespace eastl
 		#if EASTL_LIST_SIZE_CACHE
 			using base_type::mSize;
 		#endif
-        using base_type::internalNode;
-        using base_type::internalAllocator;
+		using base_type::internalNode;
+		using base_type::internalAllocator;
 
 	public:
 		list();
@@ -718,7 +718,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	inline ListBase<T, Allocator>::ListBase()
-        : mNodeAllocator(base_node_type(), allocator_type(EASTL_LIST_DEFAULT_NAME))
+		: mNodeAllocator(base_node_type(), allocator_type(EASTL_LIST_DEFAULT_NAME))
 		  #if EASTL_LIST_SIZE_CACHE
 		  , mSize(0)
 		  #endif
@@ -788,8 +788,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void ListBase<T, Allocator>::DoInit() EA_NOEXCEPT
 	{
-        internalNode().mpNext = (ListNode<T>*)&internalNode();
-        internalNode().mpPrev = (ListNode<T>*)&internalNode();
+		internalNode().mpNext = (ListNode<T>*)&internalNode();
+		internalNode().mpPrev = (ListNode<T>*)&internalNode();
 	}
 
 

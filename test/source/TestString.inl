@@ -1339,32 +1339,32 @@ int TEST_STRING_NAME()
 	{
 		{
 		#if defined(EA_CHAR8)
-			StringType str;
-			str.append_convert(EA_CHAR8("123456789"), 5);
-			VERIFY(str == LITERAL("12345"));
+			StringType str; 
+			str.append_convert(eastl::string8(EA_CHAR8("123456789")));
+			VERIFY(str == LITERAL("123456789"));
 			VERIFY(str.validate());
 		#endif
 		}
 		{
 		#if defined(EA_CHAR16)
-			StringType str;
-			str.append_convert(EA_CHAR16("123456789"), 5);
-			VERIFY(str == LITERAL("12345"));
+			StringType str; 
+			str.append_convert(eastl::string16(EA_CHAR16("123456789")));
+			VERIFY(str == LITERAL("123456789"));
 			VERIFY(str.validate());
 		#endif
 		}
 		{
 		#if defined(EA_CHAR32)
-			StringType str;
-			str.append_convert(EA_CHAR32("123456789"), 5);
-			VERIFY(str == LITERAL("12345"));
+			StringType str; 
+			str.append_convert(eastl::string32(EA_CHAR32("123456789")));
+			VERIFY(str == LITERAL("123456789"));
 			VERIFY(str.validate());
 		#endif
 		}
 		// {
 		// #if defined(EA_WCHAR)
-		//     StringType str;
-		//     str.append_convert(EA_WCHAR("123456789"), 5);
+		//     StringType str = EA_WCHAR("123456789");
+		//     str.append_convert(str, 5);
 		//     VERIFY(str == LITERAL("12345"));
 		//     VERIFY(str.validate());
 		// #endif
@@ -1863,6 +1863,78 @@ int TEST_STRING_NAME()
 		}
 	}
 
+	// void ltrim("a");
+	// void rtrim("b");
+	// void trim("?");
+	{
+		StringType expected(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+
+		{
+			const auto source = LITERAL("abcdefghijklmnopqrstuvwxyz                                         ");
+
+			StringType rstr(source);
+			rstr.ltrim(LITERAL(" "));
+			VERIFY(rstr == source);  
+
+			rstr.rtrim(LITERAL(" "));
+			VERIFY(expected == rstr);
+		}
+
+		{
+			const auto source = LITERAL("abcdefghijklmnopqrstuvwxyz			\t		\t\t\t		");
+
+			StringType rstr(source);
+			rstr.ltrim(LITERAL(" \t"));
+			VERIFY(rstr == source);
+
+			rstr.rtrim(LITERAL(" \t"));
+			VERIFY(expected == rstr);
+		}
+
+		{
+			const auto source = LITERAL(" \t		\t\t\t		abcdefghijklmnopqrstuvwxyz");
+
+			StringType rstr(source);
+			rstr.rtrim(LITERAL(" \t"));
+			VERIFY(rstr == source);
+
+			rstr.ltrim(LITERAL(" \t"));
+			VERIFY(expected == rstr);
+		}
+
+		{
+			const auto source = LITERAL("$$$%$$$$$$%$$$$$$$$$%$$$$$$$$abcdefghijklmnopqrstuvwxyz*********@*****************@******");
+			StringType rstr(source);
+			rstr.trim(LITERAL("^("));
+			VERIFY(rstr == source);
+		}
+
+		{
+			const auto source = LITERAL("$$$%$$$$$$%$$$$$$$$$%$$$$$$$$abcdefghijklmnopqrstuvwxyz*********@*****************@******");
+			StringType rstr(source);
+			rstr.rtrim(LITERAL("@*"));
+
+			VERIFY(expected != rstr);
+			VERIFY(rstr == LITERAL("$$$%$$$$$$%$$$$$$$$$%$$$$$$$$abcdefghijklmnopqrstuvwxyz"));
+
+			rstr.ltrim(LITERAL("$%"));
+			VERIFY(expected == rstr);
+		}
+
+		{
+			const auto source = LITERAL("abcdefghijklmnopqrstuvwxyz**********************************");
+			StringType rstr(source);
+			rstr.ltrim(LITERAL("*"));
+			VERIFY(expected != source);
+		}
+
+		{
+			const auto source = LITERAL("           ?      abcdefghijklmnopqrstuvwxyz**********************************");
+			StringType rstr(source);
+			rstr.trim(LITERAL("*? "));
+			VERIFY(expected != source);
+		}
+	}
 
 	// this_type left(size_type n) const;
 	// this_type right(size_type n) const;

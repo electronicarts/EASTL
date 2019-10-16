@@ -737,6 +737,9 @@ namespace eastl
 		void         ltrim();
 		void         rtrim();
 		void         trim();
+		void         ltrim(const value_type* p);
+		void         rtrim(const value_type* p);
+		void         trim(const value_type* p);
 		this_type    left(size_type n) const;
 		this_type    right(size_type n) const;
 		this_type&   sprintf_va_list(const value_type* pFormat, va_list arguments);
@@ -1648,7 +1651,7 @@ namespace eastl
 	template <typename OtherStringType>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
 	{
-		return append_convert(x, x.length());
+		return append_convert(x.c_str(), x.length());
 	}
 
 
@@ -3083,6 +3086,28 @@ namespace eastl
 	{
 		ltrim();
 		rtrim();
+	}
+
+
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::ltrim(const value_type* p)
+	{
+		erase(0, find_first_not_of(p));
+	}
+
+
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::rtrim(const value_type* p)
+	{
+		erase(find_last_not_of(p) + 1);
+	}
+
+
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::trim(const value_type* p)
+	{
+		ltrim(p);
+		rtrim(p);
 	}
 
 

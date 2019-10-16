@@ -779,17 +779,17 @@ int TestSList()
 		VERIFY(eastl::is_sorted(eastl::begin(list1), eastl::end(list1), compare));
 	}
 
-    { //Test empty base-class optimization
-        struct UnemptyDummyAllocator : eastl::dummy_allocator {
-            int foo;
-        };
+	{ // Test empty base-class optimization
+		struct UnemptyDummyAllocator : eastl::dummy_allocator
+		{
+			int foo;
+		};
 
-        typedef eastl::slist<int, eastl::dummy_allocator> list1;
-        typedef eastl::slist<int, UnemptyDummyAllocator> list2;
+		typedef eastl::slist<int, eastl::dummy_allocator> list1;
+		typedef eastl::slist<int, UnemptyDummyAllocator> list2;
 
-        EATEST_VERIFY(sizeof(list1) < sizeof(list2));
-    }
-
+		EATEST_VERIFY(sizeof(list1) < sizeof(list2));
+	}
 
 	return nErrorCount;
 }

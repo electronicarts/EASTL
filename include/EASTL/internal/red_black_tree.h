@@ -184,53 +184,65 @@ namespace eastl
 	}; // rbtree_iterator
 
 
+	///////////////////////////////////////////////////////////////////////////////
+	// rb_base_compare_ebo
+	//
+	// Utilizes the "empty base-class optimization" to reduce the size of the rbtree
+	// when its Compare template argument is an empty class.
+	///////////////////////////////////////////////////////////////////////////////
+
+	template <typename Compare, bool /*isEmpty*/ = is_empty<Compare>::value>
+	struct rb_base_compare_ebo
+	{
+	protected:
+		rb_base_compare_ebo() : mCompare() {}
+		rb_base_compare_ebo(const Compare& compare) : mCompare(compare) {}
+
+		Compare& get_compare() { return mCompare; }
+		const Compare& get_compare() const { return mCompare; }
+
+		template <typename T>
+		bool compare(const T& lhs, const T& rhs) 
+		{
+			return mCompare(lhs, rhs);
+		}
+
+		template <typename T>
+		bool compare(const T& lhs, const T& rhs) const
+		{
+			return mCompare(lhs, rhs);
+		}
+
+	private:
+		Compare mCompare;
+	};
+
+	template <typename Compare>
+	struct rb_base_compare_ebo<Compare, true> : private Compare
+	{
+	protected:
+		rb_base_compare_ebo() {}
+		rb_base_compare_ebo(const Compare& compare) : Compare(compare) {}
+
+		Compare& get_compare() { return *this; }
+		const Compare& get_compare() const { return *this; }
+
+		template <typename T>
+		bool compare(const T& lhs, const T& rhs) 
+		{
+			return Compare::operator()(lhs, rhs);
+		}
+
+		template <typename T>
+		bool compare(const T& lhs, const T& rhs) const
+		{
+			return Compare::operator()(lhs, rhs);
+		}
+	};
 
 
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // rb_base_compare_ebo
-    //
-    // Utilizes the "empty base-class optimization" to reduce the size of the rbtree
-    // when its Compare template argument is an empty class.
-    ///////////////////////////////////////////////////////////////////////////////
-
-    template <typename Compare, bool /*isEmpty*/ = is_empty<Compare>::value>
-    struct rb_base_compare_ebo
-    {
-    protected:
-        rb_base_compare_ebo() : mCompare() {}
-        rb_base_compare_ebo(const Compare& compare) : mCompare(compare) {}
-
-        Compare& get_compare() { return mCompare; }
-        const Compare& get_compare() const { return mCompare; }
-
-        template <typename T>
-        bool compare(const T& lhs, const T& rhs) const { return mCompare(lhs, rhs); }
-
-    private:
-        Compare mCompare;
-    };
-
-    template <typename Compare>
-    struct rb_base_compare_ebo<Compare, true>
-        : private Compare
-    {
-    protected:
-        rb_base_compare_ebo() {}
-        rb_base_compare_ebo(const Compare& compare) : Compare(compare) {}
-
-        Compare& get_compare() { return *this; }
-        const Compare& get_compare() const { return *this; }
-
-        template <typename T>
-        bool compare(const T& lhs, const T& rhs) const { return Compare::operator()(lhs, rhs); }
-    };
-
-
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
     // rb_base
     //
     // This class allows us to use a generic rbtree as the basis of map, multimap,
@@ -252,14 +264,13 @@ namespace eastl
 	/// will be the same as each other and ExtractKey will be eastl::use_self.
 	///
 	template <typename Key, typename Value, typename Compare, typename ExtractKey, bool bUniqueKeys, typename RBTree>
-	struct rb_base 
-        : public rb_base_compare_ebo<Compare>
+	struct rb_base : public rb_base_compare_ebo<Compare>
 	{
 		typedef ExtractKey extract_key;
 
-    protected:
-        using rb_base_compare_ebo<Compare>::compare;
-        using rb_base_compare_ebo<Compare>::get_compare;
+	protected:
+		using rb_base_compare_ebo<Compare>::compare;
+		using rb_base_compare_ebo<Compare>::get_compare;
 
 	public:
 		rb_base() {}
@@ -273,18 +284,17 @@ namespace eastl
 	/// other and ExtractKey will be eastl::use_self.
 	///
 	template <typename Key, typename Value, typename Compare, typename ExtractKey, typename RBTree>
-	struct rb_base<Key, Value, Compare, ExtractKey, false, RBTree>
-        : public rb_base_compare_ebo<Compare>
+	struct rb_base<Key, Value, Compare, ExtractKey, false, RBTree> : public rb_base_compare_ebo<Compare>
 	{
 		typedef ExtractKey extract_key;
 
-    protected:
-        using rb_base_compare_ebo<Compare>::compare;
-        using rb_base_compare_ebo<Compare>::get_compare;
+	protected:
+		using rb_base_compare_ebo<Compare>::compare;
+		using rb_base_compare_ebo<Compare>::get_compare;
 
 	public:
-        rb_base() {}
-        rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
+		rb_base() {}
+		rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
 	};
 
 
@@ -292,17 +302,16 @@ namespace eastl
 	/// This specialization is used for 'map'.
 	///
 	template <typename Key, typename Pair, typename Compare, typename RBTree>
-	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, true, RBTree>
-        : public rb_base_compare_ebo<Compare>
+	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, true, RBTree> : public rb_base_compare_ebo<Compare>
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-        using rb_base_compare_ebo<Compare>::compare;
-        using rb_base_compare_ebo<Compare>::get_compare;
+		using rb_base_compare_ebo<Compare>::compare;
+		using rb_base_compare_ebo<Compare>::get_compare;
 
 	public:
-        rb_base() {}
-        rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
+		rb_base() {}
+		rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
 	};
 
 
@@ -310,21 +319,17 @@ namespace eastl
 	/// This specialization is used for 'multimap'.
 	///
 	template <typename Key, typename Pair, typename Compare, typename RBTree>
-	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, false, RBTree>
-        : public rb_base_compare_ebo<Compare>
+	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, false, RBTree> : public rb_base_compare_ebo<Compare>
 	{
 		typedef eastl::use_first<Pair> extract_key;
 
-        using rb_base_compare_ebo<Compare>::compare;
-        using rb_base_compare_ebo<Compare>::get_compare;
+		using rb_base_compare_ebo<Compare>::compare;
+		using rb_base_compare_ebo<Compare>::get_compare;
 
 	public:
-        rb_base() {}
-        rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
+		rb_base() {}
+		rb_base(const Compare& compare) : rb_base_compare_ebo<Compare>(compare) {}
 	};
-
-
-
 
 
 	/// rbtree
@@ -408,9 +413,9 @@ namespace eastl
 		typedef integral_constant<bool, bUniqueKeys>                                            has_unique_keys_type;
 		typedef typename base_type::extract_key                                                 extract_key;
 
-    protected:
-        using base_type::compare;
-        using base_type::get_compare;
+	protected:
+		using base_type::compare;
+		using base_type::get_compare;
 
 	public:
 		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).

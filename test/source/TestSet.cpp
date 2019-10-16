@@ -103,6 +103,18 @@ int TestSet()
 		vs.key_comp() = kc;
 	}
 
+	{ // non-const comparator test
+		struct my_less
+		{
+			bool operator()(int a, int b) { return a < b; }
+		};
+
+		{
+			set<int, my_less> a = {0, 1, 2, 3, 4};
+			auto i = a.find(42);
+			VERIFY(i == a.end());
+		}
+	}
 
 	return nErrorCount;
 }
