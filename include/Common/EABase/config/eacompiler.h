@@ -697,7 +697,7 @@
 			#define EA_THROW_SPEC_DELETE_NONE() throw() 
 
 		#else
-			#if defined(EA_PLATFORM_PS4)
+			#if defined(EA_PLATFORM_SONY)
 				#define EA_THROW_SPEC_NEW(X)        _THROWS(X)
 			#elif defined(_MSC_VER)
 				// Disabled warning "nonstandard extension used: 'throw (...)'" as this warning is a W4 warning which is usually off by default

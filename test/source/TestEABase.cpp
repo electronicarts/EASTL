@@ -353,11 +353,7 @@ bool VerifyValue(T v1, T v2)
 // Test EA_PLATFORM_XXX support
 // We don't do anything with the defined values below. We are just doing basic testing
 // of the usage of #if EA_PLATFORM_XXX
-#if EA_PLATFORM_XENON
-	#define EA_PLATFORM_XENON_OK
-#elif EA_PLATFORM_PS3
-	#define EA_PLATFORM_PS3_OK
-#elif EA_PLATFORM_WIN64
+#if EA_PLATFORM_WIN64
 	#define EA_PLATFORM_WIN64_OK
 #elif EA_PLATFORM_WIN32
 	#define EA_PLATFORM_WIN64_OK
@@ -2488,6 +2484,13 @@ int TestEACompilerTraits()
 	{ // Test EA_FORCE_INLINE / EA_PREFIX_FORCE_INLINE / EA_POSTFIX_FORCE_INLINE
 		DoNothingForceInline();
 		DoNothingPrefixForceInline();
+	}
+
+	{ // Test EA_FORCE_INLINE_LAMBDA
+		auto testLambda = []() EA_FORCE_INLINE_LAMBDA
+		{
+		};
+		testLambda();
 	}
 
 

@@ -34,7 +34,7 @@
 // not standards-compliant in this respect, so we need an additional include.
 // The case is similar with wchar_t under C++.
 
-#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_MSVC) || defined(EA_WCHAR_T_NON_NATIVE) || defined(EA_PLATFORM_PS4)
+#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_MSVC) || defined(EA_WCHAR_T_NON_NATIVE) || defined(EA_PLATFORM_SONY)
 	#if defined(EA_COMPILER_MSVC)
 		#pragma warning(push, 0)
 		#pragma warning(disable: 4265 4365 4836 4574)

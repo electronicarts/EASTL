@@ -124,7 +124,6 @@
 		#define EA_ASM_STYLE_ATT 1
 	#endif
 
-
 #elif defined(EA_PLATFORM_XBOXONE) || defined(_DURANGO) || defined(_XBOX_ONE) || defined(EA_PLATFORM_CAPILANO) || defined(_GAMING_XBOX)
 	// XBox One
 	// Durango was Microsoft's code-name for the platform, which is now obsolete.
