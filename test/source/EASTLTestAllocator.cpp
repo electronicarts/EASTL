@@ -15,7 +15,9 @@
 
 	#include <PPMalloc/EAGeneralAllocator.h>
 	#include <PPMalloc/EAGeneralAllocatorDebug.h>
-	
+
+	#include <coreallocator/icoreallocator_interface.h>
+
 	#if defined(EA_COMPILER_MSVC)
 		#include <math.h>       // VS2008 has an acknowledged bug that requires math.h (and possibly also string.h) to be #included before intrin.h.
 		#include <intrin.h>
@@ -108,7 +110,7 @@
 	///////////////////////////////////////////////////////////////////////////////
 	// system memory allocation helpers
 	//
-	namespace 
+	namespace
 	{
 		void* PlatformMalloc(size_t size, size_t alignment = 16)
 		{
@@ -121,7 +123,7 @@
 			return p;
 		#endif
 		}
-		
+
 		void PlatformFree(void* p)
 		{
 		#ifdef EA_PLATFORM_MICROSOFT
@@ -134,7 +136,7 @@
 		void* InternalMalloc(size_t size)
 		{
 		    void* mem = nullptr;
-			
+
 			auto& allocator = EA::Allocator::EASTLTest_GetGeneralAllocator();
 
 		#ifdef EA_DEBUG
@@ -224,6 +226,41 @@
 				PlatformFree(p);
 			}
 		}
+	}
+
+	class EASTLTestICA : public EA::Allocator::ICoreAllocator
+	{
+	public:
+		EASTLTestICA()
+		{
+		}
+
+		virtual ~EASTLTestICA()
+		{
+		}
+
+		virtual void* Alloc(size_t size, const char* name, unsigned int flags)
+		{
+			return ::InternalMalloc(size, name, (int)flags, 0, NULL, 0);
+		}
+
+		virtual void* Alloc(size_t size, const char* name, unsigned int flags,
+							unsigned int align, unsigned int)
+		{
+			return ::InternalMalloc(size, (size_t)align, name, (int)flags, 0, NULL, 0);
+		}
+
+		virtual void Free(void* pData, size_t /*size*/)
+		{
+			return ::InternalFree(pData);
+		}
+	};
+
+	EA::Allocator::ICoreAllocator* EA::Allocator::ICoreAllocator::GetDefaultAllocator()
+	{
+		static EASTLTestICA sEASTLTestICA;
+
+		return &sEASTLTestICA;
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -373,7 +410,7 @@
 		}
 	}
 
-	void EASTLTest_SetGeneralAllocator() 
+	void EASTLTest_SetGeneralAllocator()
 	{
 		EA::Allocator::SetGeneralAllocator(&EA::Allocator::EASTLTest_GetGeneralAllocator());
 		#ifdef EA_DEBUG
@@ -422,13 +459,13 @@
 	void* operator new[](size_t size, size_t alignment, size_t /*alignmentOffset*/, const char* /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/)
 		{ return Internal::EASTLAlignedAlloc(size, alignment); }
 
-	void* operator new(size_t size, size_t alignment) 
+	void* operator new(size_t size, size_t alignment)
 		{ return Internal::EASTLAlignedAlloc(size, alignment); }
 
 	void* operator new(size_t size, size_t alignment, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 		{ return Internal::EASTLAlignedAlloc(size, alignment); }
 
-	void* operator new[](size_t size, size_t alignment) 
+	void* operator new[](size_t size, size_t alignment)
 		{ return Internal::EASTLAlignedAlloc(size, alignment); }
 
 	void* operator new[](size_t size, size_t alignment, const std::nothrow_t&)EA_THROW_SPEC_NEW_NONE()
@@ -453,10 +490,3 @@
 #endif // !EASTL_OPENSOURCE
 
 #endif // Header include guard
-
-
-
-
-
-
-

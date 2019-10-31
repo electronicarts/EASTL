@@ -173,7 +173,7 @@ namespace eastl
 			const ptrdiff_t n1   = pEnd1 - pBegin1;
 			const ptrdiff_t n2   = pEnd2 - pBegin2;
 			const ptrdiff_t nMin = eastl::min_alt(n1, n2);
-			const int       cmp  = Compare(pBegin1, pBegin2, (size_t)nMin);
+			const int       cmp  = Compare(pBegin1, pBegin2, (size_type)nMin);
 
 			return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
 		}
@@ -450,48 +450,70 @@ namespace eastl
 
 
 	// global operators
+
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator==(decay_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+	}
+
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, decay_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
+	{
+		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+	}
+
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator==(decay_t<basic_string_view<CharT>> lhs, decay_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
+	{
+		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+	}
+
+
+
+
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return !(lhs == rhs);
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return lhs.compare(rhs) < 0;
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return !(rhs < lhs);
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return rhs < lhs;
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs)
+	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		return !(lhs < rhs);
 	}
 
 	// string_view / wstring_view 
-	typedef basic_string_view<char> string_view;
+	typedef basic_string_view<char>    string_view;
 	typedef basic_string_view<wchar_t> wstring_view;
 
 	// C++17 string types
-	typedef basic_string_view<char8_t> u8string_view;  // Actually not a C++17 type, but added for consistency.
+	typedef basic_string_view<char8_t>  u8string_view;  // Actually not a C++17 type, but added for consistency.
 	typedef basic_string_view<char16_t> u16string_view;
 	typedef basic_string_view<char32_t> u32string_view;
 

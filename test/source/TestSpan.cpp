@@ -80,6 +80,18 @@ void TestSpanCtor(int& nErrorCount)
 		VERIFY(s.size() == 5);
 		VERIFY(s.data()[2] == arr.data()[2]);
 	}
+
+	{
+		class foo {};
+
+		foo* pFoo = nullptr;
+
+		auto f = [](eastl::span<const foo*>) {};
+
+		eastl::array<const foo*, 1> foos = {{pFoo}};
+
+		f(foos);
+	}
 }
 
 void TestSpanSizeBytes(int& nErrorCount)

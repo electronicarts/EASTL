@@ -147,11 +147,11 @@ namespace eastl
 	#if EA_CHAR8_UNIQUE && EA_WCHAR_UNIQUE
 		inline bool DecodePart(const char8_t*&  pSrc, const char8_t*  pSrcEnd, wchar_t*&  pDest, wchar_t*  pDestEnd)
 		{
-			EA_UNUSED(pSrc);
-			EA_UNUSED(pSrcEnd);
-			EA_UNUSED(pDest);
-			EA_UNUSED(pDestEnd);
-			return false;
+		#if (EA_WCHAR_SIZE == 2)
+		    return DecodePart(pSrc, pSrcEnd, reinterpret_cast<char16_t*&>(pDest), reinterpret_cast<char16_t*>(pDestEnd));
+		#elif (EA_WCHAR_SIZE == 4)
+		    return DecodePart(pSrc, pSrcEnd, reinterpret_cast<char32_t*&>(pDest), reinterpret_cast<char32_t*>(pDestEnd));
+		#endif
 		}
 
 		inline bool DecodePart(const wchar_t*&  pSrc, const wchar_t*  pSrcEnd, char8_t*&  pDest, char8_t*  pDestEnd)
