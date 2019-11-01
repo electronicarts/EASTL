@@ -2487,10 +2487,10 @@ int TestEACompilerTraits()
 	}
 
 	{ // Test EA_FORCE_INLINE_LAMBDA
-		auto testLambda = []() EA_FORCE_INLINE_LAMBDA
-		{
-		};
-		testLambda();
+		// auto testLambda = []() EA_FORCE_INLINE_LAMBDA
+		// {
+		// };
+		// testLambda();
 	}
 
 
