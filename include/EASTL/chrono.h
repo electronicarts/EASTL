@@ -43,6 +43,10 @@
 	#endif
 	EA_RESTORE_ALL_VC_WARNINGS()
 	#pragma warning(pop)
+#endif
+
+#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
+	// Nothing to do
 #elif defined(EA_PLATFORM_SONY)
 	#include <Dinkum/threads/xtimec.h>
 	#include <kernel.h>
