@@ -196,7 +196,21 @@ int TestIterator()
 	{
 		// back_insert_iterator
 		// back_inserter
-		// To do.
+		EA_CPP14_CONSTEXPR int n = 3;
+		eastl::vector<TestObject> v1, v2, v3;
+		v1.resize(n); v2.reserve(n); v3.reserve(n);
+		{
+			int64_t copyCtorCount0 = TestObject::sTOCopyCtorCount, moveCtorCount0 = TestObject::sTOMoveCtorCount;
+			eastl::copy(v1.begin(), v1.end(), eastl::back_inserter(v2));
+			EATEST_VERIFY(v1.size() == v2.size() && TestObject::sTOCopyCtorCount == (copyCtorCount0 + n) &&
+				TestObject::sTOMoveCtorCount == moveCtorCount0);
+		}
+		{
+			int64_t copyCtorCount0 = TestObject::sTOCopyCtorCount, moveCtorCount0 = TestObject::sTOMoveCtorCount;
+			eastl::move(v1.begin(), v1.end(), eastl::back_inserter(v3));
+			EATEST_VERIFY(v1.size() == v3.size() && TestObject::sTOCopyCtorCount == copyCtorCount0 &&
+				TestObject::sTOMoveCtorCount == (moveCtorCount0 + n));
+		}
 	}
 
 	{

@@ -639,6 +639,9 @@ namespace eastl
 		back_insert_iterator& operator=(const_reference value)
 			{ container.push_back(value); return *this; }
 
+		back_insert_iterator& operator=(typename Container::value_type&& value)
+			{ container.push_back(eastl::move(value)); return *this; }
+
 		back_insert_iterator& operator*()
 			{ return *this; }
 
