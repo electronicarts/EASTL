@@ -1058,7 +1058,7 @@ namespace eastl
 	{
 		if(mpEnd == internalCapacityPtr())
 		{
-			const size_type newSize = (size_type)(mpEnd - mpBegin) + 1;
+			const size_type newSize = GetNewCapacity(mpEnd - mpBegin);
 			reserve(newSize);
 		}
  
