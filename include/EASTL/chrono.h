@@ -46,7 +46,7 @@
 #endif
 
 #if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
-	#include <thr/xtimec.h>
+	// Nothing to do
 #elif defined(EA_PLATFORM_SONY)
 	#include <Dinkum/threads/xtimec.h>
 	#include <kernel.h>
