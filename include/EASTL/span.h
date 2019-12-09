@@ -162,7 +162,7 @@ namespace eastl
 	template <class T, size_t X, class U, size_t Y>
 	EA_CONSTEXPR bool operator<(span<T, X> l, span<U, Y> r)
 	{
-		return lexicographical_compare(l.begin(), l.end(), r.begin(), r.end());
+		return eastl::lexicographical_compare(l.begin(), l.end(), r.begin(), r.end());
 	}
 
 	template <class T, size_t X, class U, size_t Y>
