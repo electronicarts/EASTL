@@ -693,7 +693,7 @@ namespace eastl
 	inline bool operator==(const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& a, 
 						   const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& b) 
 	{
-		return (a.size() == b.size()) && equal(b.begin(), b.end(), a.begin());
+		return (a.size() == b.size()) && eastl::equal(b.begin(), b.end(), a.begin());
 	}
 
 
@@ -701,7 +701,7 @@ namespace eastl
 	inline bool operator<(const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& a,
 						  const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
 	}
 
 

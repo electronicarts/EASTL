@@ -2612,19 +2612,19 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator==(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() == b.size()) && eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator!=(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() != b.size()) || !eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	inline bool operator<(const deque<T, Allocator, kDequeSubarraySize>& a, const deque<T, Allocator, kDequeSubarraySize>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>

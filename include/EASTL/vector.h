@@ -1975,21 +1975,21 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline bool operator==(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() == b.size()) && eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
 	template <typename T, typename Allocator>
 	inline bool operator!=(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() != b.size()) || !eastl::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
 	template <typename T, typename Allocator>
 	inline bool operator<(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 

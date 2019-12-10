@@ -1479,21 +1479,21 @@ template <typename AllocatorA, typename AllocatorB, typename Indices, typename..
 inline bool operator==(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
 					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
-	return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+	return ((a.size() == b.size()) && eastl::equal(a.begin(), a.end(), b.begin()));
 }
 
 template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
 inline bool operator!=(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
 					   const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
-	return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+	return ((a.size() != b.size()) || !eastl::equal(a.begin(), a.end(), b.begin()));
 }
 
 template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
 inline bool operator<(const TupleVecInternal::TupleVecImpl<AllocatorA, Indices, Ts...>& a,
 					  const TupleVecInternal::TupleVecImpl<AllocatorB, Indices, Ts...>& b)
 {
-	return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+	return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 }
 
 template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>
