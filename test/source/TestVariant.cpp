@@ -780,9 +780,78 @@ void TestCompilation(const double e) { eastl::variant<double> v{e}; }
 
 
 
+int TestVariantUserRegressionCopyMoveAssignmentOperatorLeak()
+{
+	using namespace eastl;
+	int nErrorCount = 0;
+
+	{
+		{
+			eastl::variant<TestObject> v = TestObject(1337);
+			VERIFY(eastl::get<TestObject>(v).mX == 1337);
+			eastl::variant<TestObject> v2 = TestObject(1338);
+			VERIFY(eastl::get<TestObject>(v2).mX == 1338);
+			v.operator=(v2);
+			VERIFY(eastl::get<TestObject>(v).mX == 1338);
+			VERIFY(eastl::get<TestObject>(v2).mX == 1338);
+		}
+		VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+	{
+		{
+			eastl::variant<TestObject> v = TestObject(1337);
+			VERIFY(eastl::get<TestObject>(v).mX == 1337);
+			eastl::variant<TestObject> v2 = TestObject(1338);
+			VERIFY(eastl::get<TestObject>(v2).mX == 1338);
+			v.operator=(eastl::move(v2));
+			VERIFY(eastl::get<TestObject>(v).mX == 1338);
+		}
+		VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+	{
+		{
+			eastl::variant<TestObject> v = TestObject(1337);
+			VERIFY(eastl::get<TestObject>(v).mX == 1337);
+			v = {};
+			VERIFY(eastl::get<TestObject>(v).mX == 0);
+		}
+		VERIFY(TestObject::IsClear());
+		TestObject::Reset();
+	}
+
+	return nErrorCount;
+}
+
+
+int TestVariantUserRegressionIncompleteType()
+{
+	using namespace eastl;
+	int nErrorCount = 0;
+
+	{
+		struct B;
+
+		struct A
+		{
+			vector<variant<B>> v;
+		};
+
+		struct B
+		{
+			vector<variant<A>> v;
+		};
+	}
+
+	return nErrorCount;
+}
+
+
 int TestVariant()
 {
 	int nErrorCount = 0;
+
 	nErrorCount += TestVariantBasic();
 	nErrorCount += TestVariantSize();
 	nErrorCount += TestVariantAlternative();
@@ -798,6 +867,9 @@ int TestVariant()
 	nErrorCount += TestVariantVisitor();
 	nErrorCount += TestVariantAssignment();
 	nErrorCount += TestVariantMoveOnly();
+	nErrorCount += TestVariantUserRegressionCopyMoveAssignmentOperatorLeak();
+	nErrorCount += TestVariantUserRegressionIncompleteType();
+
 	return nErrorCount;
 }
 #else

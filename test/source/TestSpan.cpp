@@ -300,6 +300,25 @@ void TestSpanContainerConversion(int& nErrorCount)
 		VERIFY(s1.data() ==  v.data());
 		VERIFY(s1.data() == s2.data());
 	}
+
+	{ // user reported regression for calling non-const span overload with a vector.
+		auto f1 = [](span<int> s) { return s.size(); };
+		auto f2 = [](span<const int> s) { return s.size(); };
+
+		{
+			vector<int> v = {0, 1, 2, 3, 4, 5};
+
+			VERIFY(f1(v) == v.size());
+			VERIFY(f2(v) == v.size());
+		}
+
+		{
+			int a[] = {0, 1, 2, 3, 4, 5};
+
+			VERIFY(f1(a) == EAArrayCount(a));
+			VERIFY(f2(a) == EAArrayCount(a));
+		}
+	}
 }
 
 void TestSpanComparison(int& nErrorCount)

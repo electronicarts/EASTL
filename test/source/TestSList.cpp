@@ -791,6 +791,40 @@ int TestSList()
 		EATEST_VERIFY(sizeof(list1) < sizeof(list2));
 	}
 
+	{ // Test erase / erase_if
+		{
+			slist<int> l = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+			eastl::erase(l, 5);
+			VERIFY((l == slist<int>{0, 1, 2, 3, 4, 6, 7, 8, 9}));
+
+			eastl::erase(l, 7);
+			VERIFY((l == slist<int>{0, 1, 2, 3, 4, 6, 8, 9}));
+
+			eastl::erase(l, 2);
+			VERIFY((l == slist<int>{0, 1, 3, 4, 6, 8, 9}));
+
+			eastl::erase(l, 0);
+			VERIFY((l == slist<int>{1, 3, 4, 6, 8, 9}));
+
+			eastl::erase(l, 4);
+			VERIFY((l == slist<int>{1, 3, 6, 8, 9}));
+		}
+
+		{
+			slist<int> l = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+			eastl::erase_if(l, [](auto e) { return e % 2 == 0; });
+			VERIFY((l == slist<int>{1, 3, 5, 7, 9}));
+
+			eastl::erase_if(l, [](auto e) { return e == 5; });
+			VERIFY((l == slist<int>{1, 3, 7, 9}));
+
+			eastl::erase_if(l, [](auto e) { return e % 3 == 0; });
+			VERIFY((l == slist<int>{1, 7}));
+		}
+	}
+
 	return nErrorCount;
 }
 

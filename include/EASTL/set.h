@@ -395,7 +395,26 @@ namespace eastl
 	}
 
 
-
+	///////////////////////////////////////////////////////////////////////
+	// erase_if 
+	//
+	// https://en.cppreference.com/w/cpp/container/set/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class Compare, class Allocator, class Predicate>
+	void erase_if(set<Key, Compare, Allocator>& c, Predicate predicate)
+	{
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -585,6 +604,28 @@ namespace eastl
 		return eastl::pair<const_iterator, const_iterator>(itLower, itUpper);
 	}
 
+
+	///////////////////////////////////////////////////////////////////////
+	// erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/multiset/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class Compare, class Allocator, class Predicate>
+	void erase_if(multiset<Key, Compare, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 } // namespace eastl

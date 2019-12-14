@@ -2651,6 +2651,25 @@ namespace eastl
 		a.swap(b);
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	// erase / erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/deque/erase2
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class U>
+	void erase(deque<T, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class T, class Allocator, class Predicate>
+	void erase_if(deque<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
+
 
 } // namespace eastl
 

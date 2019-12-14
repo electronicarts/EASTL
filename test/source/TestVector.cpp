@@ -1713,5 +1713,27 @@ int TestVector()
 		static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
 	}
 
+	// eastl::erase / eastl::erase_if tests
+	{
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+			eastl::erase(v, 5);
+			VERIFY((v == eastl::vector<int> {1, 2, 3, 4, 6, 7, 8, 9}));
+
+			eastl::erase(v, 2);
+			VERIFY((v == eastl::vector<int> {1, 3, 4, 6, 7, 8, 9}));
+
+			eastl::erase(v, 9);
+			VERIFY((v == eastl::vector<int> {1, 3, 4, 6, 7, 8}));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+			eastl::erase_if(v, [](auto i) { return i % 2 == 0; });
+			VERIFY((v == eastl::vector<int>{1, 3, 5, 7, 9}));
+		}
+	}
+
 	return nErrorCount;
 }

@@ -18,7 +18,6 @@ EA_RESTORE_ALL_VC_WARNINGS()
 #include "EAMain/EAEntryPointMain.inl"
 #include "EASTLTestAllocator.h"
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Required by EASTL.
 //
@@ -131,7 +130,6 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("SmartPtr",				TestSmartPtr);
 	testSuite.AddTest("Sort",					TestSort);
 	testSuite.AddTest("Span",				    TestSpan);
-	testSuite.AddTest("SparseMatrix",			TestSparseMatrix);
 	testSuite.AddTest("String",					TestString);
 	testSuite.AddTest("StringHashMap",			TestStringHashMap);
 	testSuite.AddTest("StringMap",				TestStringMap);

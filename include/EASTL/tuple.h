@@ -985,7 +985,7 @@ EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
 		EA_DISABLE_CLANG_WARNING(-Wmismatched-tags)
 
 		template <class... Ts>
-		class tuple_size<::eastl::tuple<Ts...>> : ::eastl::integral_constant<size_t, sizeof...(Ts)>
+		class tuple_size<::eastl::tuple<Ts...>> : public ::eastl::integral_constant<size_t, sizeof...(Ts)>
 		{
 		};
 

@@ -1856,6 +1856,24 @@ namespace eastl
 	}
 
 
+	/// erase / erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/container/forward_list/erase2
+	template <class T, class Allocator, class U>
+	void erase(slist<T, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.remove_if([&](auto& elem) { return elem == value; });
+	}
+
+	template <class T, class Allocator, class Predicate>
+	void erase_if(slist<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.remove_if(predicate);
+	}
+
+
 	/// insert_iterator
 	///
 	/// We borrow a trick from SGI STL here and define an insert_iterator 

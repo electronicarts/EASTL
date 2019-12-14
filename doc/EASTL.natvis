@@ -151,24 +151,24 @@
 </Type>
 
 <Type Name="eastl::ListBase&lt;*&gt;">
-	<DisplayString Condition="mNode.mpNext == &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext == &amp;mNodeAllocator.mFirst">
 		[0] {{}}
 	</DisplayString>
-    <DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext == &amp;mNode">
-		[1] {{ {((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue} }}
+    <DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext == &amp;mNodeAllocator.mFirst">
+		[1] {{ {((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue} }}
 	</DisplayString>
-	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext == &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext-&gt;mpNext == &amp;mNodeAllocator.mFirst">
 		[2] 
 		{{ 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue} 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext-&gt;mpNext)-&gt;mValue} 
 		}}
 	</DisplayString>
-	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext != &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst">
 		[?] 
 		{{ 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext-&gt;mpNext)-&gt;mValue}, 
 			...
 		}}
 	</DisplayString>
@@ -177,7 +177,7 @@
 		  <DisplayString>Content of lists will repeat indefinitely. Keep that in mind!</DisplayString> 
 		</Synthetic>  
         <LinkedListItems>
-            <HeadPointer>mNode.mpNext</HeadPointer>
+            <HeadPointer>mNodeAllocator.mFirst.mpNext</HeadPointer>
             <NextPointer>mpNext</NextPointer>
             <ValueNode>((eastl::ListNode&lt;$T1&gt;*)this)-&gt;mValue</ValueNode>
         </LinkedListItems>

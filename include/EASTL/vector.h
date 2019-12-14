@@ -293,13 +293,9 @@ namespace eastl
 		template <typename InputIterator>
 		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
-		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
 		iterator erase_first(const T& value);
-		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
 		iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
-		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
 		reverse_iterator erase_last(const T& value);
-		template <typename = eastl::enable_if<eastl::has_equality_v<T>>>
 		reverse_iterator erase_last_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
 
 		iterator erase(const_iterator position);
@@ -1237,9 +1233,10 @@ namespace eastl
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
 	inline typename vector<T, Allocator>::iterator vector<T, Allocator>::erase_first(const T& value)
 	{
+		static_assert(eastl::has_equality_v<T>, "T must be comparable");
+
 		iterator it = eastl::find(begin(), end(), value);
 
 		if (it != end())
@@ -1249,10 +1246,11 @@ namespace eastl
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
 	inline typename vector<T, Allocator>::iterator 
 	vector<T, Allocator>::erase_first_unsorted(const T& value)
 	{
+		static_assert(eastl::has_equality_v<T>, "T must be comparable");
+
 		iterator it = eastl::find(begin(), end(), value);
 
 		if (it != end())
@@ -1262,10 +1260,11 @@ namespace eastl
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
 	inline typename vector<T, Allocator>::reverse_iterator 
 	vector<T, Allocator>::erase_last(const T& value)
 	{
+		static_assert(eastl::has_equality_v<T>, "T must be comparable");
+
 		reverse_iterator it = eastl::find(rbegin(), rend(), value);
 
 		if (it != rend())
@@ -1275,10 +1274,11 @@ namespace eastl
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
 	inline typename vector<T, Allocator>::reverse_iterator 
 	vector<T, Allocator>::erase_last_unsorted(const T& value)
 	{
+		static_assert(eastl::has_equality_v<T>, "T must be comparable");
+
 		reverse_iterator it = eastl::find(rbegin(), rend(), value);
 
 		if (it != rend())
@@ -2020,6 +2020,26 @@ namespace eastl
 		a.swap(b);
 	}
 
+
+
+	///////////////////////////////////////////////////////////////////////
+	// erase / erase_if
+	// 
+	// https://en.cppreference.com/w/cpp/container/vector/erase2
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class U>
+	void erase(vector<T, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container. 
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class T, class Allocator, class Predicate>
+	void erase_if(vector<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container. 
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
 
 } // namespace eastl
 

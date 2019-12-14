@@ -4056,6 +4056,23 @@ namespace eastl
 		EA_RESTORE_VC_WARNING()  // warning: 4455
 	#endif
 
+
+	/// erase / erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/string/basic_string/erase2
+	template <class CharT, class Allocator, class U>
+	void erase(basic_string<CharT, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class CharT, class Allocator, class Predicate>
+	void erase_if(basic_string<CharT, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
 } // namespace eastl
 
 

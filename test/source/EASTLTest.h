@@ -68,7 +68,6 @@ int TestSet();
 int TestSmartPtr();
 int TestSort();
 int TestSpan();
-int TestSparseMatrix();
 int TestString();
 int TestStringHashMap();
 int TestStringMap();

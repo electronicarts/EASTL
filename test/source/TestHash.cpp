@@ -704,25 +704,23 @@ int TestHash()
 		//            const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR)
 		// this_type& operator=(std::initializer_list<value_type> ilist);
 		// void insert(std::initializer_list<value_type> ilist);
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-			hash_set<int> intHashSet = { 12, 13, 14 };
-			EATEST_VERIFY(intHashSet.size() == 3);
-			EATEST_VERIFY(intHashSet.find(12) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(13) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(14) != intHashSet.end());
+		hash_set<int> intHashSet = { 12, 13, 14 };
+		EATEST_VERIFY(intHashSet.size() == 3);
+		EATEST_VERIFY(intHashSet.find(12) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(13) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(14) != intHashSet.end());
 
-			intHashSet = { 22, 23, 24 };
-			EATEST_VERIFY(intHashSet.size() == 3);
-			EATEST_VERIFY(intHashSet.find(22) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(23) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(24) != intHashSet.end());
+		intHashSet = { 22, 23, 24 };
+		EATEST_VERIFY(intHashSet.size() == 3);
+		EATEST_VERIFY(intHashSet.find(22) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(23) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(24) != intHashSet.end());
 
-			intHashSet.insert({ 42, 43, 44 });
-			EATEST_VERIFY(intHashSet.size() == 6);
-			EATEST_VERIFY(intHashSet.find(42) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(43) != intHashSet.end());
-			EATEST_VERIFY(intHashSet.find(44) != intHashSet.end());
-		#endif
+		intHashSet.insert({ 42, 43, 44 });
+		EATEST_VERIFY(intHashSet.size() == 6);
+		EATEST_VERIFY(intHashSet.find(42) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(43) != intHashSet.end());
+		EATEST_VERIFY(intHashSet.find(44) != intHashSet.end());
 	}
 
 	{
@@ -732,6 +730,21 @@ int TestHash()
 		// size_type       erase(const key_type&);
 		// To do.
 	}
+
+
+	{ // hash_set erase_if
+		hash_set<int> m = {0, 1, 2, 3, 4};
+		eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
+		VERIFY((m == hash_set<int>{1, 3}));
+	}
+
+	{ // hash_multiset erase_if
+		hash_multiset<int> m = {0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4};
+		eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
+		VERIFY((m == hash_multiset<int>{1, 1, 1, 3}));
+	}
+
+
 
 
 
@@ -915,6 +928,20 @@ int TestHash()
 				EATEST_VERIFY(it == hashMap.end());
 		}
 	}
+
+	{ // hash_map erase_if
+		hash_map<int, int> m = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}};
+		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		VERIFY((m == hash_map<int, int>{{1, 1}, {3, 3}}));
+	}
+
+	{ // hash_multimap erase_if
+		hash_multimap<int, int> m = {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {1, 1}, {2, 2},
+		                             {2, 2}, {2, 2}, {2, 2}, {3, 3}, {3, 3}, {4, 4}};
+		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		VERIFY((m == hash_multimap<int, int>{{1, 1}, {3, 3}, {3, 3}}));
+	}
+
 
 
 	{   

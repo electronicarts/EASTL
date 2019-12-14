@@ -1058,6 +1058,34 @@ int TestDeque()
 	#endif
 	}
 
+
+	{ // Test erase / erase_if
+		{
+			eastl::deque<int> d = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+			eastl::erase(d, 2);
+			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 7, 8, 9}));
+
+			eastl::erase(d, 7);
+			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8, 9}));
+
+			eastl::erase(d, 9);
+			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8}));
+
+			eastl::erase(d, 5);
+			VERIFY((d == eastl::deque<int>{1, 3, 4, 6, 8}));
+
+			eastl::erase(d, 3);
+			VERIFY((d == eastl::deque<int>{1, 4, 6, 8}));
+		}
+
+		{
+			eastl::deque<int> d = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+			eastl::erase_if(d, [](auto i) { return i % 2 == 0; });
+			VERIFY((d == eastl::deque<int>{1, 3, 5, 7, 9}));
+		}
+	}
+
 	return nErrorCount;
 }
 

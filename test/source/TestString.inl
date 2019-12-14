@@ -2020,6 +2020,24 @@ int TEST_STRING_NAME()
 		}
 	}
 
+	// test eastl::erase
+	{
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		eastl::erase(str, LITERAL('a'));
+		eastl::erase(str, LITERAL('f'));
+		eastl::erase(str, LITERAL('l'));
+		eastl::erase(str, LITERAL('w'));
+		eastl::erase(str, LITERAL('y'));
+		VERIFY(str == LITERAL("bcdeghijkmnopqrstuvxz"));
+	}
+
+	// test eastl::erase_if
+	{
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		eastl::erase_if(str, [](auto c) { return c == LITERAL('a') || c == LITERAL('v'); });
+		VERIFY(str == LITERAL("bcdefghijklmnopqrstuwxyz"));
+	}
+
 	return nErrorCount;
 }
 

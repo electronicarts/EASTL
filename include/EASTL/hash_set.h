@@ -203,9 +203,25 @@ namespace eastl
 
 	}; // hash_set
 
-
-
-
+	/// hash_set erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/container/unordered_set/erase_if
+	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode, typename UserPredicate>
+	void erase_if(eastl::hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>& c, UserPredicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 	/// hash_multiset
@@ -320,6 +336,26 @@ namespace eastl
 		}
 
 	}; // hash_multiset
+
+	/// hash_multiset erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/container/unordered_multiset/erase_if
+	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode, typename UserPredicate>
+	void erase_if(eastl::hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>& c, UserPredicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 

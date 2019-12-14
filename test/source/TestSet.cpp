@@ -116,6 +116,18 @@ int TestSet()
 		}
 	}
 
+	{ // set erase_if tests
+		set<int> s = {0, 1, 2, 3, 4};
+		eastl::erase_if(s, [](auto i) { return i % 2 == 0;});
+		VERIFY((s == set<int>{1,3}));
+	}
+
+	{ // multiset erase_if tests
+		multiset<int> s = {0, 0, 0, 0, 0, 1, 1, 1, 2, 3, 3, 3, 4};
+		eastl::erase_if(s, [](auto i) { return i % 2 == 0;});
+		VERIFY((s == multiset<int>{1, 1, 1, 3, 3, 3}));
+	}
+
 	return nErrorCount;
 }
 

@@ -2138,6 +2138,26 @@ namespace eastl
 	}
 
 
+	///////////////////////////////////////////////////////////////////////
+	// erase / erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/list/erase2
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class U>
+	void erase(list<T, Allocator>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.remove_if([&](auto& elem) { return elem == value; });
+	}
+
+	template <class T, class Allocator, class Predicate>
+	void erase_if(list<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.remove_if(predicate);
+	}
+
+
 } // namespace eastl
 
 

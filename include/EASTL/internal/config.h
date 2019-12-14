@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.15.00"
-	#define EASTL_VERSION_N  31500
+	#define EASTL_VERSION   "3.16.01"
+	#define EASTL_VERSION_N  31601
 #endif
 
 
@@ -143,20 +143,18 @@
 // http://en.wikipedia.org/wiki/C%2B%2B14#Relaxed_constexpr_restrictions
 //
 #if !defined(EA_CPP14_CONSTEXPR)
+
 	#if defined(EA_COMPILER_MSVC_2015)
-		#define EA_CPP14_CONSTEXPR // not supported
-		#define EA_NO_CPP14_CONSTEXPR
-	#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION < 9000)     // Before GCC 9.0
-		#define EA_CPP14_CONSTEXPR                                      // not supported
-		#define EA_NO_CPP14_CONSTEXPR
-	#elif defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION < 500)     // Before clang5
-		#define EA_CPP14_CONSTEXPR                                      // not supported
-		#define EA_NO_CPP14_CONSTEXPR
+		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
+	#elif defined(__GNUC__) && (EA_COMPILER_VERSION < 9000)   // Before GCC 9.0
+		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
 	#elif defined(EA_COMPILER_CPP14_ENABLED)
 		#define EA_CPP14_CONSTEXPR constexpr
 	#else
-		#define EA_CPP14_CONSTEXPR // not supported
-		#define EA_NO_CPP14_CONSTEXPR
+		#define EA_CPP14_CONSTEXPR  // not supported
+		#define EA_NO_CPP14_CONSTEXPR 
 	#endif
 #endif
 

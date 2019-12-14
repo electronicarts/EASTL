@@ -84,13 +84,13 @@ namespace eastl
 		    enable_if_t<!is_same_v<Container, span> && !is_same_v<Container, array<value_type>> &&
 		                !is_array_v<Container> &&
 		                Internal::HasSizeAndData<Container>::value &&
-		                is_convertible_v<remove_pointer_t<decltype(eastl::data(eastl::declval<Container>()))> (*)[], element_type (*)[]>>;
+		                is_convertible_v<remove_pointer_t<decltype(eastl::data(eastl::declval<Container&>()))> (*)[], element_type (*)[]>>;
 
 		// generic container conversion constructors
 		template <typename Container, typename = SfinaeForGenericContainers<Container>>
 		EA_CONSTEXPR span(Container& cont);
 
-		template <typename Container, typename = SfinaeForGenericContainers<Container>>
+		template <typename Container, typename = SfinaeForGenericContainers<const Container>>
 		EA_CONSTEXPR span(const Container& cont);
 
 		template <typename U, size_t N, typename = enable_if_t<(Extent == eastl::dynamic_extent || N == Extent) && (is_convertible_v<U(*)[], element_type(*)[]>)>>
@@ -141,12 +141,13 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////
 	// template deduction guides 
 	///////////////////////////////////////////////////////////////////////////
-
-	// template<class T, size_t N> span(T (&)[N]) ->           span <T, N>;
-	// template<class T, size_t N> span(array<T, N>&) ->       span <T, N>;
-	// template<class T, size_t N> span(const array<T, N>&) -> span <const T, N>;
-	// template<class Container>   span(Container&) ->         span <typename Container::value_type>;
-	// template<class Container>   span(const Container&) ->   span <const typename Container::value_type>;
+	#ifdef __cpp_deduction_guides
+		template<class T, size_t N> span(T (&)[N]) ->           span <T, N>;
+		template<class T, size_t N> span(array<T, N>&) ->       span <T, N>;
+		template<class T, size_t N> span(const array<T, N>&) -> span <const T, N>;
+		template<class Container>   span(Container&) ->         span <typename Container::value_type>;
+		template<class Container>   span(const Container&) ->   span <const typename Container::value_type>;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////////

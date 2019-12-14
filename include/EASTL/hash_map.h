@@ -288,9 +288,25 @@ namespace eastl
 
 	}; // hash_map
 
-
-
-
+	/// hash_map erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/container/unordered_map/erase_if
+	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode, typename UserPredicate>
+	void erase_if(eastl::hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& c, UserPredicate predicate)
+	{
+		// Erases all elements that satisfy the predicate from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 	/// hash_multimap
@@ -436,8 +452,27 @@ namespace eastl
 			return base_type::DoInsertKey(false_type(), eastl::move(key));
 		}
 
-
 	}; // hash_multimap
+
+	/// hash_multimap erase_if
+	///
+	/// https://en.cppreference.com/w/cpp/container/unordered_multimap/erase_if
+	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode, typename UserPredicate>
+	void erase_if(eastl::hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& c, UserPredicate predicate)
+	{
+		// Erases all elements that satisfy the predicate from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 

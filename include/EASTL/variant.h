@@ -261,15 +261,18 @@ namespace eastl
 		};
 
 		// handler function
-		using StorageHandlerPtr = void(*)(StorageOp, void*, void*);
+		using storage_handler_ptr = void(*)(StorageOp, void*, void*);
 		using aligned_storage_impl_t = aligned_union_t<16, Types...>;
 
 		aligned_storage_impl_t mBuffer;
-		StorageHandlerPtr mpHandler = nullptr;
+		storage_handler_ptr mpHandler = nullptr;
 
 		template<typename VariantStorageT>
 		inline void DoOp(StorageOp op, VariantStorageT&& other)  // bind to both rvalue and lvalues
 		{
+			if(mpHandler)
+				DoOp(StorageOp::DESTROY);
+
 			if (other.mpHandler)
 				mpHandler = other.mpHandler;
 
@@ -361,7 +364,7 @@ namespace eastl
 
 			new (&mBuffer) RT(eastl::forward<Args>(args)...);
 
-			mpHandler = (StorageHandlerPtr)&DoOpImpl<RT>;
+			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
 		}
 
 		template <typename T, typename U, typename... Args>
@@ -376,7 +379,7 @@ namespace eastl
 
 			new (&mBuffer) RT(il, eastl::forward<Args>(args)...);
 
-			mpHandler = (StorageHandlerPtr)&DoOpImpl<RT>;
+			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
 		}
 
 		template<typename T>

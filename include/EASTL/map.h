@@ -476,7 +476,26 @@ namespace eastl
 	}
 
 
-
+	///////////////////////////////////////////////////////////////////////
+	// erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/map/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class T, class Compare, class Allocator, class Predicate>
+	void erase_if(map<Key, T, Compare, Allocator>& c, Predicate predicate)
+	{
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -633,6 +652,27 @@ namespace eastl
 
 
 
+	///////////////////////////////////////////////////////////////////////
+	// erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/multimap/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class T, class Compare, class Allocator, class Predicate>
+	void erase_if(multimap<Key, T, Compare, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
 
 } // namespace eastl
 

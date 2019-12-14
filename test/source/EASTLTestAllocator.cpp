@@ -302,7 +302,7 @@
 	}
 
 
-	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new(size_t size) EA_THROW_SPEC_NEW(std::bad_alloc)
+	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new(size_t size) 
 	{
 		gEASTLTest_AllocationCount++;
 		gEASTLTest_TotalAllocationCount++;
@@ -320,7 +320,7 @@
 	}
 
 
-	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new[](size_t size) EA_THROW_SPEC_NEW(std::bad_alloc)
+	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new[](size_t size) 
 	{
 		gEASTLTest_AllocationCount++;
 		gEASTLTest_TotalAllocationCount++;
