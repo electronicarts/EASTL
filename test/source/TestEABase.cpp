@@ -2316,7 +2316,11 @@ int TestEACompilerTraits()
 		EA_ALIGNED(int, j[3], ALIGNMENT_AMOUNT_16);
 		EA_ALIGNED(int, k[3], ALIGNMENT_AMOUNT_16) = { 1, 2, 3 };
 		struct EA_ALIGN(8) L { int x; int y; };
+
+		EA_DISABLE_VC_WARNING(4359)
 		EA_ALIGN(ALIGNMENT_AMOUNT_32) struct X { int x; int y; } m;
+		EA_RESTORE_VC_WARNING()
+
 	  //int N[3] EA_PACKED; // Some compilers (e.g. GCC) don't support this or ignore this and generate a warning.
 		struct P { int x EA_PACKED; int y EA_PACKED; };
 		struct Q { int x; int y; } EA_PACKED;

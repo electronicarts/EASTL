@@ -224,8 +224,6 @@
 	#if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_TV_TITLE)
 		#define EA_PLATFORM_XBOXONE_XDK 	1
 	#endif
-
-// Larrabee                                           // This part to be removed once __LRB__ is supported by the Larrabee compiler in 2009.
 #elif defined(EA_PLATFORM_LRB) || defined(__LRB__) || (defined(__EDG__) && defined(__ICC) && defined(__x86_64__))
 	#undef  EA_PLATFORM_LRB
 	#define EA_PLATFORM_LRB         1

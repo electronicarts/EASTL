@@ -1550,7 +1550,7 @@
 			#else
 				#define EA_SSE 0
 			#endif
-		#elif (defined(EA_SSE3) && EA_SSE3) || defined EA_PLATFORM_XBOXONE
+		#elif (defined(EA_SSE3) && EA_SSE3) || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_SSE 3
 		#elif defined(EA_SSE2) && EA_SSE2
 			#define EA_SSE 2
@@ -1589,28 +1589,28 @@
 		#endif
 	#endif
 	#ifndef EA_SSSE3
-		#if defined __SSSE3__ || defined EA_PLATFORM_XBOXONE
+		#if defined __SSSE3__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_SSSE3 1
 		#else
 			#define EA_SSSE3 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_1
-		#if defined __SSE4_1__ || defined EA_PLATFORM_XBOXONE
+		#if defined __SSE4_1__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_SSE4_1 1
 		#else
 			#define EA_SSE4_1 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_2
-		#if defined __SSE4_2__ || defined EA_PLATFORM_XBOXONE
+		#if defined __SSE4_2__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_SSE4_2 1
 		#else
 			#define EA_SSE4_2 0
 		#endif
 	#endif
 	#ifndef EA_SSE4A
-		#if defined __SSE4A__ || defined EA_PLATFORM_XBOXONE
+		#if defined __SSE4A__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_SSE4A 1
 		#else
 			#define EA_SSE4A 0
@@ -1628,7 +1628,7 @@
 	#ifndef EA_AVX
 		#if defined __AVX2__
 			#define EA_AVX 2
-		#elif defined __AVX__ || defined EA_PLATFORM_XBOXONE
+		#elif defined __AVX__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_AVX 1
 		#else
 			#define EA_AVX 0
@@ -1645,7 +1645,7 @@
 	// EA_FP16C may be used to determine the existence of float <-> half conversion operations on an x86 CPU.
 	// (For example to determine if _mm_cvtph_ps or _mm_cvtps_ph could be used.)
 	#ifndef EA_FP16C
-		#if defined __F16C__ || defined EA_PLATFORM_XBOXONE
+		#if defined __F16C__ || defined EA_PLATFORM_XBOXONE || defined CS_UNDEFINED_STRING
 			#define EA_FP16C 1
 		#else
 			#define EA_FP16C 0
@@ -1668,7 +1668,7 @@
 	// EA_ABM may be used to determine if Advanced Bit Manipulation sets are available for the target architecture (POPCNT, LZCNT)
 	// 
 	#ifndef EA_ABM
-		#if defined(__ABM__) || defined(EA_PLATFORM_XBOXONE) || defined(EA_PLATFORM_SONY)
+		#if defined(__ABM__) || defined(EA_PLATFORM_XBOXONE) || defined(EA_PLATFORM_SONY) || defined(CS_UNDEFINED_STRING)
 			#define EA_ABM 1
 		#else
 			#define EA_ABM 0
@@ -1697,7 +1697,7 @@
 	#ifndef EA_BMI
 		#if defined(__BMI2__)
 			#define EA_BMI 2
-		#elif defined(__BMI__) || defined(EA_PLATFORM_XBOXONE)
+		#elif defined(__BMI__) || defined(EA_PLATFORM_XBOXONE) || defined(CS_UNDEFINED_STRING)
 			#define EA_BMI 1
 		#else
 			#define EA_BMI 0

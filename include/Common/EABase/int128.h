@@ -111,20 +111,12 @@ protected:
 
 	EA_CONSTEXPR uint64_t Low() const
 	{
-	#ifdef EA_SYSTEM_BIG_ENDIAN
 		return mPart0;
-	#else
-		return mPart1;
-	#endif
 	}
 
 	EA_CONSTEXPR uint64_t High() const
 	{
-	#ifdef EA_SYSTEM_BIG_ENDIAN
 		return mPart1;
-	#else
-		return mPart0;
-	#endif
 	}
 
 protected:
