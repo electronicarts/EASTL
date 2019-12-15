@@ -28,6 +28,8 @@ endif()
 
 if(EASTL_BUILD_TESTS)
     add_subdirectory(test)
+else()
+    add_subdirectory(test/packages/EABase)
 endif()
 
 #-------------------------------------------------------------------------------------------
