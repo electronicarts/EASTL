@@ -290,7 +290,7 @@ namespace eastl
 
 		EA_CONSTEXPR size_type find_first_of(basic_string_view sw, size_type pos = 0) const EA_NOEXCEPT
 		{
-			return find_first_of(sw.mpBegin, pos, mnCount);
+			return find_first_of(sw.mpBegin, pos, sw.mnCount);
 		}
 
 		EA_CONSTEXPR size_type find_first_of(T c, size_type pos = 0) const EA_NOEXCEPT { return find(c, pos); }
