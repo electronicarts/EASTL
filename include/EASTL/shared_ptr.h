@@ -1284,7 +1284,7 @@ namespace eastl
 	template <typename T>
 	inline shared_ptr<T> atomic_exchange_explicit(shared_ptr<T>* pSharedPtrA, shared_ptr<T> sharedPtrB, ... /*std::memory_order memoryOrder*/)
 	{
-		atomic_exchange(pSharedPtrA, sharedPtrB);
+		return atomic_exchange(pSharedPtrA, sharedPtrB);
 	}
 
 	// Compares the shared pointers pointed-to by p and expected. If they are equivalent (share ownership of the 
