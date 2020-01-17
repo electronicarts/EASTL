@@ -318,7 +318,9 @@ namespace eastl
 		// (iterator categories). This is because in these cases there is an optimized
 		// implementation that can be had for some cases relative to others. Functions
 		// which aren't referenced are neither compiled nor linked into the application.
-		struct should_copy_tag{}; struct should_move_tag : public should_copy_tag{};
+		template <bool bMove> struct should_move_or_copy_tag{};
+		using should_copy_tag = should_move_or_copy_tag<false>;
+		using should_move_tag = should_move_or_copy_tag<true>;
 
 		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
 		pointer DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
@@ -1513,7 +1515,7 @@ namespace eastl
 
 		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
 		{
-			pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+			pointer const pNewData = DoRealloc(n, first, last, should_move_or_copy_tag<bMove>());
 			eastl::destruct(mpBegin, mpEnd);
 			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 

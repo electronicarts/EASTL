@@ -536,6 +536,29 @@ int TestFixedVector()
 		EATEST_VERIFY(fv.validate());
 	}
 
+	{ // Test that ensures that move ctor that triggers realloc (e.g. > capacity) does so via move code path
+		eastl::fixed_vector<TestObject, 1, true> fv1;
+		fv1.push_back(TestObject(0));
+		fv1.push_back(TestObject(0));
+		int64_t copyCtorCount0 = TestObject::sTOCopyCtorCount, moveCtorCount0 = TestObject::sTOMoveCtorCount;
+		decltype(fv1) fv2 = eastl::move(fv1);
+		EATEST_VERIFY(TestObject::sTOCopyCtorCount == copyCtorCount0 && TestObject::sTOMoveCtorCount == (moveCtorCount0 + 2));
+	}
+	{ // Same as above but with custom statefull allocator
+		struct MyAlloc : public eastl::allocator
+		{
+			MyAlloc()=default;
+			MyAlloc(int i) : dummy(i) {}
+			int dummy;
+		};
+		eastl::fixed_vector<TestObject, 1, true, MyAlloc> fv1;
+		fv1.push_back(TestObject(0));
+		fv1.push_back(TestObject(0));
+		int64_t copyCtorCount0 = TestObject::sTOCopyCtorCount, moveCtorCount0 = TestObject::sTOMoveCtorCount;
+		decltype(fv1) fv2(eastl::move(fv1), MyAlloc(123));
+		EATEST_VERIFY(TestObject::sTOCopyCtorCount == copyCtorCount0 && TestObject::sTOMoveCtorCount == (moveCtorCount0 + 2));
+	}
+
 	#if defined(EA_COMPILER_CPP17_ENABLED) 
 	//Test pairing of std::variant with fixed_vector
 	{
