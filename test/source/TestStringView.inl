@@ -403,6 +403,7 @@ int TEST_STRING_NAME()
 			VERIFY(str.find_first_of(LITERAL("eeef"), 1, 4) == 18);
 			VERIFY(str.find_first_of(LITERAL('g')) == 26);
 			VERIFY(str.find_first_of(LITERAL('$')) == StringViewT::npos);
+			VERIFY(str.find_first_of(StringViewT(LITERAL(" a"), 1)) == StringViewT::npos);
 		}
 
 		// EA_CONSTEXPR size_type find_last_of(basic_string_view s, size_type pos = npos) const EA_NOEXCEPT;
