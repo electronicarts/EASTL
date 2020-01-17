@@ -11,6 +11,18 @@ If you are familiar with the C++ STL or have worked with other templated contain
 
 EASTL is suitable for any tools and shipping applications where the functionality of EASTL is useful. Modern compilers are capable of producing good code with templates and many people are using them in both current generation and future generation applications on multiple platforms from embedded systems to servers and mainframes.
 
+## Package Managers
+
+You can download and install EASTL using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    vcpkg install eastl
+
+The EASTL port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 
 ## Documentation
 
