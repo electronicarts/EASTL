@@ -1405,6 +1405,10 @@ static int Test_shared_ptr_thread()
 			spTO = atomic_exchange(&spTO2, spTO);
 			EATEST_VERIFY(spTO->mX == 56);
 			EATEST_VERIFY(spTO2->mX == 77);
+			
+			spTO = atomic_exchange_explicit(&spTO2, spTO);
+			EATEST_VERIFY(spTO->mX == 77);
+			EATEST_VERIFY(spTO2->mX == 56);
 
 			// bool atomic_compare_exchange_strong(shared_ptr<T>* pSharedPtr, shared_ptr<T>* pSharedPtrCondition, shared_ptr<T> sharedPtrNew);
 			// bool atomic_compare_exchange_weak(shared_ptr<T>* pSharedPtr, shared_ptr<T>* pSharedPtrCondition, shared_ptr<T> sharedPtrNew);
@@ -1413,12 +1417,12 @@ static int Test_shared_ptr_thread()
 			shared_ptr<TestObject> spTO3 = atomic_load(&spTO2);
 			bool result = atomic_compare_exchange_strong(&spTO3, &spTO, make_shared<TestObject>(88));   // spTO3 != spTO, so this should do no exchange and return false.
 			EATEST_VERIFY(!result);
-			EATEST_VERIFY(spTO3->mX == 77);
-			EATEST_VERIFY(spTO->mX == 77);
+			EATEST_VERIFY(spTO3->mX == 56);
+			EATEST_VERIFY(spTO->mX == 56);
 
 			result = atomic_compare_exchange_strong(&spTO3, &spTO2, make_shared<TestObject>(88));       // spTO3 == spTO2, so this should succeed.
 			EATEST_VERIFY(result);
-			EATEST_VERIFY(spTO2->mX == 77);
+			EATEST_VERIFY(spTO2->mX == 56);
 			EATEST_VERIFY(spTO3->mX == 88);
 		}
 	#endif
