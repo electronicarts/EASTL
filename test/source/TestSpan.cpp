@@ -388,6 +388,46 @@ void TestSpanSubViews(int& nErrorCount)
 		VERIFY(first_span[2] == 8);
 		VERIFY(first_span[3] == 9);
 	}
+
+	{ // fixed-extent subspan (full-range)
+		span<int, 10> s =  arr1;
+		auto first_span = s.subspan<0, 10>();
+		VERIFY(first_span.size() == 10);
+		VERIFY(first_span[0] == 0);
+		VERIFY(first_span[1] == 1);
+		VERIFY(first_span[8] == 8);
+		VERIFY(first_span[9] == 9);
+	}
+
+	{ // fixed-extent subspan (sub-range)
+		span<int, 10> s =  arr1;
+		auto first_span = s.subspan<3, 4>();
+		VERIFY(first_span.size() == 4);
+		VERIFY(first_span[0] == 3);
+		VERIFY(first_span[1] == 4);
+		VERIFY(first_span[2] == 5);
+		VERIFY(first_span[3] == 6);
+	}
+
+	{ // dynamic-extent subspan (full-range)
+		span<int> s =  arr1;
+		auto first_span = s.subspan(0, s.size());
+		VERIFY(first_span.size() == 10);
+		VERIFY(first_span[0] == 0);
+		VERIFY(first_span[1] == 1);
+		VERIFY(first_span[8] == 8);
+		VERIFY(first_span[9] == 9);
+	}
+
+	{ // dynamic-extent subspan (sub-range)
+		span<int> s =  arr1;
+		auto first_span = s.subspan(3, 4);
+		VERIFY(first_span.size() == 4);
+		VERIFY(first_span[0] == 3);
+		VERIFY(first_span[1] == 4);
+		VERIFY(first_span[2] == 5);
+		VERIFY(first_span[3] == 6);
+	}
 }
 
 int TestSpan()

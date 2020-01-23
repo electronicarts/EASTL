@@ -30,7 +30,9 @@
 
 namespace eastl
 {
-	namespace Internal 
+	static EA_CONSTEXPR size_t dynamic_extent = size_t(-1);
+
+	namespace Internal
 	{
 		// HasSizeAndData
 		// 
@@ -41,9 +43,18 @@ namespace eastl
 
 		template <typename T>
 		struct HasSizeAndData<T, void_t<decltype(eastl::size(eastl::declval<T>())), decltype(eastl::data(eastl::declval<T>()))>> : eastl::true_type {};
-	}
 
-	static EA_CONSTEXPR size_t dynamic_extent = size_t(-1);
+		// SubspanExtent
+		//
+		// Integral constant that calculates the resulting extent of a templated subspan operation.
+		//
+		//   If Count is not dynamic_extent then SubspanExtent::value is Count,
+		//   otherwise, if Extent is not dynamic_extent, SubspanExtent::value is (Extent - Offset),
+		//   otherwise, SubspanExtent::value is dynamic_extent.
+		//
+		template<size_t Extent, size_t Offset, size_t Count>
+		struct SubspanExtent : eastl::integral_constant<size_t, (Count != dynamic_extent ? Count : (Extent != dynamic_extent ? (Extent - Offset) : dynamic_extent))> {};
+	}
 
 	template <typename T, size_t Extent = eastl::dynamic_extent>
 	class span
@@ -105,9 +116,9 @@ namespace eastl
 		EA_CPP14_CONSTEXPR span<element_type, Count> last() const;
 		EA_CPP14_CONSTEXPR span<element_type, dynamic_extent> last(size_t Count) const;
 
-		// template <size_t Offset, size_t Count = dynamic_extent>
-		// EA_CONSTEXPR span<element_type, E [> see below <]> subspan() const;
-		// EA_CONSTEXPR span<element_type, dynamic_extent> subspan(size_t Offset, size_t Count = dynamic_extent) const;
+		template <size_t Offset, size_t Count = dynamic_extent>
+		EA_CONSTEXPR span<element_type, Internal::SubspanExtent<Extent, Offset, Count>::value> subspan() const;
+		EA_CONSTEXPR span<element_type, dynamic_extent> subspan(size_t Offset, size_t Count = dynamic_extent) const;
 
 		// observers
 		EA_CONSTEXPR pointer    data() const EA_NOEXCEPT;
@@ -381,6 +392,27 @@ namespace eastl
 	{
 		EASTL_ASSERT_MSG(bounds_check(sz), "undefined behavior accessing out of bounds");
 		return {data() + size() - sz, static_cast<index_type>(sz)};
+	}
+
+	template <typename T, size_t Extent>
+	template <size_t Offset, size_t Count>
+	EA_CONSTEXPR span<typename span<T, Extent>::element_type, Internal::SubspanExtent<Extent, Offset, Count>::value>
+	span<T, Extent>::subspan() const
+	{
+		EASTL_ASSERT_MSG(bounds_check(Offset),                                  "undefined behaviour accessing out of bounds");
+		EASTL_ASSERT_MSG(Count == dynamic_extent || Count <= (size() - Offset), "undefined behaviour accessing out of bounds");
+
+		return {data() + Offset, Count == dynamic_extent ? size() - Offset : Count};
+	}
+
+	template <typename T, size_t Extent>
+	EA_CONSTEXPR span<typename span<T, Extent>::element_type, dynamic_extent>
+	span<T, Extent>::subspan(size_t offset, size_t count) const
+	{
+		EASTL_ASSERT_MSG(bounds_check(offset),                                  "undefined behaviour accessing out of bounds");
+		EASTL_ASSERT_MSG(count == dynamic_extent || count <= (size() - offset), "undefined behaviour accessing out of bounds");
+
+		return {data() + offset, count == dynamic_extent ? size() - offset : count};
 	}
 
 	template <typename T, size_t Extent>
