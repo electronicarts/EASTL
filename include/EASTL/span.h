@@ -400,7 +400,7 @@ namespace eastl
 	span<T, Extent>::subspan() const
 	{
 		EASTL_ASSERT_MSG(bounds_check(Offset),                                  "undefined behaviour accessing out of bounds");
-		EASTL_ASSERT_MSG(Count == dynamic_extent || Count <= (size() - Offset), "undefined behaviour accessing out of bounds");
+		EASTL_ASSERT_MSG(Count == dynamic_extent || Count <= (size() - Offset), "undefined behaviour exceeding size of span");
 
 		return {data() + Offset, Count == dynamic_extent ? size() - Offset : Count};
 	}
@@ -410,7 +410,7 @@ namespace eastl
 	span<T, Extent>::subspan(size_t offset, size_t count) const
 	{
 		EASTL_ASSERT_MSG(bounds_check(offset),                                  "undefined behaviour accessing out of bounds");
-		EASTL_ASSERT_MSG(count == dynamic_extent || count <= (size() - offset), "undefined behaviour accessing out of bounds");
+		EASTL_ASSERT_MSG(count == dynamic_extent || count <= (size() - offset), "undefined behaviour exceeding size of span");
 
 		return {data() + offset, count == dynamic_extent ? size() - offset : count};
 	}
