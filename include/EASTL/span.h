@@ -116,6 +116,8 @@ namespace eastl
 		EA_CONSTEXPR bool       empty() const EA_NOEXCEPT;
 
 		// subscript operators, element access
+		EA_CONSTEXPR reference front() const;
+		EA_CONSTEXPR reference back() const;
 		EA_CONSTEXPR reference operator[](index_type idx) const;
 		EA_CONSTEXPR reference operator()(index_type idx) const;
 
@@ -264,7 +266,23 @@ namespace eastl
 	template <typename T, size_t Extent>
 	EA_CONSTEXPR bool span<T, Extent>::empty() const EA_NOEXCEPT
 	{
-		return size() == 0; 
+		return size() == 0;
+	}
+
+	template <typename T, size_t Extent>
+	EA_CONSTEXPR typename span<T, Extent>::reference span<T, Extent>::front() const
+	{
+		EASTL_ASSERT_MSG(!empty(), "undefined behavior accessing an empty span");
+
+		return mpData[0];
+	}
+
+	template <typename T, size_t Extent>
+	EA_CONSTEXPR typename span<T, Extent>::reference span<T, Extent>::back() const
+	{
+		EASTL_ASSERT_MSG(!empty(), "undefined behavior accessing an empty span");
+
+		return mpData[mnSize - 1];
 	}
 
 	template <typename T, size_t Extent>

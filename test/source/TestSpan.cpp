@@ -120,13 +120,16 @@ void TestSpanSizeBytes(int& nErrorCount)
 	}
 }
 
-void TestSpanSubscript(int& nErrorCount)
+void TestSpanElementAccess(int& nErrorCount)
 {
 	using namespace eastl;
 
 	{
 		int arr[5] = {0, 1, 2, 3, 4};
 		span<int> s(arr);
+
+		VERIFY(s.front() == 0);
+		VERIFY(s.back() == 4);
 
 		VERIFY(s[0] == 0);
 		VERIFY(s[1] == 1);
@@ -393,7 +396,7 @@ int TestSpan()
 
 	TestSpanCtor(nErrorCount);
 	TestSpanSizeBytes(nErrorCount);
-	TestSpanSubscript(nErrorCount);
+	TestSpanElementAccess(nErrorCount);
 	TestSpanIterators(nErrorCount);
 	TestSpanCopyAssignment(nErrorCount);
 	TestSpanContainerConversion(nErrorCount);
