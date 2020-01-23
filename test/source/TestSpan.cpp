@@ -389,44 +389,58 @@ void TestSpanSubViews(int& nErrorCount)
 		VERIFY(first_span[3] == 9);
 	}
 
-	{ // fixed-extent subspan (full-range)
+	{ // subspan: full range
 		span<int, 10> s =  arr1;
-		auto first_span = s.subspan<0, 10>();
-		VERIFY(first_span.size() == 10);
-		VERIFY(first_span[0] == 0);
-		VERIFY(first_span[1] == 1);
-		VERIFY(first_span[8] == 8);
-		VERIFY(first_span[9] == 9);
+
+		auto fixed_span = s.subspan<0, 10>();
+		VERIFY(fixed_span.size() == 10);
+		VERIFY(fixed_span[0] == 0);
+		VERIFY(fixed_span[1] == 1);
+		VERIFY(fixed_span[8] == 8);
+		VERIFY(fixed_span[9] == 9);
+
+		auto dynamic_span = s.subspan(0, s.size());
+		VERIFY(dynamic_span.size() == 10);
+		VERIFY(dynamic_span[0] == 0);
+		VERIFY(dynamic_span[1] == 1);
+		VERIFY(dynamic_span[8] == 8);
+		VERIFY(dynamic_span[9] == 9);
 	}
 
-	{ // fixed-extent subspan (sub-range)
+	{ // subspan: subrange
 		span<int, 10> s =  arr1;
-		auto first_span = s.subspan<3, 4>();
-		VERIFY(first_span.size() == 4);
-		VERIFY(first_span[0] == 3);
-		VERIFY(first_span[1] == 4);
-		VERIFY(first_span[2] == 5);
-		VERIFY(first_span[3] == 6);
+
+		auto fixed_span = s.subspan<3, 4>();
+		VERIFY(fixed_span.size() == 4);
+		VERIFY(fixed_span[0] == 3);
+		VERIFY(fixed_span[1] == 4);
+		VERIFY(fixed_span[2] == 5);
+		VERIFY(fixed_span[3] == 6);
+
+		auto dynamic_span = s.subspan(3, 4);
+		VERIFY(dynamic_span.size() == 4);
+		VERIFY(dynamic_span[0] == 3);
+		VERIFY(dynamic_span[1] == 4);
+		VERIFY(dynamic_span[2] == 5);
+		VERIFY(dynamic_span[3] == 6);
 	}
 
-	{ // dynamic-extent subspan (full-range)
-		span<int> s =  arr1;
-		auto first_span = s.subspan(0, s.size());
-		VERIFY(first_span.size() == 10);
-		VERIFY(first_span[0] == 0);
-		VERIFY(first_span[1] == 1);
-		VERIFY(first_span[8] == 8);
-		VERIFY(first_span[9] == 9);
-	}
+	{ // subspan: default count
+		span<int, 10> s =  arr1;
 
-	{ // dynamic-extent subspan (sub-range)
-		span<int> s =  arr1;
-		auto first_span = s.subspan(3, 4);
-		VERIFY(first_span.size() == 4);
-		VERIFY(first_span[0] == 3);
-		VERIFY(first_span[1] == 4);
-		VERIFY(first_span[2] == 5);
-		VERIFY(first_span[3] == 6);
+		auto fixed_span = s.subspan<3>();
+		VERIFY(fixed_span.size() == 7);
+		VERIFY(fixed_span[0] == 3);
+		VERIFY(fixed_span[1] == 4);
+		VERIFY(fixed_span[5] == 8);
+		VERIFY(fixed_span[6] == 9);
+
+		auto dynamic_span = s.subspan(3);
+		VERIFY(dynamic_span.size() == 7);
+		VERIFY(dynamic_span[0] == 3);
+		VERIFY(dynamic_span[1] == 4);
+		VERIFY(dynamic_span[5] == 8);
+		VERIFY(dynamic_span[6] == 9);
 	}
 }
 
