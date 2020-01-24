@@ -122,6 +122,14 @@ int TestArray()
 		VERIFY( (a <= c));
 		VERIFY(!(a >= c));
 		VERIFY(!(a  > c));
+
+		// deduction guides
+		#ifdef __cpp_deduction_guides
+			array deduced {1,2,3,4,5};
+
+			VERIFY((eastl::is_same_v<decltype(deduced)::value_type, int>));
+			VERIFY(deduced.size() == 5);
+		#endif
 	}
 
 	// constexpr tests
