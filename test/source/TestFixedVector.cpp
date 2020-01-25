@@ -9,7 +9,7 @@
 #include <EAStdC/EAMemory.h>
 #include <new>
 
-#if defined(EA_COMPILER_CPP17_ENABLED) 
+#if defined(EA_COMPILER_CPP17_ENABLED) && __has_include(<variant>)
 #include <variant> //Variant not present in older standards
 #endif
 
@@ -559,7 +559,7 @@ int TestFixedVector()
 		EATEST_VERIFY(TestObject::sTOCopyCtorCount == copyCtorCount0 && TestObject::sTOMoveCtorCount == (moveCtorCount0 + 2));
 	}
 
-	#if defined(EA_COMPILER_CPP17_ENABLED) 
+	#if defined(EA_COMPILER_CPP17_ENABLED) && __has_include(<variant>)
 	//Test pairing of std::variant with fixed_vector
 	{
 		eastl::fixed_vector<std::variant<int>, 4> v;

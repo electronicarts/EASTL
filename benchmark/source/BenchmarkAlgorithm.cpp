@@ -207,26 +207,6 @@ namespace
 
 
 	template <typename Container>
-	void TestRandomShuffleStd(EA::StdC::Stopwatch& stopwatch, Container& c, EASTLTest_Rand rng) // Intentionally passed by value instead of by reference. We want both functions here to have the same rng.
-	{
-		stopwatch.Restart();
-		std::random_shuffle(c.begin(), c.end(), rng);
-		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)c.front());
-	}
-
-	template <typename Container>
-	void TestRandomShuffleEa(EA::StdC::Stopwatch& stopwatch, Container& c, EASTLTest_Rand rng)
-	{
-		stopwatch.Restart();
-		eastl::random_shuffle(c.begin(), c.end(), rng);
-		stopwatch.Stop();        
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)c.front());
-	}
-
-
-
-	template <typename Container>
 	void TestLowerBoundStd(EA::StdC::Stopwatch& stopwatch, const Container& c, const typename Container::value_type* pBegin,  const typename Container::value_type* pEnd)
 	{
 
@@ -651,18 +631,6 @@ void BenchmarkAlgorithm2(EASTLTest_Rand& rng, EA::StdC::Stopwatch& stopwatch1, E
 
 			if(i == 1)
 				Benchmark::AddResult("algorithm/adj_find/vector<TestObject>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-
-			///////////////////////////////
-			// Test random_shuffle
-			///////////////////////////////
-
-			// TestRandomShuffleStd(stopwatch1, stdVectorUint64, rng);
-			// TestRandomShuffleEa (stopwatch2, eaVectorUint64,  rng);
-
-			// if(i == 1)
-			//     Benchmark::AddResult("algorithm/rand_shuffle/vector<uint64_t>", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 
