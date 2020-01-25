@@ -41,6 +41,10 @@ endif()
 # Temporary logic to build a subset of tests with char8_t support since the
 # benchmark code and underlying submodules (particularly EAStdC) don't
 # currently compile if the full project is built with these flags enabled.
+#
+# An additional define is present (EASTL_EXPECT_CHAR8T_SUPPORT) if a flag
+# is successfully found to allow tests to fail themselves at compile time
+# if the define is present but EA_CHAR8_UNIQUE isn't set.
 if (EASTL_BUILD_CHAR8T_TESTS)
     check_cxx_compiler_flag(-fchar8_t COMPILER_SUPPORTS_GNU_CHAR8T_FLAG)
     check_cxx_compiler_flag(/Zc:char8_t COMPILER_SUPPORTS_MSVC_CHAR8T_FLAG)
@@ -48,9 +52,11 @@ if (EASTL_BUILD_CHAR8T_TESTS)
     if (COMPILER_SUPPORTS_GNU_CHAR8T_FLAG)
         message(STATUS "Building with char8_t support in tests.")
         set_source_files_properties("source/TestString.cpp" "source/TestStringView.cpp" PROPERTIES COMPILE_FLAGS -fchar8_t)
+        add_definitions(-DEASTL_EXPECT_CHAR8T_SUPPORT)
     elseif (COMPILER_SUPPORTS_MSVC_CHAR8T_FLAG)
         message(STATUS "Building with char8_t support in tests.")
         set_source_files_properties("source/TestString.cpp" "source/TestStringView.cpp" PROPERTIES COMPILE_FLAGS /Zc:char8_t)
+        add_definitions(-DEASTL_EXPECT_CHAR8T_SUPPORT)
     else()
         message(NOTICE "Cannot build with char8_t support in tests: compiler does not support any known flags.")
     endif()

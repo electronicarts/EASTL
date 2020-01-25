@@ -7,6 +7,10 @@
 #include <EASTL/numeric_limits.h>
 #include <EASTL/string_view.h>
 
+// Verify char8_t support is present if the test build requested it.
+#if defined(EASTL_EXPECT_CHAR8T_SUPPORT) && !EA_CHAR8_UNIQUE
+static_assert(false, "Building with char8_t tests enabled, but EA_CHAR8_UNIQUE evaluates to false.");
+#endif
 
 // this mess is required inorder to inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicStringView
