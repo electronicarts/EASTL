@@ -65,7 +65,9 @@ namespace eastl
 		typedef eastl_size_t                            index_type;
 		typedef ptrdiff_t                               difference_type;
 		typedef T*                                      pointer;
+		typedef const T*                                const_pointer;
 		typedef T&                                      reference;
+		typedef const T&                                const_reference;
 		typedef T*                                      iterator;
 		typedef const T*                                const_iterator;
 		typedef eastl::reverse_iterator<iterator>       reverse_iterator;
