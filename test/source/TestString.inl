@@ -372,11 +372,11 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(typename StringType::CtorConvert(), EA_WCHAR("123456789"));
-		//     VERIFY(str == LITERAL("123456789"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str(typename StringType::CtorConvert(), EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -405,11 +405,11 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(typename StringType::CtorConvert(), EA_WCHAR("123456789"), 4);
-		//     VERIFY(str == LITERAL("1234"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str(typename StringType::CtorConvert(), EA_WCHAR("123456789"), 4);
+		    VERIFY(str == LITERAL("1234"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -438,11 +438,11 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(typename StringType::CtorConvert(), eastl::basic_string<wchar_t, StringType::allocator_type>(EA_WCHAR("123456789")));
-		//     VERIFY(str == LITERAL("123456789"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str(typename StringType::CtorConvert(), eastl::basic_string<wchar_t, typename StringType::allocator_type>(EA_WCHAR("123456789")));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -786,12 +786,12 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		//     str.assign_convert(EA_WCHAR("123456789"));
-		//     VERIFY(str == LITERAL("123456789"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    str.assign_convert(EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -823,12 +823,12 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		//     str.assign_convert(EA_WCHAR("123456789"), 3);
-		//     VERIFY(str == LITERAL("123"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    str.assign_convert(EA_WCHAR("123456789"), 3);
+		    VERIFY(str == LITERAL("123"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -866,14 +866,14 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		//     eastl::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    eastl::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
 
-		//     str.assign_convert(str2);
-		//     VERIFY(str == LITERAL("123456789"));
-		//     VERIFY(str.validate());
-		// #endif
+		    str.assign_convert(str2);
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -1288,12 +1288,12 @@ int TEST_STRING_NAME()
 		#endif
 		}
 		{
-		// #if defined(EA_WCHAR)
-		//     StringType str;
-		//     str.append_convert(EA_WCHAR("123456789"));
-		//     VERIFY(str == LITERAL("123456789"));
-		//     VERIFY(str.validate());
-		// #endif
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert(EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
 		}
 	}
 
@@ -1324,14 +1324,14 @@ int TEST_STRING_NAME()
 			VERIFY(str.validate());
 		#endif
 		}
-		// {
-		// #if defined(EA_WCHAR)
-		//     StringType str;
-		//     str.append_convert(EA_WCHAR("123456789"), 5);
-		//     VERIFY(str == LITERAL("12345"));
-		//     VERIFY(str.validate());
-		// #endif
-		// }
+		{
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert(EA_WCHAR("123456789"), 5);
+		    VERIFY(str == LITERAL("12345"));
+		    VERIFY(str.validate());
+		#endif
+		}
 	}
 
 	// template <typename OtherStringType>
@@ -1355,20 +1355,20 @@ int TEST_STRING_NAME()
 		}
 		{
 		#if defined(EA_CHAR32)
-			StringType str; 
+			StringType str;
 			str.append_convert(eastl::string32(EA_CHAR32("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(str.validate());
 		#endif
 		}
-		// {
-		// #if defined(EA_WCHAR)
-		//     StringType str = EA_WCHAR("123456789");
-		//     str.append_convert(str, 5);
-		//     VERIFY(str == LITERAL("12345"));
-		//     VERIFY(str.validate());
-		// #endif
-		// }
+		{
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert(eastl::wstring(EA_WCHAR("123456789")));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(str.validate());
+		#endif
+		}
 	}
 
 	// void push_back(value_type c);
