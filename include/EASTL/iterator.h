@@ -311,11 +311,8 @@ namespace eastl
 		// random_access_iterator operator[] is merely required to return something convertible to reference. 
 		// reverse_iterator operator[] can't necessarily know what to return as the underlying iterator 
 		// operator[] may return something other than reference.
-		// reference operator[](difference_type n) const
-		//     { return mIterator[-n - 1]; }
-
 		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
-			{ return *(*this + n); }
+			{ return mIterator[-n - 1]; }
 	};
 
 
