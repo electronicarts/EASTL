@@ -7,7 +7,13 @@
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
 project(EASTLTest CXX)
+include(CheckCXXCompilerFlag)
 include(CTest)
+
+#-------------------------------------------------------------------------------------------
+# Options
+#-------------------------------------------------------------------------------------------
+option(EASTL_BUILD_CHAR8T_TESTS "Enable building individual tests with char8_t support." OFF)
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -30,6 +36,24 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pointer-bool-conversion -Wno-unknown-warning-option")
+endif()
+
+# Temporary logic to build a subset of tests with char8_t support since the
+# benchmark code and underlying submodules (particularly EAStdC) don't
+# currently compile if the full project is built with these flags enabled.
+if (EASTL_BUILD_CHAR8T_TESTS)
+    check_cxx_compiler_flag(-fchar8_t COMPILER_SUPPORTS_GNU_CHAR8T_FLAG)
+    check_cxx_compiler_flag(/Zc:char8_t COMPILER_SUPPORTS_MSVC_CHAR8T_FLAG)
+
+    if (COMPILER_SUPPORTS_GNU_CHAR8T_FLAG)
+        message(STATUS "Building with char8_t support in tests.")
+        set_source_files_properties("source/TestString.cpp" "source/TestStringView.cpp" PROPERTIES COMPILE_FLAGS -fchar8_t)
+    elseif (COMPILER_SUPPORTS_MSVC_CHAR8T_FLAG)
+        message(STATUS "Building with char8_t support in tests.")
+        set_source_files_properties("source/TestString.cpp" "source/TestStringView.cpp" PROPERTIES COMPILE_FLAGS /Zc:char8_t)
+    else()
+        message(NOTICE "Cannot build with char8_t support in tests: compiler does not support any known flags.")
+    endif()
 endif()
 
 #-------------------------------------------------------------------------------------------
