@@ -229,7 +229,9 @@ void TestSpanIterators(int& nErrorCount)
 			VERIFY(*p-- == 9);
 		};
 
+		testReverseIteratorBegin(s.rbegin());
 		testReverseIteratorBegin(s.crbegin());
+		testReverseIteratorEnd(s.rend());
 		testReverseIteratorEnd(s.crend());
 	}
 }

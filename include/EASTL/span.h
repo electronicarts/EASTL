@@ -343,13 +343,13 @@ namespace eastl
 	template <typename T, size_t Extent>
 	EA_CONSTEXPR typename span<T, Extent>::reverse_iterator span<T, Extent>::rbegin() const EA_NOEXCEPT
 	{
-		return mpData + mnSize;
+		return reverse_iterator(mpData + mnSize);
 	}
 
 	template <typename T, size_t Extent>
 	EA_CONSTEXPR typename span<T, Extent>::reverse_iterator span<T, Extent>::rend() const EA_NOEXCEPT
 	{
-		return mpData;
+		return reverse_iterator(mpData);
 	}
 
 	template <typename T, size_t Extent>
