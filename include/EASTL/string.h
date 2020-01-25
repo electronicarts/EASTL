@@ -3934,6 +3934,21 @@ namespace eastl
 		}
 	};
 
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		template <>
+		struct hash<string8>
+		{
+			size_t operator()(const string8& x) const
+			{
+				const char8_t* p = (const char8_t*)x.c_str();
+				unsigned int c, result = 2166136261U;
+				while((c = *p++) != 0)
+					result = (result * 16777619) ^ c;
+				return (size_t)result;
+			}
+		};
+	#endif
+
 	template <>
 	struct hash<string16>
 	{
@@ -4051,6 +4066,11 @@ namespace eastl
 				inline u16string operator"" s(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
 				inline u32string operator"" s(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
 				inline wstring operator"" s(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
+
+				// C++20 char8_t support.
+				#if EA_CHAR8_UNIQUE
+					inline u8string operator"" s(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, u8string::size_type(len)}; }
+				#endif
 		    }
 	    }
 		EA_RESTORE_VC_WARNING()  // warning: 4455
