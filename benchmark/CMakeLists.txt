@@ -39,6 +39,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_BUILD_TYPE MATCHES "MinSizeR
     message(FATAL_ERROR "FIXME: MinSizeRel on MingW-w64's Clang fails to link.")
 endif()
 
+# The benchmark suite fails to compile if char8_t is enabled, so disable it.
+if (EASTL_NO_CHAR8T_FLAG)
+    add_compile_options(${EASTL_NO_CHAR8T_FLAG})
+endif()
+
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
