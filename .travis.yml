@@ -34,9 +34,6 @@ matrix:
         - compiler: clang "release build with clang to trigger MOJI check"
           env: EASTL_CONFIG=Release USE_MOJI_CHECK=yes
           os: linux
-        - compiler: clang # C++20 char8_t support is present in Clang 7+.
-          env: EASTL_CONFIG=Release EASTL_BUILD_CHAR8T_TESTS=ON
-          os: linux
         - compiler: msvc
           env: EASTL_CONFIG=Release CXXFLAGS="/std:c++latest /Zc:char8_t"
           os: windows 
@@ -72,7 +69,7 @@ install:
 before_script:
   - mkdir build_$EASTL_CONFIG
   - cd build_$EASTL_CONFIG
-  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_BUILD_CHAR8T_TESTS:BOOL=${EASTL_BUILD_CHAR8T_TESTS}
+  - cmake .. -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
   - cmake --build . --config $EASTL_CONFIG
 
 script:
