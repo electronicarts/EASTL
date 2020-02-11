@@ -13,6 +13,13 @@ EASTL is suitable for any tools and shipping applications where the functionalit
 
 ## Package Managers
 
+You can download and install EASTL using the [Conan](https://github.com/conan-io/conan) package manager:
+
+    conan install eastl/3.15.00@
+
+The EASTL package in conan is kept up to date by Conan team members and community contributors. If the version is out-of-date, please [create an issue or pull request](https://github.com/conan-io/conan-center-index) on the Conan Center Index repository.
+
+
 You can download and install EASTL using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
 
     git clone https://github.com/Microsoft/vcpkg.git
