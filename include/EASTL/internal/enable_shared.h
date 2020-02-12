@@ -45,6 +45,12 @@ namespace eastl
 		shared_ptr<const T> shared_from_this() const
 			{ return shared_ptr<const T>(mWeakPtr); }
 
+		weak_ptr<T> weak_from_this()
+			{ return mWeakPtr; }
+
+		weak_ptr<const T> weak_from_this() const
+			{ return mWeakPtr; }
+
 	public: // This is public because the alternative fails on some compilers that we need to support.
 		mutable weak_ptr<T> mWeakPtr;
 

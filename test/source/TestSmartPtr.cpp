@@ -1522,6 +1522,22 @@ static int Test_weak_ptr()
 		EATEST_VERIFY(!(pFoo < qFoo) && !(qFoo < pFoo)); // p and q share ownership
 	}
 
+	{   // weak_from_this const
+		shared_ptr<const foo> pFoo(new foo);
+		weak_ptr<const foo> qFoo = pFoo->weak_from_this();
+
+		EATEST_VERIFY(pFoo == qFoo.lock());
+		EATEST_VERIFY(!(pFoo < qFoo.lock()) && !(qFoo.lock() < pFoo)); // p and q share ownership
+	}
+
+	{   // weak_from_this
+		shared_ptr<foo> pFoo(new foo);
+		weak_ptr<foo> qFoo = pFoo->weak_from_this();
+
+		EATEST_VERIFY(pFoo == qFoo.lock());
+		EATEST_VERIFY(!(pFoo < qFoo.lock()) && !(qFoo.lock() < pFoo)); // p and q share ownership
+	}
+	
 	return nErrorCount;
 }
 
