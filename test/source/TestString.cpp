@@ -12,21 +12,30 @@
 
 using namespace eastl;
 
+// Verify char8_t support is present if the test build requested it.
+#if defined(EASTL_EXPECT_CHAR8T_SUPPORT) && !EA_CHAR8_UNIQUE
+static_assert(false, "Building with char8_t tests enabled, but EA_CHAR8_UNIQUE evaluates to false.");
+#endif
+
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
 #define LITERAL(x) x
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicStringW
-#define LITERAL(x) EA_WCHAR(x) 
+#define LITERAL(x) EA_WCHAR(x)
+#include "TestString.inl"
+
+#define TEST_STRING_NAME TestBasicString8
+#define LITERAL(x) EA_CHAR8(x)
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString16
-#define LITERAL(x) EA_CHAR16(x) 
+#define LITERAL(x) EA_CHAR16(x)
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString32
-#define LITERAL(x) EA_CHAR32(x) 
+#define LITERAL(x) EA_CHAR32(x)
 #include "TestString.inl"
 
 int TestString()
@@ -38,6 +47,11 @@ int TestString()
 
 	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicStringW<eastl::wstring>();
+
+#if EA_CHAR8_UNIQUE
+	nErrorCount += TestBasicString8<eastl::basic_string<char8_t, StompDetectAllocator>>();
+	nErrorCount += TestBasicString8<eastl::u8string>();
+#endif
 
 	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString16<eastl::u16string>();
@@ -54,6 +68,11 @@ int TestString()
 
 	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
+
+#if EA_CHAR8_UNIQUE
+	nErrorCount += TestBasicString8<eastl::basic_string<char8_t, CountingAllocator>>();
+	VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
+#endif
 
 	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
@@ -101,6 +120,7 @@ int TestString()
 		VERIFY(L"cplusplus"s == L"cplusplus");
 		VERIFY(u"cplusplus"s == u"cplusplus");
 		VERIFY(U"cplusplus"s == U"cplusplus");
+		VERIFY(u8"cplusplus"s == u8"cplusplus");
 	}
 	#endif
 

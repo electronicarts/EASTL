@@ -32,12 +32,27 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pointer-bool-conversion -Wno-unknown-warning-option")
 endif()
 
+# Parts of the test suite fail to compile if char8_t is enabled, so we
+# disable it and only enable for specific source files later on.
+if (EASTL_NO_CHAR8T_FLAG)
+    add_compile_options(${EASTL_NO_CHAR8T_FLAG})
+endif()
+
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLTEST_SOURCES "source/*.cpp" "source/*.inl" "source/*.h")
 set(SOURCES ${EASTLTEST_SOURCES})
 
+# Compile a subset of tests with explicit char8_t support if available.
+if (EASTL_CHAR8T_FLAG)
+    message(STATUS "Building with char8_t support in tests.")
+    set(EASTLTEST_CHAR8T_SOURCES "source/TestString.cpp" "source/TestStringView.cpp")
+
+    set_source_files_properties(${EASTLTEST_CHAR8T_SOURCES} PROPERTIES
+        COMPILE_FLAGS ${EASTL_CHAR8T_FLAG}
+        COMPILE_DEFINITIONS "EASTL_EXPECT_CHAR8T_SUPPORT")
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
