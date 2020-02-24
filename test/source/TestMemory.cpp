@@ -128,8 +128,10 @@ int64_t LCTestObject::sTOCtorCount = 0;
 int64_t LCTestObject::sTODtorCount = 0;
 
 
-eastl::late_constructed<LCTestObject, true>  gLCTestObjectTrue;
-eastl::late_constructed<LCTestObject, false> gLCTestObjectFalse;
+eastl::late_constructed<LCTestObject, true, true>  gLCTestObjectTrueTrue;
+eastl::late_constructed<LCTestObject, false, true> gLCTestObjectFalseTrue;
+eastl::late_constructed<LCTestObject, false, false> gLCTestObjectFalseFalse;
+eastl::late_constructed<LCTestObject, true, false> gLCTestObjectTrueFalse;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -163,84 +165,192 @@ int TestMemory()
 	{
 		LCTestObject* pLCTO;
 
+		LCTestObject::sTOCount     = 0;
+		LCTestObject::sTOCtorCount = 0;
+		LCTestObject::sTODtorCount = 0;
+
 		// Verify alignment requirements.
-		// We don't verify that gLCTestObjectTrue.get() is aligned for all platforms because some platforms can't do that with global memory.
+		// We don't verify that gLCTestObjectTrueTrue.get() is aligned for all platforms because some platforms can't do that with global memory.
 		static_assert(eastl::alignment_of<typename late_constructed<LCTestObject>::value_type>::value == 64, "late_constructed alignment failure.");
 		static_assert(eastl::alignment_of<typename late_constructed<LCTestObject>::storage_type>::value == 64, "late_constructed alignment failure.");
 		static_assert(eastl::alignment_of<late_constructed<LCTestObject> >::value >= 64, "late_constructed alignment failure.");
 
 
-		// late_constructed / gLCTestObjectTrue 
+		// late_constructed / gLCTestObjectTrueTrue 
 		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
-		EATEST_VERIFY(!gLCTestObjectTrue.is_constructed());
+		EATEST_VERIFY(!gLCTestObjectTrueTrue.is_constructed());
 
-		pLCTO = gLCTestObjectTrue.get(); // This will auto-construct LCTestObject.
+		pLCTO = gLCTestObjectTrueTrue.get(); // This will auto-construct LCTestObject.
 		EATEST_VERIFY(pLCTO != NULL);
-		EATEST_VERIFY(gLCTestObjectTrue.is_constructed());
+		EATEST_VERIFY(gLCTestObjectTrueTrue.is_constructed());
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
 
-		gLCTestObjectTrue->mX = 17;
-		EATEST_VERIFY(gLCTestObjectTrue->mX == 17);
+		gLCTestObjectTrueTrue->mX = 17;
+		EATEST_VERIFY(gLCTestObjectTrueTrue->mX == 17);
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
 
-		gLCTestObjectTrue.destruct();
+		gLCTestObjectTrueTrue.destruct();
 		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 1));
-		EATEST_VERIFY(!gLCTestObjectTrue.is_constructed());
+		EATEST_VERIFY(!gLCTestObjectTrueTrue.is_constructed());
 
-		gLCTestObjectTrue->mX = 18;
-		EATEST_VERIFY(gLCTestObjectTrue->mX == 18);
-		EATEST_VERIFY(gLCTestObjectTrue.is_constructed());
+		gLCTestObjectTrueTrue->mX = 18;
+		EATEST_VERIFY(gLCTestObjectTrueTrue->mX == 18);
+		EATEST_VERIFY(gLCTestObjectTrueTrue.is_constructed());
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 2) && (LCTestObject::sTODtorCount == 1));
 
-		gLCTestObjectTrue.destruct();
-		(*gLCTestObjectTrue).mX = 19;
-		EATEST_VERIFY(gLCTestObjectTrue->mX == 19);
+		gLCTestObjectTrueTrue.destruct();
+		(*gLCTestObjectTrueTrue).mX = 19;
+		EATEST_VERIFY(gLCTestObjectTrueTrue->mX == 19);
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 3) && (LCTestObject::sTODtorCount == 2));
 
-		gLCTestObjectTrue.destruct();
+		gLCTestObjectTrueTrue.destruct();
 		LCTestObject::sTOCount     = 0;
 		LCTestObject::sTOCtorCount = 0;
 		LCTestObject::sTODtorCount = 0;
 
-		// late_constructed / gLCTestObjectFalse 
+		// late_constructed / gLCTestObjectFalseTrue 
 		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
-		EATEST_VERIFY(!gLCTestObjectFalse.is_constructed());
+		EATEST_VERIFY(!gLCTestObjectFalseTrue.is_constructed());
 
-		pLCTO = gLCTestObjectFalse.get(); // This will not auto-construct LCTestObject.
+		pLCTO = gLCTestObjectFalseTrue.get(); // This will not auto-construct LCTestObject.
 		EATEST_VERIFY(pLCTO == NULL);
-		EATEST_VERIFY(!gLCTestObjectFalse.is_constructed());
+		EATEST_VERIFY(!gLCTestObjectFalseTrue.is_constructed());
 		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
 
-		gLCTestObjectFalse.construct();
-		pLCTO = gLCTestObjectFalse.get();
+		gLCTestObjectFalseTrue.construct();
+		pLCTO = gLCTestObjectFalseTrue.get();
 		EATEST_VERIFY(pLCTO != NULL);
-		EATEST_VERIFY(gLCTestObjectFalse.is_constructed());
+		EATEST_VERIFY(gLCTestObjectFalseTrue.is_constructed());
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
 
-		gLCTestObjectFalse->mX = 17;
-		EATEST_VERIFY(gLCTestObjectFalse->mX == 17);
+		gLCTestObjectFalseTrue->mX = 17;
+		EATEST_VERIFY(gLCTestObjectFalseTrue->mX == 17);
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
 
-		gLCTestObjectFalse.destruct();
+		gLCTestObjectFalseTrue.destruct();
 		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 1));
-		EATEST_VERIFY(!gLCTestObjectFalse.is_constructed());
+		EATEST_VERIFY(!gLCTestObjectFalseTrue.is_constructed());
 
-		gLCTestObjectFalse.construct(14);
-		EATEST_VERIFY(gLCTestObjectFalse->mX == 14);
-		gLCTestObjectFalse->mX = 18;
-		EATEST_VERIFY(gLCTestObjectFalse->mX == 18);
-		EATEST_VERIFY(gLCTestObjectFalse.is_constructed());
+		gLCTestObjectFalseTrue.construct(14);
+		EATEST_VERIFY(gLCTestObjectFalseTrue->mX == 14);
+		gLCTestObjectFalseTrue->mX = 18;
+		EATEST_VERIFY(gLCTestObjectFalseTrue->mX == 18);
+		EATEST_VERIFY(gLCTestObjectFalseTrue.is_constructed());
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 2) && (LCTestObject::sTODtorCount == 1));
 
-		gLCTestObjectFalse.destruct();
-		gLCTestObjectFalse.construct(10, 20, 30);
-		EATEST_VERIFY(gLCTestObjectFalse->mX == 10+20+30);
-		(*gLCTestObjectFalse).mX = 19;
-		EATEST_VERIFY(gLCTestObjectFalse->mX == 19);
+		gLCTestObjectFalseTrue.destruct();
+		gLCTestObjectFalseTrue.construct(10, 20, 30);
+		EATEST_VERIFY(gLCTestObjectFalseTrue->mX == 10+20+30);
+		(*gLCTestObjectFalseTrue).mX = 19;
+		EATEST_VERIFY(gLCTestObjectFalseTrue->mX == 19);
 		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 3) && (LCTestObject::sTODtorCount == 2));
 
-		gLCTestObjectFalse.destruct();
+		gLCTestObjectFalseTrue.destruct();
 	}
+
+	{
+		LCTestObject* pLCTO;
+
+		LCTestObject::sTOCount     = 0;
+		LCTestObject::sTOCtorCount = 0;
+		LCTestObject::sTODtorCount = 0;
+
+		// Verify alignment requirements.
+		// We don't verify that gLCTestObjectTrueTrue.get() is aligned for all platforms because some platforms can't do that with global memory.
+		static_assert(eastl::alignment_of<typename late_constructed<LCTestObject>::value_type>::value == 64, "late_constructed alignment failure.");
+		static_assert(eastl::alignment_of<typename late_constructed<LCTestObject>::storage_type>::value == 64, "late_constructed alignment failure.");
+		static_assert(eastl::alignment_of<late_constructed<LCTestObject> >::value >= 64, "late_constructed alignment failure.");
+
+
+		// late_constructed / gLCTestObjectTrueFalse
+		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
+		EATEST_VERIFY(!gLCTestObjectTrueFalse.is_constructed());
+
+		pLCTO = gLCTestObjectTrueFalse.get(); // This will auto-construct LCTestObject.
+		EATEST_VERIFY(pLCTO != NULL);
+		EATEST_VERIFY(gLCTestObjectTrueFalse.is_constructed());
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
+
+		gLCTestObjectTrueFalse->mX = 17;
+		EATEST_VERIFY(gLCTestObjectTrueFalse->mX == 17);
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
+
+		gLCTestObjectTrueFalse.destruct();
+		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 1));
+		EATEST_VERIFY(!gLCTestObjectTrueFalse.is_constructed());
+
+		gLCTestObjectTrueFalse->mX = 18;
+		EATEST_VERIFY(gLCTestObjectTrueFalse->mX == 18);
+		EATEST_VERIFY(gLCTestObjectTrueFalse.is_constructed());
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 2) && (LCTestObject::sTODtorCount == 1));
+
+		gLCTestObjectTrueFalse.destruct();
+		(*gLCTestObjectTrueFalse).mX = 19;
+		EATEST_VERIFY(gLCTestObjectTrueFalse->mX == 19);
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 3) && (LCTestObject::sTODtorCount == 2));
+
+		gLCTestObjectTrueFalse.destruct();
+		LCTestObject::sTOCount     = 0;
+		LCTestObject::sTOCtorCount = 0;
+		LCTestObject::sTODtorCount = 0;
+
+		// late_constructed / gLCTestObjectFalseFalse
+		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
+		EATEST_VERIFY(!gLCTestObjectFalseFalse.is_constructed());
+
+		pLCTO = gLCTestObjectFalseFalse.get(); // This will not auto-construct LCTestObject.
+		EATEST_VERIFY(pLCTO == NULL);
+		EATEST_VERIFY(!gLCTestObjectFalseFalse.is_constructed());
+		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 0) && (LCTestObject::sTODtorCount == 0));
+
+		gLCTestObjectFalseFalse.construct();
+		pLCTO = gLCTestObjectFalseFalse.get();
+		EATEST_VERIFY(pLCTO != NULL);
+		EATEST_VERIFY(gLCTestObjectFalseFalse.is_constructed());
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
+
+		gLCTestObjectFalseFalse->mX = 17;
+		EATEST_VERIFY(gLCTestObjectFalseFalse->mX == 17);
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
+
+		gLCTestObjectFalseFalse.destruct();
+		EATEST_VERIFY((LCTestObject::sTOCount == 0) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 1));
+		EATEST_VERIFY(!gLCTestObjectFalseFalse.is_constructed());
+
+		gLCTestObjectFalseFalse.construct(14);
+		EATEST_VERIFY(gLCTestObjectFalseFalse->mX == 14);
+		gLCTestObjectFalseFalse->mX = 18;
+		EATEST_VERIFY(gLCTestObjectFalseFalse->mX == 18);
+		EATEST_VERIFY(gLCTestObjectFalseFalse.is_constructed());
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 2) && (LCTestObject::sTODtorCount == 1));
+
+		gLCTestObjectFalseFalse.destruct();
+		gLCTestObjectFalseFalse.construct(10, 20, 30);
+		EATEST_VERIFY(gLCTestObjectFalseFalse->mX == 10+20+30);
+		(*gLCTestObjectFalseFalse).mX = 19;
+		EATEST_VERIFY(gLCTestObjectFalseFalse->mX == 19);
+		EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 3) && (LCTestObject::sTODtorCount == 2));
+
+		gLCTestObjectFalseFalse.destruct();
+	}
+
+	LCTestObject::sTOCount     = 0;
+	LCTestObject::sTOCtorCount = 0;
+	LCTestObject::sTODtorCount = 0;
+	{
+		eastl::late_constructed<LCTestObject, true, false> lc;
+		lc.construct();
+	}
+	EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
+
+	LCTestObject::sTOCount     = 0;
+	LCTestObject::sTOCtorCount = 0;
+	LCTestObject::sTODtorCount = 0;
+	{
+		eastl::late_constructed<LCTestObject, false, false> lc;
+		lc.construct();
+	}
+	EATEST_VERIFY((LCTestObject::sTOCount == 1) && (LCTestObject::sTOCtorCount == 1) && (LCTestObject::sTODtorCount == 0));
 
 
 	// We use the vector container to supply a RandomAccessIterator.

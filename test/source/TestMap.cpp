@@ -115,8 +115,8 @@ int TestMap()
 
 	{
 		// User reports that EASTL_VALIDATE_COMPARE_ENABLED / EASTL_COMPARE_VALIDATE isn't compiling for this case.
-		eastl::map<eastl::string8, int> m; 
-		m.find_as(EA_CHAR8("some string"), eastl::equal_to_2<eastl::string8, const char8_t*>()); 
+		eastl::map<eastl::u8string, int> m; 
+		m.find_as(EA_CHAR8("some string"), eastl::equal_to_2<eastl::u8string, const char8_t*>()); 
 	}
 
 	{

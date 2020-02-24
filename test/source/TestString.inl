@@ -1340,7 +1340,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str; 
-			str.append_convert(eastl::string8(EA_CHAR8("123456789")));
+			str.append_convert(eastl::u8string(EA_CHAR8("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(str.validate());
 		#endif

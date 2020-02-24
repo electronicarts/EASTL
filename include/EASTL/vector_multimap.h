@@ -304,7 +304,9 @@ namespace eastl
 	inline vector_multimap<K, T, C, A, RAC>::vector_multimap()
 		: base_type(), mValueCompare(C())
 	{
+	#if EASTL_NAME_ENABLED
 		get_allocator().set_name(EASTL_VECTOR_MULTIMAP_DEFAULT_NAME);
+	#endif
 	}
 
 

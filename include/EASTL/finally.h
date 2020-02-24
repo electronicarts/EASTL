@@ -32,6 +32,8 @@
 #endif
 
 #include <EASTL/internal/config.h>
+#include <EASTL/internal/move_help.h>
+#include <EASTL/type_traits.h>
 
 namespace eastl
 {

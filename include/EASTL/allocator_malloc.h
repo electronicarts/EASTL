@@ -32,14 +32,20 @@
 		#include <stdlib.h> // memalign, posix_memalign. 
 		#define EASTL_ALIGNED_MALLOC_AVAILABLE 1
 
-		#if defined(__clang__)
-			#if __has_include(<malloc/malloc.h>) 
+		#if EA_HAS_INCLUDE_AVAILABLE
+			#if EA_HAS_INCLUDE(<malloc/malloc.h>)
 				#include <malloc/malloc.h>
-			#elif __has_include(<malloc.h>) 
+			#elif EA_HAS_INCLUDE(<malloc.h>)
 				#include <malloc.h>
 			#endif
 		#elif defined(EA_PLATFORM_BSD)
 			#include <malloc/malloc.h>
+		#elif defined(EA_COMPILER_CLANG)
+			#if __has_include(<malloc/malloc.h>)
+				#include <malloc/malloc.h>
+			#elif __has_include(<malloc.h>)
+				#include <malloc.h>
+			#endif
 		#else
 			#include <malloc.h>
 		#endif

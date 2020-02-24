@@ -169,6 +169,10 @@ namespace eastl
 	/// operator * or ->. autoConstruct is convenient but it causes * and -> to be slightly slower
 	/// and may result in construction at an inconvenient time. 
 	///
+	/// The autoDestruct template parameter controls whether the object, if constructed, is automatically
+	/// destructed when ~late_constructed() is called or must be manually destructed via a call to
+	/// destruct().
+	///
 	/// While construction can be automatic or manual, automatic destruction support is always present.
 	/// Thus you aren't required in any case to manually call destruct. However, you may safely manually
 	/// destruct the object at any time before the late_constructed destructor is executed. 
@@ -199,11 +203,11 @@ namespace eastl
 	///         // You may want to call destruct here, but aren't required to do so unless the Widget type requires it.
 	///     }
 	/// 
-	template <typename T, bool autoConstruct = true>
+	template <typename T, bool autoConstruct = true, bool autoDestruct = true>
 	class late_constructed
 	{
 	public:
-		using this_type    = late_constructed<T, autoConstruct>;
+		using this_type    = late_constructed<T, autoConstruct, autoDestruct>;
 		using value_type   = T;
 		using storage_type = eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>>;
 
@@ -212,16 +216,16 @@ namespace eastl
 
 		~late_constructed()
 		{
-			if(mpValue)
+			if (autoDestruct && mpValue)
 				(*mpValue).~value_type();
-		} 
+		}
 
 		template <typename... Args>
 		void construct(Args&&... args)
 		{
 			if(!mpValue)
-				mpValue = new(&mStorage) value_type(eastl::forward<Args>(args)...);
-		} 
+				mpValue = new (&mStorage) value_type(eastl::forward<Args>(args)...);
+		}
 
 		bool is_constructed() const EA_NOEXCEPT
 			{ return mpValue != nullptr; }
@@ -288,11 +292,11 @@ namespace eastl
 
 
 	// Specialization that doesn't auto-construct on demand.
-	template <typename T>
-	class late_constructed<T, false> : public late_constructed<T, true>
+	template <typename T, bool autoDestruct>
+	class late_constructed<T, false, autoDestruct> : public late_constructed<T, true, autoDestruct>
 	{
 	public:
-		typedef late_constructed<T, true> base_type;
+		typedef late_constructed<T, true, autoDestruct> base_type;
 
 		typename base_type::value_type& operator*() EA_NOEXCEPT
 			{ EASTL_ASSERT(base_type::mpValue); return *base_type::mpValue; }

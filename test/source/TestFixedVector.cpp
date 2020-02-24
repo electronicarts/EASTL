@@ -143,7 +143,8 @@ int TestFixedVector()
 		EATEST_VERIFY(fv88.capacity() >= (capacity * 2));
 
 		// void swap(this_type& x);
-		FixedVectorInt8 fv7(5, 3);
+		// FixedVectorInt8 fv7(5, 3);  // MSVC-ARM64 generated an internal compiler error on this line.
+		FixedVectorInt8 fv7 = {3, 3, 3, 3, 3};
 		FixedVectorInt8 fv8(intArray, intArray + 8);
 
 		swap(fv7, fv8);

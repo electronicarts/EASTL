@@ -3900,12 +3900,12 @@ namespace eastl
 	typedef basic_string<char>    string;
 	typedef basic_string<wchar_t> wstring;
 
-	/// string8 / string16 / string32
-	typedef basic_string<char8_t>  string8;
+	/// custom string8 / string16 / string32
+	typedef basic_string<char>     string8;
 	typedef basic_string<char16_t> string16;
 	typedef basic_string<char32_t> string32;
 
-	// C++11 string types
+	/// ISO mandated string types
 	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
@@ -3934,20 +3934,22 @@ namespace eastl
 		}
 	};
 
-	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
-		template <>
-		struct hash<string8>
-		{
-			size_t operator()(const string8& x) const
-			{
-				const char8_t* p = (const char8_t*)x.c_str();
-				unsigned int c, result = 2166136261U;
-				while((c = *p++) != 0)
-					result = (result * 16777619) ^ c;
-				return (size_t)result;
-			}
-		};
-	#endif
+	// NOTE(rparolin): no longer required.
+	//
+	// #if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+	//     template <>
+	//     struct hash<string8>
+	//     {
+	//         size_t operator()(const string8& x) const
+	//         {
+	//             const char8_t* p = (const char8_t*)x.c_str();
+	//             unsigned int c, result = 2166136261U;
+	//             while((c = *p++) != 0)
+	//                 result = (result * 16777619) ^ c;
+	//             return (size_t)result;
+	//         }
+	//     };
+	// #endif
 
 	template <>
 	struct hash<string16>
