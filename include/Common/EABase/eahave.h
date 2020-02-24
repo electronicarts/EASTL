@@ -144,11 +144,11 @@
 
 // Clang libc++
 #if !defined(EA_HAVE_LIBCPP_LIBRARY) && !defined(EA_NO_HAVE_LIBCPP_LIBRARY)
-	#if defined(__clang__)
-		#if defined(__cplusplus) && __has_include(<__config>)
+	#if EA_HAS_INCLUDE_AVAILABLE
+		#if EA_HAS_INCLUDE(<__config>)
 			#define EA_HAVE_LIBCPP_LIBRARY 1 // We could also #include <ciso646> and check if defined(_LIBCPP_VERSION).
 		#endif
-	#endif 
+	#endif
 
 	#if !defined(EA_HAVE_LIBCPP_LIBRARY) 
 		#define EA_NO_HAVE_LIBCPP_LIBRARY 1

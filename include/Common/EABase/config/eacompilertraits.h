@@ -335,7 +335,7 @@
 	//    typedef EA_ALIGNED(int, int16, 16); int16 n16;                typedef int int16; int16 n16;   Define int16 as an int which is aligned on 16.
 	//    typedef EA_ALIGNED(X, X16, 16); X16 x16;                      typedef X X16; X16 x16;         Define X16 as an X which is aligned on 16.
 
-	#if !defined(EA_ALIGN_MAX)          // If the user hasn't globally set an alternative value...
+	#if !defined(EA_ALIGN_MAX)                              // If the user hasn't globally set an alternative value...
 		#if defined(EA_PROCESSOR_ARM)                       // ARM compilers in general tend to limit automatic variables to 8 or less.
 			#define EA_ALIGN_MAX_STATIC    1048576
 			#define EA_ALIGN_MAX_AUTOMATIC       1          // Typically they support only built-in natural aligment types (both arm-eabi and apple-abi).
@@ -474,6 +474,56 @@
 		#endif
 	#endif
 
+	// ------------------------------------------------------------------------
+	// EA_HAS_INCLUDE_AVAILABLE
+	//
+	// Used to guard against the EA_HAS_INCLUDE() macro on compilers that do not
+	// support said feature.
+	//
+	// Example usage:
+	//
+	// #if EA_HAS_INCLUDE_AVAILABLE
+	//     #if EA_HAS_INCLUDE("myinclude.h")
+    //         #include "myinclude.h"
+	//     #endif
+	// #endif
+	#if !defined(EA_HAS_INCLUDE_AVAILABLE)
+		#if EA_COMPILER_CPP17_ENABLED || EA_COMPILER_CLANG || EA_COMPILER_GNUC
+			#define EA_HAS_INCLUDE_AVAILABLE 1
+		#else
+			#define EA_HAS_INCLUDE_AVAILABLE 0
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_HAS_INCLUDE
+	//
+	// May be used in #if and #elif expressions to test for the existence
+	// of the header referenced in the operand. If possible it evaluates to a
+	// non-zero value and zero otherwise. The operand is the same form as the file
+	// in a #include directive.
+	//
+	// Example usage:
+	//
+	// #if EA_HAS_INCLUDE("myinclude.h")
+	//     #include "myinclude.h"
+	// #endif
+	//
+	// #if EA_HAS_INCLUDE(<myinclude.h>)
+	//     #include <myinclude.h>
+	// #endif
+
+	#if !defined(EA_HAS_INCLUDE)
+		#if EA_COMPILER_CPP17_ENABLED
+			#define EA_HAS_INCLUDE(x) __has_include(x)
+		#elif EA_COMPILER_CLANG
+			#define EA_HAS_INCLUDE(x) __has_include(x)
+		#elif EA_COMPILER_GNUC
+			#define EA_HAS_INCLUDE(x) __has_include(x)
+		#endif
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// EA_INIT_PRIORITY_AVAILABLE
@@ -505,6 +555,39 @@
 			#define EA_INIT_PRIORITY(x)  __attribute__ ((init_priority (x)))
 		#else
 			#define EA_INIT_PRIORITY(x)
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_INIT_SEG_AVAILABLE
+	//
+	//
+	#if !defined(EA_INIT_SEG_AVAILABLE)
+		#if defined(_MSC_VER)
+			#define EA_INIT_SEG_AVAILABLE 1
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_INIT_SEG
+	//
+	// Specifies a keyword or code section that affects the order in which startup code is executed.
+	//
+	// https://docs.microsoft.com/en-us/cpp/preprocessor/init-seg?view=vs-2019
+	//
+	// Example:
+	// 		EA_INIT_SEG(compiler) MyType gMyTypeGlobal;	
+	// 		EA_INIT_SEG("my_section") MyOtherType gMyOtherTypeGlobal;	
+	//
+	#if !defined(EA_INIT_SEG)
+		#if defined(EA_INIT_SEG_AVAILABLE)
+			#define EA_INIT_SEG(x)                                                                                                \
+				__pragma(warning(push)) __pragma(warning(disable : 4074)) __pragma(warning(disable : 4075)) __pragma(init_seg(x)) \
+					__pragma(warning(pop))
+		#else
+			#define EA_INIT_SEG(x)
 		#endif
 	#endif
 
@@ -1187,7 +1270,7 @@
 					#define EA_WCHAR_T_NON_NATIVE 1
 				#endif
 			#endif
-		#elif defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND) || (defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_WINDOWS))
+		#elif defined(EA_COMPILER_MSVC) || (defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_WINDOWS))
 			#ifndef _NATIVE_WCHAR_T_DEFINED
 				#define EA_WCHAR_T_NON_NATIVE 1
 			#endif
@@ -2379,13 +2462,16 @@
 	#ifdef __cplusplus
 		struct EANonCopyable
 		{
-			#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) || defined(__EDG__) // EDG doesn't appear to behave properly for the case of defaulted constructors; it generates a mistaken warning about missing default constructors.
-				EANonCopyable(){} // Putting {} here has the downside that it allows a class to create itself, 
-			   ~EANonCopyable(){} // but avoids linker errors that can occur with some compilers (e.g. Green Hills).
+			#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) ||  defined(__EDG__) 
+				// EDG doesn't appear to behave properly for the case of defaulted constructors; 
+				// it generates a mistaken warning about missing default constructors.					 
+				EANonCopyable() {}  // Putting {} here has the downside that it allows a class to create itself,
+				~EANonCopyable() {} // but avoids linker errors that can occur with some compilers (e.g. Green Hills).
 			#else
 				EANonCopyable() = default;
 			   ~EANonCopyable() = default;
 			#endif
+
 			EA_NON_COPYABLE(EANonCopyable)
 		};
 	#endif

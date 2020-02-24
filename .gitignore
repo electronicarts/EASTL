@@ -1,2 +1,49 @@
 tags
+cscope.out
+**/*.swp
+**/*.swo
+.swp
+*.swp
+.swo
+.TMP
+-.d
+eastl_build_out
+build_bench
+bench.bat
+build.bat
 .p4config
+
+## CMake generated files
+CMakeCache.txt
+cmake_install.cmake
+
+## Patch files
+*.patch
+
+## For Visual Studio Generated projects
+*.sln
+**/*.vcxproj
+**/*.vcxproj.filters
+*.VC.opendb
+*.sdf
+**/*.suo
+**/*.user
+.vs/*
+**/Debug/*
+CMakeFiles/*
+EASTL.dir/**
+RelWithDebInfo/*
+Release/*
+Win32/*
+x64/*
+MinSizeRel/*
+build*/*
+Testing/*
+%ALLUSERSPROFILE%/*
+
+# Buck
+/buck-out/
+/.buckd/
+/buckaroo/
+.buckconfig.local
+BUCKAROO_DEPS

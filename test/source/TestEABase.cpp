@@ -84,6 +84,25 @@ EA_DISABLE_VC_WARNING(4265 4296 4310 4350 4481 4530 4625 4626 4996)
 
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Exercise EA_HAS_INCLUDE
+///////////////////////////////////////////////////////////////////////////////
+#if EA_HAS_INCLUDE_AVAILABLE
+	#if EA_HAS_INCLUDE(<EASTL/map.h>)
+		#include <EASTL/map.h>
+
+		eastl::map<int, int> gTestHasIncludeMap;
+	#endif
+#endif
+
+#if EA_HAS_INCLUDE_AVAILABLE
+	#if EA_HAS_INCLUDE(<DefinitelyDoesNotExist.h>)
+		#error "Include Does Not EXIST!"
+	#endif
+#endif
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exercise EAHave
 ///////////////////////////////////////////////////////////////////////////////
@@ -327,7 +346,7 @@ EA_CONSTEXPR int GetValue(){ return 37; }
 
 
 // EA_EXTERN_TEMPLATE / EA_COMPILER_NO_EXTERN_TEMPLATE
-template struct EASTL_API eabase_template<char>;
+template struct eabase_template<char>;
 
 
 // Forward declarations
@@ -505,15 +524,14 @@ struct SizeofMemberTestClass // Intentionally a non-pod.
 
 // EA_INIT_PRIORITY
 InitPriorityTestClass gInitPriorityTestClass0 EA_INIT_PRIORITY(2000);
-#ifndef __SNC__ // SNC is broken with respect to constructors.
 InitPriorityTestClass gInitPriorityTestClass1 EA_INIT_PRIORITY(2000) (1);
-#endif
+
+// EA_INIT_SEG
+EA_INIT_SEG(compiler) InitPriorityTestClass gInitSegTestSection(2300);
 
 
 // EA_MAY_ALIAS
-#ifndef __SNC__ // SNC doesn't support this usage.
 void* EA_MAY_ALIAS gPtr0 = NULL;
-#endif
 
 typedef void* EA_MAY_ALIAS pvoid_may_alias;
 pvoid_may_alias gPtr1 = NULL;
@@ -1552,7 +1570,6 @@ int TestEACompiler()
 
 	// As of this writing, eacompiler.h defines at least the following compilers:
 	// EA_COMPILER_GNUC
-	// EA_COMPILER_BORLANDC
 	// EA_COMPILER_INTEL
 	// EA_COMPILER_METROWERKS
 	// EA_COMPILER_MSVC, EA_COMPILER_MSVC6, EA_COMPILER_MSVC7, EA_COMPILER_MSVC7_1
@@ -2317,7 +2334,7 @@ int TestEACompilerTraits()
 		EA_ALIGNED(int, k[3], ALIGNMENT_AMOUNT_16) = { 1, 2, 3 };
 		struct EA_ALIGN(8) L { int x; int y; };
 
-		EA_DISABLE_VC_WARNING(4359)
+		EA_DISABLE_VC_WARNING(4359)  // ARM64: C4359: 'TestEACompilerTraits::X': Alignment specifier is less than actual alignment (4), and will be ignored.
 		EA_ALIGN(ALIGNMENT_AMOUNT_32) struct X { int x; int y; } m;
 		EA_RESTORE_VC_WARNING()
 
@@ -2411,10 +2428,8 @@ int TestEACompilerTraits()
 			ClassWithDefaultCtor    cdcA  EA_POSTFIX_ALIGN(ALIGNMENT_AMOUNT_64);
 		  //ClassWithoutDefaultCtor cwdcA EA_POSTFIX_ALIGN(64);
 
-			#ifndef __SNC__ // SNC is broken with respect to constructors.
-				ClassWithDefaultCtor    cdcB  EA_POSTFIX_ALIGN(ALIGNMENT_AMOUNT_64)(3);
-				ClassWithoutDefaultCtor cwdcB EA_POSTFIX_ALIGN(ALIGNMENT_AMOUNT_64)(3);
-			#endif
+			ClassWithDefaultCtor    cdcB  EA_POSTFIX_ALIGN(ALIGNMENT_AMOUNT_64)(3);
+			ClassWithoutDefaultCtor cwdcB EA_POSTFIX_ALIGN(ALIGNMENT_AMOUNT_64)(3);
 		#else
 			DoError(nErrorCount, "EA_POSTFIX_ALIGN test 2");
 		#endif
@@ -2491,10 +2506,10 @@ int TestEACompilerTraits()
 	}
 
 	{ // Test EA_FORCE_INLINE_LAMBDA
-		// auto testLambda = []() EA_FORCE_INLINE_LAMBDA
-		// {
-		// };
-		// testLambda();
+		auto testLambda = []() EA_FORCE_INLINE_LAMBDA
+		{
+		};
+		testLambda();
 	}
 
 
@@ -2530,10 +2545,17 @@ int TestEACompilerTraits()
 		if(gInitPriorityTestClass0.mX != 0)
 			DoError(nErrorCount, "EA_INIT_PRIORITY test.");
 
-		#ifndef __SNC__ // SNC is broken with respect to constructors.
-			if(gInitPriorityTestClass1.mX != 1)
-				DoError(nErrorCount, "EA_INIT_PRIORITY test.");
-		#endif
+		if(gInitPriorityTestClass1.mX != 1)
+			DoError(nErrorCount, "EA_INIT_PRIORITY test.");
+	}
+
+
+	{ // Test EA_INIT_SEG
+		// We don't test that the init_seg succeeded in modifying the init priority.
+		// We merely test that this compiles on all platforms and assume the compiler's 
+		// support of this is not broken.
+		if(gInitSegTestSection.mX != 2300)
+			DoError(nErrorCount, "EA_INIT_SEG test.");
 	}
 
 
@@ -2541,10 +2563,8 @@ int TestEACompilerTraits()
 		// We don't test that the init priority succeeded in modifying the init priority.
 		// We merely test that this compiles on all platforms and assume the compiler's 
 		// support of this is not broken.
-		#ifndef __SNC__ // SNC doesn't support this usage.
-			if(gPtr0 != NULL)
-				DoError(nErrorCount, "EA_MAY_ALIAS test.");
-		#endif
+		if(gPtr0 != NULL)
+			DoError(nErrorCount, "EA_MAY_ALIAS test.");
 
 		if(gPtr1 != NULL)
 			DoError(nErrorCount, "EA_MAY_ALIAS test.");

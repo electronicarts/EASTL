@@ -388,7 +388,7 @@
 	   #define __STDC_FORMAT_MACROS
 	#endif
 
-	#if defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND) // VC++ 7.1+ understands long long as a data type but doesn't accept %ll as a printf specifier.
+	#if defined(EA_COMPILER_MSVC) // VC++ 7.1+ understands long long as a data type but doesn't accept %ll as a printf specifier.
 		#define EA_PRI_64_LENGTH_SPECIFIER "I64"
 		#define EA_SCN_64_LENGTH_SPECIFIER "I64"
 	#else
@@ -512,7 +512,7 @@
 // 
 #ifndef BOOL8_T_DEFINED // If the user hasn't already defined this...
 	#define BOOL8_T_DEFINED
-	#if defined(EA_COMPILER_MSVC) || (defined(EA_COMPILER_INTEL) && defined(EA_PLATFORM_WINDOWS)) || defined(EA_COMPILER_BORLAND)
+	#if defined(EA_COMPILER_MSVC) || (defined(EA_COMPILER_INTEL) && defined(EA_PLATFORM_WINDOWS))
 		#if defined(__cplusplus)
 			typedef bool bool8_t;
 		#else
@@ -596,7 +596,7 @@
 // ------------------------------------------------------------------------
 // Character types
 //
-#if defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND)
+#if defined(EA_COMPILER_MSVC)
 	#if defined(EA_WCHAR_T_NON_NATIVE)
 	   // In this case, wchar_t is not defined unless we include 
 	   // wchar.h or if the compiler makes it built-in.
@@ -921,7 +921,7 @@
 //
 #if defined(_MSC_VER) && (_MSC_VER >= 1600) && defined(__cplusplus)
 	// static_assert is defined by the compiler for both C and C++.
-#elif !defined(__cplusplus) && defined(EA_PLATFORM_ANDROID) 
+#elif !defined(__cplusplus) && defined(EA_PLATFORM_ANDROID) && ((defined(__STDC_VERSION__) && __STDC_VERSION__ < 201100L) || !defined(__STDC_VERSION__))
 	// AndroidNDK does not support static_assert despite claiming it's a C11 compiler
 	#define NEED_CUSTOM_STATIC_ASSERT
 #elif defined(__clang__) && defined(__cplusplus)
