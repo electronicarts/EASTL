@@ -2,10 +2,11 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 /////////////////////////////////////////////////////////////////////////////
 
+#include <EASTL/fixed_function.h>
+
 #include <EABase/eabase.h>
 #include <EAAssert/eaassert.h>
 #include "EASTLTest.h"
-#include <EASTL/fixed_function.h>
 #include <EASTL/numeric.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
