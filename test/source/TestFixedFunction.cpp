@@ -2,10 +2,13 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 /////////////////////////////////////////////////////////////////////////////
 
-#include <EASTL/fixed_function.h>
-
 #include <EABase/eabase.h>
 #include <EAAssert/eaassert.h>
+
+// Included prior to EASTLTest.h to guard against the following bug resurfacing:
+// https://github.com/electronicarts/EASTL/issues/275
+#include <EASTL/fixed_function.h>
+
 #include "EASTLTest.h"
 #include <EASTL/numeric.h>
 
