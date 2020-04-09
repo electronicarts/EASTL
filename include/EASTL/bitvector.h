@@ -766,7 +766,7 @@ namespace eastl
 	typename bitvector<Allocator, Element, Container>::iterator
 	bitvector<Allocator, Element, Container>::begin() EA_NOEXCEPT
 	{
-		return iterator(&mContainer[0], 0);
+		return iterator(mContainer.begin(), 0);
 	}
 
 
@@ -774,7 +774,7 @@ namespace eastl
 	typename bitvector<Allocator, Element, Container>::const_iterator
 	bitvector<Allocator, Element, Container>::begin() const EA_NOEXCEPT
 	{
-		return const_iterator(&mContainer[0], 0);
+		return const_iterator(mContainer.begin(), 0);
 	}
 
 
@@ -782,7 +782,7 @@ namespace eastl
 	typename bitvector<Allocator, Element, Container>::const_iterator
 	bitvector<Allocator, Element, Container>::cbegin() const EA_NOEXCEPT
 	{
-		return const_iterator(&mContainer[0], 0);
+		return const_iterator(mContainer.begin(), 0);
 	}
 
 
