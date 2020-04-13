@@ -165,6 +165,11 @@ int TestBitVector()
 
 			bv0.assign(boolArray, boolArray + EAArrayCount(boolArray));
 			EATEST_VERIFY(bv0 == bitvector<>(boolArray, boolArray + EAArrayCount(boolArray)));
+
+			bv0.resize(0);
+			EATEST_VERIFY(bv0.begin()==bv0.end());//should not crash
+			bv3.resize(0);
+			EATEST_VERIFY(bv0 == bv3);
 		}
 	}
 
