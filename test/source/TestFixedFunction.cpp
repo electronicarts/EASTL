@@ -4,8 +4,12 @@
 
 #include <EABase/eabase.h>
 #include <EAAssert/eaassert.h>
-#include "EASTLTest.h"
+
+// Included prior to EASTLTest.h to guard against the following bug resurfacing:
+// https://github.com/electronicarts/EASTL/issues/275
 #include <EASTL/fixed_function.h>
+
+#include "EASTLTest.h"
 #include <EASTL/numeric.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
