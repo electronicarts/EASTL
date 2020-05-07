@@ -19,6 +19,7 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 include_directories(source)
 include_directories(../test/source)
+include_directories(../test/packages/EABase/include/Common)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
