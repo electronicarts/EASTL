@@ -63,6 +63,7 @@ add_executable(EASTLTest ${SOURCES})
 # Include directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(EASTLTest PUBLIC include)
+target_include_directories(EASTLTest PRIVATE packages/EABase/include/Common)
 
 #-------------------------------------------------------------------------------------------
 # Dependencies 
@@ -74,7 +75,6 @@ add_subdirectory(packages/EAMain)
 add_subdirectory(packages/EATest)
 add_subdirectory(packages/EAThread)
 
-target_link_libraries(EASTLTest EABase)
 target_link_libraries(EASTLTest EAAssert)
 target_link_libraries(EASTLTest EAMain)
 target_link_libraries(EASTLTest EASTL)

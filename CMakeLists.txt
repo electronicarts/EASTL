@@ -46,5 +46,5 @@ target_include_directories(EASTL PRIVATE ./test/packages/EABase/include/Common)
 #-------------------------------------------------------------------------------------------
 # Dependencies
 #-------------------------------------------------------------------------------------------
-target_link_libraries(EASTL EABase)
+
 
