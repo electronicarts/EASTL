@@ -210,10 +210,8 @@ namespace eastl
 		{
 			if (pValue != mPair.first())
 			{
-				if (mPair.first())
-					get_deleter()(mPair.first());
-
-				mPair.first() = pValue;
+				if (auto first = exchange(mPair.first(), pValue))
+					get_deleter()(first);
 			}
 		}
 

@@ -392,6 +392,20 @@ namespace SmartPtrTest
 		int mX;
 	};
 
+	struct CheckUPtrEmptyInDestructor
+	{
+		~CheckUPtrEmptyInDestructor()
+		{
+			if(mpUPtr)
+				mCheckUPtrEmpty = (*mpUPtr == nullptr);
+		}
+
+		eastl::unique_ptr<CheckUPtrEmptyInDestructor>* mpUPtr{};
+		static bool mCheckUPtrEmpty;
+	};
+
+	bool CheckUPtrEmptyInDestructor::mCheckUPtrEmpty = false;
+
 } // namespace SmartPtrTest
 
 
@@ -540,6 +554,16 @@ static int Test_unique_ptr()
 
 			EATEST_VERIFY(sLocalDeleterCalled == false);
 		}
+	}
+
+	{
+		// Test that unique_ptr internal pointer is reset before calling the destructor
+		CheckUPtrEmptyInDestructor::mCheckUPtrEmpty = false;
+
+		unique_ptr<CheckUPtrEmptyInDestructor> uptr(new CheckUPtrEmptyInDestructor);
+		uptr->mpUPtr = &uptr;
+		uptr.reset();
+		EATEST_VERIFY(CheckUPtrEmptyInDestructor::mCheckUPtrEmpty);
 	}
 
 	{
