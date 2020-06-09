@@ -287,7 +287,7 @@ int TestSort()
 
 				intArray = intArraySaved;
 				vector<int64_t> buffer(intArray.size());
-				merge_sort_buffer(intArray.begin(), intArray.end(), &buffer[0]);
+				merge_sort_buffer(intArray.begin(), intArray.end(), buffer.data());
 				EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
 				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 
@@ -303,6 +303,17 @@ int TestSort()
 				EATEST_VERIFY(eastl::accumulate(begin(intArraySaved), end(intArraySaved), int64_t(0)) == expectedSum);
 			}
 		}
+	}
+
+	// Test insertion_sort() does not invalidate a BidirectionalIterator by doing --BidirectionalIterator.begin()
+	{
+		// Test Passes if the Test doesn't crash
+		eastl::deque<int> deque;
+		deque.push_back(1);
+
+		insertion_sort(deque.begin(), deque.end());
+
+		insertion_sort(deque.begin(), deque.end(), eastl::less<int>{});
 	}
 
 

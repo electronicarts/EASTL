@@ -1156,6 +1156,15 @@ static int Test_shared_ptr()
 	}
 
 
+	{ // Test shared_ptr lambda deleter
+		auto deleter = [](int*) {}; 
+		eastl::shared_ptr<int> ptr(nullptr, deleter);
+
+		EATEST_VERIFY(!ptr);
+		EATEST_VERIFY(ptr.get() == nullptr);
+	}
+
+
 	{ // Test of shared_ptr<void const>
 		#if !defined(__GNUC__) ||  (__GNUC__ >= 3) // If not using old GCC (GCC 2.x is broken)...
 			shared_ptr<void const> voidPtr = shared_ptr<A1>(new A1);

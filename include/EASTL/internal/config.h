@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.16.05"
-	#define EASTL_VERSION_N  31605
+	#define EASTL_VERSION   "3.16.07"
+	#define EASTL_VERSION_N  31607
 #endif
 
 
@@ -448,6 +448,8 @@ namespace eastl
 // the front of the container, but not use it if the container is empty.
 // In practice it's often easier and more efficient to do this than to write
 // extra code to check if the container is empty.
+//
+// NOTE: If this is enabled, EASTL_ASSERT_ENABLED must also be enabled
 //
 // Example usage:
 //     template <typename T, typename Allocator>
@@ -1544,13 +1546,8 @@ namespace eastl
 //    size_t alignment = EASTL_ALIGN_OF(int);
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 #ifndef EASTL_ALIGN_OF
-	#if !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x doesn't do __alignof correctly all the time.
-		#define EASTL_ALIGN_OF __alignof
-	#else
-		#define EASTL_ALIGN_OF(type) ((size_t)offsetof(struct{ char c; type m; }, m))
-	#endif
+	#define EASTL_ALIGN_OF alignof
 #endif
 
 
@@ -1768,20 +1765,13 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	#endif
 #endif
 
+
 /// EASTL_TUPLE_ENABLED
 /// EASTL tuple implementation depends on variadic template support
 #if EASTL_VARIADIC_TEMPLATES_ENABLED && !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 	#define EASTL_TUPLE_ENABLED 1
 #else
 	#define EASTL_TUPLE_ENABLED 0
-#endif
-
-/// EA_ONCE
-///
-/// This is a fix for the EA_ONCE define that's broken in EABase versions prior to 2.00.40
-///
-#ifndef EA_ONCE
-	#define EA_ONCE()
 #endif
 
 

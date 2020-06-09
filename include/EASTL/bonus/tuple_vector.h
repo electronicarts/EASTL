@@ -1131,45 +1131,49 @@ public:
 	
 	reference_tuple front() 
 	{
-#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-	// We allow the user to reference an empty container.
-#elif EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
-			EASTL_FAIL_MSG("tuple_vector::front -- empty vector");
-#endif
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
+				EASTL_FAIL_MSG("tuple_vector::front -- empty vector");
+		#else
+			// We allow the user to reference an empty container.
+		#endif
+
 		return at(0); 
 	}
 
 	const_reference_tuple front() const
 	{
-#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-	// We allow the user to reference an empty container.
-#elif EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
-			EASTL_FAIL_MSG("tuple_vector::front -- empty vector");
-#endif
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
+				EASTL_FAIL_MSG("tuple_vector::front -- empty vector");
+		#else
+			// We allow the user to reference an empty container.
+		#endif
+
 		return at(0); 
 	}
 	
 	reference_tuple back() 
 	{
-#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-	// We allow the user to reference an empty container.
-#elif EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
-			EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
-#endif
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
+				EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
+		#else
+			// We allow the user to reference an empty container.
+		#endif
+
 		return at(size() - 1); 
 	}
 
 	const_reference_tuple back() const 
 	{
-#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-	// We allow the user to reference an empty container.
-#elif EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
-			EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
-#endif
+		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
+				EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
+		#else
+			// We allow the user to reference an empty container.
+		#endif
+
 		return at(size() - 1); 
 	}
 
