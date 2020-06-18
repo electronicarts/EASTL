@@ -661,7 +661,7 @@ public:
 				size_type oldNumElements = mNumElements;
 				
 				DoCopyFromTupleArray(begin(), begin() + oldNumElements, first);
-				DoUninitializedCopyFromTupleArray(begin() + oldNumElements, begin() + newNumElements, first);
+				DoUninitializedCopyFromTupleArray(begin() + oldNumElements, begin() + newNumElements, first + oldNumElements);
 				mNumElements = newNumElements;
 			}
 			else // else 0 <= n <= mNumElements

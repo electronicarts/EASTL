@@ -803,36 +803,36 @@ int TestTupleVector()
 			// test assign from initList that grows the capacity
 			testVec.assign({
 				{ true, TestObject(1), 1.0f }, 
-				{ true, TestObject(1), 1.0f },
-				{ true, TestObject(1), 1.0f }
+				{ true, TestObject(2), 2.0f },
+				{ true, TestObject(3), 3.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 3);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(1), 1.0f));
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i + 1), (float)i + 1.0f));
 			}
 			EATEST_VERIFY(TestObject::sTOCount == 3);
 
 			// test assign from initList that shrinks the vector
 			testVec.assign({
-				{ true, TestObject(2), 2.0f }
+				{ true, TestObject(4), 4.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 1);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(2), 2.0f));
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i + 4), (float)i + 4.0f));
 			}
 			EATEST_VERIFY(TestObject::sTOCount == 1);
 
 			// test assign from initList for when there's enough capacity
 			testVec.assign({
-				{ true, TestObject(3), 3.0f },
-				{ true, TestObject(3), 3.0f }
+				{ true, TestObject(5), 5.0f },
+				{ true, TestObject(6), 6.0f }
 				});
 			EATEST_VERIFY(testVec.size() == 2);
 			for (unsigned int i = 0; i < testVec.size(); ++i)
 			{
-				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(3), 3.0f));
+				EATEST_VERIFY(testVec[i] == make_tuple(true, TestObject(i + 5), (float)i + 5.0f));
 			}
 			EATEST_VERIFY(TestObject::sTOCount == 2);
 		}
