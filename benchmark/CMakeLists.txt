@@ -19,6 +19,7 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 include_directories(source)
 include_directories(../test/source)
+include_directories(../test/packages/EABase/include/Common)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -76,7 +77,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(EASTLBenchmark_Libraries
-    EABase
     EAAssert
     EAMain
     EAThread

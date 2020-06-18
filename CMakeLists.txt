@@ -42,9 +42,9 @@ add_definitions(-DEASTL_OPENSOURCE=1)
 # Include dirs
 #-------------------------------------------------------------------------------------------
 target_include_directories(EASTL PUBLIC include)
-
+target_include_directories(EASTL PRIVATE ./test/packages/EABase/include/Common)
 #-------------------------------------------------------------------------------------------
 # Dependencies
 #-------------------------------------------------------------------------------------------
-target_link_libraries(EASTL EABase)
+
 
