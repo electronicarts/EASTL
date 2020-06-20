@@ -162,15 +162,11 @@ namespace eastl
 	inline void ref_count_sp::release()
 	{
 		EASTL_ASSERT((mRefCount > 0) && (mWeakRefCount > 0));
-		if(Internal::atomic_decrement(&mRefCount) > 0)
-			Internal::atomic_decrement(&mWeakRefCount);
-		else
-		{
+		if(Internal::atomic_decrement(&mRefCount) == 0)
 			free_value();
 
-			if(Internal::atomic_decrement(&mWeakRefCount) == 0)
-				free_ref_count_sp();
-		}
+		if(Internal::atomic_decrement(&mWeakRefCount) == 0)
+			free_ref_count_sp();
 	}
 
 	inline void ref_count_sp::weak_addref() EA_NOEXCEPT
