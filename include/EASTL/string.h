@@ -389,7 +389,7 @@ namespace eastl
 				RawLayout raw;
 			};
 
-			Layout()                                                  { ResetToSSO(); SetSSOSize(0); } // start as SSO by default
+			Layout()                                                  { ResetToSSO(); } // start as SSO by default
 			Layout(const Layout& other)                               { Copy(*this, other); }
 			Layout(Layout&& other)                                    { Move(*this, other); }
 			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
@@ -481,7 +481,7 @@ namespace eastl
 			inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { eastl::swap(dst.raw, src.raw); }
 			inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { eastl::swap(a.raw, b.raw); }
 
-			inline void ResetToSSO() EA_NOEXCEPT { memset(&raw, 0, sizeof(RawLayout)); }
+			inline void ResetToSSO() EA_NOEXCEPT { *SSOBeginPtr() = 0; SetSSOSize(0); }
 		};
 
 		eastl::compressed_pair<Layout, allocator_type> mPair;
@@ -935,6 +935,7 @@ namespace eastl
 	{
 		// Note that we do not call SizeInitialize here.
 		AllocateSelf(n);
+		internalLayout().SetSize(0);
 		*internalLayout().EndPtr() = 0;
 	}
 
@@ -947,6 +948,7 @@ namespace eastl
 	{
 		const size_type n = (size_type)CharStrlen(pFormat);
 		AllocateSelf(n);
+		internalLayout().SetSize(0);
 
 		va_list arguments;
 		va_start(arguments, pFormat);
@@ -1408,10 +1410,9 @@ namespace eastl
 					pointer pOldBegin = internalLayout().BeginPtr();
 					const size_type nOldCap = internalLayout().GetHeapCapacity();
 
-					internalLayout().ResetToSSO(); // reset layout to sso
-					CharStringUninitializedCopy(pOldBegin, pOldBegin + n, internalLayout().BeginPtr());
-					// *EndPtr() = 0 is already done by the ResetToSSO
+					CharStringUninitializedCopy(pOldBegin, pOldBegin + n, internalLayout().SSOBeginPtr());
 					internalLayout().SetSSOSize(n);
+					*internalLayout().SSOEndPtr() = 0;
 
 					DoFree(pOldBegin, nOldCap + 1);
 
@@ -3231,8 +3232,7 @@ namespace eastl
 		AllocateSelf(n);
 
 		CharStringUninitializedFillN(internalLayout().BeginPtr(), n, c);
-		internalLayout().SetSize(n);
-	   *internalLayout().EndPtr() = 0;
+		*internalLayout().EndPtr() = 0;
 	}
 
 
@@ -3249,8 +3249,7 @@ namespace eastl
 		AllocateSelf(n);
 
 		CharStringUninitializedCopy(pBegin, pEnd, internalLayout().BeginPtr());
-		internalLayout().SetSize(n);
-	   *internalLayout().EndPtr() = 0;
+		*internalLayout().EndPtr() = 0;
 	}
 
 
@@ -3312,7 +3311,6 @@ namespace eastl
 	inline void basic_string<T, Allocator>::AllocateSelf()
 	{
 		internalLayout().ResetToSSO();
-		internalLayout().SetSSOSize(0);
 	}
 
 
@@ -3334,10 +3332,10 @@ namespace eastl
 			pointer pBegin = DoAllocate(n + 1);
 			internalLayout().SetHeapBeginPtr(pBegin);
 			internalLayout().SetHeapCapacity(n);
-			internalLayout().SetHeapSize(0);
+			internalLayout().SetHeapSize(n);
 		}
 		else
-			AllocateSelf();
+			internalLayout().SetSSOSize(n);
 	}
 
 
