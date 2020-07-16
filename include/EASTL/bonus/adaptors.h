@@ -34,8 +34,9 @@ namespace eastl
 	template <typename Container>
 	struct reverse_wrapper
 	{
-		reverse_wrapper(Container& c) : mContainer(c) {}
-		Container& mContainer;
+		template <typename C>
+		reverse_wrapper(C&& c) : mContainer(eastl::forward<C>(c)) {}
+		Container mContainer;
 	};
 
 	template <typename Container>
