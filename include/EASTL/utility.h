@@ -19,12 +19,12 @@
 #include <EASTL/internal/in_place_t.h>
 #include <EASTL/internal/piecewise_construct_t.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push)           // VC++ generates a bogus warning that you cannot code away.
-	#pragma warning(disable: 4619)  // There is no warning number 'number'.
-	#pragma warning(disable: 4217)  // Member template functions cannot be used for copy-assignment or copy-construction.
-	#pragma warning(disable: 4512)  // 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
-#endif
+
+// 4619 - There is no warning number 'number'.
+// 4217 - Member template functions cannot be used for copy-assignment or copy-construction.
+// 4512 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4619 4217 4512);
+
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -838,24 +838,35 @@ namespace eastl
 
 }  // namespace eastl
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
+///////////////////////////////////////////////////////////////
+// C++17 structured bindings support for eastl::pair
+//
+#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+	#include <tuple>
+	namespace std
+	{
+		// NOTE(rparolin): Some platform implementations didn't check the standard specification and implemented the
+		// "tuple_size" and "tuple_element" primary template with as a struct.  The standard specifies they are
+		// implemented with the class keyword so we provide the template specializations as a class and disable the
+		// generated warning.
+		EA_DISABLE_CLANG_WARNING(-Wmismatched-tags)
+
+		template <class... Ts>
+		class tuple_size<::eastl::pair<Ts...>> : public ::eastl::integral_constant<size_t, sizeof...(Ts)>
+		{
+		};
+
+		template <size_t I, class... Ts>
+		class tuple_element<I, ::eastl::pair<Ts...>> : public ::eastl::tuple_element<I, ::eastl::pair<Ts...>>
+		{
+		};
+
+		EA_RESTORE_CLANG_WARNING()
+	}
 #endif
 
 
+EA_RESTORE_VC_WARNING();
+
+
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

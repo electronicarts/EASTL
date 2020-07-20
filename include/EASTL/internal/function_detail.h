@@ -17,7 +17,6 @@
 #include <EASTL/internal/functional_base.h>
 #include <EASTL/internal/move_help.h>
 #include <EASTL/internal/function_help.h>
-#include <EASTL/internal/allocator_traits_fwd_decls.h>
 
 #include <EASTL/type_traits.h>
 #include <EASTL/utility.h>
@@ -313,7 +312,86 @@ namespace eastl
 				}
 			#endif // EASTL_RTTI_ENABLED
 
-				static R Invoker(const FunctorStorageType& functor, Args... args)
+				/**
+				 * NOTE:
+				 *
+				 * The order of arguments here is vital to the call optimization. Let's dig into why and look at some asm.
+				 * We have two invoker signatures to consider:
+				 *   R Invoker(const FunctorStorageType& functor, Args... args)
+				 *   R Invoker(Args... args, const FunctorStorageType& functor)
+				 *
+				 * Assume we are using the Windows x64 Calling Convention where the first 4 arguments are passed into
+				 * RCX, RDX, R8, R9. This optimization works for any Calling Convention, we are just using Windows x64 for
+				 * this example.
+				 *
+				 * Given the following member function: void TestMemberFunc(int a, int b)
+				 *  RCX == this
+				 *  RDX == a
+				 *  R8  == b
+				 *
+				 * All three arguments to the function including the hidden this pointer, which in C++ is always the first argument
+				 * are passed into the first three registers.
+				 * The function call chain for eastl::function<>() is as follows:
+				 *  operator ()(this, Args... args) -> Invoker(Args... args, this->mStorage) -> StoredFunction(Args... arg)
+				 *
+				 * Let's look at what is happening at the asm level with the different Invoker function signatures and why.
+				 *
+				 * You will notice that operator ()() and Invoker() have the arguments reversed. operator ()() just directly calls
+				 * to Invoker(), it is a tail call, so we force inline the call operator to ensure we directly call to the Invoker().
+				 * Most compilers always inline it anyways by default; have been instances where it doesn't even though the asm ends
+				 * up being cheaper.
+				 * call -> call -> call versus call -> call
+				 *
+				 * eastl::function<int(int, int)> = FunctionPointer
+				 *
+				 * Assume we have the above eastl::function object that holds a pointer to a function as the internal callable.
+				 *
+				 * Invoker(this->mStorage, Args... args) is called with the follow arguments in registers:
+				 *  RCX = this  |  RDX = a  |  R8 = b
+				 *
+				 * Inside Invoker() we use RCX to deference into the eastl::function object and get the function pointer to call.
+				 * This function to call has signature Func(int, int) and thus requires its arguments in registers RCX and RDX.
+				 * The compiler must shift all the arguments towards the left. The full asm looks something as follows.
+				 *
+				 * Calling Invoker:                       Inside Invoker:
+				 *
+				 * mov rcx, this                          mov rax, [rcx]
+				 * mov rdx, a                             mov rcx, rdx
+				 * mov r8, b                              mov rdx, r8
+				 * call [rcx + offset to Invoker]         jmp [rax]
+				 *
+				 * Notice how the compiler shifts all the arguments before calling the callable and also we only use the this pointer
+				 * to access the internal storage inside the eastl::function object.
+				 *
+				 * Invoker(Args... args, this->mStorage) is called with the following arguments in registers:
+				 *  RCX = a  |  RDX = b  |  R8 = this
+				 *
+				 * You can see we no longer have to shift the arguments down when going to call the internal stored callable.
+				 *
+				 * Calling Invoker:                      Inside Invoker:
+				 *
+				 * mov rcx, a                            mov rax, [r8]
+				 * mov rdx, b                            jmp [rax]
+				 * mov r8, this
+				 * call [r8 + offset to Invoker]
+				 *
+				 * The generated asm does a straight tail jmp to the loaded function pointer. The arguments are already in the correct
+				 * registers.
+				 *
+				 * For Functors or Lambdas with no captures, this gives us another free register to use to pass arguments since the this
+				 * is at the end, it can be passed onto the stack if we run out of registers. Since the callable has no captures; inside
+				 * the Invoker(), we won't ever need to touch this thus we can just call the operator ()() or let the compiler inline it.
+				 *
+				 * For a callable with captures there is no perf hit since the callable in the common case is inlined and the pointer to the callable
+				 * buffer is passed in a register which the compiler can use to access the captures.
+				 *
+				 * For eastl::function<void(const T&, int, int)> that a holds a pointer to member function. The this pointers is implicitly
+				 * the first argument in the argument list, const T&, and the member function pointer will be called on that object.
+				 * This prevents any argument shifting since the this for the member function pointer is already in RCX.
+				 *
+				 * This is why having this at the end of the argument list is important for generating efficient Invoker() thunks.
+				 */
+				static R Invoker(Args... args, const FunctorStorageType& functor)
 				{
 					return eastl::invoke(*Base::GetFunctorPtr(functor), eastl::forward<Args>(args)...);
 				}
@@ -405,7 +483,7 @@ namespace eastl
 			{
 				Destroy();
 				mMgrFuncPtr = nullptr;
-				mInvokeFuncPtr = nullptr;
+				mInvokeFuncPtr = &DefaultInvoker;
 
 				return *this;
 			}
@@ -459,17 +537,9 @@ namespace eastl
 				return HaveManager();
 			}
 
-			R operator ()(Args... args) const
+			EASTL_FORCE_INLINE R operator ()(Args... args) const
 			{
-			#if EASTL_EXCEPTIONS_ENABLED
-				if (!HaveManager())
-				{
-					throw eastl::bad_function_call();
-				}
-			#else
-				EASTL_ASSERT_MSG(HaveManager(), "function_detail call on an empty function_detail<R(Args..)>");
-			#endif
-				return (*mInvokeFuncPtr)(mStorage, eastl::forward<Args>(args)...);
+				return (*mInvokeFuncPtr)(eastl::forward<Args>(args)..., this->mStorage);
 			}
 
 			#if EASTL_RTTI_ENABLED
@@ -547,7 +617,7 @@ namespace eastl
 				mMgrFuncPtr = other.mMgrFuncPtr;
 				mInvokeFuncPtr = other.mInvokeFuncPtr;
 				other.mMgrFuncPtr = nullptr;
-				other.mInvokeFuncPtr = nullptr;
+				other.mInvokeFuncPtr = &DefaultInvoker;
 			}
 
 			template <typename Functor>
@@ -559,7 +629,7 @@ namespace eastl
 				if (internal::is_null(functor))
 				{
 					mMgrFuncPtr = nullptr;
-					mInvokeFuncPtr = nullptr;
+					mInvokeFuncPtr = &DefaultInvoker;
 				}
 				else
 				{
@@ -571,10 +641,29 @@ namespace eastl
 
 		private:
 			typedef void* (*ManagerFuncPtr)(void*, void*, typename Base::ManagerOperations);
-			typedef R (*InvokeFuncPtr)(const FunctorStorageType&, Args...);
+			typedef R (*InvokeFuncPtr)(Args..., const FunctorStorageType&);
+
+			EA_DISABLE_GCC_WARNING(-Wreturn-type);
+			EA_DISABLE_CLANG_WARNING(-Wreturn-type);
+			EA_DISABLE_VC_WARNING(4716); // 'function' must return a value
+			// We cannot assume that R is default constructible.
+			// This function is called only when the function object CANNOT be called because it is empty,
+			// it will always throw or assert so we never use the return value anyways and neither should the caller.
+			static R DefaultInvoker(Args... args, const FunctorStorageType& functor)
+			{
+				#if EASTL_EXCEPTIONS_ENABLED
+					throw eastl::bad_function_call();
+				#else
+					EASTL_ASSERT_MSG(false, "function_detail call on an empty function_detail<R(Args..)>");
+				#endif
+			};
+			EA_RESTORE_VC_WARNING();
+			EA_RESTORE_CLANG_WARNING();
+			EA_RESTORE_GCC_WARNING();
+
 
 			ManagerFuncPtr mMgrFuncPtr = nullptr;
-			InvokeFuncPtr mInvokeFuncPtr = nullptr;
+			InvokeFuncPtr mInvokeFuncPtr = &DefaultInvoker;
 		};
 
 	} // namespace internal

@@ -19,7 +19,7 @@ EA_DISABLE_ALL_VC_WARNINGS()
 	#include <stdexcept>
 	#include <new>
 #endif
-EA_RESTORE_VC_WARNING()
+EA_RESTORE_ALL_VC_WARNINGS();
 
 
 int TestAlgorithm();
@@ -80,6 +80,8 @@ int TestVariant();
 int TestVector();
 int TestVectorMap();
 int TestVectorSet();
+int TestAtomicBasic();
+int TestAtomicAsm();
 
 
 // Now enable warnings as desired.

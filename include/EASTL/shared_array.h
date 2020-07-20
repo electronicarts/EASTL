@@ -62,15 +62,12 @@
 #include <EASTL/internal/smart_ptr.h>   // Defines smart_array_deleter
 
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
+EA_DISABLE_ALL_VC_WARNINGS();
+
 	#include <new>
 	#include <stddef.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-#endif
+
+EA_RESTORE_ALL_VC_WARNINGS();
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.

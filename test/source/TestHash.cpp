@@ -54,6 +54,18 @@ struct Struct {
 };
 
 
+// For regression code below.
+template<class HashType>
+struct HashTest
+{
+	template<typename... Args>
+	auto operator()(Args&&... args)
+	{
+		return eastl::hash<HashType>{}(eastl::forward<Args>(args)...);
+	}
+};
+
+
 
 // What we are doing here is creating a special case of a hashtable where the key compare
 // function is not the same as the value operator==. 99% of the time when you create a 
@@ -1425,7 +1437,6 @@ int TestHash()
 
 	
 	{
-
 		struct name_equals
 		{
 			bool operator()(const eastl::pair<int, const char*>& a, const eastl::pair<int, const char*>& b) const
@@ -1447,6 +1458,25 @@ int TestHash()
 			VERIFY(isFound);
 		}
 	}
+
+	{ // User reported regression for code changes limiting hash code generated for non-arithmetic types.
+	    { VERIFY(HashTest<char>{}('a') == size_t('a')); }
+	    { VERIFY(HashTest<int>{}(42) == 42); }
+	    { VERIFY(HashTest<unsigned>{}(42) == 42); }
+	    { VERIFY(HashTest<signed>{}(42) == 42); }
+	    { VERIFY(HashTest<short>{}(short(42)) == 42); }
+	    { VERIFY(HashTest<unsigned short>{}((unsigned short)42) == 42); }
+	    { VERIFY(HashTest<int>{}(42) == 42); }
+	    { VERIFY(HashTest<unsigned int>{}(42) == 42); }
+	    { VERIFY(HashTest<long int>{}(42) == 42); }
+	    { VERIFY(HashTest<unsigned long int>{}(42) == 42); }
+	    { VERIFY(HashTest<long long int>{}(42) == 42); }
+	    { VERIFY(HashTest<unsigned long long int>{}(42) == 42); }
+
+	#if defined(EA_HAVE_INT128) && EA_HAVE_INT128
+	    { VERIFY(HashTest<uint128_t>{}(UINT128_C(0, 42)) == 42); }
+	#endif
+    }
 
 	return nErrorCount;
 }

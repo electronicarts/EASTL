@@ -12,6 +12,7 @@
 #include <EASTL/internal/smart_ptr.h>   // Defines smart_ptr_deleter
 #include <EASTL/internal/move_help.h>   // Defines EASTL_MOVE
 #include <EASTL/type_traits.h>
+#include <EASTL/utility.h>
 #include <EASTL/functional.h>
 #include <EASTL/bonus/compressed_pair.h>
 #include <stddef.h>
@@ -371,11 +372,14 @@ namespace eastl
 			static_assert(!eastl::is_pointer<deleter_type>::value, "unique_ptr deleter default-constructed with null pointer. Use a different constructor or change your deleter to a class.");
 		}
 
-		template <typename P> // Pointers to types derived from T are rejected by the constructors, and by reset.
-		explicit unique_ptr(P pArray, typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
-			: mPair(pArray)
+		template <typename P,
+		          typename = eastl::enable_if_t<Internal::is_array_cv_convertible<P, pointer>::value>> // Pointers to types derived from T are rejected by the constructors, and by reset.
+		 explicit unique_ptr(P pArray) EA_NOEXCEPT
+		    : mPair(pArray)
 		{
-			static_assert(!eastl::is_pointer<deleter_type>::value, "unique_ptr deleter default-constructed with null pointer. Use a different constructor or change your deleter to a class.");
+			static_assert(!eastl::is_pointer<deleter_type>::value,
+			              "unique_ptr deleter default-constructed with null pointer. Use a different constructor or "
+			              "change your deleter to a class.");
 		}
 
 		template <typename P>
@@ -385,7 +389,7 @@ namespace eastl
 			: mPair(pArray, deleter) {}
 
 		template <typename P>
-		unique_ptr(P pArray, typename eastl::remove_reference<deleter_type>::type&& deleter, typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
+		unique_ptr(P pArray, typename eastl::remove_reference<deleter_type>::type&& deleter, eastl::enable_if_t<Internal::is_array_cv_convertible<P, pointer>::value>* = 0) EA_NOEXCEPT
 			: mPair(pArray, eastl::move(deleter))
 		{
 			static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");

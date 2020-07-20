@@ -13,6 +13,7 @@
 	#define EASTL_SNPRINTF_TESTS_ENABLED 1
 #endif
 
+
 template<typename StringType>
 int TEST_STRING_NAME()
 {
@@ -2036,6 +2037,31 @@ int TEST_STRING_NAME()
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		eastl::erase_if(str, [](auto c) { return c == LITERAL('a') || c == LITERAL('v'); });
 		VERIFY(str == LITERAL("bcdefghijklmnopqrstuwxyz"));
+	}
+
+	// template<> struct hash<eastl::string>;
+	// template<> struct hash<eastl::wstring>;
+	// template<> struct hash<eastl::u16string>;
+	// template<> struct hash<eastl::u32string>;
+	{
+		// NOTE(rparolin): This is required because the string tests inject custom allocators to assist in debugging.
+		// These custom string types require their own hashing specializations which we emulate by constructing a custom
+		// hashing functor that defers to the eastl::basic_string<CharT> hash implementation; effectively ignoring the
+		// custom allocator.
+	    auto LocalHash = [](auto s) -> size_t {
+		    using UserStringType = decltype(s);
+		    using TargetType = eastl::basic_string<typename UserStringType::value_type>;
+
+		    TargetType t(s.data());
+		    return eastl::hash<TargetType>{}(t);
+	    };
+
+	    StringType sw1(LITERAL("Hello, World"));
+		StringType sw2(LITERAL("Hello, World"), 5);
+		StringType sw3(LITERAL("Hello"));
+
+		VERIFY(LocalHash(sw1) != LocalHash(sw2));
+		VERIFY(LocalHash(sw2) == LocalHash(sw3));
 	}
 
 	return nErrorCount;

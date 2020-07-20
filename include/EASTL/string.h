@@ -117,18 +117,18 @@ EA_RESTORE_GCC_WARNING()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning(disable: 4267)  // 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
-	#pragma warning(disable: 4480)  // nonstandard extension used: specifying underlying type for enum
-	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-	#pragma warning(disable: 4702)  // unreachable code
-#endif
+// 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+// 4480 - nonstandard extension used: specifying underlying type for enum
+// 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+// 4267 - 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
+// 4702 - unreachable code
+EA_DISABLE_VC_WARNING(4530 4480 4571 4267 4702);
+
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
+
 
 #include <EASTL/internal/char_traits.h>
 #include <EASTL/string_view.h>
@@ -3932,22 +3932,20 @@ namespace eastl
 		}
 	};
 
-	// NOTE(rparolin): no longer required.
-	//
-	// #if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
-	//     template <>
-	//     struct hash<string8>
-	//     {
-	//         size_t operator()(const string8& x) const
-	//         {
-	//             const char8_t* p = (const char8_t*)x.c_str();
-	//             unsigned int c, result = 2166136261U;
-	//             while((c = *p++) != 0)
-	//                 result = (result * 16777619) ^ c;
-	//             return (size_t)result;
-	//         }
-	//     };
-	// #endif
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		template <>
+		struct hash<u8string>
+		{
+			size_t operator()(const u8string& x) const
+			{
+				const char8_t* p = (const char8_t*)x.c_str();
+				unsigned int c, result = 2166136261U;
+				while((c = *p++) != 0)
+					result = (result * 16777619) ^ c;
+				return (size_t)result;
+			}
+		};
+	#endif
 
 	template <>
 	struct hash<string16>
@@ -4096,8 +4094,7 @@ namespace eastl
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
+
 
 #endif // Header include guard

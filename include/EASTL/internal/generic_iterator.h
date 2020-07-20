@@ -23,12 +23,9 @@
 #include <EASTL/iterator.h>
 #include <EASTL/type_traits.h>
 
-
-#ifdef _MSC_VER
-	#pragma warning(push)           // VC++ generates a bogus warning that you cannot code away.
-	#pragma warning(disable: 4619)  // There is no warning number 'number'.
-	#pragma warning(disable: 4217)  // Member template functions cannot be used for copy-assignment or copy-construction.
-#endif
+// There is no warning number 'number'.
+// Member template functions cannot be used for copy-assignment or copy-construction.
+EA_DISABLE_VC_WARNING(4619 4217);
 
 
 namespace eastl
@@ -205,25 +202,7 @@ namespace eastl
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -847,6 +847,7 @@ int TestVariantUserRegressionIncompleteType()
 	return nErrorCount;
 }
 
+int TestVariantGeneratingComparisonOverloads();
 
 int TestVariant()
 {
@@ -869,6 +870,7 @@ int TestVariant()
 	nErrorCount += TestVariantMoveOnly();
 	nErrorCount += TestVariantUserRegressionCopyMoveAssignmentOperatorLeak();
 	nErrorCount += TestVariantUserRegressionIncompleteType();
+	nErrorCount += TestVariantGeneratingComparisonOverloads();
 
 	return nErrorCount;
 }

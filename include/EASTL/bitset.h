@@ -27,29 +27,22 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/algorithm.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-#endif
+EA_DISABLE_ALL_VC_WARNINGS();
+
 #include <stddef.h>
 #include <string.h>
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+
+EA_RESTORE_ALL_VC_WARNINGS();
 
 #if EASTL_EXCEPTIONS_ENABLED
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-	#endif
+	EA_DISABLE_ALL_VC_WARNINGS();
+
 	#include <stdexcept> // std::out_of_range, std::length_error.
-	#ifdef _MSC_VER
-		#pragma warning(pop)
-	#endif
+
+	EA_RESTORE_ALL_VC_WARNINGS();
 #endif
 
-#if defined(_MSC_VER)
-	#pragma warning(push)
-	#pragma warning(disable: 4127)  // Conditional expression is constant
-#endif
+EA_DISABLE_VC_WARNING(4127); // Conditional expression is constant
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -2234,21 +2227,6 @@ EA_RESTORE_GCC_WARNING()
 } // namespace eastl
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-

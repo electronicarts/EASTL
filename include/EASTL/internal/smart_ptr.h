@@ -61,8 +61,8 @@ namespace eastl
 
 		#define EASTL_TYPE_TRAIT_is_array_cv_convertible_CONFORMANCE 1
 
-		template <typename P1, typename P2, bool = eastl::is_same<typename eastl::remove_cv<typename pointer_traits<P1>::element_type>::type,
-																  typename eastl::remove_cv<typename pointer_traits<P2>::element_type>::type>::value>
+		template <typename P1, typename P2, bool = eastl::is_same_v<eastl::remove_cv_t<typename pointer_traits<P1>::element_type>,
+																    eastl::remove_cv_t<typename pointer_traits<P2>::element_type>>>
 		struct is_array_cv_convertible_impl 
 			: public eastl::is_convertible<P1, P2> {};  // Return true if P1 is convertible to P2.
 
@@ -70,7 +70,7 @@ namespace eastl
 		struct is_array_cv_convertible_impl<P1, P2, false> 
 			: public eastl::false_type {};              // P1's underlying type is not the same as P2's, so it can't be converted, even if P2 refers to a subclass of P1. Parent == Child, but Parent[] != Child[]
 
-		template <typename P1, typename P2, bool = eastl::is_scalar<P1>::value && !eastl::is_pointer<P1>::value>
+		template <typename P1, typename P2, bool = eastl::is_scalar_v<P1> && !eastl::is_pointer_v<P1>>
 		struct is_array_cv_convertible
 			: public is_array_cv_convertible_impl<P1, P2> {};
 

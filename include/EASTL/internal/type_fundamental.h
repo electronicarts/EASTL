@@ -139,6 +139,10 @@ namespace eastl
 	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled above...
 		template <> struct is_integral_helper<wchar_t>        : public true_type{};
 	#endif
+	#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+		template <> struct is_integral_helper<__int128_t>     : public true_type{};
+		template <> struct is_integral_helper<__uint128_t>    : public true_type{};
+	#endif
 
 	template <typename T>
 	struct is_integral : public eastl::is_integral_helper<typename eastl::remove_cv<T>::type>{};

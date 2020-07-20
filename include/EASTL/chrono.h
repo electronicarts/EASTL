@@ -27,22 +27,25 @@
 
 // TODO:  move to platform specific cpp or header file
 #if  defined EA_PLATFORM_MICROSOFT
-	#pragma warning(push, 0)
-	#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-	#endif
 	EA_DISABLE_ALL_VC_WARNINGS()
+
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+
 	#undef NOMINMAX
 	#define NOMINMAX
+
 	#include <Windows.h>
+
 	#ifdef min
 		#undef min
 	#endif
-	#ifdef max 
+	#ifdef max
 		#undef max
 	#endif
+
 	EA_RESTORE_ALL_VC_WARNINGS()
-	#pragma warning(pop)
 #endif
 
 #if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)

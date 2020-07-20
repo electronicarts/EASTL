@@ -3,27 +3,9 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-#include "EASTLTest.h"
-#include <EASTL/bonus/sparse_matrix.h>
+/* NOTE: No Header Guard */
 
 
+EA_RESTORE_VC_WARNING();
 
-
-int TestSparseMatrix()
-{
-	int nErrorCount = 0;
-
-	return nErrorCount;
-}
-
-
-
-
-
-
-
-
-
-
-
-
+EA_RESTORE_CLANG_WARNING();

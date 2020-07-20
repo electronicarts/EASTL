@@ -72,7 +72,6 @@
 #include <EASTL/internal/generic_iterator.h>
 #include <EASTL/internal/pair_fwd_decls.h>
 #include <EASTL/internal/functional_base.h>
-#include <EASTL/internal/allocator_traits_fwd_decls.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/allocator.h>
@@ -85,12 +84,12 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <new>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning(disable: 4146)  // unary minus operator applied to unsigned type, result still unsigned
-	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-#endif
+
+// 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+// 4146 - unary minus operator applied to unsigned type, result still unsigned
+// 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+EA_DISABLE_VC_WARNING(4530 4146 4571);
+
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -1587,19 +1586,18 @@ namespace eastl
 		};
 
 		template <typename Pointer, bool = has_element_type<Pointer>::value>
-		struct pointer_element_type;
+		struct pointer_element_type 
+		{
+			using type = Pointer;
+		};
 
 		template <typename Pointer>
 		struct pointer_element_type<Pointer, true>
 			{ typedef typename Pointer::element_type type; };
 
-		#if EASTL_VARIADIC_TEMPLATES_ENABLED // See 20.6.3.1 p3 for why we need to support this. Pointer may be a template with various arguments as opposed to a non-templated class.
-			template <template <typename, typename...> class Pointer, typename T, typename... Args>
-			struct pointer_element_type<Pointer<T, Args...>, false>
-				{ typedef T type; };
-		#else
-			// To consider: solve this via multiple declarations. For our uses this may not matter a lot, as this is an uncommon use-case.
-		#endif
+		template <template <typename, typename...> class Pointer, typename T, typename... Args>
+		struct pointer_element_type<Pointer<T, Args...>, false>
+			{ typedef T type; };
 
 
 		// pointer_difference_type
@@ -1680,23 +1678,8 @@ namespace eastl
 
 } // namespace eastl
 
-#include <EASTL/internal/allocator_traits.h>
 
-
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
