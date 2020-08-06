@@ -871,12 +871,26 @@ static int TestAdaptors()
 {
 	int nErrorCount = 0;
 
+	// reverse lvalue container
 	{
 		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 		eastl::vector<int> original(begin(int_data), end(int_data));
 
 		eastl::vector<int> reversed;
 		for(auto& e : eastl::reverse(original))
+			reversed.push_back(e);
+
+		eastl::reverse(begin(original), end(original));
+		EATEST_VERIFY(reversed == original);
+	}
+
+	// reverse rvalue container
+	{
+		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+		eastl::vector<int> original(begin(int_data), end(int_data));
+
+		eastl::vector<int> reversed;
+		for (auto& e : eastl::reverse(eastl::vector<int>(original)))
 			reversed.push_back(e);
 
 		eastl::reverse(begin(original), end(original));
