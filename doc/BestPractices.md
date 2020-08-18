@@ -78,7 +78,7 @@ EASTL fixed containers include:
 To create a fixed_set, you can use the following code:
 
 ```cpp
-fixed_set<int, 25> intSet; // Create a set capable of holding 250 elements.
+fixed_set<int, 25> intSet; // Create a set capable of holding 25 elements.
 
 intSet.push_back(37);
 ```
