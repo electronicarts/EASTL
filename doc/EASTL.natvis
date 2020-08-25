@@ -103,6 +103,24 @@
     </Expand>
 </Type>
 
+<Type Name="eastl::span&lt;*&gt;">
+	<DisplayString Condition="mnSize == 0">[{mnSize}] {{}}</DisplayString>
+	<DisplayString Condition="mnSize == 1">[{mnSize}] {{ {*mpData} }}</DisplayString>
+	<DisplayString Condition="mnSize == 2">[{mnSize}] {{ {*mpData}, {*(mpData+1)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 3">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 4">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 5">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 6">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)}, {*(mpData+5)} }}</DisplayString>
+	<DisplayString Condition="mnSize &gt; 6">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)}, {*(mpData+5)}, ... }}</DisplayString>
+	<Expand>
+		<Item Name="[size]">mnSize</Item>
+		<ArrayItems>
+			<Size>mnSize</Size>
+			<ValuePointer>mpData</ValuePointer>
+		</ArrayItems>
+	</Expand>
+</Type>
+
 <Type Name="eastl::VectorBase&lt;*&gt;">
 	<DisplayString Condition="mpEnd == mpBegin">[{mpEnd - mpBegin}] {{}}</DisplayString>
 	<DisplayString Condition="mpEnd - mpBegin == 1">[{mpEnd - mpBegin}] {{ {*mpBegin} }}</DisplayString>
