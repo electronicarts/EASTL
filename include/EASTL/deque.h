@@ -564,6 +564,7 @@ namespace eastl
 		{
 			DoFreeSubarrays(mItBegin.mpCurrentArrayPtr, mItEnd.mpCurrentArrayPtr + 1);
 			DoFreePtrArray(mpPtrArray, mnPtrArraySize);
+			mpPtrArray = nullptr;
 		}
 	}
 
