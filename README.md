@@ -40,11 +40,12 @@ Please see [EASTL Introduction](doc/Introduction.md).
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on compiling and testing the source.
 
-## Credits
+## Credits And Maintainers
 
 EASTL was created by Paul Pedriana and he maintained the project for roughly 10 years.  
 
-Roberto Parolin is the current EASTL owner within EA and is responsible for the open source repository.
+Roberto Parolin is the current EASTL owner and primary maintainer within EA and is responsible for the open source repository.
+Max Winkler is the secondary maintainer for EASTL within EA and on the open source repository.
 
 Significant EASTL contributions were made by (in alphabetical order):
 
@@ -58,6 +59,11 @@ Significant EASTL contributions were made by (in alphabetical order):
 * Roberto Parolin
 * Simon Everett
 
+## Contributors
+
+## Projects And Products Using EASTL
+
+* Frostbite - Electronic Arts - [https://www.ea.com/frostbite]
 
 ## License
 
