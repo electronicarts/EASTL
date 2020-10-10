@@ -22,10 +22,7 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/bitset.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4480)  // nonstandard extension used: specifying underlying type for enum
-#endif
+EA_DISABLE_VC_WARNING(4480); // nonstandard extension used: specifying underlying type for enum
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -1472,21 +1469,6 @@ namespace eastl
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-

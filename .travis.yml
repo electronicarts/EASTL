@@ -1,3 +1,4 @@
+dist: xenial
 language: cpp
 
 cache:
@@ -19,15 +20,17 @@ env:
 
 addons:
   apt:
+    update: true
     sources:
-      - ubuntu-toolchain-r-test
       - george-edison55-precise-backports
-      - llvm-toolchain-trusty-7
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main'
+        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
       - cmake
       - cmake-data
-      - g++-7
-      - clang-7
+      - g++-9
+      - clang-11
 
 matrix:
     include:
@@ -56,10 +59,12 @@ git:
 
 before_install:
   - git submodule update --init 
-  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-7"                                                                    ;fi
-  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-7"                                                                   ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-7"                              ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-7"                           ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CC="gcc-9"                                                                    ;fi
+  - if [[ "$CXX" == "g++" ]]; then export CXX="g++-9"                                                                   ;fi
+  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-11"                             ;fi
+  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-11"                          ;fi
+  - if [[ "$CXX" == "g++-9" && "${TRAVIS_OS_NAME}" != "windows" ]]; then g++-9 -v                                       ;fi
+  - if [[ "$CXX" == "clang++-11" && "${TRAVIS_OS_NAME}" != "windows" ]]; then clang++-11 -v                             ;fi
 
 install:
 # MOJI check; exit 1 if non-ascii characters detected in C++

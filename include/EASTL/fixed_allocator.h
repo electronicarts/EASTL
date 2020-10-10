@@ -20,18 +20,13 @@
 #include <EASTL/allocator.h>
 #include <EASTL/type_traits.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#pragma warning(pop)
-#else
-	#include <new>
-#endif
+EA_DISABLE_ALL_VC_WARNINGS();
 
-#if defined(_MSC_VER)
-	#pragma warning(push)
-	#pragma warning(disable: 4275) // non dll-interface class used as base for DLL-interface classkey 'identifier'
-#endif
+#include <new>
+
+EA_RESTORE_ALL_VC_WARNINGS();
+
+EA_DISABLE_VC_WARNING(4275); // non dll-interface class used as base for DLL-interface classkey 'identifier'
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -455,12 +450,6 @@ namespace eastl
 } // namespace eastl
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
-
-
-

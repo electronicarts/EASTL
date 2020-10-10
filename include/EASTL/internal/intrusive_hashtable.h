@@ -29,18 +29,11 @@
 #include <EASTL/utility.h>
 #include <EASTL/algorithm.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#include <stddef.h>
-	#include <string.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-	#include <string.h>
-#endif
-
+EA_DISABLE_ALL_VC_WARNINGS();
+#include <new>
+#include <stddef.h>
+#include <string.h>
+EA_RESTORE_ALL_VC_WARNINGS();
 
 
 namespace eastl
@@ -994,12 +987,3 @@ namespace eastl
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-

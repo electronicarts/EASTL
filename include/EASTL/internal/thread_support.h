@@ -37,15 +37,12 @@
 	#include <pthread.h>
 #endif
 
+// copy constructor could not be generated because a base class copy constructor is inaccessible or deleted.
+// assignment operator could not be generated because a base class assignment operator is inaccessible or deleted.
+// non dll-interface class used as base for DLL-interface classkey 'identifier'.
+EA_DISABLE_VC_WARNING(4625 4626 4275);
 
-#if defined(_MSC_VER)
-	#pragma warning(push)
-	#pragma warning(disable: 4625) // copy constructor could not be generated because a base class copy constructor is inaccessible or deleted.
-	#pragma warning(disable: 4626) // assignment operator could not be generated because a base class assignment operator is inaccessible or deleted.
-	#pragma warning(disable: 4275) // non dll-interface class used as base for DLL-interface classkey 'identifier'.
-#endif
 
-	
 #if defined(EA_PLATFORM_MICROSOFT)
 	#if defined(EA_PROCESSOR_POWERPC)
 		extern "C" long  __stdcall _InterlockedIncrement(long volatile* Addend);
@@ -241,17 +238,7 @@ namespace eastl
 } // namespace eastl
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-

@@ -9,12 +9,12 @@
 #include <EASTL/memory.h>
 
 #if defined(EA_PLATFORM_MICROSOFT)
-	#pragma warning(push, 0)
+	EA_DISABLE_ALL_VC_WARNINGS();
 	#ifndef WIN32_LEAN_AND_MEAN
 		#define WIN32_LEAN_AND_MEAN
 	#endif
 	#include <Windows.h>
-	#pragma warning(pop)    
+	EA_RESTORE_ALL_VC_WARNINGS();
 #endif
 
 

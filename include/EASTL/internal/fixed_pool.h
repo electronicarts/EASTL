@@ -30,18 +30,13 @@
 #include <EASTL/allocator.h>
 #include <EASTL/type_traits.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#pragma warning(pop)
-#else
-	#include <new>
-#endif
 
-#if defined(_MSC_VER)
-	#pragma warning(push)
-	#pragma warning(disable: 4275) // non dll-interface class used as base for DLL-interface classkey 'identifier'
-#endif
+EA_DISABLE_ALL_VC_WARNINGS();
+#include <new>
+EA_RESTORE_ALL_VC_WARNINGS();
+
+// 4275 - non dll-interface class used as base for DLL-interface classkey 'identifier'
+EA_DISABLE_VC_WARNING(4275);
 
 
 namespace eastl
@@ -1630,10 +1625,7 @@ namespace eastl
 } // namespace eastl
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-

@@ -7,6 +7,7 @@
 EA_DISABLE_VC_WARNING(4623 4625 4413 4510)
 
 #include <EASTL/tuple.h>
+#include <EASTL/unique_ptr.h>
 
 #if EASTL_TUPLE_ENABLED
 
@@ -489,6 +490,14 @@ int TestTuple()
 		EATEST_VERIFY(y == 2);
 		EATEST_VERIFY(z == 3);
 	}
+
+	{ // const unpacking test
+		eastl::tuple<int, int, int> t = {1,2,3};
+		const auto [x,y,z] = t;
+		EATEST_VERIFY(x == 1);
+		EATEST_VERIFY(y == 2);
+		EATEST_VERIFY(z == 3);
+	}
 	#endif
 
 	// user regression for tuple_cat
@@ -503,6 +512,16 @@ int TestTuple()
 		EATEST_VERIFY(eastl::get<1>(tc) == 1);
 		EATEST_VERIFY(eastl::get<2>(tc) == nullptr);
 		EATEST_VERIFY(eastl::get<3>(tc) == true);
+	}
+
+	// user reported regression that exercises type_traits trying to pull out the element_type from "fancy pointers"
+	{
+		auto up = eastl::make_unique<int[]>(100);
+		auto t = eastl::make_tuple(eastl::move(up));
+
+		using ResultTuple_t = decltype(t);
+		static_assert(eastl::is_same_v<ResultTuple_t, eastl::tuple<eastl::unique_ptr<int[]>>>); 
+		static_assert(eastl::is_same_v<eastl::tuple_element_t<0, ResultTuple_t>, eastl::unique_ptr<int[]>>);
 	}
 
 	return nErrorCount;

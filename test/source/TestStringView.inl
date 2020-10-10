@@ -469,7 +469,6 @@ int TEST_STRING_NAME()
 		{
 			StringViewT sw1(LITERAL("AAAAABBBBBCCCDDDDDEEEEEFFFGGH"));
 			StringViewT sw2(LITERAL("aaaaabbbbbcccdddddeeeeefffggh"));
-			StringViewT sw3(LITERAL("0123456789!@#$%^&*()"));
 
 			VERIFY(sw1 == StringViewT(LITERAL("AAAAABBBBBCCCDDDDDEEEEEFFFGGH")));
 			VERIFY(sw1 != StringViewT(LITERAL("abcdefghijklmnopqrstuvwxyz")));

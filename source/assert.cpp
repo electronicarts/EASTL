@@ -8,15 +8,15 @@
 #include <EABase/eabase.h>
 
 #if defined(EA_PLATFORM_MICROSOFT)
-	#pragma warning(push, 0)
-	#if defined _MSC_VER
+	EA_DISABLE_ALL_VC_WARNINGS();
+	#if defined(EA_COMPILER_MSVC)
 		#include <crtdbg.h>
 	#endif
 	#ifndef WIN32_LEAN_AND_MEAN
 		#define WIN32_LEAN_AND_MEAN
 	#endif
 	#include <Windows.h>
-	#pragma warning(pop)
+	EA_RESTORE_ALL_VC_WARNINGS();
 #elif defined(EA_PLATFORM_ANDROID)
 	#include <android/log.h>
 #else

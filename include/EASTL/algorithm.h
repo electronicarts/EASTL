@@ -243,17 +243,16 @@
 #include <EASTL/internal/generic_iterator.h>
 #include <EASTL/random.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#if defined(EA_COMPILER_MICROSOFT) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+EA_DISABLE_ALL_VC_WARNINGS();
+
+	#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
 		#include <intrin.h>
 	#endif
-#endif
+
 	#include <stddef.h>
 	#include <string.h> // memcpy, memcmp, memmove
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+
+EA_RESTORE_ALL_VC_WARNINGS();
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.

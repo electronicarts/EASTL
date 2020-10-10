@@ -47,7 +47,8 @@
 
 
 // Disable Warnings:
-//   cast truncates constant value / expression is always false
+//   4310 - cast truncates constant value
+//   4296 - expression is always false
 EA_DISABLE_VC_WARNING(4310 4296)
 
 // EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED

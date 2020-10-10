@@ -9,9 +9,7 @@
 #include <stddef.h>
 
 
-#ifdef _MSC_VER
-	#pragma warning(disable: 4267)  // 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
-#endif
+EA_DISABLE_VC_WARNING(4267); // 'argument' : conversion from 'size_t' to 'const uint32_t', possible loss of data. This is a bogus warning resulting from a bug in VC++.
 
 
 namespace eastl
@@ -176,26 +174,4 @@ namespace eastl
 
 } // namespace eastl
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+EA_RESTORE_VC_WARNING();

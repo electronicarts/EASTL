@@ -177,6 +177,46 @@ static int TestUtilityPair()
 #endif
 	}
 
+#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+	// pair structured bindings test 
+	{
+		eastl::pair<int, int> t = {1,2};
+		auto [x,y] = t;
+		EATEST_VERIFY(x == 1);
+		EATEST_VERIFY(y == 2);
+	}
+
+	{
+		auto t = eastl::make_pair(1, 2);
+		auto [x,y] = t;
+		EATEST_VERIFY(x == 1);
+		EATEST_VERIFY(y == 2);
+	}
+
+	{ // reported user-regression structured binding unpacking for iterators
+		eastl::vector<int> v = {1,2,3,4,5,6};
+		auto t = eastl::make_pair(v.begin(), v.end() - 1);
+		auto [x,y] = t;
+		EATEST_VERIFY(*x == 1);
+		EATEST_VERIFY(*y == 6);
+	}
+
+	{ // reported user-regression structured binding unpacking for iterators
+		eastl::vector<int> v = {1,2,3,4,5,6};
+		auto t = eastl::make_pair(v.begin(), v.end());
+		auto [x,y] = t;
+		EATEST_VERIFY(*x == 1);
+		EA_UNUSED(y);
+	}
+
+	{ // reported user-regression for const structured binding unpacking for iterators
+		eastl::vector<int> v = {1,2,3,4,5,6};
+		const auto [x,y] = eastl::make_pair(v.begin(), v.end());;
+		EATEST_VERIFY(*x == 1);
+		EA_UNUSED(y);
+	}
+#endif
+
 	return nErrorCount;
 }
 

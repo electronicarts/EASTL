@@ -17,6 +17,7 @@ using namespace eastl;
 static_assert(false, "Building with char8_t tests enabled, but EA_CHAR8_UNIQUE evaluates to false.");
 #endif
 
+
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
 #define LITERAL(x) x
@@ -48,7 +49,7 @@ int TestString()
 	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicStringW<eastl::wstring>();
 
-#if EA_CHAR8_UNIQUE
+#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
 	nErrorCount += TestBasicString8<eastl::basic_string<char8_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString8<eastl::u8string>();
 #endif
@@ -56,7 +57,7 @@ int TestString()
 	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString16<eastl::u16string>();
 
-#if EA_CHAR32_NATIVE
+#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
 	nErrorCount += TestBasicString32<eastl::basic_string<char32_t, StompDetectAllocator>>();
 	nErrorCount += TestBasicString32<eastl::u32string>();
 #endif
@@ -69,7 +70,7 @@ int TestString()
 	nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
 
-#if EA_CHAR8_UNIQUE
+#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
 	nErrorCount += TestBasicString8<eastl::basic_string<char8_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0);
 #endif
@@ -77,7 +78,7 @@ int TestString()
 	nErrorCount += TestBasicString16<eastl::basic_string<char16_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
 
-#if EA_CHAR32_NATIVE
+#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
 	nErrorCount += TestBasicString32<eastl::basic_string<char32_t, CountingAllocator>>();
 	VERIFY(CountingAllocator::getActiveAllocationCount() == 0); 
 #endif
@@ -127,7 +128,7 @@ int TestString()
 
 	{
 		// CustomAllocator has no data members which reduces the size of an eastl::basic_string via the empty base class optimization.
-		typedef eastl::basic_string<char, CustomAllocator> EboString;
+		using EboString = eastl::basic_string<char, CustomAllocator>;
 
 		// this must match the eastl::basic_string heap memory layout struct which is a pointer and 2 eastl_size_t.
 		const int expectedSize = sizeof(EboString::pointer) + (2 * sizeof(EboString::size_type));

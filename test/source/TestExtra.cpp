@@ -884,6 +884,20 @@ static int TestAdaptors()
 		EATEST_VERIFY(reversed == original);
 	}
 
+	// reverse const lvalue container
+	{
+		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+		const eastl::vector<int> original(begin(int_data), end(int_data));
+
+		eastl::vector<int> reversed;
+		for(auto& e : eastl::reverse(original))
+			reversed.push_back(e);
+
+		eastl::vector<int> reversed_original(original);
+		eastl::reverse(begin(reversed_original), end(reversed_original));
+		EATEST_VERIFY(reversed == reversed_original);
+	}
+
 	// reverse rvalue container
 	{
 		int int_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};

@@ -8,7 +8,6 @@
 
 #include <EABase/eabase.h>
 #include <EASTL/internal/config.h>
-#include <EASTL/internal/allocator_traits_fwd_decls.h>
 #include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/internal/functional_base.h>
@@ -1011,14 +1010,12 @@ namespace eastl
 		// utility to disable the generic template specialization that is
 		// used for enum types only.
 		template <typename T, bool Enabled>
-		struct EnableHashIf
-		{
-		};
+		struct EnableHashIf {};
 
 		template <typename T>
 		struct EnableHashIf<T, true>
 		{
-			size_t operator()(const T& p) const { return size_t(p); }
+			size_t operator()(T p) const { return size_t(p); }
 		};
 	} // namespace Internal
 
@@ -1026,10 +1023,7 @@ namespace eastl
 	template <typename T> struct hash;
 
 	template <typename T>
-	struct hash : Internal::EnableHashIf<T, is_enum_v<T>>
-	{
-		size_t operator()(T p) const { return size_t(p); }
-	};
+	struct hash : Internal::EnableHashIf<T, is_enum_v<T>> {};
 
 	template <typename T> struct hash<T*> // Note that we use the pointer as-is and don't divide by sizeof(T*). This is because the table is of a prime size and this division doesn't benefit distribution.
 		{ size_t operator()(T* p) const { return size_t(uintptr_t(p)); } };
@@ -1046,14 +1040,19 @@ namespace eastl
 	template <> struct hash<unsigned char>
 		{ size_t operator()(unsigned char val) const { return static_cast<size_t>(val); } };
 
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		template <> struct hash<char8_t>
+			{ size_t operator()(char8_t val) const { return static_cast<size_t>(val); } };
+	#endif
+
 	#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
 		template <> struct hash<char16_t>
-		{ size_t operator()(char16_t val) const { return static_cast<size_t>(val); } };
+			{ size_t operator()(char16_t val) const { return static_cast<size_t>(val); } };
 	#endif
 
 	#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
 		template <> struct hash<char32_t>
-		{ size_t operator()(char32_t val) const { return static_cast<size_t>(val); } };
+			{ size_t operator()(char32_t val) const { return static_cast<size_t>(val); } };
 	#endif
 
 	// If wchar_t is a native type instead of simply a define to an existing type...
@@ -1094,6 +1093,11 @@ namespace eastl
 
 	template <> struct hash<long double>
 		{ size_t operator()(long double val) const { return static_cast<size_t>(val); } };
+
+	#if defined(EA_HAVE_INT128) && EA_HAVE_INT128
+	template <> struct hash<uint128_t>
+		{ size_t operator()(uint128_t val) const { return static_cast<size_t>(val); } };
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////////
