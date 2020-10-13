@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.17.00"
-	#define EASTL_VERSION_N  31700
+	#define EASTL_VERSION   "3.17.01"
+	#define EASTL_VERSION_N  31701
 #endif
 
 
@@ -864,7 +864,7 @@ namespace eastl
 	#if EASTL_INT128_SUPPORTED
 		#define EASTL_INT128_DEFINED 1
 
-		#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)
+		#if defined(__SIZEOF_INT128__) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)
 			typedef __int128_t   eastl_int128_t;
 			typedef __uint128_t eastl_uint128_t;
 		#else
