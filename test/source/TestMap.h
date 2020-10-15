@@ -9,6 +9,7 @@
 #include <EASTL/type_traits.h>
 #include <EASTL/scoped_ptr.h>
 #include <EASTL/random.h>
+#include <EASTL/tuple.h>
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	EA_DISABLE_ALL_VC_WARNINGS()
@@ -695,6 +696,7 @@ int TestMapCpp11()
 	//
 	// insert_return_type insert(value_type&& value);
 	// iterator insert(const_iterator position, value_type&& value);
+	// void insert(std::initializer_list<value_type> ilist);
 	TestObject::Reset();
 
 	typedef T1 TOMap;
@@ -723,25 +725,29 @@ int TestMapCpp11()
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 	EATEST_VERIFY(value40.second.mX == 0);
 
-	value_type value41(4, to4);
+	value_type value41(4, TestObject(41));
 	toMapInsertResult = toMap.emplace(eastl::move(value41));
 	EATEST_VERIFY(toMapInsertResult.second == false);
+	EATEST_VERIFY(toMapInsertResult.first->second.mX == 4);
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to5(5);
 	value_type value50(5, to5);
+	EATEST_VERIFY(toMap.find(5) == toMap.end());
 	toMapInsertResult = toMap.emplace(eastl::move(value50));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
-	value_type value51(5, to5);
+	value_type value51(5, TestObject(51));
 	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, eastl::move(value51));
 	EATEST_VERIFY(toMapIterator->first == 5);
+	EATEST_VERIFY(toMapIterator->second.mX == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	TestObject to6(6);
 	value_type value6(6, to6);
+	EATEST_VERIFY(toMap.find(6) == toMap.end());
 	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 6);
 	EATEST_VERIFY(toMap.find(6) != toMap.end());
@@ -758,17 +764,20 @@ int TestMapCpp11()
 	// iterator t1A.emplace_hint(const_iterator position, const value_type& value);
 	TestObject to7(7);
 	value_type value70(7, to7);
+	EATEST_VERIFY(toMap.find(7) == toMap.end());
 	toMapInsertResult = toMap.emplace(value70);
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(7) != toMap.end());
 
-	value_type value71(7, to7);
+	value_type value71(7, TestObject(71));
 	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, value71);
 	EATEST_VERIFY(toMapIterator->first == 7);
+	EATEST_VERIFY(toMapIterator->second.mX == 7);
 	EATEST_VERIFY(toMap.find(7) != toMap.end());
 
 	TestObject to8(8);
 	value_type value8(8, to8);
+	EATEST_VERIFY(toMap.find(8) == toMap.end());
 	toMapIterator = toMap.emplace_hint(toMap.begin(), value8); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 8);
 	EATEST_VERIFY(toMap.find(8) != toMap.end());
@@ -787,20 +796,143 @@ int TestMapCpp11()
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to9(9);
 	value_type value90(9, to9);
+	EATEST_VERIFY(toMap.find(9) == toMap.end());
 	toMapInsertResult = toMap.emplace(eastl::move(value90));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
-	value_type value91(9, to9);
-	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, eastl::move(value91));
+	value_type value91(9, TestObject(91));
+	toMapIterator = toMap.insert(toMapInsertResult.first, eastl::move(value91));
 	EATEST_VERIFY(toMapIterator->first == 9);
+	EATEST_VERIFY(toMapIterator->second.mX == 9);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
 	TestObject to10(10);
 	value_type value10(10, to10);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMap.find(10) == toMap.end());
+	toMapIterator = toMap.insert(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 10);
 	EATEST_VERIFY(toMap.find(10) != toMap.end());
+
+	// insert_return_type t1A.emplace(Args&&... args);
+	TestObject to11(11);
+	EATEST_VERIFY(toMap.find(11) == toMap.end());
+	toMapInsertResult = toMap.emplace(11, to11);
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMapInsertResult.first->first == 11);
+	EATEST_VERIFY(toMap.find(11) != toMap.end());
+
+	TestObject to111(111);
+	toMapInsertResult = toMap.emplace(11, to111);
+	EATEST_VERIFY(toMapInsertResult.second == false);
+	EATEST_VERIFY(toMapInsertResult.first->first == 11);
+	EATEST_VERIFY(toMapInsertResult.first->second.mX == 11);
+	EATEST_VERIFY(toMap.find(11) != toMap.end());
+
+	TestObject to12(12);
+	EATEST_VERIFY(toMap.find(12) == toMap.end());
+	toMapInsertResult = toMap.emplace(12, eastl::move(to12));
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMapInsertResult.first->first == 12);
+	EATEST_VERIFY(toMap.find(12) != toMap.end());
+
+	TestObject to121(121);
+	toMapInsertResult = toMap.emplace(12, eastl::move(to121));
+	EATEST_VERIFY(toMapInsertResult.second == false);
+	EATEST_VERIFY(toMapInsertResult.first->first == 12);
+	EATEST_VERIFY(toMapInsertResult.first->second.mX == 12);
+	EATEST_VERIFY(toMap.find(12) != toMap.end());
+
+	EATEST_VERIFY(toMap.find(13) == toMap.end());
+	toMapInsertResult = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(13), eastl::make_tuple(1, 2, 10)); // 1 + 2 + 10 = 13
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMapInsertResult.first->first == 13);
+	EATEST_VERIFY(toMap.find(13) != toMap.end());
+
+	toMapInsertResult = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(13), eastl::make_tuple(1, 30, 100)); // 1 + 30 + 100 = 131
+	EATEST_VERIFY(toMapInsertResult.second == false);
+	EATEST_VERIFY(toMapInsertResult.first->first == 13);
+	EATEST_VERIFY(toMapInsertResult.first->second.mX == 13);
+	EATEST_VERIFY(toMap.find(13) != toMap.end());
+
+	// iterator t1A.emplace_hint(const_iterator position, Args&&... args);
+	TestObject to14(14);
+	EATEST_VERIFY(toMap.find(14) == toMap.end());
+	toMapInsertResult = toMap.emplace(14, to14);
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMap.find(14) != toMap.end());
+
+	TestObject to141(141);
+	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, 14, to141);
+	EATEST_VERIFY(toMapIterator->first == 14);
+	EATEST_VERIFY(toMapIterator->second.mX == 14);
+	EATEST_VERIFY(toMap.find(14) != toMap.end());
+
+	TestObject to15(15);
+	EATEST_VERIFY(toMap.find(15) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), 15, to15); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 15);
+	EATEST_VERIFY(toMap.find(15) != toMap.end());
+
+	TestObject to16(16);
+	EATEST_VERIFY(toMap.find(16) == toMap.end());
+	toMapInsertResult = toMap.emplace(16, eastl::move(to16));
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMap.find(16) != toMap.end());
+
+	TestObject to161(161);
+	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, 16, eastl::move(to161));
+	EATEST_VERIFY(toMapIterator->first == 16);
+	EATEST_VERIFY(toMapIterator->second.mX == 16);
+	EATEST_VERIFY(toMap.find(16) != toMap.end());
+
+	TestObject to17(17);
+	EATEST_VERIFY(toMap.find(17) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), 17, eastl::move(to17)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 17);
+	EATEST_VERIFY(toMap.find(17) != toMap.end());
+
+	EATEST_VERIFY(toMap.find(18) == toMap.end());
+	toMapInsertResult = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(18), eastl::make_tuple(3, 5, 10)); // 3 + 5 + 10 = 18
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMap.find(18) != toMap.end());
+
+	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, eastl::piecewise_construct, eastl::make_tuple(18), eastl::make_tuple(1, 80, 100)); // 1 + 80 + 100 = 181
+	EATEST_VERIFY(toMapIterator->first == 18);
+	EATEST_VERIFY(toMapIterator->second.mX == 18);
+	EATEST_VERIFY(toMap.find(18) != toMap.end());
+
+	EATEST_VERIFY(toMap.find(19) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::piecewise_construct, eastl::make_tuple(19), eastl::make_tuple(4, 5, 10)); // 4 + 5 + 10 = 19 // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 19);
+	EATEST_VERIFY(toMap.find(19) != toMap.end());
+
+	// iterator t1A.insert(const_iterator position, const value_type& value);
+	TestObject to20(20);
+	value_type value20(20, to20);
+	EATEST_VERIFY(toMap.find(20) == toMap.end());
+	toMapInsertResult = toMap.emplace(value20);
+	EATEST_VERIFY(toMapInsertResult.second == true);
+	EATEST_VERIFY(toMap.find(20) != toMap.end());
+
+	value_type value201(20, TestObject(201));
+	toMapIterator = toMap.insert(toMapInsertResult.first, value201);
+	EATEST_VERIFY(toMapIterator->first == 20);
+	EATEST_VERIFY(toMapIterator->second.mX == 20);
+	EATEST_VERIFY(toMap.find(20) != toMap.end());
+
+	TestObject to21(21);
+	value_type value21(21, to21);
+	EATEST_VERIFY(toMap.find(21) == toMap.end());
+	toMapIterator = toMap.insert(toMap.begin(), value21); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 21);
+	EATEST_VERIFY(toMap.find(21) != toMap.end());
+
+	// void insert(std::initializer_list<value_type> ilist);
+	toMap.insert({ value_type(22, TestObject(22)), value_type(23, TestObject(23)), value_type(24, TestObject(24)) });
+	EATEST_VERIFY(toMap.find(22) != toMap.end());
+	EATEST_VERIFY(toMap.find(23) != toMap.end());
+	EATEST_VERIFY(toMap.find(24) != toMap.end());
 
 	return nErrorCount;
 }
@@ -852,6 +984,7 @@ int TestMultimapCpp11()
 	//
 	// insert_return_type insert(value_type&& value);
 	// iterator insert(const_iterator position, value_type&& value);
+	// void insert(std::initializer_list<value_type> ilist);
 	TestObject::Reset();
 
 	typedef T1 TOMap;
@@ -879,25 +1012,29 @@ int TestMultimapCpp11()
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 	EATEST_VERIFY(value40.second.mX == 0);
 
-	value_type value41(4, to4);
+	value_type value41(4, TestObject(41));
 	toMapIterator = toMap.emplace(eastl::move(value41));
 	EATEST_VERIFY(toMapIterator->first == 4);
-	EATEST_VERIFY(toMap.find(4) != toMap.end());
+	EATEST_VERIFY(toMapIterator->second.mX == 41);
+	EATEST_VERIFY(toMap.count(4) == 2);
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to5(5);
 	value_type value50(5, to5);
+	EATEST_VERIFY(toMap.find(5) == toMap.end());
 	toMapIterator = toMap.emplace(eastl::move(value50));
 	EATEST_VERIFY(toMapIterator->first == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
-	value_type value51(5, to5);
+	value_type value51(5, TestObject(51));
 	toMapIterator = toMap.emplace_hint(toMapIterator, eastl::move(value51));
 	EATEST_VERIFY(toMapIterator->first == 5);
-	EATEST_VERIFY(toMap.find(5) != toMap.end());
+	EATEST_VERIFY(toMapIterator->second.mX == 51);
+	EATEST_VERIFY(toMap.count(5) == 2);
 
 	TestObject to6(6);
 	value_type value6(6, to6);
+	EATEST_VERIFY(toMap.find(6) == toMap.end());
 	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 6);
 	EATEST_VERIFY(toMap.find(6) != toMap.end());
@@ -914,17 +1051,20 @@ int TestMultimapCpp11()
 	// iterator t1A.emplace_hint(const_iterator position, const value_type& value);
 	TestObject to7(7);
 	value_type value70(7, to7);
+	EATEST_VERIFY(toMap.find(7) == toMap.end());
 	toMapIterator = toMap.emplace(value70);
 	EATEST_VERIFY(toMapIterator->first == 7);
 	EATEST_VERIFY(toMap.find(7) != toMap.end());
 
-	value_type value71(7, to7);
+	value_type value71(7, TestObject(71));
 	toMapIterator = toMap.emplace_hint(toMapIterator, value71);
 	EATEST_VERIFY(toMapIterator->first == 7);
-	EATEST_VERIFY(toMap.find(7) != toMap.end());
+	EATEST_VERIFY(toMapIterator->second.mX == 71);
+	EATEST_VERIFY(toMap.count(7) == 2);
 
 	TestObject to8(8);
 	value_type value8(8, to8);
+	EATEST_VERIFY(toMap.find(8) == toMap.end());
 	toMapIterator = toMap.emplace_hint(toMap.begin(), value8); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 8);
 	EATEST_VERIFY(toMap.find(8) != toMap.end());
@@ -943,20 +1083,133 @@ int TestMultimapCpp11()
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to9(9);
 	value_type value90(9, to9);
+	EATEST_VERIFY(toMap.find(9) == toMap.end());
 	toMapIterator = toMap.emplace(eastl::move(value90));
 	EATEST_VERIFY(toMapIterator->first == 9);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
-	value_type value91(9, to9);
-	toMapIterator = toMap.emplace_hint(toMapIterator, eastl::move(value91));
+	value_type value91(9, TestObject(91));
+	toMapIterator = toMap.insert(toMapIterator, eastl::move(value91));
 	EATEST_VERIFY(toMapIterator->first == 9);
-	EATEST_VERIFY(toMap.find(9) != toMap.end());
+	EATEST_VERIFY(toMapIterator->second.mX == 91);
+	EATEST_VERIFY(toMap.count(9) == 2);
 
 	TestObject to10(10);
 	value_type value10(10, to10);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMap.find(10) == toMap.end());
+	toMapIterator = toMap.insert(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 10);
 	EATEST_VERIFY(toMap.find(10) != toMap.end());
+
+	// iterator t1A.emplace(Args&&... args);
+	TestObject to11(11);
+	EATEST_VERIFY(toMap.find(11) == toMap.end());
+	toMapIterator = toMap.emplace(11, to11);
+	EATEST_VERIFY(toMapIterator->first == 11);
+	EATEST_VERIFY(toMap.find(11) != toMap.end());
+
+	TestObject to111(111);
+	toMapIterator = toMap.emplace(11, to111);
+	EATEST_VERIFY(toMapIterator->first == 11);
+	EATEST_VERIFY(toMapIterator->second.mX == 111);
+	EATEST_VERIFY(toMap.count(11) == 2);
+
+	TestObject to12(12);
+	EATEST_VERIFY(toMap.find(12) == toMap.end());
+	toMapIterator = toMap.emplace(12, eastl::move(to12));
+	EATEST_VERIFY(toMapIterator->first == 12);
+	EATEST_VERIFY(toMap.find(12) != toMap.end());
+
+	TestObject to121(121);
+	toMapIterator = toMap.emplace(12, eastl::move(to121));
+	EATEST_VERIFY(toMapIterator->first == 12);
+	EATEST_VERIFY(toMapIterator->second.mX == 121);
+	EATEST_VERIFY(toMap.count(12) == 2);
+
+	EATEST_VERIFY(toMap.find(13) == toMap.end());
+	toMapIterator = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(13), eastl::make_tuple(1, 2, 10)); // 1 + 2 + 10 = 13
+	EATEST_VERIFY(toMapIterator->first == 13);
+	EATEST_VERIFY(toMap.find(13) != toMap.end());
+
+	toMapIterator = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(13), eastl::make_tuple(1, 30, 100)); // 1 + 30 + 100 = 131
+	EATEST_VERIFY(toMapIterator->first == 13);
+	EATEST_VERIFY(toMapIterator->second.mX == 131);
+	EATEST_VERIFY(toMap.count(13) == 2);
+
+	// iterator t1A.emplace_hint(const_iterator position, Args&&... args);
+	TestObject to14(14);
+	EATEST_VERIFY(toMap.find(14) == toMap.end());
+	toMapIterator = toMap.emplace(14, to14);
+	EATEST_VERIFY(toMap.find(14) != toMap.end());
+
+	TestObject to141(141);
+	toMapIterator = toMap.emplace_hint(toMapIterator, 14, to141);
+	EATEST_VERIFY(toMapIterator->first == 14);
+	EATEST_VERIFY(toMapIterator->second.mX == 141);
+	EATEST_VERIFY(toMap.count(14) == 2);
+
+	TestObject to15(15);
+	EATEST_VERIFY(toMap.find(15) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), 15, to15); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 15);
+	EATEST_VERIFY(toMap.find(15) != toMap.end());
+
+	TestObject to16(16);
+	EATEST_VERIFY(toMap.find(16) == toMap.end());
+	toMapIterator = toMap.emplace(16, eastl::move(to16));
+	EATEST_VERIFY(toMap.find(16) != toMap.end());
+
+	TestObject to161(161);
+	toMapIterator = toMap.emplace_hint(toMapIterator, 16, eastl::move(to161));
+	EATEST_VERIFY(toMapIterator->first == 16);
+	EATEST_VERIFY(toMapIterator->second.mX == 161);
+	EATEST_VERIFY(toMap.count(16) == 2);
+
+	TestObject to17(17);
+	EATEST_VERIFY(toMap.find(17) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), 17, eastl::move(to17)); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 17);
+	EATEST_VERIFY(toMap.find(17) != toMap.end());
+
+	EATEST_VERIFY(toMap.find(18) == toMap.end());
+	toMapIterator = toMap.emplace(eastl::piecewise_construct, eastl::make_tuple(18), eastl::make_tuple(3, 5, 10)); // 3 + 5 + 10 = 18
+	EATEST_VERIFY(toMap.find(18) != toMap.end());
+
+	toMapIterator = toMap.emplace_hint(toMapIterator, eastl::piecewise_construct, eastl::make_tuple(18), eastl::make_tuple(1, 80, 100)); // 1 + 80 + 100 = 181
+	EATEST_VERIFY(toMapIterator->first == 18);
+	EATEST_VERIFY(toMapIterator->second.mX == 181);
+	EATEST_VERIFY(toMap.count(18) == 2);
+
+	EATEST_VERIFY(toMap.find(19) == toMap.end());
+	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::piecewise_construct, eastl::make_tuple(19), eastl::make_tuple(4, 5, 10)); // 4 + 5 + 10 = 19 // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 19);
+	EATEST_VERIFY(toMap.find(19) != toMap.end());
+
+	// iterator t1A.insert(const_iterator position, const value_type& value);
+	TestObject to20(20);
+	value_type value20(20, to20);
+	EATEST_VERIFY(toMap.find(20) == toMap.end());
+	toMapIterator = toMap.emplace(value20);
+	EATEST_VERIFY(toMap.find(20) != toMap.end());
+
+	value_type value201(20, TestObject(201));
+	toMapIterator = toMap.insert(toMapIterator, value201);
+	EATEST_VERIFY(toMapIterator->first == 20);
+	EATEST_VERIFY(toMapIterator->second.mX == 201);
+	EATEST_VERIFY(toMap.count(20) == 2);
+
+	TestObject to21(21);
+	value_type value21(21, to21);
+	EATEST_VERIFY(toMap.find(21) == toMap.end());
+	toMapIterator = toMap.insert(toMap.begin(), value21); // specify a bad hint. Insertion should still work.
+	EATEST_VERIFY(toMapIterator->first == 21);
+	EATEST_VERIFY(toMap.find(21) != toMap.end());
+
+	// void insert(std::initializer_list<value_type> ilist);
+	toMap.insert({ value_type(22, TestObject(22)), value_type(23, TestObject(23)), value_type(24, TestObject(24)), value_type(24, TestObject(241)) });
+	EATEST_VERIFY(toMap.find(22) != toMap.end());
+	EATEST_VERIFY(toMap.find(23) != toMap.end());
+	EATEST_VERIFY(toMap.count(24) == 2);
 
 	return nErrorCount;
 }
