@@ -11,6 +11,9 @@
 #endif
 
 
+#include <EASTL/internal/type_transformations.h>
+
+
 #include <string.h>
 
 
@@ -31,6 +34,7 @@ EASTL_FORCE_INLINE volatile T* AtomicVolatileCast(T* ptr) EA_NOEXCEPT
 	return reinterpret_cast<volatile T*>(ptr);
 }
 
+
 /**
  * NOTE:
  *
@@ -38,13 +42,17 @@ EASTL_FORCE_INLINE volatile T* AtomicVolatileCast(T* ptr) EA_NOEXCEPT
  * doing atomic operations on pointers must be casted to the suitable
  * sized unsigned integral type.
  *
+ * Some compiler intrinsics aren't generics and thus structs must also
+ * be casted to the appropriate sized unsigned integral type.
+ *
  * Atomic operations on an int* might have to be casted to a uint64_t on
  * a platform with 8-byte pointers as an example.
  *
  * Also doing an atomic operation on a struct, we must ensure that we observe
  * the whole struct as one atomic unit with no shearing between the members.
  * A load of a struct with two uint32_t members must be one uint64_t load,
- * not two separate uint32_t loads.
+ * not two separate uint32_t loads, thus casted to the suitable sized
+ * unsigned integral type.
  */
 template <typename Integral, typename T>
 EASTL_FORCE_INLINE volatile Integral* AtomicVolatileIntegralCast(T* ptr) EA_NOEXCEPT
@@ -109,15 +117,26 @@ EASTL_FORCE_INLINE ToType* AtomicTypeCast(FromType* ptr) EA_NOEXCEPT
  * This can be implemented in many different ways depending on the compiler such
  * as thru a union, memcpy, reinterpret_cast<Test&>(atomicLoad), etc.
  */
-template <typename Pun, typename T>
+template <typename Pun, typename T, eastl::enable_if_t<!eastl::is_same_v<Pun, T>, int> = 0>
 EASTL_FORCE_INLINE Pun AtomicTypePunCast(const T& fromType) EA_NOEXCEPT
 {
 	static_assert(sizeof(Pun) == sizeof(T), "eastl::atomic<T> : Pun and T must be the same size for type punning!");
 
-	Pun ret;
+	/**
+	 * aligned_storage ensures we can TypePun objects that aren't trivially default constructible
+	 * but still trivially copyable.
+	 */
+	typename eastl::aligned_storage<sizeof(Pun), alignof(T)>::type ret;
 	memcpy(eastl::addressof(ret), eastl::addressof(fromType), sizeof(Pun));
-	return ret;
+	return reinterpret_cast<Pun&>(ret);
 }
+
+template <typename Pun, typename T, eastl::enable_if_t<eastl::is_same_v<Pun, T>, int> = 0>
+EASTL_FORCE_INLINE Pun AtomicTypePunCast(const T& fromType) EA_NOEXCEPT
+{
+	return fromType;
+}
+
 
 template <typename T>
 EASTL_FORCE_INLINE T AtomicNegateOperand(T val) EA_NOEXCEPT

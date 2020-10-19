@@ -11,6 +11,23 @@
 #endif
 
 
+#if defined(EA_PROCESSOR_X86_64)
+
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_8 _InterlockedXor8_np
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_16 _InterlockedXor16_np
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_32 _InterlockedXor_np
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_64 _InterlockedXor64_np
+
+#else
+
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_8 _InterlockedXor8
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_16 _InterlockedXor16
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_32 _InterlockedXor
+	#define EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_64 _InterlockedXor64
+
+#endif
+
+
 #define EASTL_MSVC_XOR_FETCH_POST_INTRIN_COMPUTE(ret, val, xorend)	\
 	ret = (val) ^ (xorend)
 
@@ -20,16 +37,16 @@
 
 
 #define EASTL_MSVC_ATOMIC_XOR_FETCH_8(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_XOR_FETCH_N(char, _InterlockedXor8, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_XOR_FETCH_N(char, EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_8, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_XOR_FETCH_16(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_XOR_FETCH_N(short, _InterlockedXor16, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_XOR_FETCH_N(short, EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_16, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_XOR_FETCH_32(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_XOR_FETCH_N(long, _InterlockedXor, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_XOR_FETCH_N(long, EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_32, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_XOR_FETCH_64(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_XOR_FETCH_N(long long, _InterlockedXor64, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_XOR_FETCH_N(__int64, EASTL_MSVC_ATOMIC_XOR_FETCH_INTRIN_64, type, ret, ptr, val, MemoryOrder)
 
 
 /////////////////////////////////////////////////////////////////////////////////

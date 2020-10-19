@@ -28,8 +28,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 
+
 namespace eastl
 {
+
 
 namespace internal
 {
@@ -37,6 +39,7 @@ namespace internal
 
 /**
  * NOTE:
+ *
  * This can be used by specific compiler implementations to implement a data dependency compiler barrier.
  * Some compiler barriers do not take in input dependencies as is possible with the gcc asm syntax.
  * Thus we need a way to create a false dependency on the input variable so the compiler does not dead-store
@@ -73,6 +76,7 @@ extern EASTL_API volatile CompilerBarrierDataDependencyFuncPtr gCompilerBarrierD
 
 
 } // namespace internal
+
 
 } // namespace eastl
 

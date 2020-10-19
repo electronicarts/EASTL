@@ -43,12 +43,18 @@
 //    in various platform implementations.
 //
 // 2. Allows for the implementation to be implemented efficiently on compilers that do not
-//    directly implement the C++ memory model such as msvc.
+//    directly implement the C++ memory model in their intrinsics such as msvc.
 //
 // 3. Allows for the implementation of atomics that may not be supported on the given platform,
 //    such as 128-bit atomics on 32-bit platforms since the macros will only ever be expanded
 //    on platforms that support said features. This makes implementing said features pretty easy
 //    since we do not have to worry about complicated feature detection in the low level implementations.
+//
+// The macro implementation may asume that all passed in types are trivially constructible thus it is
+// free to create local variables of the passed in types as it may please.
+// It may also assume that all passed in types are trivially copyable as well.
+// It cannot assume any passed in type is any given type thus is a specific type if needed, it must do an
+// EASTL_ATOMIC_TYPE_PUN_CAST() to the required type.
 //
 
 

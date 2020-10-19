@@ -21,7 +21,7 @@
 	EASTL_MSVC_ATOMIC_EXCHANGE_OP_N(long, _InterlockedExchange, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_EXCHANGE_64(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_EXCHANGE_OP_N(long long, _InterlockedExchange64, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_EXCHANGE_OP_N(__int64, _InterlockedExchange64, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_EXCHANGE_128(type, ret, ptr, val, MemoryOrder) \
 	{																	\

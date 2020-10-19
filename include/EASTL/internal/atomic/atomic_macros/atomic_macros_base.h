@@ -48,7 +48,7 @@
 // EASTL_ATOMIC_CHOOSE_OP_IMPL
 //
 // This macro chooses between the compiler or architecture implementation for a
-// given atomic operation
+// given atomic operation.
 //
 // USAGE:
 //

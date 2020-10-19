@@ -11,22 +11,39 @@
 #endif
 
 
+#if defined(EA_PROCESSOR_X86_64)
+
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_8 _InterlockedAnd8_np
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_16 _InterlockedAnd16_np
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_32 _InterlockedAnd_np
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_64 _InterlockedAnd64_np
+
+#else
+
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_8 _InterlockedAnd8
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_16 _InterlockedAnd16
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_32 _InterlockedAnd
+	#define EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_64 _InterlockedAnd64
+
+#endif
+
+
 #define EASTL_MSVC_ATOMIC_FETCH_AND_N(integralType, andIntrinsic, type, ret, ptr, val, MemoryOrder) \
 	EASTL_MSVC_ATOMIC_FETCH_OP_N(integralType, andIntrinsic, type, ret, ptr, val, MemoryOrder, \
 								 EASTL_MSVC_NOP_PRE_INTRIN_COMPUTE)
 
 
 #define EASTL_MSVC_ATOMIC_FETCH_AND_8(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_FETCH_AND_N(char, _InterlockedAnd8, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_AND_N(char, EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_8, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_AND_16(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_FETCH_AND_N(short, _InterlockedAnd16, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_AND_N(short, EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_16, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_AND_32(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_FETCH_AND_N(long, _InterlockedAnd, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_AND_N(long, EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_32, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_AND_64(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_FETCH_AND_N(long long, _InterlockedAnd64, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_AND_N(__int64, EASTL_MSVC_ATOMIC_FETCH_AND_INTRIN_64, type, ret, ptr, val, MemoryOrder)
 
 
 /////////////////////////////////////////////////////////////////////////////////

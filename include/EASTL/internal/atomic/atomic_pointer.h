@@ -77,12 +77,14 @@ namespace internal
 
 		atomic_pointer_base() EA_NOEXCEPT = default;
 
+		atomic_pointer_base(const atomic_pointer_base&) EA_NOEXCEPT = delete;
+
 	public: /* assignment operators */
 
-		using Base::operator =;
+		using Base::operator=;
 
-		atomic_pointer_base& operator =(const atomic_pointer_base&)          EA_NOEXCEPT = delete;
-		atomic_pointer_base& operator =(const atomic_pointer_base&) volatile EA_NOEXCEPT = delete;
+		atomic_pointer_base& operator=(const atomic_pointer_base&)          EA_NOEXCEPT = delete;
+		atomic_pointer_base& operator=(const atomic_pointer_base&) volatile EA_NOEXCEPT = delete;
 
 	public: /* fetch_add */
 
@@ -208,12 +210,14 @@ namespace internal
 																		\
 		atomic_pointer_width() EA_NOEXCEPT = default;					\
 																		\
+		atomic_pointer_width(const atomic_pointer_width&) EA_NOEXCEPT = delete; \
+																		\
 	public: /* assignment operators */									\
 																		\
-		using Base::operator =;											\
+		using Base::operator=;											\
 																		\
-		atomic_pointer_width& operator =(const atomic_pointer_width&)          EA_NOEXCEPT = delete; \
-		atomic_pointer_width& operator =(const atomic_pointer_width&) volatile EA_NOEXCEPT = delete; \
+		atomic_pointer_width& operator=(const atomic_pointer_width&)          EA_NOEXCEPT = delete; \
+		atomic_pointer_width& operator=(const atomic_pointer_width&) volatile EA_NOEXCEPT = delete; \
 																		\
 	public: /* fetch_add */												\
 																		\

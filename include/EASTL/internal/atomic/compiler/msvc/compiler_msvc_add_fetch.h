@@ -29,7 +29,7 @@
 	EASTL_MSVC_ATOMIC_ADD_FETCH_N(long, _InterlockedExchangeAdd, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_ADD_FETCH_64(type, ret, ptr, val, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_ADD_FETCH_N(long long, _InterlockedExchangeAdd64, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_ADD_FETCH_N(__int64, _InterlockedExchangeAdd64, type, ret, ptr, val, MemoryOrder)
 
 
 /////////////////////////////////////////////////////////////////////////////////

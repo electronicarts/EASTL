@@ -10,11 +10,12 @@
 	#pragma once
 #endif
 
+
 /////////////////////////////////////////////////////////////////////////////////
 //
 //  Below is the documentation of the API of the eastl::atomic<T> library.
 //  This includes class and free functions.
-//  Anything marked with a '+' infront of the name is an extension to the std API.
+//  Anything marked with a '+' in front of the name is an extension to the std API.
 //
 
 
@@ -133,7 +134,7 @@
 //        : Returns the new updated value after the RMW operation.
 //        : Memory is affected according to seq_cst ordering.
 //
-//   - T oprator+=/-=/&=/|=/^=(T)
+//   - T operator+=/-=/&=/|=/^=(T)
 //        : Atomically adds, subtracts, bitwise and/or/xor the atomic object with T.
 //        : Returns the new updated value after the operation.
 //        : Memory is affected according to seq_cst ordering.
@@ -251,32 +252,27 @@
 //                to solve static-init order fiasco, there are other solutions for that.
 //
 // 2.
-//   Description: Atomic template T must always be nothrow default constructible
-//   Reasoning  : If stores are always noexcept then your constructor should not be
-//                doing anything crazy as well.
-//
-// 3.
 //   Description: Atomics are always lock free
 //   Reasoning  : We don't want people to fall into performance traps where implicit locking
 //                is done. If your user defined type is large enough to not support atomic
 //                instructions then your user code should do the locking.
 //
-// 4.
+// 3.
 //   Description: Atomic objects can not be volatile
 //   Reasoning  : Volatile objects do not make sense in the context of eastl::atomic<T>.
 //                Use the given memory orders to get the ordering you need.
 //                Atomic objects have to become visible on the bus. See below for details.
 //
-// 5.
+// 4.
 //   Description: Consume memory order is not supported
 //   Reasoning  : See below for the reasoning.
 //
-// 6.
+// 5.
 //   Description: ATOMIC_INIT() macros and the ATOMIC_LOCK_FREE macros are not implemented
 //   Reasoning  : Use the is_lock_free() method instead of the macros.
 //                ATOMIC_INIT() macros aren't needed since the default constructor value initializes.
 //
-// 7.
+// 6.
 //   Description: compare_exchange failure memory order cannot be stronger than success memory order
 //   Reasoning  : Besides the argument that it ideologically does not make sense that a failure
 //                of the atomic operation shouldn't have a stricter ordering guarantee than the
@@ -288,7 +284,7 @@
 //                that versions of compilers that say they support C++17 do not properly adhere to this
 //                new requirement in their intrinsics. Thus we will not support this.
 //
-// 8.
+// 7.
 //   Description: All memory orders are distinct types instead of enum values
 //   Reasoning  : This will not affect how the API is used in user code.
 //                It allows us to statically assert on invalid memory orders since they are compile-time types
@@ -303,16 +299,16 @@
 //
 //   ******** DISCLAIMER ********
 //
-//   This documentation is not meant to provide rigourous proofs on the memory models
+//   This documentation is not meant to provide rigorous proofs on the memory models
 //   of specific architectures or the C++ memory model introduced in C++11. It is not
 //   meant to provide formal mathematical definitions and logic that shows that a given
 //   implementation adheres to the C++ memory model. This isn't meant to be some infallible
 //   oracle on memory models, barriers, observers, and architecture implementation details.
 //   What I do hope a reader gets out of this is the following. An understanding of the C++
 //   memory model and how that relates to implementations on various architectures. Various
-//   phenomona and ways that compilers and architectures can steer away from a sequentially
+//   phenomena and ways that compilers and architectures can steer away from a sequentially
 //   consistent system. To provide examples on how to use this library with common patterns
-//   that will been seen in many code bases. Lastly I would like to provide insight and
+//   that will be seen in many code bases. Lastly I would like to provide insight and
 //   further readings into the lesser known topics that aren't shared outside people
 //   who live in this space and why certain things are done the way they are
 //   such as cumulativity of memory barriers as one example. Sometimes specifying barriers
@@ -335,7 +331,7 @@
 //   [3] Evaluating the Cost of Atomic Operations on Modern Architectures
 //   [4] A Tutorial Introduction to the ARM and POWER Relaxed Memory Models
 //   [5] Memory Barriers: a Hardware View for Software Hackers
-//   [6] Memory Model = Instruction Reordering + Store Atomcity
+//   [6] Memory Model = Instruction Reordering + Store Atomicity
 //   [7] ArMOR: Defending Against Memory Consistency Model Mismatches in Heterogeneous Architectures
 //   [8] Weak Memory Models: Balancing Definitional Simplicity and Implementation Flexibility
 //   [9] Repairing Sequential Consistency in C/C++11
@@ -350,7 +346,7 @@
 //
 //   ******** What does it mean to be Atomic? ********
 //
-//   The word atomic has been overloaded and can mean a lot of differnt things depending on the context,
+//   The word atomic has been overloaded and can mean a lot of different things depending on the context,
 //   so let's digest it.
 //
 //   The first attribute for something to be atomic is that concurrent stores and loads
@@ -376,14 +372,14 @@
 //   on a 32-bit ARMv7 core.
 //
 //   An operation may be considered atomic if multiple sub-operations are done as one
-//   transanctional unit. This is commonly known as a Read-Modify-Write, RMW, operation.
+//   transactional unit. This is commonly known as a Read-Modify-Write, RMW, operation.
 //   Take a simple add operation; it is actually a load from memory into a register,
 //   a modification of said register and then a store back to memory. If two threads
 //   concurrently execute this add operation on the same memory location; any interleaving
 //   of the 3 sub-operations is possible. It is possible that if the initial value is 0,
 //   the result may be 1 because each thread executed in lockstep both loading 0, adding 1
 //   and then storing 1. A RMW operation may be considered atomic if the whole sequence of
-//   sub-operations are serialized as one transanctional unit.
+//   sub-operations are serialized as one transactional unit.
 //
 //   Atomicity may also refer to the order in which memory operations are observed and the
 //   dependencies between memory operations to different memory locations. As a quick example
@@ -392,7 +388,7 @@
 //   the store to B, will we observe r1 == 2. Our intuition tells us that well A was stored
 //   first and then B, so if I read the new value of B then I must also read the new value
 //   of A since the store to A happened before B so if I can see B then I must be able to
-//   see everthing before B which includes A.
+//   see everything before B which includes A.
 //   This highlights the ordering of memory operations and why memory barriers and memory
 //   models are so heavily attached to atomic operations because one could classify something
 //   is atomic if the dependency highlighted in the above example is allowed to be maintained.
@@ -430,7 +426,7 @@
 //   in various interconnects from the cpu to the memory itself. One key thing to note is that cpus
 //   do not physically reorder the instruction stream. Instructions are dispatched and retired
 //   in-order but executed out-of-order. Memory barriers will prevent these tricks from happening
-//   by controling the interaction of multiple cpus.
+//   by controlling the interaction of multiple cpus.
 //
 //   Compilers will morph your code and physically move instructions around as long as the program
 //   has the same observed behaviour. This is becoming increasingly true with more optimization techniques
@@ -439,7 +435,7 @@
 //   This means the compiler does indeed alter the instruction stream
 //   and compiler barriers are a way to tell them to not move any memory instructions across the barrier.
 //   This does not prevent a compiler from doing optimizations such as constant folding, merging of
-//   overlapping loads, or even dead store elimination. Compiler barries are also very cheap and
+//   overlapping loads, or even dead store elimination. Compiler barriers are also very cheap and
 //   have zero impact on anything that the compiler knows isn't visible in memory such as local variables
 //   whose addresses do not escape the function even if their address is taken. You can think of it
 //   in terms of a sequence point as used with "volatile" qualified variables to denote a place in code where
@@ -512,16 +508,16 @@
 //   ******** Adding Caches ********
 //
 //   Caches by nature implicitly add the potential for memory reordering. A centralized shared snoopy bus that we all learned in school
-//   makes it easy to implement sequential consistency with caches. Writes and reads are all serialized in a total order via the cache bus transanction
+//   makes it easy to implement sequential consistency with caches. Writes and reads are all serialized in a total order via the cache bus transaction
 //   ordering. Every modern day bus is not inorder, and most certainly not a shared centralized bus. Cache coherency guarantees that all memory operations
 //   will be propagated eventually to all parties, but it doesn't guarantee in what order or in what time frame. Once you add
-//   caches, various levels of caching and various interconnects between remote cpus, you ineviatably run into the issue where
-//   some cpus observe the affects of a store before other cpus. Obviously we have weakly-ordered and strongly-ordered cpus with
-//   caches so why is that? The short answer is, where is the onous put, is it on the programmer or the hardware. Does the hardware
+//   caches, various levels of caching and various interconnects between remote cpus, you inevitably run into the issue where
+//   some cpus observe the effects of a store before other cpus. Obviously we have weakly-ordered and strongly-ordered cpus with
+//   caches so why is that? The short answer is, where is the onus put, is it on the programmer or the hardware. Does the hardware
 //   have dependency tracking, is it able to determine when a memory order violation occurs such as rolling back its speculative execution
 //   and also how far along the chain of interconnects does the hardware wait before it determines that the memory operation has
 //   been acknowledged or is considered to satisfy its memory ordering guarantees. Again this is a very high level view of the system
-//   as a whole, but the take away is yes; caches do add the potential for reordering but other supporting hardware determines whether
+//   as a whole, but the takeaway is yes; caches do add the potential for reordering but other supporting hardware determines whether
 //   that is observable by the programmer. There is also some debate whether weakly-ordered processors are actually more performant
 //   than strongly-ordered cpus eluding to the fact that the hardware has a better picture of what is a violation versus the programmer
 //   having to emit far more barriers on weakly-ordered architectures in multi-threaded code which may actually not be needed because the
@@ -533,7 +529,7 @@
 //   Store buffers are simple fixed size structures that sit between the cpu and the memory hierarchy. This allows
 //   each cpu to record its write in the store buffer and then move onto the next instruction. The store buffer will
 //   eventually be flushed to the resulting memory hierarchy in FIFO order. How and when this flushing occurs is irrelevant to the
-//   understanding of a store buffer. A read from an adress will grab the most recent write to the same address in the store buffer.
+//   understanding of a store buffer. A read from an address will grab the most recent write to the same address in the store buffer.
 //
 //   The introduction of a store buffer is our first dive into weaker memory consistency. The addition of this hardware turns the consistency model weaker,
 //   into one that is commonly known as TSO, Total-Store Order. This is the exact model used by x86 cpus and we will see what this means
@@ -598,10 +594,10 @@
 //   ---------------------------
 //
 //   This STLD barrier effectively will flush the store buffer into the memory hierarchy ensuring all stores in the buffer are visible to all other cpus at the same time
-//   before executing the load instruction. Again nothing prevents a potenital hardware from speculatively executing the load even with the STLD barrier, the hardware will have to do
+//   before executing the load instruction. Again nothing prevents a potential hardware from speculatively executing the load even with the STLD barrier, the hardware will have to do
 //   a proper rollback if it detected a memory order violation otherwise it can continue on with its speculative load. The barrier just delimits a stability point.
 //
-//   Most hardware does not provide granular barrier semenatics such as STLD. Most provide a write memory barrier which only orders stores, STST, a read memory barrier
+//   Most hardware does not provide granular barrier semantics such as STLD. Most provide a write memory barrier which only orders stores, STST, a read memory barrier
 //   which only orders loads, LDLD, and then a full memory barrier which is all 4 permutations. So on x86 we will have to use the mfence, memory fence, instruction
 //   which is a full memory barrier to get our desired STLD requirements.
 //
@@ -611,11 +607,11 @@
 //
 //   Let's look at a non-FIFO store buffer now as seen in ARM cpus as an example and we will use a standard Message Passing example to see how it manifests in even weaker consistency.
 //   A store buffer on ARM as an example allows write merging even with adjacent stores, is not a FIFO queue, any stores in the small hardware hash table may be ejected at any point
-//   due to a collision eviction or the availability of cache lines in the cache hierarchy meaning that stores may bypass the buffer entirely if that cacheline is already owned by that cpu.
+//   due to a collision eviction or the availability of cachelines in the cache hierarchy meaning that stores may bypass the buffer entirely if that cacheline is already owned by that cpu.
 //   There is no guarantee that stores will be completed in order as in the FIFO case.
 //
 //   ---------------------------
-//   Inital State:
+//   Initial State:
 //   x = 0; y = 0;
 //   ---------------------------
 //   Thread 0     |    Thread 1
@@ -632,14 +628,14 @@
 //   Let's see how this breaks with a non-FIFO store buffer.
 //
 //   Thread 0 executes the STORE(x, 1) but the cacheline for x is not in thread 0's cache so we write to the store buffer and wait for the cacheline.
-//   Thread 1 executes the LOAD(y) and it also does not have y in its cacheline so it waits before completeing the load.
+//   Thread 1 executes the LOAD(y) and it also does not have y in its cacheline so it waits before completing the load.
 //   Thread 0 moves on to STORE(y, 1). It owns this cacheline, hypothetically, so it may bypass the store buffer and store directly to the cache.
-//   Thread 0 receives message that Thread 1 needs y's cacheline, so it transfers the now modified cacheline to Thread 1.
+//   Thread 0 receives a message that Thread 1 needs y's cacheline, so it transfers the now modified cacheline to Thread 1.
 //   Thread 1 completes the load with the updated value of y = 1 and branches out of the while loop since we saw the new value of y.
 //   Thread 1 executes LOAD(x) which will return 0 since Thread 0 still hasn't flushed its store buffer waiting for x's cacheline.
 //   Thread 0 receives x's cacheline and now flushes x = 1 to the cache. Thread 1 will also have invalidated its cacheline for x that it brought in via the previous load.
 //
-//   We have now fallen victim to STST reordering, allowing Thread 1 to observe a load of x returning 0. Not only does this store buffer allow STLD reording due to the nature of
+//   We have now fallen victim to STST reordering, allowing Thread 1 to observe a load of x returning 0. Not only does this store buffer allow STLD reordering due to the nature of
 //   buffering stores, but it also allows another reordering; that of Store-Store reordering. It was observed as if Thread 0 executed STORE(y, 1) before STORE(x, 1) which completely
 //   broke our simple message passing scenario.
 //
@@ -663,12 +659,12 @@
 //   Due to the cache coherency protocol in play, a write to a cacheline will have to send invalidation messages to all other cpus that may have that cacheline as well.
 //   Immediately executing and responding to invalidation messages can cause quite a stall especially if the cache is busy at the moment with other requests.
 //   The longer we wait to invalidate the cacheline, the longer the remote cpu doing the write is stalled waiting on us. We don't like this very much.
-//   Invalidation Queues are just that, we queue up the action of actually invalidating the cache line but immediately respond to the request saying we did it anyway.
+//   Invalidation Queues are just that, we queue up the action of actually invalidating the cacheline but immediately respond to the request saying we did it anyway.
 //   Now the remote cpu thinks we invalidated said cacheline but actually it may very well still be in our cache ready to be read from. We just got weaker again, let's
 //   see how this manifests in code by starting from the end of our previous example.
 //
 //   ---------------------------
-//   Inital State:
+//   Initial State:
 //   x = 0; y = 0;
 //   ---------------------------
 //   Thread 0     |    Thread 1
@@ -745,7 +741,7 @@
 //   STORE(&(y + r0 - r1), 1) | STORE(&(x + r1 - r1), 1)
 //   -----------------------------------------------------
 //
-//   Both fixes above ensure that both writes cannot be commited, made globally visible, until their program source code order preceeding reads have been fully satisfied.
+//   Both fixes above ensure that both writes cannot be committed, made globally visible, until their program source code order preceding reads have been fully satisfied.
 //
 //   ******** Compiler Barriers ********
 //
@@ -753,7 +749,7 @@
 //   loads and stores from moving up above the compiler barrier. Here we will see the various ways our code may be subject
 //   to compiler optimizations and why compiler barriers are needed. Note as stated above, compiler barriers may not
 //   prevent all compiler optimizations or transformations. Compiler barriers are usually implemented by reloading all
-//   variables that currently cached in registers and flushing all stores in registers back to memory.
+//   variables that are currently cached in registers and flushing all stores in registers back to memory.
 //   This list isn't exhaustive but will hopefully try to outline what compiler barriers protect against and what they don't.
 //
 //   Compiler may reorder loads.
@@ -769,14 +765,14 @@
 //   operations and STORE result into A; operations and STORE result int B; -> all operations; STORE result into B; STORE result into A;
 //
 //   Insert a compiler barrier in between the two stores to guarantee that they are kept in order.
-//   It is not required the multiple stores to A before the barrier are not merged into one final store.
+//   It is not required that the multiple stores to A before the barrier are not merged into one final store.
 //   It is not required that the store to B after the barrier be written to memory, it may be cached in a register for some indeterminate
 //   amount of time as an example.
 //   STORE(A, 1); COMPILER_BARRIER; STORE(B, 1);
 //
 //   The compiler is allowed to merge overlapping loads and stores.
 //   Inserting a compiler barrier here will not prevent the compiler from doing this optimization as doing one wider load/store is
-//   technically still abidding by the guarantee that the loads/stores are not reordered with each other.
+//   technically still abiding by the guarantee that the loads/stores are not reordered with each other.
 //   LOAD A[0]; LOAD A[1]; -> A single wider LOAD instruction
 //   STORE(A[0], 1); STORE(A[1], 2); -> A single wider STORE instruction
 //
@@ -831,8 +827,8 @@
 //   STORE(A, 1);
 //
 //   The compiler is well within its rights to omit the second store to A. Assuming we are doing some fancy lockfree communication
-//   with another cpu and the last store is meant to ensure the ending value is 1 even if another cpu changed A inbetween; that
-//   assumption will not be satisfied. A compiler barrier will not prevent the last store from be dead-store removed.
+//   with another cpu and the last store is meant to ensure the ending value is 1 even if another cpu changed A in between; that
+//   assumption will not be satisfied. A compiler barrier will not prevent the last store from being dead-store removed.
 //
 //   STORE(A, 1);
 //   OPERATIONS;
@@ -891,7 +887,7 @@
 //   only conditional branches. The problem is compilers do not understand control dependencies, and control dependencies
 //   are incredibly hard to understand. This is meant to make the reader aware they exist and to never use them
 //   because they shouldn't be needed at all with eastl::atomic<T>. Also control dependencies are categorized as LDLD or LDST,
-//   store control dependencies inheritly do not make sense since the conditional branch loads and compares two values.
+//   store control dependencies inherently do not make sense since the conditional branch loads and compares two values.
 //
 //   A LDLD control dependency is an anti-pattern since it is not guaranteed that any architecture will detect the memory-order violation.
 //   r0 = LOAD(A);
@@ -901,7 +897,7 @@
 //   Given those sequence of instructions, it is entirely possible that a cpu attempts to speculatively predict and load the value of B
 //   before the branch instruction has finished executing. It is entirely allowed that the cpu loads from B, assume B is in cache and A
 //   is not in cache, before A. It is allowed, that even if the cpu was correct in it's prediction that it doesn't reload B and change the
-//   fact the it speculatively got lucky.
+//   fact that it speculatively got lucky.
 //
 //   This is also what the x86 pause instruction inserted into spin wait loops is meant to solve.
 //   LOOP:
@@ -912,7 +908,7 @@
 //   x86 will catch a memory order violation if it sees that an external store was done to A and thus must flush the entire
 //   pipeline of all the speculated load A. Pause instruction tells the cpu to not do speculative loads so that the pipeline is not
 //   filled with all said speculative load instructions. This ensures we do not incur the costly pipeline flushes from memory order
-//   violations which is likely to occur in tight spin wait loops. This also allows other threads on the same physical core to use the
+//   violations which are likely to occur in tight spin wait loops. This also allows other threads on the same physical core to use the
 //   core's resources better since our speculative nature won't be hogging it all.
 //
 //   A LDST control dependency is a true dependency in which the cpu cannot make a store visible to the system and other cpus until it
@@ -924,7 +920,7 @@
 //
 //   The fun part comes in with how does the compiler actually break all of this.
 //   First is that if the compiler can ensure that the value of A in the LDST example is always not zero, then it is always within its
-//   righs to completely remove the if statement which would lend us with no control dependency.
+//   rights to completely remove the if statement which would lend us with no control dependency.
 //
 //   Things get more fun when we deal with conditionals with else and else if statements where the compiler might be able to employ
 //   invariant code motion optimizations. Take this example.
@@ -947,7 +943,7 @@
 //
 //   Things can get even more complicated especially in C++ when values may come from constexpr, inline, inline constexpr, static const, etc,
 //   variables and thus the compiler will do all sorts of transformations to reduce, remove, augment and change all your conditional code since
-//   it knows the values of the expressions or even parts of it at compile time. Even more agressive optimizations like LTO might break code that was being cautious.
+//   it knows the values of the expressions or even parts of it at compile time. Even more aggressive optimizations like LTO might break code that was being cautious.
 //   Even adding simple short circuiting logic or your classic likely/unlikely macros can alter conditionals in ways you didn't expect.
 //   In short know enough about control dependencies to know not to ever use them.
 //
@@ -963,7 +959,7 @@
 //   Those are the above variations of Store Atomicity. Most processors have Non-Atomic Store Atomicity and thus you must program to that lowest common denominator.
 //   We can use barriers, with some caveats, to restore Multi-Copy Store Atomicity to a Non-Atomic system though we need to define a new granular definition for
 //   memory barriers to define this behaviour. Simple LDLD/LDST/STST/STLD definition is not enough to categorize memory barriers at this level. Let's start off
-//   with a simple example that breaks under a Non-Atomic Store Atomicity system and what potenital hardware features allow this behaviour to be observed.
+//   with a simple example that breaks under a Non-Atomic Store Atomicity system and what potential hardware features allow this behaviour to be observed.
 //
 //   NOTE: For all the below examples we assume no compile reordering and that the processor also executes the instructions with no local reorderings to make the examples simpler,
 //         to only show off the effects of Multi-Copy Store Atomicity. This is why we don't add any address dependencies, or mark explicit LDLD/LDST memory barriers.
@@ -972,7 +968,7 @@
 //   ---------------------------------------------------------------------------------------------------------
 //   Write-To-Read Causality, WRC, Litmus Test
 //   ---------------------------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   X = 0; Y = 0;
 //   ---------------------------------------------------------------------------------------------------------
 //   Thread 0                 | Thread 1                          | Thread 2
@@ -984,7 +980,7 @@
 //   ---------------------------------------------------------------------------------------------------------
 //
 //   Let's go over this example in detail and whether the outcome shown above can be observed. In this example Thread 0 stores 1 into X. If Thread 1 observes the write to X,
-//   it stores the observed value into Y. Thread 2 loads from Y then X. This means if the load from Y retuns 1, then we intuitively know the global store order
+//   it stores the observed value into Y. Thread 2 loads from Y then X. This means if the load from Y returns 1, then we intuitively know the global store order
 //   was 1 to X and then 1 to Y. So is it possible then that the load from X in Thread 2 can return 0 in that case? Under a Multi-Copy Store Atomicity system, that would be
 //   impossible because once 1 was stored to X all cpus see that store so if Thread 2 saw the store to Y which can only happen after the store to X was observed, then
 //   Thread 2 must also have observed the store to X and return 1. As you may well have figured out, it is possible under a Non-Atomic Store Atomicity system to still
@@ -1000,7 +996,7 @@
 //   has an SMT value of 2. Thread 0 will store 1 into X. This store may be in the store buffer or in the L1 cache that cpu 1 also shares with cpu 0, thus cpu 1 has early access to cpu 0's stores.
 //   Thread 1 loads X which it observed as 1 early and then stores 1 into Y. Thread 2 may see the load from Y returning 1 but now the load from X returning 0 all because cpu 1 got early
 //   access to cpu 0 store due to sharing a L1 cache or store buffer.
-//   We will come back on how to fix this example with the proper memory barries for the Non-Atomic Store Atomicity systems, but we need to detour first.
+//   We will come back on how to fix this example with the proper memory barriers for the Non-Atomic Store Atomicity systems, but we need to detour first.
 //
 //   We need to take a deeper dive into memory barriers to understand how to restore Multi-Copy Store Atomicity from a Non-Atomic Store Atomicity system.
 //   Let's start with a motivating example and we will be using the POWER architecture throughout this example because it encompasses all the possible observable behaviour.
@@ -1021,14 +1017,14 @@
 //   IRIW         : YES   |                            IRIW         : NO
 //
 //   The TSO memory model provided by x86 seems to be exactly the same as POWER if we add lwsync memory barrier instructions in between each of the memory instructions.
-//   This provides us the exact same ordering guarantees as the TSO memory model. If we just looked at the 4 permuatations of reorderings we would be inclined to assume that
-//   TSO has the exact same ordering as sprinkling lwsync in our code inbetween every pair of memory instructions. That is not the case because memory barrier causality and cumulativity differ in subtle ways.
+//   This provides us the exact same ordering guarantees as the TSO memory model. If we just looked at the 4 permutations of reorderings we would be inclined to assume that
+//   TSO has the exact same ordering as sprinkling lwsync in our code in between every pair of memory instructions. That is not the case because memory barrier causality and cumulativity differ in subtle ways.
 //   In this case they differ by the implicit guarantees from the TSO memory model versus those provided by the POWER lwsync memory barrier.
 //   So the lwsync memory barrier prevents reordering with instructions that have causality but does not prevent reordering with instructions that are completely independent.
 //   Let's dive into these concepts a bit more.
 //
 //   Non-Atomic Store Atomicity architectures are prone to behaviours such as the non-causal outcome of the WRC test above. Architectures such as POWER defines memory barriers to enforce
-//   ordering with respect to memory accesses in remote cpus other than the cpu actually issuing the memory barrier. This is known a memory barrier cumulativity.
+//   ordering with respect to memory accesses in remote cpus other than the cpu actually issuing the memory barrier. This is known as memory barrier cumulativity.
 //   How does the memory barrier issued on my cpu affect the view of memory accesses done by remote cpuss.
 //
 //   Cumulative memory barriers are defined as follows - Take your time this part is very non-trivial:
@@ -1064,13 +1060,13 @@
 //   WRC litmus test represents a scenario where only a A-Cumulative memory barrier is needed. The lwsync not only provides the needed local LDST memory barrier for the local thread but also ensures
 //   that any write Thread 1 has read from before the memory barrier is kept in order with any write Thread 1 does after the memory barrier as far as any other thread observes.
 //   In other words it ensures that any write that has propagated to Thread 1 before the memory barrier is propagated to any other thread before the second store after the memory barrier in Thread 1
-//   can propagte to other threads in the system. This is exactly the definition of A-Cumulativity and what we need to ensure that causality is maintained in the WRC Litmus Test example.
+//   can propagate to other threads in the system. This is exactly the definition of A-Cumulativity and what we need to ensure that causality is maintained in the WRC Litmus Test example.
 //   With that lwsync in place it is now impossible to observe r0 = 1 && r1 = 1 && r2 = 0. The lwsync has restored causal ordering. Let's look at an example that requires B-Cumulativity.
 //
 //   ---------------------------------------------------------------------------------------------------------
 //   Example 2 from POWER manual
 //   ---------------------------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   X = 0; Y = 0; Z = 0
 //   ---------------------------------------------------------------------------------------------------------
 //   Thread 0                 | Thread 1                          | Thread 2
@@ -1098,15 +1094,15 @@
 //   First the lwsync provides the needed local STST memory barrier for the local thread, thus the lwsync here ensures that the store to X propagates to Thread 1 before the store to Y.
 //   B-Cumulativity applied to all operations after the memory barrier ensure that the store to X is
 //   kept in order with respect to the store to Z as far as all other threads participating in the dependency chain are concerned. This is the exact definition of B-Cumulativity.
-//   With this one lwsync the outcome outlined above is impossble to observe. If r0 = 1 && r1 = 1 then r2 must be properly observed to be 1.
+//   With this one lwsync the outcome outlined above is impossible to observe. If r0 = 1 && r1 = 1 then r2 must be properly observed to be 1.
 //
 //   We know that lwsync only provides A-Cumulativity and B-Cumulativity. Now we will look at examples that have no causality constraints thus we need to grab heavier memory barriers
-//   that ensure in short we will say makes a store visible to all processors even those not on the dependency chains. Let's get to the first example.
+//   that ensures in short we will say makes a store become visible to all processors, even those not on the dependency chains. Let's get to the first example.
 //
 //   ---------------------------------------------------------------------------------------------------------
 //   Independent Reads of Independent Writes, IRIW, coined by Doug Lea
 //   ---------------------------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   X = 0; Y = 0;
 //   ---------------------------------------------------------------------------------------------------------
 //   Thread 0                 | Thread 1                       | Thread 2               | Thread 3
@@ -1134,7 +1130,7 @@
 //   To ensure that the above observation is forbidden we need to add a full sync memory barrier on both the reading threads. Think of sync as restoring sequential consistency.
 //   The sync memory barrier ensures that any writes that Thread 1 has read from before the memory barrier are fully propagated to all threads before the reads are satisfied after the memory barrier.
 //   The same can be said for Thread 3. This is why the sync memory barrier is needed because there is no partial causal ordering here or anything that can be considered for our A and  B Cumulativity definitions.
-//   We must ensure that all writes have been propagated to all cpus before proceeding. This gives way to the difference between sync and lwsync with regards to visiblity of writes and cumulativity.
+//   We must ensure that all writes have been propagated to all cpus before proceeding. This gives way to the difference between sync and lwsync with regards to visibility of writes and cumulativity.
 //   sync guarantees that all program-order previous stores must have been propagated to all other cpus before the memory instructions after the memory barrier.
 //   lwsync does not ensure that stores before the memory barrier have actually propagated to any other cpu before memory instructions after the memory barrier, but it will keep stores before and after the
 //   lwsync in order as far as other cpus are concerned that are within the dependency chain.
@@ -1183,9 +1179,9 @@
 //   STORE_RELEASE(FLAG, 1)   | r0 = LOAD(DATA)
 //   ------------------------------------------------------
 //
-//   This a common message passing idiom that also shows the use of Release-Acquire semantics. It should be obvious by the definitions outlined above why this works.
+//   This is a common message passing idiom that also shows the use of Release-Acquire semantics. It should be obvious by the definitions outlined above why this works.
 //   An Acquire operation attached to a load needs to provide a LDLD and LDST memory barrier according to our definition of acquire. This is provided by default on x86 TSO thus no memory barrier is emitted.
-//   A Release operation attached to a store needs to provde a STST and LDST memory barrier according to our definition of release. This is provided by default on x86 TSO thus no memory barrier is emitted.
+//   A Release operation attached to a store needs to provide a STST and LDST memory barrier according to our definition of release. This is provided by default on x86 TSO thus no memory barrier is emitted.
 //
 //   A couple of things of note here. One is that by attaching the semantics of a memory model directly to the memory instruction/operation itself we can take advantage of the fact the some processors
 //   already provide guarantees between memory instructions and thus we do not have to emit memory barriers. Another thing of note is that the memory model is directly attached to the operation,
@@ -1238,7 +1234,7 @@
 //                            | STORE_RELEASE(Y, r0)              | r2 = LOAD(X)
 //   ---------------------------------------------------------------------------------------------------------
 //
-//   You may notice both of these examples from the previous section. We replaced the standalone POWER memory barrier instructions with Release-Acquire semantics attached directly to the operations where we want causality perserved.
+//   You may notice both of these examples from the previous section. We replaced the standalone POWER memory barrier instructions with Release-Acquire semantics attached directly to the operations where we want causality preserved.
 //   We have transformed those examples to use the eastl::atomic<T> memory model.
 //   Take a moment to digest these examples in relation to the definition of Release-Acquire semantics.
 //
@@ -1333,7 +1329,7 @@
 //
 //   The above shows a more elaborate example of how data dependent dependencies flow through RAW chains either through memory or through registers.
 //
-//   Notice by identify that this is a data dependent operation and asking for a consume ordering, we can completely eliminate the memory barrier on Thread 1 since we know ARMv7 does not reorder data dependent loads. Neat.
+//   Notice by identifying that this is a data dependent operation and asking for a consume ordering, we can completely eliminate the memory barrier on Thread 1 since we know ARMv7 does not reorder data dependent loads. Neat.
 //   Unfortunately every major compiler upgrades a consume to an acquire ordering, because the consume ordering in the standard has a stronger guarantee and requires the compiler to do complicated dependency tracking.
 //   Dependency chains in source code must be mapped to dependency chains at the machine instruction level until a std::kill_dependency in the source code.
 //
@@ -1398,7 +1394,7 @@
 //   ******** Relaxed && eastl::atomic<T> guarantees ********
 //
 //   We saw various ways that compiler barriers do not help us and that we need something more granular to make sure accesses are not mangled by the compiler to be considered atomic.
-//   Ensuring these guarantees like preventing dead-store elimination or the spliting of stores into smaller sub stores is where the C/C++11
+//   Ensuring these guarantees like preventing dead-store elimination or the splitting of stores into smaller sub stores is where the C/C++11
 //   standard comes into play to define what it means to operate on an atomic object.
 //   These basic guarantees are provided via new compiler intrinsics on gcc/clang that provide explicit indication to the compiler.
 //   Or on msvc by casting the underlying atomic T to a volatile T*, providing stronger compiler guarantees than the standard requires.
@@ -1406,7 +1402,7 @@
 //   reordered across sequence points. Again we are not using volatile here to guarantee atomicity, we are using it in its very intended purpose
 //   to tell the compiler it cannot assume anything about the contents of that variable. Now let's dive into the base guarantees of eastl::atomic<T>.
 //
-//   The standard defines the follow for all operations on an atomic object M.
+//   The standard defines the following for all operations on an atomic object M.
 //
 //   Write-Write Coherence:
 //   If an operation A modifies an atomic object M(store), happens before an operation B that modifies M(store), then A shall be earlier than B in the modification order of M.
@@ -1423,7 +1419,7 @@
 //   If a side effect X on an atomic object M(store), happens before a value computation B on M(load), then the evaluation of B must take its value from X or from some side effect Y that follows X in the
 //   modification order of M.
 //
-//   What does all this mean. This is just pedantic way of saying that the preceeding coherence requirements disallow compiler reordering of atomic operations to a single atomic object.
+//   What does all this mean. This is just a pedantic way of saying that the preceding coherence requirements disallow compiler reordering of atomic operations to a single atomic object.
 //   This means all operations must be emitted by the compiler. Stores cannot be dead-store eliminated even if they are the only stores.
 //   Loads cannot have common subexpression elimination performed on them even if they are the only loads.
 //   Loads and Stores to the same atomic object cannot be reordered by the compiler.
@@ -1433,8 +1429,8 @@
 //
 //   ******** Same Address LoadLoad Reordering ********
 //
-//   It is expected that same address operations cannot and are not reordered with each other. It is expected that operations to the same address have sequetial consistency because
-//   they are to the same address. If you picture a cpu executing instructions, how is it possible to reorder instructions to the same address and yet kept program behaviour the same.
+//   It is expected that same address operations cannot and are not reordered with each other. It is expected that operations to the same address have sequential consistency because
+//   they are to the same address. If you picture a cpu executing instructions, how is it possible to reorder instructions to the same address and yet keep program behaviour the same.
 //   Same Address LoadLoad Reordering is one weakening that is possible to do and keep observed program behaviour for a single-threaded program.
 //   More formally, A and B are two memory instructions onto the same address P, where A is program ordered before B. If A and B are both loads then their order need not be ordered.
 //   If B is a store then it cannot retire the store before A instruction completes. If A is a store and B is a load, then B must get its value forwarded from the store buffer or observe a later store
@@ -1445,7 +1441,7 @@
 //   ---------------------------
 //   Same Address LoadLoad
 //   ---------------------------
-//   Inital State:
+//   Initial State:
 //   x = 0;
 //   ---------------------------
 //   Thread 0     |    Thread 1
@@ -1456,7 +1452,7 @@
 //   Observed: r0 = 1 && r0 = 0
 //   ---------------------------
 //
-//   Notice in the above example it has appeared as if the two loads from the same address have been reordered. If we first observed the new store of 1, then the next load should not observed a value in the past.
+//   Notice in the above example it has appeared as if the two loads from the same address have been reordered. If we first observed the new store of 1, then the next load should not observe a value in the past.
 //   Many programmers, expect same address sequential consistency, all accesses to a single address appear to execute in a sequential order.
 //   Notice this violates the Read-Read Coherence for all atomic objects defined by the std and thus provided by eastl::atomic<T>.
 //
@@ -1498,7 +1494,7 @@
 //   This can be used to add synchronization to a series of several relaxed atomic operations, as in the following trivial example.
 //
 //   ----------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   x = 0;
 //   eastl::atomic<int> y = 0;
 //   z = 0;
@@ -1518,12 +1514,12 @@
 //   ******** Atomic vs Standalone Fence ********
 //
 //   A sequentially consistent fence is stronger than a sequentially consistent operation because it is not tied to a specific atomic object.
-//   An atomic fence must provide sychronization with ANY atomic object where as the ordering on the atomic object itself must only provide
+//   An atomic fence must provide synchronization with ANY atomic object whereas the ordering on the atomic object itself must only provide
 //   that ordering on that SAME atomic object. Thus this can provide cheaper guarantees on architectures with dependency tracking hardware.
 //   Let's look at a concrete example that will make this all clear.
 //
 //   ----------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   eastl::atomic<int> y = 0;
 //   eastl::atomic<int> z = 0;
 //   ----------------------------------------------------------------------------------------
@@ -1540,7 +1536,7 @@
 //   In the above example if we observe r0 = 1 it is impossible to observe r1 = 0.
 //
 //   ----------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   eastl::atomic<int> x = 0;
 //   eastl::atomic<int> y = 0;
 //   eastl::atomic<int> z = 0;
@@ -1560,7 +1556,7 @@
 //   observing r1 = 0 even if we observe r0 = 1. For example the following code may fail.
 //
 //   ----------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   eastl::atomic<int> x = 0;
 //   eastl::atomic<int> y = 0;
 //   eastl::atomic<int> z = 0;
@@ -1575,7 +1571,7 @@
 //   ----------------------------------------------------------------------------------------
 //
 //   ----------------------------------------------------------------------------------------
-//   Inital State:
+//   Initial State:
 //   eastl::atomic<int> x = 0;
 //   eastl::atomic<int> y = 0;
 //   eastl::atomic<int> z = 0;
@@ -1589,7 +1585,7 @@
 //   Observed: r0 = 1 && r1 = 0
 //   ----------------------------------------------------------------------------------------
 //
-//   In this example it is entirely possible that we observe r0 = 1 && r1 = 0 even though we have source code causility and sequentially consistent operations.
+//   In this example it is entirely possible that we observe r0 = 1 && r1 = 0 even though we have source code causality and sequentially consistent operations.
 //   Observability is tied to the atomic object on which the operation was performed and the thread fence doesn't synchronize-with the fetch_add because there is no
 //   there is no load above the fence that reads the value from the fetch_add.
 //
@@ -1603,7 +1599,7 @@
 //
 //   All memory_order_seq_cst operations exhibit the below single total order in which all threads observe all modifications in the same order
 //
-//   Paraphrashing, there is a single total order on all memory_order_seq_cst operations, S, such that each sequentially consistent operation B that loads a value from
+//   Paraphrasing, there is a single total order on all memory_order_seq_cst operations, S, such that each sequentially consistent operation B that loads a value from
 //   atomic object M observes either the result of the last sequentially consistent modification A on M, or some modification on M that isn't memory_order_seq_cst.
 //   For atomic modifications A and B on an atomic object M, B occurs after A in the total order of M if:
 //   there is a memory_order_seq_cst fence X whereby A is sequenced before X, and X precedes B,
@@ -1659,7 +1655,7 @@
 //   Observed: r0 = 1 && r1 = 0 && r2 = 0
 //   ------------------------------------------------------------------------------------------------
 //
-//   You'll notice this example is an inbetween example of the Store-Buffer and IRIW examples we have seen earlier. The store in Thread 0 needs to be sequentially consistent so it synchronizes with the
+//   You'll notice this example is an in between example of the Store-Buffer and IRIW examples we have seen earlier. The store in Thread 0 needs to be sequentially consistent so it synchronizes with the
 //   thread fence in Thread 1. C++20 due to Reference [9], increased the strength of sequentially consistent fences has been increased to allow for the following.
 //
 //   ------------------------------------------------------------------------------------------------
@@ -1683,8 +1679,8 @@
 //
 //   ******** False Sharing ********
 //
-//   As we know operations work on the granularity of a cache line. A RMW operation obviously must have some help from the cache to ensure the entire operation
-//   is seen a one whole unit. Conceptually we can think of this as the cpu's cache taking a lock on the cacheline, the cpu doing the read-modify-write operation on the
+//   As we know operations work on the granularity of a cacheline. A RMW operation obviously must have some help from the cache to ensure the entire operation
+//   is seen as one whole unit. Conceptually we can think of this as the cpu's cache taking a lock on the cacheline, the cpu doing the read-modify-write operation on the
 //   locked cacheline, and then releasing the lock on the cacheline. This means during that time any other cpu needing that cacheline must wait for the lock to be released.
 //
 //   If we have two atomic objects doing RMW operations and they are within the same cacheline, they are unintentionally contending and serializing with each other even
@@ -1718,7 +1714,7 @@
 //   If the value in memory is 0x22222233 then the first cmpxchg succeeded, then the second cmpxchg succeeded and finally our
 //   byte to memory was stored, yet our load returned 0x11111133. This is because store buffer contents can be forwarded to overlapping loads.
 //   It is possible that the byte store got put in the store buffer. Our load happened after the first cmpxchg with the byte forwarded.
-//   This behaviour is fine as along as your algorithm is able to cope with this kind of store buffer forwarding effects.
+//   This behaviour is fine as long as your algorithm is able to cope with this kind of store buffer forwarding effects.
 //
 //   Reference [13] is a great read on more about this topic of mixed-size concurrency.
 //

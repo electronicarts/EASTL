@@ -29,8 +29,8 @@
 	 */
 	#if defined(EA_PROCESSOR_ARM32)
 
-		#define EASTL_ARCH_ATOMIC_MSVC_ARM32_LDREXD(ret, ptr)		\
-			ret = __ldrexd(ptr)
+		#define EASTL_ARCH_ATOMIC_ARM32_LDREXD(ret, ptr)	\
+			ret = __ldrexd((ptr))
 
 	#endif
 
@@ -60,7 +60,7 @@
 		#define EASTL_ARCH_ATOMIC_LOAD_64(type, ret, ptr)						\
 			{																	\
 				__int64 loadRet64;												\
-				EASTL_ARCH_ATOMIC_MSVC_ARM32_LDREXD(loadRet64, EASTL_ATOMIC_VOLATILE_INTEGRAL_CAST(__int64, (ptr))); \
+				EASTL_ARCH_ATOMIC_ARM32_LDREXD(loadRet64, EASTL_ATOMIC_VOLATILE_INTEGRAL_CAST(__int64, (ptr))); \
 																				\
 				ret = EASTL_ATOMIC_TYPE_PUN_CAST(type, loadRet64);				\
 			}
@@ -75,6 +75,7 @@
 
 	/**
 	 * NOTE:
+	 *
 	 * The ARM documentation states the following:
 	 * A 64-bit pair requires the address to be quadword aligned and is single-copy atomic for each doubleword at doubleword granularity
 	 *
@@ -83,22 +84,13 @@
 	 */
 	#define EASTL_ARCH_ATOMIC_ARM_LOAD_128(type, ret, ptr, MemoryOrder)		\
 		{																	\
-			struct BitfieldPun128											\
-			{																\
-				__int64 value[2];											\
-			};																\
-																			\
-			struct BitfieldPun128 loadedPun = EASTL_ATOMIC_TYPE_PUN_CAST(struct BitfieldPun128, *(ptr)); \
-																			\
+			bool cmpxchgRetBool;											\
+			ret = *(ptr);													\
 			do																\
 			{																\
-				bool cmpxchgRetBool;										\
-				EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_CMPXCHG_STRONG_, MemoryOrder), _128)(struct BitfieldPun128, cmpxchgRetBool, \
-																											EASTL_ATOMIC_TYPE_CAST(struct BitfieldPun128, (ptr)), \
-																											&loadedPun, loadedPun);	\
+				EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_CMPXCHG_STRONG_, MemoryOrder), _128)(type, cmpxchgRetBool, \
+																											ptr, &(ret), ret); \
 			} while (!cmpxchgRetBool);										\
-																			\
-			ret = EASTL_ATOMIC_TYPE_PUN_CAST(type, loadedPun);				\
 		}
 
 

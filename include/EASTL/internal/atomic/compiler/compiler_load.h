@@ -118,11 +118,19 @@
  * This implementation assumes the hardware doesn't reorder dependent
  * loads unlike the DEC Alpha.
  */
+#define EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_N(type, ret, ptr)		\
+	{																	\
+		static_assert(eastl::is_pointer_v<type>, "eastl::atomic<T> : Read Depends Type must be a Pointer Type!"); \
+		static_assert(eastl::is_pointer_v<eastl::remove_pointer_t<decltype(ptr)>>, "eastl::atomic<T> : Read Depends Ptr must be a Pointer to a Pointer!"); \
+																		\
+		ret = (*EASTL_ATOMIC_VOLATILE_CAST(ptr));						\
+	}
+
 #define EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_32(type, ret, ptr)	\
-	ret = (*EASTL_ATOMIC_VOLATILE_CAST(ptr))						\
+	EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_N(type, ret, ptr)
 
 #define EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_64(type, ret, ptr)	\
-	ret = (*EASTL_ATOMIC_VOLATILE_CAST(ptr))						\
+	EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_N(type, ret, ptr)
 
 #define EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_32_AVAILABLE 1
 #define EASTL_COMPILER_ATOMIC_LOAD_READ_DEPENDS_64_AVAILABLE 1

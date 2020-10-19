@@ -11,6 +11,7 @@
 #include <EASTL/internal/config.h>
 #include <EABase/eabase.h>
 
+
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
 
@@ -48,6 +49,49 @@ typedef eastl::multiset<TestObject> VMS4;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////
+// xvalue_test
+//
+// Test utility type that sets the class data to known value when its data has
+// has been moved out.  This enables us to write tests that verify that the
+// destruction action taken on container elements occured during move operations.
+//
+struct xvalue_test
+{
+	static const int MOVED_FROM = -1;
+
+	int data = 42;
+
+	xvalue_test(int in) : data(in) {}
+	~xvalue_test() = default;
+
+	xvalue_test(const xvalue_test& other) 
+		: data(other.data) {}
+
+	xvalue_test& operator=(const xvalue_test& other)
+	{
+		data = other.data;
+		return *this;
+	}
+
+	xvalue_test(xvalue_test&& other)
+	{
+		data = other.data;
+		other.data = MOVED_FROM;
+	}
+
+	xvalue_test& operator=(xvalue_test&& other)
+	{
+		data = other.data;
+		other.data = MOVED_FROM;
+		return *this;
+	}
+
+	friend bool operator<(const xvalue_test& rhs, const xvalue_test& lhs) 
+		{ return rhs.data < lhs.data; }
+};
 
 
 
@@ -126,6 +170,30 @@ int TestSet()
 		multiset<int> s = {0, 0, 0, 0, 0, 1, 1, 1, 2, 3, 3, 3, 4};
 		eastl::erase_if(s, [](auto i) { return i % 2 == 0;});
 		VERIFY((s == multiset<int>{1, 1, 1, 3, 3, 3}));
+	}
+
+	{
+		// user reported regression: ensure container elements are NOT 
+		// moved from during the eastl::set construction process.
+		eastl::vector<xvalue_test> m1 = {{0}, {1}, {2}, {3}, {4}, {5}};
+		eastl::set<xvalue_test> m2{m1.begin(), m1.end()};
+
+		bool result = eastl::all_of(m1.begin(), m1.end(), 
+				[&](auto& e) { return e.data != xvalue_test::MOVED_FROM; });
+
+		VERIFY(result);
+	}
+
+	{
+		// user reported regression: ensure container elements are moved from during the
+		// eastl::set construction process when using an eastl::move_iterator.
+		eastl::vector<xvalue_test> m1 = {{0}, {1}, {2}, {3}, {4}, {5}};
+		eastl::set<xvalue_test> m2{eastl::make_move_iterator(m1.begin()), eastl::make_move_iterator(m1.end())};
+
+		bool result = eastl::all_of(m1.begin(), m1.end(), 
+				[&](auto& e) { return e.data == xvalue_test::MOVED_FROM; });
+
+		VERIFY(result);
 	}
 
 	return nErrorCount;

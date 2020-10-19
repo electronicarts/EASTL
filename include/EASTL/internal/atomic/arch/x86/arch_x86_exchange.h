@@ -54,7 +54,7 @@
 #if ((defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
 
 
-	#define EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, MemoryOrder) \
+	#define EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, MemoryOrder) \
 		{																	\
 			bool cmpxchgRet;												\
 			/* This is intentionally a non-atomic 128-bit load which may observe shearing. */ \
@@ -70,19 +70,19 @@
 
 
 	#define EASTL_ARCH_ATOMIC_EXCHANGE_RELAXED_128(type, ret, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, RELAXED)
+		EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, RELAXED)
 
 	#define EASTL_ARCH_ATOMIC_EXCHANGE_ACQUIRE_128(type, ret, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, ACQUIRE)
+		EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, ACQUIRE)
 
 	#define EASTL_ARCH_ATOMIC_EXCHANGE_RELEASE_128(type, ret, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, RELEASE)
+		EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, RELEASE)
 
 	#define EASTL_ARCH_ATOMIC_EXCHANGE_ACQ_REL_128(type, ret, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, ACQ_REL)
+		EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, ACQ_REL)
 
 	#define EASTL_ARCH_ATOMIC_EXCHANGE_SEQ_CST_128(type, ret, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_EXCHANGE_128(type, ret, ptr, val, SEQ_CST)
+		EASTL_ARCH_ATOMIC_X86_EXCHANGE_128(type, ret, ptr, val, SEQ_CST)
 
 
 #endif
