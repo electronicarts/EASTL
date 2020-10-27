@@ -329,7 +329,7 @@ namespace eastl
 	/// but current efforts have resulted in less efficient and more fragile code.
 	/// The logic of this class doesn't lend itself to a clean implementation. 
 	/// It turns out that deques are one of the least likely classes you'd want this
-	/// behaviour in, so until this functionality becomes very imporantant to somebody,
+	/// behaviour in, so until this functionality becomes very important to somebody,
 	/// we will leave it as-is. It can probably be solved by adding some extra code to
 	/// the Do* functions and adding good comments explaining the situation.
 	/// 
