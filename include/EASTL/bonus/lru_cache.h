@@ -66,10 +66,16 @@ namespace eastl
 	/// All accesses to a given key (insert, update, get) will push that key to most recently used.
 	/// If the data objects are shared between threads, it would be best to use a smartptr to manage the lifetime of the data.
 	/// as it could be removed from the cache while in use by another thread.
-	template <typename Key, typename Value, typename Allocator = EASTLAllocatorType, 
-		typename list_type = eastl::list<Key, Allocator>, 
-		typename map_type = eastl::unordered_map<Key, eastl::pair<Value, typename list_type::iterator>, eastl::hash<Key>, eastl::equal_to<Key>, Allocator  > > 
-		class lru_cache
+	template <typename Key,
+	          typename Value,
+	          typename Allocator = EASTLAllocatorType,
+	          typename list_type = eastl::list<Key, Allocator>,
+	          typename map_type = eastl::unordered_map<Key,
+	                                                   eastl::pair<Value, typename list_type::iterator>,
+	                                                   eastl::hash<Key>,
+	                                                   eastl::equal_to<Key>,
+	                                                   Allocator>>
+	class lru_cache
 	{
 	public:
 		using key_type = Key;
@@ -81,9 +87,9 @@ namespace eastl
 		using data_container_type = eastl::pair<value_type, list_iterator>;
 		using iterator = typename map_type::iterator;
 		using const_iterator = typename map_type::const_iterator;
-		using this_type = lru_cache <key_type, value_type, Allocator, list_type, map_type>;
+		using this_type = lru_cache<key_type, value_type, Allocator, list_type, map_type>;
 		using create_callback_type = eastl::function<value_type(key_type)>;
-		using delete_callback_type = eastl::function<void(const value_type&)>;
+		using delete_callback_type = eastl::function<void(const value_type &)>;
 
 		/// lru_cache constructor
 		///
@@ -91,7 +97,7 @@ namespace eastl
 		/// For complex objects or operations, the creator and deletor callbacks can be used.
 		/// This works just like a regular map object: on access, the Value will be created if it doesn't exist, returned otherwise.
 		explicit lru_cache(size_type size,
-		                   const allocator_type &allocator = EASTL_LRUCACHE_DEFAULT_ALLOCATOR,
+		                   const allocator_type& allocator = EASTL_LRUCACHE_DEFAULT_ALLOCATOR,
 		                   create_callback_type creator = nullptr,
 		                   delete_callback_type deletor = nullptr)
 		    : m_list(allocator)
@@ -99,7 +105,8 @@ namespace eastl
 		    , m_capacity(size)
 		    , m_create_callback(creator)
 		    , m_delete_callback(deletor)
-		{}
+		{
+		}
 
 		/// lru_cache destructor
 		///
@@ -107,13 +114,22 @@ namespace eastl
 		~lru_cache()
 		{
 			// Destruct everything we have cached
-			for (auto &iter : m_map)
+			for (auto& iter : m_map)
 			{
-				if (m_delete_callback) m_delete_callback(iter.second.first);
+				if (m_delete_callback)
+					m_delete_callback(iter.second.first);
 			}
 		}
 
-		lru_cache(this_type &) = delete;
+		lru_cache(std::initializer_list<eastl::pair<Key, Value>> il)
+			: lru_cache(il.size())
+		{
+			for(auto& p : il)
+				insert_or_assign(p.first, p.second);
+		}
+
+		// TODO(rparolin):  Why do we prevent copies? And what about moves?
+		lru_cache(const this_type&) = delete;
 		this_type &operator=(const this_type&) = delete;
 
 		/// insert
@@ -121,7 +137,7 @@ namespace eastl
 		/// insert key k with value v.
 		/// If key already exists, no change is made and the return value is false.
 		/// If the key doesn't exist, the data is added to the map and the return value is true.
-		bool insert(const key_type &k, const value_type &v)
+		bool insert(const key_type& k, const value_type& v)
 		{
 			if (m_map.find(k) == m_map.end())
 			{
@@ -143,7 +159,7 @@ namespace eastl
 		/// Places a new object in place k created with args
 		/// If the key already exists, it is replaced.
 		template <typename... Args>
-		void emplace(const key_type &k, Args&&... args)
+		void emplace(const key_type& k, Args&&... args)
 		{
 			make_space();
 
@@ -155,7 +171,7 @@ namespace eastl
 		///
 		/// Same as add, but replaces the data at key k, if it exists, with the new entry v
 		/// Note that the deletor for the old v will be called before it's replaced with the new value of v
-		void insert_or_assign(const key_type &k, const value_type &v)
+		void insert_or_assign(const key_type& k, const value_type& v)
 		{
 			auto iter = m_map.find(k);
 
@@ -172,7 +188,7 @@ namespace eastl
 		/// contains
 		/// 
 		/// Returns true if key k exists in the cache
-		bool contains(const key_type &k) const
+		bool contains(const key_type& k) const
 		{
 			return m_map.find(k) != m_map.end();
 		}
@@ -180,7 +196,7 @@ namespace eastl
 		/// at
 		///
 		/// Retrives the data for key k, not valid if k does not exist
-		eastl::optional<value_type> at(const key_type &k)
+		eastl::optional<value_type> at(const key_type& k)
 		{
 			auto iter = m_map.find(k);
 
@@ -198,7 +214,7 @@ namespace eastl
 		///
 		/// Retrives the data for key k.  If no data exists, it will be created by calling the
 		/// creator.
-		value_type &get(const key_type &k)
+		value_type& get(const key_type& k)
 		{
 			auto iter = m_map.find(k);
 
@@ -219,13 +235,13 @@ namespace eastl
 		}
 
 		/// Equivalent to get(k)
-		value_type &operator[](const key_type &k) { return get(k); }
+		value_type& operator[](const key_type& k) { return get(k); }
 
 		/// erase
 		///
 		/// erases key k from the cache.
 		/// If k does not exist, returns false.  If k exists, returns true.
-		bool erase(const key_type &k)
+		bool erase(const key_type& k)
 		{
 			auto iter = m_map.find(k);
 
@@ -259,7 +275,7 @@ namespace eastl
 		///
 		/// Touches key k, marking it as most recently used.
 		/// If k does not exist, returns false.  If the touch was successful, returns true.
-		bool touch(const key_type &k)
+		bool touch(const key_type& k)
 		{
 			auto iter = m_map.find(k);
 
@@ -275,7 +291,7 @@ namespace eastl
 		/// touch
 		///
 		/// Touches key at iterator iter, moving it to most recently used position
-		void touch(iterator &iter)
+		void touch(iterator& iter)
 		{
 			auto listRef = iter->second.second;
 
@@ -289,7 +305,7 @@ namespace eastl
 		/// Updates key k with data v.
 		/// If key k does not exist, returns false and no changes are made.
 		/// If key k exists, existing data has its deletor called and key k's data is replaced with new v data
-		bool assign(const key_type &k, const value_type &v)
+		bool assign(const key_type& k, const value_type& v)
 		{
 			auto iter = m_map.find(k);
 
@@ -305,7 +321,7 @@ namespace eastl
 		/// assign
 		///
 		/// Updates data at spot iter with data v.
-		void assign(iterator &iter, const value_type &v)
+		void assign(iterator& iter, const value_type& v)
 		{
 			if (m_delete_callback)
 				m_delete_callback(iter->second.first);
@@ -314,21 +330,21 @@ namespace eastl
 		}
 
 		// standard container functions
-		iterator begin()				EA_NOEXCEPT { return m_map.begin(); }
-		iterator end()					EA_NOEXCEPT { return m_map.end(); }
-		iterator rbegin()				EA_NOEXCEPT { return m_map.rbegin(); }
-		iterator rend()					EA_NOEXCEPT { return m_map.rend(); }
-		const_iterator begin()	const	EA_NOEXCEPT	{ return m_map.begin(); }
-		const_iterator cbegin() const	EA_NOEXCEPT	{ return m_map.cbegin(); }
-		const_iterator crbegin() const	EA_NOEXCEPT { return m_map.crbegin(); }
-		const_iterator end()	const	EA_NOEXCEPT	{ return m_map.end(); }
-		const_iterator cend()	const	EA_NOEXCEPT	{ return m_map.cend(); }
-		const_iterator crend()	const	EA_NOEXCEPT { return m_map.crend(); }
+		iterator begin()               EA_NOEXCEPT { return m_map.begin(); }
+		iterator end()                 EA_NOEXCEPT { return m_map.end(); }
+		iterator rbegin()              EA_NOEXCEPT { return m_map.rbegin(); }
+		iterator rend()                EA_NOEXCEPT { return m_map.rend(); }
+		const_iterator begin() const   EA_NOEXCEPT { return m_map.begin(); }
+		const_iterator cbegin() const  EA_NOEXCEPT { return m_map.cbegin(); }
+		const_iterator crbegin() const EA_NOEXCEPT { return m_map.crbegin(); }
+		const_iterator end() const     EA_NOEXCEPT { return m_map.end(); }
+		const_iterator cend() const    EA_NOEXCEPT { return m_map.cend(); }
+		const_iterator crend() const   EA_NOEXCEPT { return m_map.crend(); }
 
-		bool		empty() const EA_NOEXCEPT		{ return m_map.empty(); }
-		size_type	size() const EA_NOEXCEPT		{ return m_map.size(); }
-		size_type	capacity() const EA_NOEXCEPT	{ return m_capacity; }
-		
+		bool empty() const             EA_NOEXCEPT { return m_map.empty(); }
+		size_type size() const         EA_NOEXCEPT { return m_map.size(); }
+		size_type capacity() const     EA_NOEXCEPT { return m_capacity; }
+
 		void clear() EA_NOEXCEPT
 		{
 			// Since we have a delete callback, we want to reuse the trim function by cheating the max
@@ -394,6 +410,7 @@ namespace eastl
 			}
 		}
 
+	private:
 		list_type				m_list;
 		map_type				m_map;
 		size_type				m_capacity;

@@ -27,9 +27,11 @@
 
 	#if 1
 
+		// 4459 : declaration of 'identifier' hides global declaration
+		// 4456 : declaration of 'identifier' hides previous local declaration
 		#define EASTL_ARCH_ATOMIC_CPU_MB()				\
 			{											\
-				EA_DISABLE_VC_WARNING(4456);			\
+				EA_DISABLE_VC_WARNING(4459 4456);		\
 				volatile long _;						\
 				_InterlockedExchangeAdd(&_, 0);			\
 				EA_RESTORE_VC_WARNING();				\
