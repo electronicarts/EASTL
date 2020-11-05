@@ -25,27 +25,58 @@ namespace internal
 	template <typename T, unsigned width = sizeof(T)>
 	struct atomic_base_width;
 
+	/**
+	 * NOTE:
+	 *
+	 * T does not have to be trivially default constructible but it still
+	 * has to be a trivially copyable type for the primary atomic template.
+	 * Thus we must type pun into whatever storage type of the given fixed width
+	 * the platform designates. This ensures T does not have to be trivially constructible.
+	 */
+
+#define EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits)				\
+	EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_FIXED_WIDTH_TYPE_, bits)
+
 
 #define EASTL_ATOMIC_STORE_FUNC_IMPL(op, bits)							\
-	EA_PREPROCESSOR_JOIN(op, bits)(T, this->GetAtomicAddress(), desired);
+	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
+	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   fixedWidthDesired)
 
-#define EASTL_ATOMIC_LOAD_FUNC_IMPL(op, bits)					\
-	T retVal;													\
-	EA_PREPROCESSOR_JOIN(op, bits)(T, retVal, this->GetAtomicAddress()); \
-	return retVal;
+
+#define EASTL_ATOMIC_LOAD_FUNC_IMPL(op, bits)							\
+	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) retVal;					\
+	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
+								   retVal,								\
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress())); \
+	return EASTL_ATOMIC_TYPE_PUN_CAST(T, retVal);
+
 
 #define EASTL_ATOMIC_EXCHANGE_FUNC_IMPL(op, bits)						\
-	T retVal;															\
-	EA_PREPROCESSOR_JOIN(op, bits)(T, retVal, this->GetAtomicAddress(), desired); \
-	return retVal;
+	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) retVal;					\
+	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
+	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
+								   retVal,								\
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   fixedWidthDesired);					\
+	return EASTL_ATOMIC_TYPE_PUN_CAST(T, retVal);
+
 
 #define EASTL_ATOMIC_CMPXCHG_FUNC_IMPL(op, bits)						\
 	bool retVal;														\
-	EA_PREPROCESSOR_JOIN(op, bits)(T, retVal, this->GetAtomicAddress(), &expected, desired); \
+	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
+	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
+								   retVal,								\
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), &expected), \
+								   fixedWidthDesired);					\
 	return retVal;
 
-#define EASTL_ATOMIC_BASE_OP_JOIN(fetchOp, Order)						\
-	EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_, fetchOp), Order)
+
+#define EASTL_ATOMIC_BASE_OP_JOIN(op, Order)						\
+	EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_, op), Order)
+
 
 #define EASTL_ATOMIC_BASE_CMPXCHG_FUNCS_IMPL(funcName, cmpxchgOp, bits)	\
 	using Base::funcName;												\
@@ -172,7 +203,7 @@ namespace internal
 		{																\
 		}																\
 																		\
-		atomic_base_width() EA_NOEXCEPT = default;						\
+		atomic_base_width() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>) = default;	\
 																		\
 		atomic_base_width(const atomic_base_width&) EA_NOEXCEPT = delete; \
 																		\
@@ -270,14 +301,14 @@ namespace internal
 																		\
 		using Base::operator=;											\
 																		\
-		T operator =(T desired) EA_NOEXCEPT								\
+		T operator=(T desired) EA_NOEXCEPT								\
 		{																\
 			store(desired, eastl::memory_order_seq_cst);				\
 			return desired;												\
 		}																\
 																		\
-		atomic_base_width& operator =(const atomic_base_width&)          EA_NOEXCEPT = delete; \
-		atomic_base_width& operator =(const atomic_base_width&) volatile EA_NOEXCEPT = delete; \
+		atomic_base_width& operator=(const atomic_base_width&)          EA_NOEXCEPT = delete; \
+		atomic_base_width& operator=(const atomic_base_width&) volatile EA_NOEXCEPT = delete; \
 																		\
 	};
 

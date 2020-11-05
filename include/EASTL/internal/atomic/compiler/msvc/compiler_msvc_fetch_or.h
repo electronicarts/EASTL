@@ -11,22 +11,39 @@
 #endif
 
 
+#if defined(EA_PROCESSOR_X86_64)
+
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_8 _InterlockedOr8_np
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_16 _InterlockedOr16_np
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_32 _InterlockedOr_np
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_64 _InterlockedOr64_np
+
+#else
+
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_8 _InterlockedOr8
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_16 _InterlockedOr16
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_32 _InterlockedOr
+	#define EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_64 _InterlockedOr64
+
+#endif
+
+
 #define EASTL_MSVC_ATOMIC_FETCH_OR_N(integralType, orIntrinsic, type, ret, ptr, val, MemoryOrder) \
 	EASTL_MSVC_ATOMIC_FETCH_OP_N(integralType, orIntrinsic, type, ret, ptr, val, MemoryOrder, \
 								 EASTL_MSVC_NOP_PRE_INTRIN_COMPUTE)
 
 
 #define EASTL_MSVC_ATOMIC_FETCH_OR_8(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_FETCH_OR_N(char, _InterlockedOr8, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_OR_N(char, EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_8, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_OR_16(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_FETCH_OR_N(short, _InterlockedOr16, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_OR_N(short, EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_16, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_OR_32(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_FETCH_OR_N(long, _InterlockedOr, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_OR_N(long, EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_32, type, ret, ptr, val, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_FETCH_OR_64(type, ret, ptr, val, MemoryOrder)	\
-	EASTL_MSVC_ATOMIC_FETCH_OR_N(long long, _InterlockedOr64, type, ret, ptr, val, MemoryOrder)
+	EASTL_MSVC_ATOMIC_FETCH_OR_N(long long, EASTL_MSVC_ATOMIC_FETCH_OR_INTRIN_64, type, ret, ptr, val, MemoryOrder)
 
 
 /////////////////////////////////////////////////////////////////////////////////

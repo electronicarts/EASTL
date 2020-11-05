@@ -29,13 +29,13 @@
 			{																	\
 				integralType valIntegral = EASTL_ATOMIC_TYPE_PUN_CAST(integralType, (val)); \
 																				\
-				*(EASTL_ATOMIC_VOLATILE_INTEGRAL_CAST(integralType, (ptr))) = valIntegral; \
+				(*(EASTL_ATOMIC_VOLATILE_INTEGRAL_CAST(integralType, (ptr)))) = valIntegral; \
 			}
 
 	#endif
 
 
-	#define EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, MemoryOrder)	\
+	#define EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, MemoryOrder)	\
 		{																	\
 			type exchange128; EA_UNUSED(exchange128);						\
 			EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_EXCHANGE_, MemoryOrder), _128)(type, exchange128, ptr, val); \
@@ -68,7 +68,7 @@
 		EASTL_ARCH_ATOMIC_X86_STORE_64(type, ptr, val)
 
 	#define EASTL_ARCH_ATOMIC_STORE_RELAXED_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, RELAXED)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, RELAXED)
 
 
 	#define EASTL_ARCH_ATOMIC_STORE_RELEASE_8(type, ptr, val)	\
@@ -88,7 +88,7 @@
 		EASTL_ARCH_ATOMIC_X86_STORE_64(type, ptr, val)
 
 	#define EASTL_ARCH_ATOMIC_STORE_RELEASE_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, RELEASE)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, RELEASE)
 
 
 	#define EASTL_ARCH_ATOMIC_STORE_SEQ_CST_8(type, ptr, val)		\
@@ -113,7 +113,7 @@
 	/**
 	 * NOTE:
 	 *
-	 * Since 64-bit exchange is wrapped around a cmpxchg8b on 32-bit, it is
+	 * Since 64-bit exchange is wrapped around a cmpxchg8b on 32-bit x86, it is
 	 * faster to just do a mov; mfence.
 	 */
 	#if defined(EA_PROCESSOR_X86)
@@ -139,7 +139,7 @@
 
 
 	#define EASTL_ARCH_ATOMIC_STORE_SEQ_CST_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, SEQ_CST)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, SEQ_CST)
 
 
 #endif
@@ -148,7 +148,7 @@
 #if ((defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
 
 
-	#define EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, MemoryOrder)	\
+	#define EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, MemoryOrder)	\
 		{																	\
 			type exchange128; EA_UNUSED(exchange128);						\
 			EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_EXCHANGE_, MemoryOrder), _128)(type, exchange128, ptr, val); \
@@ -156,13 +156,13 @@
 
 
 	#define EASTL_ARCH_ATOMIC_STORE_RELAXED_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, RELAXED)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, RELAXED)
 
 	#define EASTL_ARCH_ATOMIC_STORE_RELEASE_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, RELEASE)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, RELEASE)
 
 	#define EASTL_ARCH_ATOMIC_STORE_SEQ_CST_128(type, ptr, val)		\
-		EASTL_ARCH_ATOMIC_X64_STORE_128(type, ptr, val, SEQ_CST)
+		EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, SEQ_CST)
 
 
 #endif

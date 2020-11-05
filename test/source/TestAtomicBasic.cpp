@@ -755,7 +755,9 @@ void AtomicPointerBasicTest::TestAssignmentOperators()
 	}
 
 	{
-		PtrType val = (PtrType)0x4;
+		PtrType val = (PtrType)0x4;
+
+
 		AtomicType atomic{val};
 
 		PtrType expected = (PtrType)0x8;
@@ -1430,6 +1432,52 @@ void AtomicPointerBasicTest::TestAtomicPointerStandalone()
 		}
 	}
 }
+
+struct AtomicNonTriviallyConstructible
+{
+	AtomicNonTriviallyConstructible()
+		: a(0)
+		, b(0)
+	{
+	}
+
+	AtomicNonTriviallyConstructible(uint16_t a, uint16_t b)
+		: a(a)
+		, b(b)
+	{
+	}
+
+	friend bool operator==(const AtomicNonTriviallyConstructible& a, const AtomicNonTriviallyConstructible& b)
+	{
+		return a.a == b.a && a.b == b.b;
+	}
+
+	uint16_t a;
+	uint16_t b;
+};
+
+struct AtomicNonTriviallyConstructibleNoExcept
+{
+	AtomicNonTriviallyConstructibleNoExcept() noexcept
+		: a(0)
+		, b(0)
+	{
+	}
+
+	AtomicNonTriviallyConstructibleNoExcept(uint16_t a, uint16_t b) noexcept
+		: a(a)
+		, b(b)
+	{
+	}
+
+	friend bool operator==(const AtomicNonTriviallyConstructibleNoExcept& a, const AtomicNonTriviallyConstructibleNoExcept& b)
+	{
+		return a.a == b.a && a.b == b.b;
+	}
+
+	uint16_t a;
+	uint16_t b;
+};
 
 struct AtomicUserType16
 {
@@ -3726,6 +3774,91 @@ void AtomicIntegralBasicTest<T>::TestAtomicStandalone()
 	}
 }
 
+struct AtomicNonDefaultConstructible
+{
+	AtomicNonDefaultConstructible(uint8_t a)
+		: a(a)
+	{
+	}
+
+	friend bool operator==(const AtomicNonDefaultConstructible& a, const AtomicNonDefaultConstructible& b)
+	{
+		return a.a == b.a;
+	}
+
+	uint8_t a;
+};
+
+#if defined(EASTL_ATOMIC_HAS_8BIT)
+
+int TestAtomicNonDefaultConstructible()
+{
+	int nErrorCount = 0;
+
+	{
+		eastl::atomic<AtomicNonDefaultConstructible> atomic{AtomicNonDefaultConstructible{(uint8_t)3}};
+
+		VERIFY(atomic.load() == AtomicNonDefaultConstructible{(uint8_t)3});
+	}
+
+	{
+		eastl::atomic<AtomicNonDefaultConstructible> atomic{AtomicNonDefaultConstructible{(uint8_t)3}};
+
+		atomic.store(AtomicNonDefaultConstructible{(uint8_t)4});
+
+		VERIFY(atomic.load() == AtomicNonDefaultConstructible{(uint8_t)4});
+	}
+
+	return nErrorCount;
+}
+
+#endif
+
+struct Atomic128LoadType
+{
+	friend bool operator==(const Atomic128LoadType& a, const Atomic128LoadType& b)
+	{
+		return a.a == b.a && a.b == b.b && a.c == b.c && a.d == b.d;
+	}
+
+	uint32_t a, b, c, d;
+};
+
+#if defined(EASTL_ATOMIC_HAS_128BIT)
+
+int TestAtomic128Loads()
+{
+	int nErrorCount = 0;
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{1, 1, 0, 0}};
+
+		VERIFY((atomic.load() == Atomic128LoadType{1, 1, 0, 0}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 1, 1}};
+
+		VERIFY((atomic.load() == Atomic128LoadType{0, 0, 1, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 1, 0, 1}};
+
+		VERIFY((atomic.load() == Atomic128LoadType{0, 1, 0, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{1, 0, 1, 0}};
+
+		VERIFY((atomic.load() == Atomic128LoadType{1, 0, 1, 0}));
+	}
+
+	return nErrorCount;
+}
+
+#endif
+
 int TestAtomicBasic()
 {
 	int nErrorCount = 0;
@@ -3790,6 +3923,20 @@ int TestAtomicBasic()
 		}
 	#endif
 
+	#if defined(EASTL_ATOMIC_HAS_32BIT)
+			{
+				AtomicUserTypeBasicTest<AtomicNonTriviallyConstructible> userTypeAtomicTest;
+
+				nErrorCount += userTypeAtomicTest.RunTest();
+			}
+
+			{
+				AtomicUserTypeBasicTest<AtomicNonTriviallyConstructibleNoExcept> userTypeAtomicTest;
+
+				nErrorCount += userTypeAtomicTest.RunTest();
+			}
+	#endif
+
 	#if defined(EASTL_ATOMIC_HAS_128BIT)
 		{
 			AtomicUserTypeBasicTest<AtomicUserType128> userTypeAtomicTest;
@@ -3821,6 +3968,18 @@ int TestAtomicBasic()
 
 		nErrorCount += atomicStandaloneBasicTest.RunTest();
 	}
+
+#if defined(EASTL_ATOMIC_HAS_128BIT)
+
+	nErrorCount += TestAtomic128Loads();
+
+#endif
+
+#if defined(EASTL_ATOMIC_HAS_8BIT)
+
+	nErrorCount += TestAtomicNonDefaultConstructible();
+
+#endif
 
 	return nErrorCount;
 }

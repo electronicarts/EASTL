@@ -836,7 +836,7 @@ namespace eastl
 			{
 		#endif
 				for(; first != last; ++first)
-					insert(eastl::move(*first));
+					insert(*first);
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)

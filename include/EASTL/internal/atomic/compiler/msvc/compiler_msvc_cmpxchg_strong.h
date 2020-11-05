@@ -11,17 +11,34 @@
 #endif
 
 
+#if defined(EA_PROCESSOR_X86_64)
+
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_8 _InterlockedCompareExchange8
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_16 _InterlockedCompareExchange16_np
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_32 _InterlockedCompareExchange_np
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_64 _InterlockedCompareExchange64_np
+
+#else
+
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_8 _InterlockedCompareExchange8
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_16 _InterlockedCompareExchange16
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_32 _InterlockedCompareExchange
+	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_64 _InterlockedCompareExchange64
+
+#endif
+
+
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_8(type, ret, ptr, expected, desired, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(char, _InterlockedCompareExchange8, type, ret, ptr, expected, desired, MemoryOrder)
+	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(char, EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_8, type, ret, ptr, expected, desired, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_16(type, ret, ptr, expected, desired, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(short, _InterlockedCompareExchange16, type, ret, ptr, expected, desired, MemoryOrder)
+	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(short, EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_16, type, ret, ptr, expected, desired, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_32(type, ret, ptr, expected, desired, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(long, _InterlockedCompareExchange, type, ret, ptr, expected, desired, MemoryOrder)
+	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(long, EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_32, type, ret, ptr, expected, desired, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_64(type, ret, ptr, expected, desired, MemoryOrder) \
-	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(long long, _InterlockedCompareExchange64, type, ret, ptr, expected, desired, MemoryOrder)
+	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_N(__int64, EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_64, type, ret, ptr, expected, desired, MemoryOrder)
 
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_128(type, ret, ptr, expected, desired, MemoryOrder) \
 	EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_OP_128(type, ret, ptr, expected, desired, MemoryOrder)

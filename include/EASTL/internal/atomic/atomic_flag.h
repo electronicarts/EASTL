@@ -36,8 +36,8 @@ public: /* deleted ctors && assignment operators */
 
 	atomic_flag(const atomic_flag&) EA_NOEXCEPT = delete;
 
-	atomic_flag& operator =(const atomic_flag&)          EA_NOEXCEPT = delete;
-	atomic_flag& operator =(const atomic_flag&) volatile EA_NOEXCEPT = delete;
+	atomic_flag& operator=(const atomic_flag&)          EA_NOEXCEPT = delete;
+	atomic_flag& operator=(const atomic_flag&) volatile EA_NOEXCEPT = delete;
 
 public: /* clear */
 

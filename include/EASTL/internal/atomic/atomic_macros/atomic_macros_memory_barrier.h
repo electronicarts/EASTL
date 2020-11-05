@@ -7,7 +7,7 @@
 #define EASTL_ATOMIC_INTERNAL_MACROS_MEMORY_BARRIER_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
-#pragma once
+	#pragma once
 #endif
 
 

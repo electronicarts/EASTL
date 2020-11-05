@@ -81,8 +81,8 @@ namespace internal
 			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
 
-		atomic_size_aligned() EA_NOEXCEPT
-			: mAtomic{} /* Zero-Initialized */
+		atomic_size_aligned() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>)
+			: mAtomic{} /* Value-Initialize which will Zero-Initialize Trivial Constructible types */
 		{
 			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
@@ -156,13 +156,13 @@ namespace internal
 
 	public: /* assignment operator */
 
-		T operator =(T desired) volatile EA_NOEXCEPT
+		T operator=(T desired) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
 
-		atomic_size_aligned& operator =(const atomic_size_aligned&)          EA_NOEXCEPT = delete;
-		atomic_size_aligned& operator =(const atomic_size_aligned&) volatile EA_NOEXCEPT = delete;
+		atomic_size_aligned& operator=(const atomic_size_aligned&)          EA_NOEXCEPT = delete;
+		atomic_size_aligned& operator=(const atomic_size_aligned&) volatile EA_NOEXCEPT = delete;
 
 	protected: /* Accessors */
 

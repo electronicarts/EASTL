@@ -43,9 +43,9 @@ namespace eastl
 	/// Implements a templated array class as per the C++ standard TR1.
 	/// This class allows you to use a built-in C style array like an STL vector.
 	/// It does not let you change its size, as it is just like a C built-in array.
-	/// Our implementation here strives to remove function call nesting, as that 
+	/// Our implementation here strives to remove function call nesting, as that
 	/// makes it hard for us to profile debug builds due to function call overhead.
-	/// Note that this is intentionally a struct with public data, as per the 
+	/// Note that this is intentionally a struct with public data, as per the
 	/// C++ standard update proposal requirements.
 	///
 	/// Example usage:
@@ -75,9 +75,9 @@ namespace eastl
 			count = N
 		};
 
-		// Note that the member data is intentionally public. 
-		// This allows for aggregate initialization of the 
-		// object (e.g. array<int, 5> a = { 0, 3, 2, 4 }; ) 
+		// Note that the member data is intentionally public.
+		// This allows for aggregate initialization of the
+		// object (e.g. array<int, 5> a = { 0, 3, 2, 4 }; )
 		value_type mValue[N ? N : 1];
 
 	public:
@@ -85,9 +85,9 @@ namespace eastl
 
 		void fill(const value_type& value);
 
-		// Unlike the swap function for other containers, array::swap takes linear time, 
+		// Unlike the swap function for other containers, array::swap takes linear time,
 		// may exit via an exception, and does not cause iterators to become associated with the other container.
-		void swap(this_type& x) EA_NOEXCEPT_IF(eastl::is_nothrow_swappable<value_type>::value); 
+		void swap(this_type& x) EA_NOEXCEPT_IF(eastl::is_nothrow_swappable<value_type>::value);
 
 		EA_CPP14_CONSTEXPR iterator       begin() EA_NOEXCEPT;
 		EA_CPP14_CONSTEXPR const_iterator begin() const EA_NOEXCEPT;
@@ -318,7 +318,7 @@ namespace eastl
 
 
 	template <typename T, size_t N>
-	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference  
+	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::front() const
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -382,7 +382,7 @@ namespace eastl
 		#endif
 
 		EA_ANALYSIS_ASSUME(i < N);
-		return static_cast<const_reference>(mValue[i]); 
+		return static_cast<const_reference>(mValue[i]);
 	}
 
 
@@ -476,6 +476,41 @@ namespace eastl
 	inline void swap(array<T, N>& a, array<T, N>& b)
 	{
 		eastl::swap_ranges(&a.mValue[0], &a.mValue[N], &b.mValue[0]);
+	}
+
+
+	///////////////////////////////////////////////////////////////////////
+	// to_array
+	///////////////////////////////////////////////////////////////////////
+	namespace internal
+	{
+		template<class T, size_t N, size_t... I>
+		EA_CONSTEXPR auto to_array(T (&a)[N], index_sequence<I...>)
+		{
+			return eastl::array<eastl::remove_cv_t<T>, N>{{a[I]...}};
+		}
+
+		template<class T, size_t N, size_t... I>
+		EA_CONSTEXPR auto to_array(T (&&a)[N], index_sequence<I...>)
+		{
+			return eastl::array<eastl::remove_cv_t<T>, N>{{eastl::move(a[I])...}};
+		}
+	}
+
+	template<class T, size_t N>
+	EA_CONSTEXPR eastl::array<eastl::remove_cv_t<T>, N> to_array(T (&a)[N])
+	{
+		static_assert(eastl::is_constructible_v<T, T&>, "element type T must be copy-initializable");
+		static_assert(!eastl::is_array_v<T>, "passing multidimensional arrays to to_array is ill-formed");
+		return internal::to_array(a, eastl::make_index_sequence<N>{});
+	}
+
+	template<class T, size_t N>
+	EA_CONSTEXPR eastl::array<eastl::remove_cv_t<T>, N> to_array(T (&&a)[N])
+	{
+		static_assert(eastl::is_move_constructible_v<T>, "element type T must be move-constructible");
+		static_assert(!eastl::is_array_v<T>, "passing multidimensional arrays to to_array is ill-formed");
+		return internal::to_array(eastl::move(a), eastl::make_index_sequence<N>{});
 	}
 
 

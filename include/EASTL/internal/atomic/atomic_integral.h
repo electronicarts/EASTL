@@ -80,10 +80,10 @@ namespace internal
 
 	public: /* assignment operator */
 
-		using Base::operator =;
+		using Base::operator=;
 
-		atomic_integral_base& operator =(const atomic_integral_base&)          EA_NOEXCEPT = delete;
-		atomic_integral_base& operator =(const atomic_integral_base&) volatile EA_NOEXCEPT = delete;
+		atomic_integral_base& operator=(const atomic_integral_base&)          EA_NOEXCEPT = delete;
+		atomic_integral_base& operator=(const atomic_integral_base&) volatile EA_NOEXCEPT = delete;
 
 	public: /* fetch_add */
 
@@ -238,10 +238,10 @@ namespace internal
 																		\
 	public: /* assignment operator */									\
 																		\
-		using Base::operator =;											\
+		using Base::operator=;											\
 																		\
-		atomic_integral_width& operator =(const atomic_integral_width&)          EA_NOEXCEPT = delete; \
-		atomic_integral_width& operator =(const atomic_integral_width&) volatile EA_NOEXCEPT = delete; \
+		atomic_integral_width& operator=(const atomic_integral_width&)          EA_NOEXCEPT = delete; \
+		atomic_integral_width& operator=(const atomic_integral_width&) volatile EA_NOEXCEPT = delete; \
 																		\
 	public: /* fetch_add */												\
 																		\

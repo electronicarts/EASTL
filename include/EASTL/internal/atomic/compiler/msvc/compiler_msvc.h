@@ -33,12 +33,41 @@ EA_RESTORE_ALL_VC_WARNINGS();
 /////////////////////////////////////////////////////////////////////////////////
 
 
+#define EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_8 char
+#define EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_16 short
+#define EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_32 long
+#define EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_64 __int64
+
+namespace eastl
+{
+
+namespace internal
+{
+
+struct FixedWidth128
+{
+	__int64 value[2];
+};
+
+} // namespace internal
+
+} // namespace eastl
+
+#define EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_128 eastl::internal::FixedWidth128
+
+
+/////////////////////////////////////////////////////////////////////////////////
+
+
 /**
  * NOTE:
+ *
  * Unfortunately MSVC Intrinsics depend on the architecture
  * that we are compiling for.
  * These are some indirection macros to make our lives easier and
  * ensure the least possible amount of copy-paste to reduce programmer errors.
+ *
+ * All compiler implementations end up deferring to the below macros.
  */
 #if defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64)
 
@@ -53,7 +82,7 @@ EA_RESTORE_ALL_VC_WARNINGS();
 		ret = Intrinsic(ptr, exchange, comparand)
 
 	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_128_OP(ret, ptr, comparandResult, exchangeHigh, exchangeLow, MemoryOrder) \
-		ret = _InterlockedCompareExchange128(ptr, exchangeHigh, exchangeLow, comparandResult)
+		ret = _InterlockedCompareExchange128_np(ptr, exchangeHigh, exchangeLow, comparandResult)
 
 
 #elif defined(EA_PROCESSOR_ARM32) || defined(EA_PROCESSOR_ARM64)

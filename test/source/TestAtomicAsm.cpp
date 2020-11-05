@@ -4417,6 +4417,52 @@ EA_NO_INLINE static int TestAtomicReadDependsIntrusive()
 	return a + b + c + d;
 }
 
+#if defined(EASTL_ATOMIC_HAS_32BIT)
+
+EA_NO_INLINE static void TestAtomic32LoadStoreSameAddressSeqCst()
+{
+	eastl::atomic<uint32_t> atomic{0};
+
+	uint32_t ret1 = atomic.load(eastl::memory_order_relaxed);
+
+	atomic.store(4, eastl::memory_order_relaxed);
+
+	uint32_t ret2 = atomic.load(eastl::memory_order_relaxed);
+
+	uint32_t ret3 = atomic.load(eastl::memory_order_relaxed);
+
+	atomic.store(5, eastl::memory_order_relaxed);
+
+	eastl::compiler_barrier_data_dependency(ret1);
+	eastl::compiler_barrier_data_dependency(ret2);
+	eastl::compiler_barrier_data_dependency(ret3);
+}
+
+#endif
+
+#if defined(EASTL_ATOMIC_HAS_128BIT)
+
+EA_NO_INLINE static void TestAtomic128LoadStoreSameAddressSeqCst()
+{
+	eastl::atomic<UserType128> atomic{UserType128{0, 0, 0, 0}};
+
+	UserType128 ret1 = atomic.load(eastl::memory_order_relaxed);
+
+	atomic.store(UserType128{1, 0, 2, 4}, eastl::memory_order_relaxed);
+
+	UserType128 ret2 = atomic.load(eastl::memory_order_relaxed);
+
+	UserType128 ret3 = atomic.load(eastl::memory_order_relaxed);
+
+	atomic.store(UserType128{1, 1, 2, 4}, eastl::memory_order_relaxed);
+
+	eastl::compiler_barrier_data_dependency(ret1);
+	eastl::compiler_barrier_data_dependency(ret2);
+	eastl::compiler_barrier_data_dependency(ret3);
+}
+
+#endif
+
 int TestAtomicAsm()
 {
 	int nErrorCount = 0;
@@ -4858,6 +4904,18 @@ int TestAtomicAsm()
 	{
 		TestCompilerBarrierDataDependency();
 	}
+
+#if defined(EASTL_ATOMIC_HAS_32BIT)
+
+	TestAtomic32LoadStoreSameAddressSeqCst();
+
+#endif
+
+#if defined(EASTL_ATOMIC_HAS_128BIT)
+
+	TestAtomic128LoadStoreSameAddressSeqCst();
+
+#endif
 
 	return nErrorCount;
 }

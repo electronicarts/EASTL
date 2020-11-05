@@ -34,6 +34,7 @@
 
 	/**
 	 * NOTE:
+	 *
 	 * While it makes no sense for a hardware memory barrier to not imply a compiler barrier.
 	 * MSVC docs do not explicitly state that, so better to be safe than sorry chasing down
 	 * hard to find bugs due to the compiler deciding to reorder things.
