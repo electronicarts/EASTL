@@ -30,7 +30,7 @@
 //      trick of using: basic_string<char>(x).swap(x);
 //    - basic_string has a force_size() function, which unilaterally moves the string
 //      end position (mpEnd) to the given location. Useful for when the user writes
-//      into the string via some extenal means such as C strcpy or sprintf.
+//      into the string via some external means such as C strcpy or sprintf.
 //    - basic_string substr() deviates from the standard and returns a string with
 //		a copy of this->get_allocator()
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@
 //    - A reference count needs to exist with the string, which increases string memory usage.
 //    - With thread safety, atomic operations and mutex locks are expensive, especially
 //      on weaker memory systems such as console gaming platforms.
-//    - All non-const string accessor functions need to do a sharing check the the
+//    - All non-const string accessor functions need to do a sharing check then the
 //      first such check needs to detach the string. Similarly, all string assignments
 //      need to do a sharing check as well. If you access the string before doing an
 //      assignment, the assignment doesn't result in a shared string, because the string

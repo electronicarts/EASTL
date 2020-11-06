@@ -1008,7 +1008,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_OPERATOR_EQUALS_OTHER_ENABLED
 //
-// Defined as 0 or 1. Default is 0 until such day that it's deemeed safe.
+// Defined as 0 or 1. Default is 0 until such day that it's deemed safe.
 // When enabled, enables operator= for other char types, e.g. for code
 // like this:
 //     eastl::string8  s8;
@@ -1325,7 +1325,7 @@ namespace eastl
 //
 // Defined as 0 or 1; default is 1.
 // Specifies whether the min and max algorithms are available.
-// It may be useful to disable the min and max algorithems because sometimes
+// It may be useful to disable the min and max algorithms because sometimes
 // #defines for min and max exist which would collide with EASTL min and max.
 // Note that there are already alternative versions of min and max in EASTL
 // with the min_alt and max_alt functions. You can use these without colliding

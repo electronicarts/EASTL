@@ -9,7 +9,7 @@
 //
 // eastl::any is a type-safe container for single values of any type.  Our
 // implementation makes use of the "small local buffer" optimization to avoid
-// unnecessary dynamic memory allocation if the specified type is a eligible to
+// unnecessary dynamic memory allocation if the specified type is eligible to
 // be stored in its local buffer.  The user type must satisfy the size
 // requirements and must be no-throw move-constructible to qualify for the local
 // buffer optimization.
@@ -591,7 +591,7 @@ namespace eastl
 
 	// NOTE(rparolin): The runtime type check was commented out because in DLL builds the templated function pointer
 	// value will be different -- completely breaking the validation mechanism.  Due to the fact that eastl::any uses
-	// type erasure we can't refesh (on copy/move) the cached function pointer to the internal handler function because
+	// type erasure we can't refresh (on copy/move) the cached function pointer to the internal handler function because
 	// we don't statically know the type.
 	template <class ValueType>
 	inline const ValueType* any_cast(const any* pAny) EA_NOEXCEPT

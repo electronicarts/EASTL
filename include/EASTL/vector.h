@@ -1718,7 +1718,7 @@ namespace eastl
 	{                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
 		clear();
 		this_type temp(eastl::move(*this));  // This is the simplest way to accomplish this, 
-		swap(temp);             // and it is as efficient as any other.
+		swap(temp);                          // and it is as efficient as any other.
 	}
 
 
@@ -1876,7 +1876,7 @@ namespace eastl
 				pointer pNewEnd = pNewData;
 				try
 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
-					// call eastl::destruct on the entire range if only the first part of the range was costructed.
+					// call eastl::destruct on the entire range if only the first part of the range was constructed.
 					::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
 					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
 					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
@@ -1887,14 +1887,14 @@ namespace eastl
 					if(pNewEnd)
 						eastl::destruct(pNewData, pNewEnd);                                         // Destroy what has been constructed so far.
 					else
-						eastl::destruct(pNewData + nPosSize);                                       // The exception occurred during the first unintialized move, so destroy only the value at nPosSize.
+						eastl::destruct(pNewData + nPosSize);                                       // The exception occurred during the first uninitialized move, so destroy only the value at nPosSize.
 					DoFree(pNewData, nNewSize);
 					throw;
 				}
 			#else
 				::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);                  // Because the old data is potentially being moved rather than copied, we need to move 
 				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);   // the value first, because it might possibly be a reference to the old data being moved.
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we asssume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
+				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we assume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
 			#endif
 
 			eastl::destruct(mpBegin, mpEnd);
