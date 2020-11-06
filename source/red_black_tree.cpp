@@ -125,7 +125,8 @@ namespace eastl
 	/// RBTreeRotateLeft
 	/// Does a left rotation about the given node. 
 	/// If you want to understand tree rotation, any book on algorithms will
-	/// discussion the topic in good detail.
+	/// discuss the topic in detail.
+	///
 	rbtree_node_base* RBTreeRotateLeft(rbtree_node_base* pNode, rbtree_node_base* pNodeRoot)
 	{
 		rbtree_node_base* const pNodeTemp = pNode->mpNodeRight;
@@ -154,7 +155,8 @@ namespace eastl
 	/// RBTreeRotateRight
 	/// Does a right rotation about the given node. 
 	/// If you want to understand tree rotation, any book on algorithms will
-	/// discussion the topic in good detail.
+	/// discuss the topic in detail.
+	///
 	rbtree_node_base* RBTreeRotateRight(rbtree_node_base* pNode, rbtree_node_base* pNodeRoot)
 	{
 		rbtree_node_base* const pNodeTemp = pNode->mpNodeLeft;
