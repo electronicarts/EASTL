@@ -553,6 +553,12 @@
 </Type>
 
 
+
+<Type Name="eastl::atomic_flag">
+	<DisplayString>{mFlag.mAtomic}</DisplayString>
+</Type>
+
+
 <!-- TODO eastl::tuple -->
 
 

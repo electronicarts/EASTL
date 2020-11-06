@@ -282,5 +282,59 @@ int TestLruCache()
 		}
 	}
 
+	// Test iteration
+	{
+		eastl::lru_cache<int, int> lc(5);
+		lc.insert_or_assign(0,10);
+		lc.insert_or_assign(1,11);
+		lc.insert_or_assign(2,12);
+		lc.insert_or_assign(3,13);
+		lc.insert_or_assign(4,14);
+
+		{ // test manual for-loop
+			int i = 0;
+			for (auto b = lc.begin(), e = lc.end(); b != e; b++)
+			{
+				auto &p = *b;
+				VERIFY(i == p.first);
+				VERIFY(i + 10 == p.second.first);
+				i++;
+			}
+		}
+
+		{ // test pairs 
+			int i = 0;
+			for(auto& p : lc)
+			{
+				VERIFY(i == p.first);
+				VERIFY(i + 10 == p.second.first);
+				i++;
+			}
+		}
+
+		{ // test structured bindings
+			int i = 0;
+			for(auto& [key, value] : lc)
+			{
+				VERIFY(i == key);
+				VERIFY(i + 10 == value.first);
+				i++;
+			}
+		}
+	}
+
+	// test initializer_list
+	{
+		eastl::lru_cache<int, int> lc = {{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}, {5, 15}};
+
+		int i = 0;
+		for(auto& p : lc)
+		{
+			VERIFY(i == p.first);
+			VERIFY(i + 10 == p.second.first);
+			i++;
+		}
+	}
+
 	return nErrorCount;
 }
