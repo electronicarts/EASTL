@@ -356,7 +356,7 @@ namespace eastl
 				get_allocator() = x.get_allocator(); // The primary effect of this is to copy the overflow allocator.
 			#endif
 
-			base_type::template DoAssign<move_iterator<iterator>, true>(make_move_iterator(x.begin()), make_move_iterator(x.end()), false_type()); // Shorter route.
+			base_type::template DoAssign<move_iterator<iterator>, true>(eastl::make_move_iterator(x.begin()), eastl::make_move_iterator(x.end()), false_type()); // Shorter route.
 		}
 		return *this;
 	}

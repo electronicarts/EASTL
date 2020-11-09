@@ -177,11 +177,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.3, variant_npos
 	//
-	#ifdef EA_COMPILER_NO_INLINE_VARIABLES
-		static EA_CONSTEXPR const size_t variant_npos = size_t(-1);
-	#else
-		inline EA_CONSTEXPR size_t variant_npos = -1;
-	#endif
+	EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR size_t variant_npos = size_t(-1);
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1048,7 +1044,7 @@ namespace eastl
 				eastl::forward<Visitor>(visitor),
 				get<ArgsIndices>(eastl::forward<ArgsTuple>(args))...,
 				get<I>(eastl::forward<Variant>(variant))
-			));
+				));
 		}
 
 		// The final call() in the recursion.

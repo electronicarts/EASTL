@@ -126,7 +126,7 @@ EASTL_FORCE_INLINE Pun AtomicTypePunCast(const T& fromType) EA_NOEXCEPT
 	 * aligned_storage ensures we can TypePun objects that aren't trivially default constructible
 	 * but still trivially copyable.
 	 */
-	typename eastl::aligned_storage<sizeof(Pun), alignof(T)>::type ret;
+	typename eastl::aligned_storage<sizeof(Pun), alignof(Pun)>::type ret;
 	memcpy(eastl::addressof(ret), eastl::addressof(fromType), sizeof(Pun));
 	return reinterpret_cast<Pun&>(ret);
 }

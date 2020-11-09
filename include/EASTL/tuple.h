@@ -395,7 +395,7 @@ namespace Internal
 		TupleImpl& operator=(OtherTuple&& t)
 		{
 			swallow(TupleLeaf<Indices, Ts>::operator=(
-				eastl::forward<tuple_element_t<Indices, MakeTupleTypes_t<OtherTuple>>>(get<Indices>(t)))...);
+						eastl::forward<tuple_element_t<Indices, MakeTupleTypes_t<OtherTuple>>>(get<Indices>(t)))...);
 			return *this;
 		}
 
@@ -755,16 +755,16 @@ public:
 	template <typename U, typename... Us,
 		Internal::TupleImplicitlyConvertible_t<tuple, U, Us...> = 0>
 		EA_CONSTEXPR tuple(U&& u, Us&&... us)
-		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, eastl::forward<U>(u),
-			eastl::forward<Us>(us)...)
+			: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, eastl::forward<U>(u),
+					eastl::forward<Us>(us)...)
 	{
 	}
 
 	template <typename U, typename... Us,
 		Internal::TupleExplicitlyConvertible_t<tuple, U, Us...> = 0>
 		explicit EA_CONSTEXPR tuple(U&& u, Us&&... us)
-		: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, eastl::forward<U>(u),
-			eastl::forward<Us>(us)...)
+			: mImpl(make_index_sequence<sizeof...(Us) + 1>{}, Internal::MakeTupleTypes_t<tuple>{}, eastl::forward<U>(u),
+					eastl::forward<Us>(us)...)
 	{
 	}
 
@@ -831,7 +831,7 @@ inline const_tuple_element_t<I, tuple<Ts...>>& get(const tuple<Ts...>& t)
 template <size_t I, typename... Ts>
 inline tuple_element_t<I, tuple<Ts...>>&& get(tuple<Ts...>&& t)
 {
-	return get<I>(move(t.mImpl));
+	return get<I>(eastl::move(t.mImpl));
 }
 
 template <typename T, typename... Ts>
@@ -849,7 +849,7 @@ inline const T& get(const tuple<Ts...>& t)
 template <typename T, typename... Ts>
 inline T&& get(tuple<Ts...>&& t)
 {
-	return get<T>(move(t.mImpl));
+	return get<T>(eastl::move(t.mImpl));
 }
 
 template <typename... Ts>

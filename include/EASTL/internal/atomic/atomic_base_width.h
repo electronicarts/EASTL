@@ -198,12 +198,12 @@ namespace internal
 																		\
 	public: /* ctors */													\
 																		\
-		atomic_base_width(T desired) EA_NOEXCEPT						\
+		EA_CONSTEXPR atomic_base_width(T desired) EA_NOEXCEPT			\
 			: Base{ desired }											\
 		{																\
 		}																\
 																		\
-		atomic_base_width() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>) = default;	\
+		EA_CONSTEXPR atomic_base_width() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>) = default; \
 																		\
 		atomic_base_width(const atomic_base_width&) EA_NOEXCEPT = delete; \
 																		\

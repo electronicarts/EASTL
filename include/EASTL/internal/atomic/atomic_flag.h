@@ -22,12 +22,12 @@ class atomic_flag
 {
 public: /* ctors */
 
-	atomic_flag(bool desired)
+	EA_CONSTEXPR atomic_flag(bool desired) EA_NOEXCEPT
 		: mFlag{ desired }
 	{
 	}
 
-	atomic_flag() EA_NOEXCEPT
+	EA_CONSTEXPR atomic_flag() EA_NOEXCEPT
 		: mFlag{ false }
 	{
 	}

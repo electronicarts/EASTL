@@ -303,41 +303,33 @@ EASTL_FORCE_INLINE typename eastl::atomic<T>::value_type atomic_load_explicit(co
 template <typename T, typename Predicate>
 EASTL_FORCE_INLINE typename eastl::atomic<T>::value_type atomic_load_cond(const eastl::atomic<T>* atomicObj, Predicate pred) EA_NOEXCEPT
 {
-	typename eastl::atomic<T>::value_type ret;
-
 	for (;;)
 	{
-		ret = atomicObj->load();
+		typename eastl::atomic<T>::value_type ret = atomicObj->load();
 
 		if (pred(ret))
 		{
-			break;
+			return ret;
 		}
 
 		EASTL_ATOMIC_CPU_PAUSE();
 	}
-
-	return ret;
 }
 
 template <typename T, typename Predicate, typename Order>
 EASTL_FORCE_INLINE typename eastl::atomic<T>::value_type atomic_load_cond_explicit(const eastl::atomic<T>* atomicObj, Predicate pred, Order order) EA_NOEXCEPT
 {
-	typename eastl::atomic<T>::value_type ret;
-
 	for (;;)
 	{
-		ret = atomicObj->load(order);
+		typename eastl::atomic<T>::value_type ret = atomicObj->load(order);
 
 		if (pred(ret))
 		{
-			break;
+			return ret;
 		}
 
 		EASTL_ATOMIC_CPU_PAUSE();
 	}
-
-	return ret;
 }
 
 
