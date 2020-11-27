@@ -1105,7 +1105,7 @@ namespace eastl
 	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key), forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1113,7 +1113,7 @@ namespace eastl
 	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1123,7 +1123,7 @@ namespace eastl
 	{
 		return DoInsertValueHint(
 		    has_unique_keys_type(), position,
-		    piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...));
+		    piecewise_construct, forward_as_tuple(key), forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1133,7 +1133,7 @@ namespace eastl
 	{
 		return DoInsertValueHint(
 		    has_unique_keys_type(), position,
-		    piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(forward<Args>(args)...));
+		    piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 

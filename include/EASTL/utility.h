@@ -789,7 +789,7 @@ namespace eastl
 			template <typename T1, typename T2>
 			static EA_CONSTEXPR T1&& getInternal(pair<T1, T2>&& p)
 			{
-				return forward<T1>(p.first);
+				return eastl::forward<T1>(p.first);
 			}
 		};
 
@@ -811,7 +811,7 @@ namespace eastl
 			template <typename T1, typename T2>
 			static EA_CONSTEXPR T2&& getInternal(pair<T1, T2>&& p)
 			{
-				return forward<T2>(p.second);
+				return eastl::forward<T2>(p.second);
 			}
 		};
 
@@ -830,7 +830,7 @@ namespace eastl
 		template <size_t I, typename T1, typename T2>
 		tuple_element_t<I, pair<T1, T2>>&& get(pair<T1, T2>&& p)
 		{
-			return GetPair<I>::getInternal(move(p));
+			return GetPair<I>::getInternal(eastl::move(p));
 		}
 
 #endif  // EASTL_TUPLE_ENABLED
