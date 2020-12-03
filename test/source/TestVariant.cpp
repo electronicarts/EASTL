@@ -212,6 +212,7 @@ int TestVariantGet()
 			VERIFY(get<string>(v) == strValue);
 			VERIFY(!holds_alternative<int>(v));
 			VERIFY(holds_alternative<string>(v));
+			VERIFY(get<string>(move(v)) == strValue);
 		}
 		{
 			v_t v;
