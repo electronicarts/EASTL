@@ -616,7 +616,7 @@ namespace eastl
 	EA_CONSTEXPR T&& get(variant<Types...>&& v)
 	{
 		static_assert(I < sizeof...(Types), "get is ill-formed if I is not a valid index in the variant typelist");
-		return get<I>(v);
+		return get<I>(eastl::move(v));
 	}
 
 	template <class T, class... Types, size_t I = meta::get_type_index_v<T, Types...>>
