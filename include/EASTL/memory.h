@@ -1390,7 +1390,7 @@ namespace eastl
 	inline void destroy(ForwardIterator first, ForwardIterator last)
 	{
 		for (; first != last; ++first)
-			destroy_at(addressof(*first));
+			eastl::destroy_at(eastl::addressof(*first));
 	}
 
 
@@ -1404,7 +1404,7 @@ namespace eastl
 	ForwardIterator destroy_n(ForwardIterator first, Size n)
 	{
 		for (; n > 0; ++first, --n)
-			destroy_at(addressof(*first));
+			eastl::destroy_at(eastl::addressof(*first));
 
 		return first;
 	}

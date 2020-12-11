@@ -2922,7 +2922,7 @@ namespace eastl
 		if(count <= 0)
 			return first;
 		else if(count == 1)
-			return find(first, last, value);
+			return eastl::find(first, last, value);
 		else if(last > first)
 		{
 			RandomAccessIterator lookAhead;
@@ -3758,7 +3758,7 @@ namespace eastl
 	{
 		typedef typename eastl::iterator_traits<BidirectionalIterator>::value_type value_type;
 
-		return next_permutation(first, last, eastl::less<value_type>());
+		return eastl::next_permutation(first, last, eastl::less<value_type>());
 	}
 
 
@@ -4061,12 +4061,6 @@ namespace eastl
 	///
 	/// http://en.cppreference.com/w/cpp/algorithm/clamp
 	///
-	template <class T>
-	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi)
-	{
-		return clamp(v, lo, hi, eastl::less<>());
-	}
-
 	template <class T, class Compare>
 	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
 	{
@@ -4075,6 +4069,11 @@ namespace eastl
 			   comp(v, lo) ? lo : comp(hi, v) ? hi : v;
 	}
 
+	template <class T>
+	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi)
+	{
+		return eastl::clamp(v, lo, hi, eastl::less<>());
+	}
 
 } // namespace eastl
 

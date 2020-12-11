@@ -60,15 +60,15 @@ namespace eastl
 	};
 
 	template <typename Container>
-	auto begin(const reverse_wrapper<Container>& w) -> decltype(rbegin(w.mContainer))
+	auto begin(const reverse_wrapper<Container>& w) -> decltype(eastl::rbegin(w.mContainer))
 	{
-		return rbegin(w.mContainer);
+		return eastl::rbegin(w.mContainer);
 	}
 
 	template <typename Container>
-	auto end(const reverse_wrapper<Container>& w) -> decltype(rend(w.mContainer))
+	auto end(const reverse_wrapper<Container>& w) -> decltype(eastl::rend(w.mContainer))
 	{
-		return rend(w.mContainer);
+		return eastl::rend(w.mContainer);
 	}
 
 	template <typename Container>

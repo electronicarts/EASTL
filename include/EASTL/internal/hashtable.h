@@ -2701,8 +2701,8 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key),
-		                     forward_as_tuple(eastl::forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, eastl::forward_as_tuple(key),
+		                     eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
@@ -2712,8 +2712,8 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)),
-		                     forward_as_tuple(eastl::forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, eastl::forward_as_tuple(eastl::move(key)),
+		                     eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
@@ -2724,7 +2724,7 @@ namespace eastl
 	{
 		insert_return_type result = DoInsertValue(
 		    has_unique_keys_type(),
-		    value_type(piecewise_construct, forward_as_tuple(key), forward_as_tuple(eastl::forward<Args>(args)...)));
+		    value_type(piecewise_construct, eastl::forward_as_tuple(key), eastl::forward_as_tuple(eastl::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
@@ -2736,8 +2736,8 @@ namespace eastl
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
 	{
 		insert_return_type result =
-		    DoInsertValue(has_unique_keys_type(), value_type(piecewise_construct, forward_as_tuple(eastl::move(key)),
-		                                                     forward_as_tuple(eastl::forward<Args>(args)...)));
+		    DoInsertValue(has_unique_keys_type(), value_type(piecewise_construct, eastl::forward_as_tuple(eastl::move(key)),
+		                                                     eastl::forward_as_tuple(eastl::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
@@ -2850,7 +2850,7 @@ namespace eastl
 		auto iter = find(k);
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(piecewise_construct, eastl::forward_as_tuple(k), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{
@@ -2868,7 +2868,7 @@ namespace eastl
 		auto iter = find(k);
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(eastl::move(k)), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(piecewise_construct, eastl::forward_as_tuple(eastl::move(k)), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{
