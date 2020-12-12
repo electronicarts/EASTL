@@ -439,7 +439,7 @@ namespace eastl
 
 			if (lastSortedEnd < 1)
 			{
-				lastSortedEnd = is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(first, last, compare) - first;
+				lastSortedEnd = eastl::is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(first, last, compare) - first;
 			}
 
 			// Sort the region unless lastSortedEnd indicates it is already sorted.

@@ -210,7 +210,7 @@ namespace eastl
 
 	template <typename T>
 	reference_wrapper<T>::reference_wrapper(T &v) EA_NOEXCEPT
-		: val(addressof(v))
+		: val(eastl::addressof(v))
 	{}
 
 	template <typename T>

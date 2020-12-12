@@ -111,7 +111,7 @@ namespace eastl
 			inline explicit optional_storage(in_place_t, Args&&... args)
 			    : engaged(true)
 			{
-				::new (eastl::addressof(val)) T{std::forward<Args>(args)...};
+				::new (eastl::addressof(val)) T{eastl::forward<Args>(args)...};
 			}
 
 			template <typename U,
