@@ -112,7 +112,7 @@ namespace eastl
 	EA_CPP14_CONSTEXPR typename eastl::remove_reference<T>::type&&
 	move(T&& x) EA_NOEXCEPT
 	{
-		return ((typename eastl::remove_reference<T>::type&&)x);
+		return static_cast<typename eastl::remove_reference<T>::type&&>(x);
 	}
 
 
