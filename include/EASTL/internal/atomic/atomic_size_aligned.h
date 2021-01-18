@@ -75,16 +75,14 @@ namespace internal
 	{
 	public: /* ctors */
 
-		atomic_size_aligned(T desired) EA_NOEXCEPT
+		EA_CONSTEXPR atomic_size_aligned(T desired) EA_NOEXCEPT
 			: mAtomic{ desired }
 		{
-			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
 
-		atomic_size_aligned() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>)
+		EA_CONSTEXPR atomic_size_aligned() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>)
 			: mAtomic{} /* Value-Initialize which will Zero-Initialize Trivial Constructible types */
 		{
-			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
 
 		atomic_size_aligned(const atomic_size_aligned&) EA_NOEXCEPT = delete;

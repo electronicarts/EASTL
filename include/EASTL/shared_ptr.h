@@ -593,8 +593,10 @@ namespace eastl
 		/// the shared reference count is deleted.
 		~shared_ptr()
 		{
-			if(mpRefCount)
+			if (mpRefCount)
+			{
 				mpRefCount->release();
+			}
 			// else if mpValue is non-NULL then we just lose it because it wasn't actually shared (can happen with
 			// shared_ptr(const shared_ptr<U>& sharedPtr, element_type* pValue) constructor).
 

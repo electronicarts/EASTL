@@ -14,6 +14,19 @@
  * I.E. fetch_add returns the previous value and add_fetch returns the current value
  */
 
+static eastl::atomic<int> sAtomicInt{ 4 };
+static eastl::atomic<void*> sAtomicPtr{ nullptr };
+
+static int TestAtomicConstantInitialization()
+{
+	int nErrorCount;
+
+	EATEST_VERIFY(sAtomicInt.load() == 4);
+	EATEST_VERIFY(sAtomicPtr == nullptr);
+
+	return 0;
+}
+
 class AtomicStandaloneBasicTest
 {
 public:
@@ -755,8 +768,7 @@ void AtomicPointerBasicTest::TestAssignmentOperators()
 	}
 
 	{
-		PtrType val = (PtrType)0x4;
-
+		PtrType val = (PtrType)0x4;
 
 		AtomicType atomic{val};
 
@@ -3809,6 +3821,18 @@ int TestAtomicNonDefaultConstructible()
 		VERIFY(atomic.load() == AtomicNonDefaultConstructible{(uint8_t)4});
 	}
 
+	{
+		eastl::atomic<AtomicNonDefaultConstructible> atomic{AtomicNonDefaultConstructible{(uint8_t)3}};
+
+		VERIFY(atomic_load_cond(&atomic, [] (AtomicNonDefaultConstructible) { return true; }) == AtomicNonDefaultConstructible{(uint8_t)3});
+	}
+
+	{
+		eastl::atomic<AtomicNonDefaultConstructible> atomic{AtomicNonDefaultConstructible{(uint8_t)3}};
+
+		VERIFY(atomic_load_cond_explicit(&atomic, [] (AtomicNonDefaultConstructible) { return true; }, eastl::memory_order_seq_cst) == AtomicNonDefaultConstructible{(uint8_t)3});
+	}
+
 	return nErrorCount;
 }
 
@@ -3850,6 +3874,78 @@ int TestAtomic128Loads()
 
 	{
 		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{1, 0, 1, 0}};
+
+		VERIFY((atomic.load() == Atomic128LoadType{1, 0, 1, 0}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{1, 1, 0, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{1, 1, 0, 0});
+
+		VERIFY((expected == Atomic128LoadType{1, 1, 0, 0}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 1, 1}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{0, 0, 1, 1});
+
+		VERIFY((expected == Atomic128LoadType{0, 0, 1, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 1, 0, 1}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{0, 1, 0, 1});
+
+		VERIFY((expected == Atomic128LoadType{0, 1, 0, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{1, 0, 1, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{1, 0, 1, 0});
+
+		VERIFY((expected == Atomic128LoadType{1, 0, 1, 0}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 0, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{1, 1, 0, 0});
+
+		VERIFY((atomic.load() == Atomic128LoadType{1, 1, 0, 0}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 0, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{0, 0, 1, 1});
+
+		VERIFY((atomic.load() == Atomic128LoadType{0, 0, 1, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 0, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{0, 1, 0, 1});
+
+		VERIFY((atomic.load() == Atomic128LoadType{0, 1, 0, 1}));
+	}
+
+	{
+		eastl::atomic<Atomic128LoadType> atomic{Atomic128LoadType{0, 0, 0, 0}};
+
+		Atomic128LoadType expected{0, 0, 0, 0};
+		atomic.compare_exchange_strong(expected, Atomic128LoadType{1, 0, 1, 0});
 
 		VERIFY((atomic.load() == Atomic128LoadType{1, 0, 1, 0}));
 	}
@@ -3980,6 +4076,8 @@ int TestAtomicBasic()
 	nErrorCount += TestAtomicNonDefaultConstructible();
 
 #endif
+
+	nErrorCount += TestAtomicConstantInitialization();
 
 	return nErrorCount;
 }

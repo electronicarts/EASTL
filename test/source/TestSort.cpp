@@ -305,6 +305,23 @@ int TestSort()
 		}
 	}
 
+	// Test tim sort with a specific array size and seed that caused a crash 
+	{
+		vector<int64_t> intArray;
+		int i = 1000000;
+		{
+			EASTLTest_Rand testRng(232526);
+
+			for (int n = 0; n < i; n++)
+			{
+				intArray.push_back(testRng.Rand());
+			}
+			vector<int64_t> buffer(intArray.size() / 2);
+			tim_sort_buffer(intArray.begin(), intArray.end(), buffer.data());
+			EATEST_VERIFY(is_sorted(intArray.begin(), intArray.end()));
+		}
+	}
+
 	// Test insertion_sort() does not invalidate a BidirectionalIterator by doing --BidirectionalIterator.begin()
 	{
 		// Test Passes if the Test doesn't crash

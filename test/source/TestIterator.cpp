@@ -42,15 +42,15 @@ int TestIterator_advance()
 		for(i = 0; i < num_elements; i++)
 		{
 			EATEST_VERIFY(*it == v[i]);
-			eastl::advance(it, 1);            
+			eastl::advance(it, 1);
 		}
 
 		// test backwards advancement
 		eastl::vector<int>::iterator it2 = v.end();
 		i = num_elements - 1;
 		do
-		{            
-			eastl::advance(it2, -1);            
+		{
+			eastl::advance(it2, -1);
 			EATEST_VERIFY(*it2 == v[i]);
 		}
 		while(i-- != 0);
@@ -114,7 +114,7 @@ int TestIterator_advance()
 
 		eastl::vector<int>::iterator it = v.end();
 		EATEST_VERIFY(*eastl::prev(it, 2) == 42);
-		EATEST_VERIFY(*eastl::prev(it /*testing the iterator distance default value*/) == 2);        
+		EATEST_VERIFY(*eastl::prev(it /*testing the iterator distance default value*/) == 2);
 	}
 
 	return nErrorCount;
@@ -130,12 +130,12 @@ int TestIterator_moveIterator()
 
 		// operator++(int)
 		auto moveIter = constBeginMoveIter;
-		moveIter++; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		moveIter++; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.
 		EATEST_VERIFY(*moveIter != *constBeginMoveIter);
 
 		// operator--(int)
 		moveIter = constBeginMoveIter + 2; // points to '42'
-		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.
 		EATEST_VERIFY(*moveIter != *(constBeginMoveIter + 2));
 	}
 
@@ -152,7 +152,7 @@ int TestIterator()
 	int nErrorCount = 0;
 	nErrorCount += TestIterator_advance();
 	nErrorCount += TestIterator_moveIterator();
-	
+
 	{
 		// reverse_iterator
 		// reverse_iterator<Iterator> make_reverse_iterator(Iterator mi)
@@ -227,8 +227,9 @@ int TestIterator()
 
 	{
 		// difference_type distance(InputIterator first, InputIterator last)
-		// To do.
-	}
+		eastl::vector<int> intVector = {0, 1, 2, 3, 4, 5, 6, 7};
+		EATEST_VERIFY(eastl::distance(intVector.begin(), intVector.end()) == 8);
+    }
 
 
 	{
@@ -260,7 +261,7 @@ int TestIterator()
 			eastl::string8 str8;
 			eastl::string8::iterator string8Iterator = eastl::begin(str8);
 			EATEST_VERIFY(string8Iterator == eastl::end(str8));
-		#endif 
+		#endif
 	}
 
 	// eastl::data
@@ -292,6 +293,7 @@ int TestIterator()
 
 		int intCArray[34];
 		EATEST_VERIFY(eastl::size(intCArray) == 34);
+		static_assert(eastl::size(intCArray) == 34, "eastl::size failure");
 	}
 
 	// eastl::ssize
@@ -304,6 +306,7 @@ int TestIterator()
 
 		int intCArray[34];
 		EATEST_VERIFY(eastl::ssize(intCArray) == (signed)34);
+		static_assert(eastl::ssize(intCArray) == 34, "eastl::ssize failure");
 	}
 
 	// eastl::empty
@@ -311,25 +314,22 @@ int TestIterator()
 		eastl::vector<int> intVector;
 		EATEST_VERIFY(eastl::empty(intVector));
 		intVector.push_back();
-		EATEST_VERIFY(!eastl::empty(intVector)); 
+		EATEST_VERIFY(!eastl::empty(intVector));
 
 		std::initializer_list<int> intInitListEmpty;
 		EATEST_VERIFY(eastl::empty(intInitListEmpty));
-
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-		    EATEST_VERIFY(!eastl::empty({1, 2, 3, 4, 5, 6}));
-		#endif
+		EATEST_VERIFY(!eastl::empty({1, 2, 3, 4, 5, 6}));
 	}
 
 	// Range-based for loops
-	#if !defined(EA_COMPILER_NO_RANGE_BASED_FOR_LOOP)
+	{
 		{
 			eastl::vector<int> v;
 			int I = 0;
 
 			v.push_back(0);
 			v.push_back(1);
- 
+
 			for(int i : v)
 				EATEST_VERIFY(i == I++);
 		}
@@ -340,11 +340,11 @@ int TestIterator()
 
 			s8.push_back('a');
 			s8.push_back('b');
- 
+
 			for(char c : s8)
 				EATEST_VERIFY(c == C++);
 		}
-	#endif
+	}
 
 
 	{

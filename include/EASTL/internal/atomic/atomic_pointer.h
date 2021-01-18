@@ -70,12 +70,12 @@ namespace internal
 
 	public: /* ctors */
 
-		atomic_pointer_base(T* desired) EA_NOEXCEPT
+		EA_CONSTEXPR atomic_pointer_base(T* desired) EA_NOEXCEPT
 			: Base{ desired }
 		{
 		}
 
-		atomic_pointer_base() EA_NOEXCEPT = default;
+		EA_CONSTEXPR atomic_pointer_base() EA_NOEXCEPT = default;
 
 		atomic_pointer_base(const atomic_pointer_base&) EA_NOEXCEPT = delete;
 
@@ -203,12 +203,12 @@ namespace internal
 																		\
 	public: /* ctors */													\
 																		\
-		atomic_pointer_width(T* desired) EA_NOEXCEPT					\
+		EA_CONSTEXPR atomic_pointer_width(T* desired) EA_NOEXCEPT		\
 			: Base{ desired }											\
 		{																\
 		}																\
 																		\
-		atomic_pointer_width() EA_NOEXCEPT = default;					\
+		EA_CONSTEXPR atomic_pointer_width() EA_NOEXCEPT = default;		\
 																		\
 		atomic_pointer_width(const atomic_pointer_width&) EA_NOEXCEPT = delete; \
 																		\

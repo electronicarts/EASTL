@@ -173,6 +173,16 @@ struct FixedWidth128
 		}																\
 	}
 
+/**
+ * In my own opinion, I found the wording on Microsoft docs a little confusing.
+ * ExchangeHigh means the top 8 bytes so (ptr + 8).
+ * ExchangeLow means the low 8 butes so (ptr).
+ * Endianness does not matter since we are just loading data and comparing data.
+ * Thought of as memcpy() and memcmp() function calls whereby the layout of the
+ * data itself is irrelevant.
+ * Only after we type pun back to the original type, and load from memory does
+ * the layout of the data matter again.
+ */
 #define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_128(type, ret, ptr, expected, desired, MemoryOrder) \
 	{																	\
 		union TypePun													\
@@ -181,9 +191,7 @@ struct FixedWidth128
 																		\
 			struct exchange128											\
 			{															\
-				EASTL_SYSTEM_BIG_ENDIAN_STATEMENT(__int64 hi, lo);		\
-																		\
-				EASTL_SYSTEM_LITTLE_ENDIAN_STATEMENT(__int64 lo, hi);	\
+				__int64 value[2];										\
 			};															\
 																		\
 			struct exchange128 exchangePun;								\
@@ -194,7 +202,7 @@ struct FixedWidth128
 		unsigned char cmpxchgRetChar;									\
 		cmpxchgRetChar = EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_128_OP(cmpxchgRetChar, EASTL_ATOMIC_VOLATILE_TYPE_CAST(__int64, (ptr)), \
 																 EASTL_ATOMIC_TYPE_CAST(__int64, (expected)), \
-																 typePun.exchangePun.hi, typePun.exchangePun.lo, \
+																 typePun.exchangePun.value[1], typePun.exchangePun.value[0], \
 																 MemoryOrder); \
 																		\
 		ret = static_cast<bool>(cmpxchgRetChar);						\

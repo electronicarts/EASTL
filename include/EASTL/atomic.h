@@ -243,36 +243,27 @@
 //   Deviations from the standard. This does not include new features added:
 //
 // 1.
-//   Description: Atomic class constructors are not and will not be constexpr.
-//   Reasoning  : We assert in the constructor that the this pointer is properly aligned.
-//                There are no other constexpr functions that can be called in a constexpr
-//                context. The only use for constexpr here is const-init time or ensuring
-//                that the object's value is placed in the executable at compile-time instead
-//                of having to call the ctor at static-init time. If you are using constexpr
-//                to solve static-init order fiasco, there are other solutions for that.
-//
-// 2.
 //   Description: Atomics are always lock free
 //   Reasoning  : We don't want people to fall into performance traps where implicit locking
 //                is done. If your user defined type is large enough to not support atomic
 //                instructions then your user code should do the locking.
 //
-// 3.
+// 2.
 //   Description: Atomic objects can not be volatile
 //   Reasoning  : Volatile objects do not make sense in the context of eastl::atomic<T>.
 //                Use the given memory orders to get the ordering you need.
 //                Atomic objects have to become visible on the bus. See below for details.
 //
-// 4.
+// 3.
 //   Description: Consume memory order is not supported
 //   Reasoning  : See below for the reasoning.
 //
-// 5.
+// 4.
 //   Description: ATOMIC_INIT() macros and the ATOMIC_LOCK_FREE macros are not implemented
 //   Reasoning  : Use the is_lock_free() method instead of the macros.
 //                ATOMIC_INIT() macros aren't needed since the default constructor value initializes.
 //
-// 6.
+// 5.
 //   Description: compare_exchange failure memory order cannot be stronger than success memory order
 //   Reasoning  : Besides the argument that it ideologically does not make sense that a failure
 //                of the atomic operation shouldn't have a stricter ordering guarantee than the
@@ -284,7 +275,7 @@
 //                that versions of compilers that say they support C++17 do not properly adhere to this
 //                new requirement in their intrinsics. Thus we will not support this.
 //
-// 7.
+// 6.
 //   Description: All memory orders are distinct types instead of enum values
 //   Reasoning  : This will not affect how the API is used in user code.
 //                It allows us to statically assert on invalid memory orders since they are compile-time types
@@ -1384,12 +1375,61 @@
 //   The read_depends operation can be used on loads from only an eastl::atomic<T*> type. The return pointer of the load must and can only be used to then further load values. And that is it.
 //   If you are unsure, upgrade this load to an acquire operation.
 //
-//   MyStruct* ptr = gAtomicPtr.load(read_depends);
+//   MyStruct* ptr = gAtomicPtr.load(memory_order_read_depends);
 //   int a = ptr->a;
 //   int b = ptr->b;
 //   return a + b;
 //
 //   The loads from ptr after the gAtomicPtr load ensure that the correct values of a and b are observed. This pairs with a Release operation on the writer side by releasing gAtomicPtr.
+//
+//
+//   As said above the returned pointer from a .load(memory_order_read_depends) can only be used to then further load values.
+//   Dereferencing(*) and Arrow Dereferencing(->) are valid operations on return values from .load(memory_order_read_depends).
+//
+//   MyStruct* ptr = gAtomicPtr.load(memory_order_read_depends);
+//   int a = ptr->a;  - VALID
+//   int a = *ptr;    - VALID
+//
+//   Since dereferencing is just indexing via some offset from some base address, this also means addition and subtraction of constants is ok.
+//
+//   int* ptr = gAtomicPtr.load(memory_order_read_depends);
+//   int a = *(ptr + 1)  - VALID
+//   int a = *(ptr - 1)  - VALID
+//
+//   Casts also work correctly since casting is just offsetting a pointer depending on the inheritance hierarchy or if using intrusive containers.
+//
+//   ReadDependsIntrusive** intrusivePtr = gAtomicPtr.load(memory_order_read_depends);
+//   ReadDependsIntrusive* ptr = ((ReadDependsIntrusive*)(((char*)intrusivePtr) - offsetof(ReadDependsIntrusive, next)));
+//
+//   Base* basePtr = gAtomicPtr.load(memory_order_read_depends);
+//   Dervied* derivedPtr = static_cast<Derived*>(basePtr);
+//
+//   Both of the above castings from the result of the load are valid for this memory order.
+//
+//   You can reinterpret_cast the returned pointer value to a uintptr_t to set bits, clear bits, or xor bits but the pointer must be casted back before doing anything else.
+//
+//   int* ptr = gAtomicPtr.load(memory_order_read_depends);
+//   ptr = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(ptr) & ~3);
+//
+//   Do not use any equality or relational operator (==, !=, >, <, >=, <=) results in the computation of offsets before dereferencing.
+//   As we learned above in the Control Dependencies section, CPUs will not order Load-Load Control Dependencies. Relational and equality operators are often compiled using branches.
+//   It doesn't have to be compiled to branched, condition instructions could be used. Or some architectures provide comparison instructions such as set less than which do not need
+//   branches when using the result of the relational operator in arithmetic statements. Then again short circuiting may need to introduct branches since C++ guarantees the
+//   rest of the expression must not be evaluated.
+//   The following odd code is forbidden.
+//
+//   int* ptr = gAtomicPtr.load(memory_order_read_depends);
+//   int* ptr2 = ptr + (ptr >= 0);
+//   int a = *ptr2;
+//
+//   Only equality comparisons against nullptr are allowed. This is becase the compiler cannot assume that the address of the loaded value is some known address and substitute our loaded value.
+//   int* ptr = gAtomicPtr.load(memory_order_read_depends);
+//   if (ptr == nullptr);  - VALID
+//   if (ptr != nullptr);  - VALID
+//
+//   Thus the above sentence that states:
+//   The return pointer of the load must and can only be used to then further load values. And that is it.
+//   must be respected by the programmer. This memory order is an optimization added for efficient read heavy pointer swapping data structures. IF you are unsure, use memory_order_acquire.
 //
 //   ******** Relaxed && eastl::atomic<T> guarantees ********
 //
@@ -1586,7 +1626,7 @@
 //   ----------------------------------------------------------------------------------------
 //
 //   In this example it is entirely possible that we observe r0 = 1 && r1 = 0 even though we have source code causality and sequentially consistent operations.
-//   Observability is tied to the atomic object on which the operation was performed and the thread fence doesn't synchronize-with the fetch_add because there is no
+//   Observability is tied to the atomic object on which the operation was performed and the thread fence doesn't synchronize-with the fetch_add because
 //   there is no load above the fence that reads the value from the fetch_add.
 //
 //   ******** Sequential Consistency Semantics ********

@@ -79,8 +79,8 @@ namespace
 
 enum TestMinMaxEnum
 {
-	teX = 0, 
-	teY = 3 
+	teX = 0,
+	teY = 3
 };
 
 
@@ -593,11 +593,11 @@ static int TestMinMax()
 
 	{
 		// template <class ForwardIterator, class Compare>
-		// eastl::pair<ForwardIterator, ForwardIterator> 
+		// eastl::pair<ForwardIterator, ForwardIterator>
 		// minmax_element(ForwardIterator first, ForwardIterator last)
 		//
 		// template <class ForwardIterator, class Compare>
-		// eastl::pair<ForwardIterator, ForwardIterator> 
+		// eastl::pair<ForwardIterator, ForwardIterator>
 		// minmax_element(ForwardIterator first, ForwardIterator last, Compare compare)
 
 		int intArray[] = { 5, -2, 1, 5, 6, 5 };
@@ -606,15 +606,15 @@ static int TestMinMax()
 		EATEST_VERIFY((*result.first == -2) && (*result.second == 6));
 
 
-		// template <typename T> 
+		// template <typename T>
 		// eastl::pair<const T&, const T&>
 		// minmax(const T& a, const T& b)
 		//
-		// template <typename T, typename Compare> 
+		// template <typename T, typename Compare>
 		// eastl::pair<const T&, const T&>
 		// minmax(const T& a, const T& b, Compare comp)
 
-		// The VC++ compiler is broken in such a way that it can't compile the following without generating a warning: 
+		// The VC++ compiler is broken in such a way that it can't compile the following without generating a warning:
 		//     warning C4413: 'eastl::pair<T1,T2>::first' : reference member is initialized to a temporary that doesn't persist after the constructor exits.
 		// The Microsoft standard library definition of minmax doesn't generate this warning... because that minmax is broken and non-conforming. I think they
 		// made it the way they did because of the aforementioned compiler bug.
@@ -883,7 +883,7 @@ int TestAlgorithm()
 
 		eastl::string in = "123456";
 		eastl::string out;
- 
+
 		eastl::copy_n(in.begin(), 4, eastl::back_inserter(out));
 		EATEST_VERIFY(out == "1234");
 	}
@@ -913,7 +913,7 @@ int TestAlgorithm()
 			for(eastl_size_t i = 0; i < 4; i++)
 				src.push_back(eastl::string(1, (char8_t)('0' + i)));
 			eastl::vector<eastl::string> dest(src.size());
-  
+
 			eastl::move(src.begin(), src.end(), dest.begin());
 			EATEST_VERIFY((dest[0] == "0") && (dest[3] == "3"));
 			EATEST_VERIFY(src[0].empty() && src[3].empty());
@@ -925,7 +925,7 @@ int TestAlgorithm()
 			for(eastl_size_t i = 0; i < 4; i++)
 				src.push_back(eastl::string(1, (char8_t)('0' + i)));
 			eastl::vector<eastl::string> dest(src.size());
-  
+
 			eastl::move_backward(src.begin(), src.end(), dest.end());
 			EATEST_VERIFY((dest[0] == "0") && (dest[3] == "3"));
 			EATEST_VERIFY(src[0].empty() && src[3].empty());
@@ -954,7 +954,7 @@ int TestAlgorithm()
 		// Count all items whose value is less than three.
 		ptrdiff_t n = count_if(intArray, intArray, bind2nd(less<int>(), (int)3)); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(intArray, intArray + 12, bind2nd(less<int>(), (int)3)); 
+		n = count_if(intArray, intArray + 12, bind2nd(less<int>(), (int)3));
 		EATEST_VERIFY(n == 5);
 
 
@@ -963,7 +963,7 @@ int TestAlgorithm()
 
 		n = count_if(toArray, toArray, bind2nd(less<TestObject>(), TestObject(3))); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(toArray, toArray + 6, bind2nd(less<TestObject>(), TestObject(3))); 
+		n = count_if(toArray, toArray + 6, bind2nd(less<TestObject>(), TestObject(3)));
 		EATEST_VERIFY(n == 3);
 
 
@@ -978,7 +978,7 @@ int TestAlgorithm()
 
 		n = count_if(intList.begin(), intList.begin(), bind2nd(less<int>(), (int)3)); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(intList.begin(), intList.end(), bind2nd(less<int>(), (int)3)); 
+		n = count_if(intList.begin(), intList.end(), bind2nd(less<int>(), (int)3));
 		EATEST_VERIFY(n == 3);
 	}
 
@@ -1181,12 +1181,12 @@ int TestAlgorithm()
 		// The list is now: { 5, 2, 1, 2, 3, 4 }
 		slist<int>::iterator it = find_if(intList.begin(), intList.begin(), bind2nd(equal_to<int>(), (int)1)); // No-op
 		EATEST_VERIFY(it == intList.begin());
-		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)1)); 
+		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)1));
 		EATEST_VERIFY(*it == 1);
-		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)99)); 
+		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)99));
 		EATEST_VERIFY(it == intList.end());
 
-		it = find_if_not(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)5)); 
+		it = find_if_not(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)5));
 		EATEST_VERIFY(*it == 2);
 	}
 
@@ -2162,7 +2162,98 @@ int TestAlgorithm()
 	}
 
 
+	// set_difference_2
 	{
+		// template <typename InputIterator1, typename InputIterator2, typename OutputIterator>
+		// void set_difference_2(InputIterator1 first1, InputIterator1 last1,
+		//                       InputIterator2 first2, InputIterator2 last2,
+		//                       OutputIterator result1, OutputIterator result2)
+		{
+			const eastl::vector<int> v1 = {1, 2, 4, 5,   7, 7, 9};
+			const eastl::vector<int> v2 = {   2,       6,      9};
+			eastl::vector<int> only_v1, only_v2;
+
+			eastl::set_difference_2(v1.begin(), v1.end(), v2.begin(), v2.end(),
+									eastl::inserter(only_v1, only_v1.begin()),
+									eastl::inserter(only_v2, only_v2.begin()));
+
+			EATEST_VERIFY((only_v1 == eastl::vector<int>{1, 4, 5, 7, 7}));
+			EATEST_VERIFY((only_v2 == eastl::vector<int>{6}));
+		}
+
+        // template <typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Compare>
+        // void set_difference_2(InputIterator1 first1, InputIterator1 last1,
+        //                       InputIterator2 first2, InputIterator2 last2,
+        //                       OutputIterator result1, OutputIterator result2, Compare compare)
+        {
+			struct local
+			{
+				int data = -1;
+				bool operator==(const local& other) const
+					{ return data == other.data; }
+			};
+
+			const eastl::vector<local> v1 = {{1}, {2}, {4}, {5},      {7}, {7}, {9}};
+			const eastl::vector<local> v2 = {     {2},           {6},           {9}};
+			eastl::vector<local> only_v1, only_v2;
+
+			eastl::set_difference_2(v1.begin(), v1.end(), v2.begin(), v2.end(),
+									eastl::inserter(only_v1, only_v1.begin()),
+									eastl::inserter(only_v2, only_v2.begin()),
+									[](const local& lhs, const local& rhs) { return lhs.data < rhs.data; });
+
+			EATEST_VERIFY((only_v1 == eastl::vector<local>{{1}, {4}, {5}, {7}, {7}}));
+			EATEST_VERIFY((only_v2 == eastl::vector<local>{{6}}));
+		}
+	}
+
+
+	// set_decomposition
+	{
+		// OutputIterator3 set_decomposition(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2,
+		//                           OutputIterator1 result1, OutputIterator2 result2, OutputIterator3 result3)
+		{
+			const eastl::vector<int> v1 = {1, 2, 4, 5,   7, 7, 9};
+			const eastl::vector<int> v2 = {   2,       6,      9};
+			eastl::vector<int> only_v1, only_v2, intersection;
+
+			eastl::set_decomposition(v1.begin(), v1.end(), v2.begin(), v2.end(),
+									eastl::inserter(only_v1, only_v1.begin()),
+									eastl::inserter(only_v2, only_v2.begin()),
+									eastl::inserter(intersection, intersection.begin()));
+
+			EATEST_VERIFY((only_v1 == eastl::vector<int>{1, 4, 5, 7, 7}));
+			EATEST_VERIFY((only_v2 == eastl::vector<int>{6}));
+			EATEST_VERIFY((intersection == eastl::vector<int>{2, 9}));
+		}
+
+		// OutputIterator3 set_decomposition(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2,
+		//                           OutputIterator1 result1, OutputIterator2 result2, OutputIterator3 result3, Compare compare)
+		{
+			struct local
+			{
+				int data = -1;
+				bool operator==(const local& other) const
+					{ return data == other.data; }
+			};
+
+			const eastl::vector<local> v1 = {{1}, {2}, {4}, {5},      {7}, {7}, {9}};
+			const eastl::vector<local> v2 = {     {2},           {6},           {9}};
+			eastl::vector<local> only_v1, only_v2, intersection;
+
+			eastl::set_decomposition(v1.begin(), v1.end(), v2.begin(), v2.end(),
+									eastl::inserter(only_v1, only_v1.begin()),
+									eastl::inserter(only_v2, only_v2.begin()),
+									eastl::inserter(intersection, intersection.begin()),
+									[](const local& lhs, const local& rhs) { return lhs.data < rhs.data; });
+
+			EATEST_VERIFY((only_v1 == eastl::vector<local>{{1}, {4}, {5}, {7}, {7}}));
+			EATEST_VERIFY((only_v2 == eastl::vector<local>{{6}}));
+			EATEST_VERIFY((intersection == eastl::vector<local>{{2}, {9}}));
+		}
+	}
+
+    {
 		// template<typename ForwardIterator1, typename ForwardIterator2>
 		// bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2)
 

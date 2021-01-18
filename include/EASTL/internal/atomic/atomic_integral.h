@@ -69,12 +69,12 @@ namespace internal
 
 	public: /* ctors */
 
-		atomic_integral_base(T desired) EA_NOEXCEPT
+		EA_CONSTEXPR atomic_integral_base(T desired) EA_NOEXCEPT
 			: Base{ desired }
 		{
 		}
 
-		atomic_integral_base() EA_NOEXCEPT = default;
+		EA_CONSTEXPR atomic_integral_base() EA_NOEXCEPT = default;
 
 		atomic_integral_base(const atomic_integral_base&) EA_NOEXCEPT = delete;
 
@@ -227,12 +227,12 @@ namespace internal
 																		\
 	public: /* ctors */													\
 																		\
-		atomic_integral_width(T desired) EA_NOEXCEPT					\
+		EA_CONSTEXPR atomic_integral_width(T desired) EA_NOEXCEPT		\
 			: Base{ desired }											\
 		{																\
 		}																\
 																		\
-		atomic_integral_width() EA_NOEXCEPT = default;					\
+		EA_CONSTEXPR atomic_integral_width() EA_NOEXCEPT = default;		\
 																		\
 		atomic_integral_width(const atomic_integral_width&) EA_NOEXCEPT = delete; \
 																		\
