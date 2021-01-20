@@ -162,7 +162,10 @@ namespace eastl
 		default_delete(const default_delete<U>&, typename eastl::enable_if<is_convertible<U*, T*>::value>::type* = 0) EA_NOEXCEPT {}
 
 		void operator()(T* p) const EA_NOEXCEPT
-			{ delete p; }
+		{
+			static_assert(0 < sizeof(T), "can't delete an incomplete type");
+			delete p;
+		}
 	};
 
 
@@ -179,7 +182,10 @@ namespace eastl
 		default_delete(const default_delete<U[]>&, typename eastl::enable_if<Internal::is_array_cv_convertible<U*, T*>::value>::type* = 0) EA_NOEXCEPT {}
 
 		void operator()(T* p) const EA_NOEXCEPT
-			{ delete[] p; }
+		{
+			static_assert(0 < sizeof(T), "can't delete an incomplete type");
+			delete[] p;
+		}
 	};
 
 
