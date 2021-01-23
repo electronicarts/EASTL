@@ -303,7 +303,12 @@ namespace eastl
 
 		// CtorSprintf exists so that we can create a constructor that accepts printf-style
 		// arguments but also doesn't collide with any other constructor declaration.
-		struct CtorSprintf{};
+		#ifdef EA_PLATFORM_MINGW
+			// Workaround for MinGW compiler bug: variadic arguments are corrupted if empty object is passed before it
+			struct CtorSprintf{ int dummy; };
+		#else
+			struct CtorSprintf{};
+		#endif
 
 		// CtorConvert exists so that we can have a constructor that implements string encoding
 		// conversion, such as between UCS2 char16_t and UTF8 char8_t.
