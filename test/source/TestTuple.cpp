@@ -524,6 +524,23 @@ int TestTuple()
 		static_assert(eastl::is_same_v<eastl::tuple_element_t<0, ResultTuple_t>, eastl::unique_ptr<int[]>>);
 	}
 
+	// support of empty types
+	{
+		static_assert(eastl::is_empty_v<eastl::true_type>);
+
+		static_assert(eastl::tuple_size_v<eastl::tuple<eastl::true_type>> == 1);
+		static_assert(eastl::tuple_size_v<eastl::tuple<int, eastl::true_type>> == 2);
+
+		// check empty base class optimization
+		static_assert(sizeof(eastl::tuple<int>) == sizeof(eastl::tuple<int, eastl::true_type>));
+		
+		// check costruction
+		static_assert(eastl::is_default_constructible_v<eastl::true_type>);
+		static_assert(eastl::is_default_constructible_v<eastl::tuple<eastl::true_type>>);
+		static_assert(eastl::is_constructible_v<eastl::tuple<eastl::true_type>, eastl::true_type>);
+		static_assert(eastl::is_same_v<decltype(eastl::make_tuple(eastl::true_type())), eastl::tuple<eastl::true_type>>);
+	}
+
 	return nErrorCount;
 }
 

@@ -284,6 +284,7 @@ namespace Internal
 	public:
 		// true_type / false_type constructors for case where ValueType is default constructible and should be value
 		// initialized and case where it is not
+		TupleLeaf() = default;
 		TupleLeaf(const TupleLeaf&) = default;
 
 		template <typename T, typename = typename enable_if<is_constructible<ValueType, T&&>::value>::type>
