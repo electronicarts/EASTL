@@ -7,7 +7,9 @@
 #include <EASTL/string.h>
 #include <EABase/eabase.h>
 
-#if defined(EA_PLATFORM_MICROSOFT)
+#if defined(EA_PLATFORM_WINDOWS_KERNEL)
+	#include <Wdm.h>
+#elif defined(EA_PLATFORM_MICROSOFT)
 	EA_DISABLE_ALL_VC_WARNINGS();
 	#if defined(EA_COMPILER_MSVC)
 		#include <crtdbg.h>
@@ -62,7 +64,9 @@ namespace eastl
 	EASTL_API void AssertionFailureFunctionDefault(const char* pExpression, void* /*pContext*/)
 	{
 		#if EASTL_ASSERT_ENABLED
-			#if defined(EA_PLATFORM_MICROSOFT)
+			#if defined(EA_PLATFORM_WINDOWS_KERNEL)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "%s", pExpression);
+			#elif defined(EA_PLATFORM_MICROSOFT)
 				printf("%s\n", pExpression); // Write the message to stdout
 				if( ::IsDebuggerPresent())
 				{
