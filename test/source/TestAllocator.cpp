@@ -129,7 +129,6 @@ static int TestFixedAllocator()
 		typedef eastl::list<int, fixed_allocator_with_overflow> IntList;
 		typedef IntList::node_type IntListNode;
 
-		IntList intList1;
 		const size_t kAlignOfIntListNode = EA_ALIGN_OF(IntListNode);
 
 		// ensure the fixed buffer contains the default value that will be replaced
@@ -139,6 +138,8 @@ static int TestFixedAllocator()
 			buffer1[i].mValue = DEFAULT_VALUE;
 			EATEST_VERIFY(buffer1[i].mValue == DEFAULT_VALUE);
 		}
+
+		IntList intList1;
 
 		// replace all the values in the local buffer with the test value
 		intList1.get_allocator().init(buffer1, sizeof(buffer1), sizeof(IntListNode), kAlignOfIntListNode);
