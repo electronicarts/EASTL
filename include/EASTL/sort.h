@@ -305,7 +305,7 @@ namespace eastl
 					{
 						iBack = iCurrent = iSorted;
 						
-						for(iBack -= nSpace; (iCurrent != iInsertFirst) && compare(*iCurrent, *iBack); iCurrent = iBack, iBack -= nSpace)
+						for(; (iCurrent != iInsertFirst) && compare(*iCurrent, *(iBack -= nSpace)); iCurrent = iBack)
 						{
 							EASTL_VALIDATE_COMPARE(!compare(*iBack, *iCurrent)); // Validate that the compare function is sane.
 							eastl::iter_swap(iCurrent, iBack);
