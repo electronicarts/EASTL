@@ -294,7 +294,7 @@ namespace eastl
 		typedef ptrdiff_t                                       difference_type;
 		typedef Allocator                                       allocator_type;
 
-	static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
+	static const EA_CONSTEXPR size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
 
 	public:
 		// CtorDoNotInitialize exists so that we can create a constructor that allocates but doesn't
