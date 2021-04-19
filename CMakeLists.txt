@@ -52,3 +52,8 @@ endif()
 
 target_link_libraries(EASTL EABase)
 
+#-------------------------------------------------------------------------------------------
+# Installation
+#-------------------------------------------------------------------------------------------
+install(TARGETS EASTL DESTINATION lib)
+install(DIRECTORY include/EASTL DESTINATION include)
