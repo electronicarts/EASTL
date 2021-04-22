@@ -282,9 +282,11 @@ namespace eastl
 		const_reference back() const;
 
 		void            push_back(const value_type& value);
+		void            push_back(value_type&& value);
 		reference       push_back();
 
 		void            push_front(const value_type& value);
+		void            push_front(value_type&& value);
 		reference       push_front();
 
 		void            pop_back();
@@ -1196,6 +1198,27 @@ namespace eastl
 	/// If there is no more space in the buffer, this will result in begin
 	/// being overwritten and the begin position being moved foward one position.
 	template <typename T, typename Container, typename Allocator>
+	void ring_buffer<T, Container, Allocator>::push_back(value_type&& value)
+	{
+		*mEnd = move(value);
+
+		if(++mEnd == c.end())
+			mEnd = c.begin();
+
+		if(mEnd == mBegin)
+		{
+			if(++mBegin == c.end())
+				mBegin = c.begin();
+		}
+		else
+			++mSize;
+	}
+
+	
+	/// A push_back operation on a ring buffer assigns the new value to end.  
+	/// If there is no more space in the buffer, this will result in begin
+	/// being overwritten and the begin position being moved foward one position.
+	template <typename T, typename Container, typename Allocator>
 	typename ring_buffer<T, Container, Allocator>::reference
 	ring_buffer<T, Container, Allocator>::push_back()
 	{
@@ -1250,6 +1273,25 @@ namespace eastl
 		*mBegin = value;
 	}
 
+
+	template <typename T, typename Container, typename Allocator>
+	void ring_buffer<T, Container, Allocator>::push_front(value_type&& value)
+	{
+		if(EASTL_UNLIKELY(mBegin == c.begin()))
+			mBegin = c.end();
+
+		if(--mBegin == mEnd)
+		{
+			if(EASTL_UNLIKELY(mEnd == c.begin()))
+				mEnd = c.end();
+			--mEnd;
+		}
+		else
+			++mSize;
+
+		*mBegin = move(value);
+	}
+	
 
 	template <typename T, typename Container, typename Allocator>
 	typename ring_buffer<T, Container, Allocator>::reference
