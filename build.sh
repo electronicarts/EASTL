@@ -6,6 +6,9 @@ cmake --build . --config Release
 # cmake --build . --config Debug
 # cmake --build . --config RelWithDebInfo
 # cmake --build . --config MinSizeRel
+
+# Test
+
 pushd test
 ctest -C Release -V
 # ctest -C Debug
