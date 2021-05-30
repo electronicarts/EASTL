@@ -1265,8 +1265,8 @@ namespace eastl
 
 		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value &&
 								   eastl::is_same<value_type_input, value_type_output>::value &&
-								  (eastl::is_pointer<BidirectionalIterator1>::value || eastl::is_same<IIC, eastl::contiguous_iterator_tag>::value) &&
-								  (eastl::is_pointer<BidirectionalIterator2>::value || eastl::is_same<OIC, eastl::contiguous_iterator_tag>::value);
+								  (eastl::is_pointer<BidirectionalIterator1>::value || eastl::is_same<IIC, EASTL_ITC_NS::contiguous_iterator_tag>::value) &&
+								  (eastl::is_pointer<BidirectionalIterator2>::value || eastl::is_same<OIC, EASTL_ITC_NS::contiguous_iterator_tag>::value);
 
 		return eastl::move_and_copy_backward_helper<IIC, isMove, canBeMemmoved>::move_or_copy_backward(first, last, resultEnd); // Need to chose based on the input iterator tag and not the output iterator tag, because containers accept input ranges of iterator types different than self.
 	}
