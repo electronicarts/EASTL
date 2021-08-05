@@ -211,7 +211,7 @@ EASTL additions/amendments to std STL
 * vector and string have set_capacity().
 * string has sprintf(), append_sprintf(), trim(), compare_i(), make_lower(), make_upper().
 * deque allows you to specify the subarray size.
-* list has a push_back(void) and push_back(void) function.
+* list has a push_front(void) and push_back(void) function.
 * hash_map, hash_set, etc. have find_as().
 
 EASTL coverage of TR1 (tr1 refers to proposed additions for the next C++ standard library, ~2008)
