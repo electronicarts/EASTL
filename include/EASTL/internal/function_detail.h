@@ -95,7 +95,7 @@ namespace eastl
 		template <typename Functor, int SIZE_IN_BYTES>
 		struct is_functor_inplace_allocatable
 		{
-			static constexpr bool value =
+			static EA_CONSTEXPR bool value =
 			    sizeof(Functor) <= sizeof(functor_storage<SIZE_IN_BYTES>) &&
 			    (eastl::alignment_of_v<functor_storage<SIZE_IN_BYTES>> % eastl::alignment_of_v<Functor>) == 0;
 		};

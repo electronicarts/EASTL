@@ -1505,7 +1505,7 @@ EA_RESTORE_GCC_WARNING()
 	inline typename BitsetBase<2, WordType>::size_type
 	BitsetBase<2, WordType>::count() const
 	{
-		#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 304) // GCC 3.4 or later
+		#if (defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 304)) || defined(__clang__) // GCC 3.4 or later
 			#if(EA_PLATFORM_WORD_SIZE == 4)
 				return (size_type)__builtin_popcountl(mWord[0])  + (size_type)__builtin_popcountl(mWord[1]);
 			#else

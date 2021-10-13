@@ -597,8 +597,7 @@ namespace chrono
 				timespec ts;
 				int result = clock_gettime(CLOCK_MONOTONIC, &ts);
 
-				if(result == EINVAL 
-					)
+				if (result == -1 && errno == EINVAL)
 					result = clock_gettime(CLOCK_REALTIME, &ts);
 
 				const uint64_t nNanoseconds = (uint64_t)ts.tv_nsec + ((uint64_t)ts.tv_sec * UINT64_C(1000000000));

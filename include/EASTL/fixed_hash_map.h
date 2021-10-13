@@ -251,7 +251,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -267,11 +267,13 @@ namespace eastl
 	{
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
 
-		if(!bEnableOverflow)
+		if (!bEnableOverflow)
+		{
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
+		}
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -288,11 +290,13 @@ namespace eastl
 	{
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
 
-		if(!bEnableOverflow)
+		if (!bEnableOverflow)
+		{
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
+		}	
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -314,7 +318,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -377,7 +381,7 @@ namespace eastl
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+		mAllocator.set_name(x.mAllocator.get_name());
 		#endif
 
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
@@ -402,7 +406,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -532,8 +536,10 @@ namespace eastl
 	{
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
 
-		if(!bEnableOverflow)
+		if (!bEnableOverflow)
+		{
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
+		}
 
 		#if EASTL_NAME_ENABLED
 			mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
@@ -556,7 +562,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -577,7 +583,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -599,7 +605,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);
@@ -616,7 +622,7 @@ namespace eastl
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+		mAllocator.set_name(x.mAllocator.get_name());
 		#endif
 
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
@@ -662,7 +668,7 @@ namespace eastl
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
+		mAllocator.set_name(x.mAllocator.get_name());
 		#endif
 
 		EASTL_CT_ASSERT((nodeCount >= 1) && (bucketCount >= 2));
@@ -687,7 +693,7 @@ namespace eastl
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
 		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
+		mAllocator.set_name(EASTL_FIXED_HASH_MULTIMAP_DEFAULT_NAME);
 		#endif
 
 		mAllocator.reset(mNodeBuffer);

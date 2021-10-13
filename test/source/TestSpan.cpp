@@ -295,7 +295,7 @@ void TestSpanContainerConversion(int& nErrorCount)
 
 	{
 		vector<int> v = {0, 1, 2, 3, 4, 5};
-		span<const int, 3> s1(v);
+		span<const int, 6> s1(v);
 		span<const int> s2(s1);
 		
 		VERIFY(s2.size() == (span<const int>::index_type)v.size());
@@ -389,6 +389,24 @@ void TestSpanSubViews(int& nErrorCount)
 		VERIFY(first_span[1] == 7);
 		VERIFY(first_span[2] == 8);
 		VERIFY(first_span[3] == 9);
+	}
+
+	{ // empty range
+		span<int, 0> s{};
+
+		auto fixed_span = s.subspan<0, 0>();
+		VERIFY(fixed_span.empty());
+		fixed_span = s.first<0>();
+		VERIFY(fixed_span.empty());
+		fixed_span = s.last<0>();
+		VERIFY(fixed_span.empty());
+
+		span<int> dynamic_span;
+		VERIFY(dynamic_span.empty());
+		dynamic_span = s.first(0);
+		VERIFY(dynamic_span.empty());
+		dynamic_span = s.last(0);
+		VERIFY(dynamic_span.empty());
 	}
 
 	{ // subspan: full range

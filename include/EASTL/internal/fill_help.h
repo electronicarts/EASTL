@@ -85,7 +85,7 @@ namespace eastl
 
 	}
 
-	#if(defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+	#if (defined(EA_COMPILER_GNUC) || defined(__clang__)) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
 		#if defined(EA_PROCESSOR_X86_64)
 			template <typename Value>
 			inline void fill(uint64_t* first, uint64_t* last, Value c)
@@ -327,7 +327,7 @@ namespace eastl
 		}
 	#endif
 
-	#if(defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+	#if (defined(EA_COMPILER_GNUC) || defined(__clang__)) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
 		#if defined(EA_PROCESSOR_X86_64)
 			template <typename Size, typename Value>
 			inline uint64_t* fill_n(uint64_t* first, Size n, Value c)

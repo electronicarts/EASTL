@@ -46,7 +46,7 @@
 
 	#endif
 
-#elif defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)
+#elif defined(__clang__) || defined(EA_COMPILER_GNUC)
 
 	/**
 	* NOTE:

@@ -57,7 +57,7 @@ EA_DISABLE_VC_WARNING(4310 4296)
 // Indicates whether we need to define our own implementations of inf, nan, snan, denorm floating point constants. 
 //
 #if !defined(EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED)
-	#if (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG) && defined(__FLT_MIN__)) || defined(_CPPLIB_VER) // __FLT_MIN__ detects if it's really GCC/clang and not a mimic. _CPPLIB_VER (Dinkumware) covers VC++, and Microsoft platforms.
+	#if (defined(EA_COMPILER_GNUC) || defined(__clang__) && defined(__FLT_MIN__)) || defined(_CPPLIB_VER) // __FLT_MIN__ detects if it's really GCC/clang and not a mimic. _CPPLIB_VER (Dinkumware) covers VC++, and Microsoft platforms.
 		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 0
 	#else
 		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 1
@@ -1213,7 +1213,7 @@ namespace eastl
 	};
 
 
-	#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) // If __int128_t/__uint128_t is supported...
+	#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 		// numeric_limits<__uint128_t>
 		template<>
 		struct numeric_limits<__uint128_t>
@@ -1391,7 +1391,7 @@ namespace eastl
 			static value_type denorm_min() 
 				{ return Internal::gFloatDenorm; }
 
-		#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && defined(__FLT_MIN__)
+		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__FLT_MIN__)
 			static EA_CONSTEXPR value_type min()
 				{ return __FLT_MIN__; }
 
@@ -1509,7 +1509,7 @@ namespace eastl
 			static value_type denorm_min() 
 				{ return Internal::gDoubleDenorm; }
 
-		#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && defined(__DBL_MIN__)
+		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__DBL_MIN__)
 			static EA_CONSTEXPR value_type min()
 				{ return __DBL_MIN__; }
 
@@ -1627,7 +1627,7 @@ namespace eastl
 			static value_type denorm_min() 
 				{ return Internal::gLongDoubleDenorm; }
 
-		#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && defined(__LDBL_MIN__)
+		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__LDBL_MIN__)
 			static EA_CONSTEXPR value_type min()
 				{ return __LDBL_MIN__; }
 

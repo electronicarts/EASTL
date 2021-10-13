@@ -162,7 +162,10 @@ namespace eastl
 		default_delete(const default_delete<U>&, typename eastl::enable_if<is_convertible<U*, T*>::value>::type* = 0) EA_NOEXCEPT {}
 
 		void operator()(T* p) const EA_NOEXCEPT
-			{ delete p; }
+		{
+			static_assert(eastl::internal::is_complete_type_v<T>, "Attempting to call the destructor of an incomplete type");
+			delete p;
+		}
 	};
 
 

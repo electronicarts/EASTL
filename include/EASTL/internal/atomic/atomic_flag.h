@@ -42,13 +42,13 @@ public: /* deleted ctors && assignment operators */
 public: /* clear */
 
 	template <typename Order>
-	void clear(Order order) volatile EA_NOEXCEPT
+	void clear(Order /*order*/) volatile EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(Order);
 	}
 
 	template <typename Order>
-	void clear(Order order) EA_NOEXCEPT
+	void clear(Order /*order*/) EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(Order);
 	}
@@ -76,14 +76,14 @@ public: /* clear */
 public: /* test_and_set */
 
 	template <typename Order>
-	bool test_and_set(Order order) volatile EA_NOEXCEPT
+	bool test_and_set(Order /*order*/) volatile EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(Order);
 		return false;
 	}
 
 	template <typename Order>
-	bool test_and_set(Order order) EA_NOEXCEPT
+	bool test_and_set(Order /*order*/) EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(Order);
 		return false;
@@ -122,14 +122,14 @@ public: /* test_and_set */
 public: /* test */
 
 	template <typename Order>
-	bool test(Order order) const volatile EA_NOEXCEPT
+	bool test(Order /*order*/) const volatile EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(Order);
 		return false;
 	}
 
 	template <typename Order>
-	bool test(Order order) const EA_NOEXCEPT
+	bool test(Order /*order*/) const EA_NOEXCEPT
 	{
 		EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(Order);
 		return false;

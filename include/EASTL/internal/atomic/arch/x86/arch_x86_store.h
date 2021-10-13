@@ -145,7 +145,7 @@
 #endif
 
 
-#if ((defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
+#if ((defined(__clang__) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
 
 
 	#define EASTL_ARCH_ATOMIC_X86_STORE_128(type, ptr, val, MemoryOrder)	\

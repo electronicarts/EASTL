@@ -40,7 +40,7 @@
 			#endif
 		#elif defined(EA_PLATFORM_BSD)
 			#include <malloc/malloc.h>
-		#elif defined(EA_COMPILER_CLANG)
+		#elif defined(__clang__)
 			#if __has_include(<malloc/malloc.h>)
 				#include <malloc/malloc.h>
 			#elif __has_include(<malloc.h>)

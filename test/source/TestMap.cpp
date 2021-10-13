@@ -120,6 +120,19 @@ int TestMap()
 	}
 
 	{
+		eastl::map<int*, int> m;
+		int* ip = (int*)(uintptr_t)0xDEADC0DE;
+
+		m[ip] = 0;
+
+		auto it = m.find_as(ip, eastl::less_2<int*, int*>{});
+		EATEST_VERIFY(it != m.end());
+
+		it = m.find_as((int*)(uintptr_t)0xDEADC0DE, eastl::less_2<int*, int*>{});
+		EATEST_VERIFY(it != m.end());
+	}
+
+	{
 		// User reports that vector<map<enum,enum>> is crashing after the recent changes to add rvalue move and emplace support to rbtree.
 		typedef eastl::map<int, int>     IntIntMap;
 		typedef eastl::vector<IntIntMap> IntIntMapArray;

@@ -25,7 +25,7 @@ namespace eastl
 	//
 	// is_empty cannot be used with union types until is_union can be made to work.
 	///////////////////////////////////////////////////////////////////////
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_empty)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_empty)))
 		#define EASTL_TYPE_TRAIT_is_empty_CONFORMANCE 1    // is_empty is conforming. 
 
 		template <typename T> 
@@ -90,7 +90,7 @@ namespace eastl
 		struct is_pod : public eastl::integral_constant<bool, (__has_trivial_constructor(T) && __is_pod(T) && !eastl::is_hat_type<T>::value) || eastl::is_void<T>::value || eastl::is_scalar<T>::value>{};
 		EA_RESTORE_VC_WARNING()
 	
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_pod)))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_pod)))
 		#define EASTL_TYPE_TRAIT_is_pod_CONFORMANCE 1    // is_pod is conforming.
 
 		template <typename T> 
@@ -128,7 +128,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// is_standard_layout
 	//
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(EA_COMPILER_MSVC) && (_MSC_VER >= 1700)) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_standard_layout)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(EA_COMPILER_MSVC) && (_MSC_VER >= 1700)) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_standard_layout)))
 		#define EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE 1    // is_standard_layout is conforming.
 
 		template <typename T> 
@@ -182,12 +182,12 @@ namespace eastl
 	// can be called without an argument.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(_MSC_VER) && (_MSC_VER >= 1600) // VS2010+
+	#if defined(_MSC_VER) && (_MSC_VER >= 1600) && !defined(EA_COMPILER_CLANG_CL) // VS2010+
 		#define EASTL_TYPE_TRAIT_has_trivial_constructor_CONFORMANCE 1    // has_trivial_constructor is conforming.
 
 		template <typename T> 
 		struct has_trivial_constructor : public eastl::integral_constant<bool, (__has_trivial_constructor(T) || eastl::is_pod<T>::value) && !eastl::is_hat_type<T>::value>{};
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_trivial_constructor_CONFORMANCE 1    // has_trivial_constructor is conforming.
 
 		template <typename T> 
@@ -242,12 +242,12 @@ namespace eastl
 	// use EASTL_DECLARE_TRIVIAL_COPY to help the compiler.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(_MSC_VER)
+	#if defined(_MSC_VER) && !defined(EA_COMPILER_CLANG_CL)
 		#define EASTL_TYPE_TRAIT_has_trivial_copy_CONFORMANCE 1    // has_trivial_copy is conforming.
 
 		template <typename T> 
 		struct has_trivial_copy : public eastl::integral_constant<bool, (__has_trivial_copy(T) || eastl::is_pod<T>::value) && !eastl::is_volatile<T>::value && !eastl::is_hat_type<T>::value>{};
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_trivial_copy_CONFORMANCE 1    // has_trivial_copy is conforming.
 
 		template <typename T> 
@@ -292,12 +292,12 @@ namespace eastl
 	// can use EASTL_DECLARE_TRIVIAL_ASSIGN to help the compiler.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(_MSC_VER) && (_MSC_VER >= 1600)
+	#if defined(_MSC_VER) && (_MSC_VER >= 1600) && !defined(EA_COMPILER_CLANG_CL)
 		#define EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE 1    // has_trivial_assign is conforming.
 
 		template <typename T> 
 		struct has_trivial_assign : public integral_constant<bool, (__has_trivial_assign(T) || eastl::is_pod<T>::value) && !eastl::is_const<T>::value && !eastl::is_volatile<T>::value && !eastl::is_hat_type<T>::value>{};
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE 1    // has_trivial_assign is conforming.
 
 		template <typename T> 
@@ -341,12 +341,12 @@ namespace eastl
 	// The user can use EASTL_DECLARE_TRIVIAL_DESTRUCTOR to help the compiler.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(_MSC_VER) && (_MSC_VER >= 1600)
+	#if defined(_MSC_VER) && (_MSC_VER >= 1600) && !defined(EA_COMPILER_CLANG_CL)
 		#define EASTL_TYPE_TRAIT_has_trivial_destructor_CONFORMANCE 1    // has_trivial_destructor is conforming.
 
 		template <typename T> 
 		struct has_trivial_destructor : public eastl::integral_constant<bool, (__has_trivial_destructor(T) || eastl::is_pod<T>::value) && !eastl::is_hat_type<T>::value>{};
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_trivial_destructor_CONFORMANCE 1    // has_trivial_destructor is conforming.
 
 		template <typename T> 
@@ -412,7 +412,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_nothrow_constructor_CONFORMANCE 1
 
 		template <typename T> 
@@ -452,7 +452,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_nothrow_copy_CONFORMANCE 1
 
 		template <typename T> 
@@ -491,7 +491,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_nothrow_assign_CONFORMANCE 1
 
 		template <typename T> 
@@ -529,7 +529,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_has_virtual_destructor_CONFORMANCE 1
 
 		template <typename T> 
@@ -571,7 +571,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_literal))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_literal))
 		#define EASTL_TYPE_TRAIT_is_literal_type_CONFORMANCE 1
 
 		template <typename T> 
@@ -615,7 +615,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_abstract)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_abstract)))
 		#define EASTL_TYPE_TRAIT_is_abstract_CONFORMANCE 1    // is_abstract is conforming.
 
 		template <typename T> 
@@ -672,7 +672,7 @@ namespace eastl
 	// up obj1 are copied into obj2, obj2 shall subsequently hold the 
 	// same value as obj1. In other words, you can memcpy/memmove it.
 	///////////////////////////////////////////////////////////////////////
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(_MSC_VER) && (_MSC_VER >= 1700)) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 5003)) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_trivially_copyable)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(_MSC_VER) && (_MSC_VER >= 1700)) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 5003)) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_copyable)))
 		#define EASTL_TYPE_TRAIT_is_trivially_copyable_CONFORMANCE 1
 
 		// https://connect.microsoft.com/VisualStudio/feedback/details/808827/c-std-is-trivially-copyable-produces-wrong-result-for-arrays
@@ -731,7 +731,7 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_constructible_CONFORMANCE 1
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_constructible)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_constructible)))
 		template<typename T, typename... Args>
 		struct is_constructible : public bool_constant<__is_constructible(T, Args...) > {};
 	#else
@@ -850,7 +850,7 @@ namespace eastl
 		// whether the __is_trivially_constructible compiler intrinsic is available.
 
 		// If the compiler has this trait built-in (which ideally all compilers would have since it's necessary for full conformance) use it.
-		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
+		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
 
 			template <typename T, typename Arg0 = eastl::unused>
 			struct is_trivially_constructible 
@@ -915,7 +915,7 @@ namespace eastl
 	#else
 
 		// If the compiler has this trait built-in (which ideally all compilers would have since it's necessary for full conformance) use it.
-		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
+		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
 			#define EASTL_TYPE_TRAIT_is_trivially_constructible_CONFORMANCE 1
 
 			// We have a problem with clang here as of clang 3.4: __is_trivially_constructible(int[]) is false, yet I believe it should be true.
@@ -1380,7 +1380,7 @@ namespace eastl
 	// arrays of unknown bound
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_trivially_assignable))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_assignable))
 		#define EASTL_TYPE_TRAIT_is_trivially_assignable_CONFORMANCE 1
 
 		template <typename T, typename U>
@@ -1778,7 +1778,7 @@ namespace eastl
 		struct is_trivially_destructible
 			: integral_constant<bool, __is_trivially_destructible(T)> {};
 
-	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || defined(__clang__))
 		#define EASTL_TYPE_TRAIT_is_trivially_destructible_CONFORMANCE EASTL_TYPE_TRAIT_is_destructible_CONFORMANCE
 
 		template <typename T>

@@ -63,12 +63,12 @@ namespace eastl
 	///     OverflowAllocator      Overflow allocator, which is only used if bEnableOverflow == true. Defaults to the global heap.
 	///
 	template <typename T, size_t nodeCount, bool bEnableOverflow = true, typename OverflowAllocator = EASTLAllocatorType>
-	class fixed_slist : public slist<T, fixed_node_allocator<sizeof(typename slist<T>::node_type), 
-									 nodeCount, EASTL_ALIGN_OF(T), 0, bEnableOverflow, OverflowAllocator> >
+	class fixed_slist : public slist<T, fixed_node_allocator<sizeof(typename slist<T>::node_type),
+									 nodeCount, EASTL_ALIGN_OF(typename slist<T>::node_type), 0, bEnableOverflow, OverflowAllocator> >
 	{
 	public:
-		typedef fixed_node_allocator<sizeof(typename slist<T>::node_type), nodeCount, 
-					 EASTL_ALIGN_OF(T), 0, bEnableOverflow, OverflowAllocator> fixed_allocator_type;
+		typedef fixed_node_allocator<sizeof(typename slist<T>::node_type), nodeCount,
+					 EASTL_ALIGN_OF(typename slist<T>::node_type), 0, bEnableOverflow, OverflowAllocator> fixed_allocator_type;
 		typedef OverflowAllocator                                              overflow_allocator_type;
 		typedef slist<T, fixed_allocator_type>                                 base_type;
 		typedef fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>  this_type;

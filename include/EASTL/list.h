@@ -771,7 +771,7 @@ namespace eastl
 	inline typename ListBase<T, Allocator>::node_type*
 	ListBase<T, Allocator>::DoAllocateNode()
 	{
-		node_type* pNode = (node_type*)allocate_memory(internalAllocator(), sizeof(node_type), EASTL_ALIGN_OF(T), 0);
+		node_type* pNode = (node_type*)allocate_memory(internalAllocator(), sizeof(node_type), EASTL_ALIGN_OF(node_type), 0);
 		EASTL_ASSERT(pNode != nullptr);
 		return pNode;
 	}

@@ -169,6 +169,7 @@ namespace eastl
 		rbtree_iterator();
 		explicit rbtree_iterator(const node_type* pNode);
 		rbtree_iterator(const iterator& x);
+		rbtree_iterator& operator=(const iterator& x);
 
 		reference operator*() const;
 		pointer   operator->() const;
@@ -662,6 +663,13 @@ namespace eastl
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const iterator& x)
 		: mpNode(x.mpNode) { }
 
+	template <typename T, typename Pointer, typename Reference>
+	typename rbtree_iterator<T, Pointer, Reference>::this_type&
+	rbtree_iterator<T, Pointer, Reference>::operator=(const iterator& x)
+	{
+		mpNode = x.mpNode;
+		return *this;
+	}
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::reference

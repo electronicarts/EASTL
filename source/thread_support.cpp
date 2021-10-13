@@ -49,7 +49,11 @@ namespace eastl
 					pthread_mutexattr_t attr;
 
 					pthread_mutexattr_init(&attr);
-					pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE); 
+
+					#if defined(EA_HAVE_pthread_mutexattr_setpshared_DECL)
+						pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
+					#endif
+
 					pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 					pthread_mutex_init(&mMutex, &attr);
 					pthread_mutexattr_destroy(&attr);
