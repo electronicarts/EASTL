@@ -19,7 +19,18 @@ include(CommonCppFlags)
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTL_SOURCES "source/*.cpp")
+set(EASTL_SOURCES
+    source/allocator_eastl.cpp
+    source/assert.cpp
+    source/atomic.cpp
+    source/fixed_pool.cpp
+    source/hashtable.cpp
+    source/intrusive_list.cpp
+    source/numeric_limits.cpp
+    source/red_black_tree.cpp
+    source/string.cpp
+    source/thread_support.cpp
+)
 add_library(EASTL ${EASTL_SOURCES})
 
 if(EASTL_BUILD_BENCHMARK)
