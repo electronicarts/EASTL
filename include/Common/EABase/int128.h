@@ -282,9 +282,11 @@ EA_CONSTEXPR inline int128_t_base::operator unsigned int() const       { return 
 EA_CONSTEXPR inline int128_t_base::operator unsigned long long() const { return static_cast<unsigned long long>(Low()); }
 EA_CONSTEXPR inline int128_t_base::operator unsigned long() const	   { return static_cast<unsigned long>(Low()); }
 EA_CONSTEXPR inline int128_t_base::operator unsigned short() const     { return static_cast<unsigned short>(Low()); }
+#if !defined(EA_COMPILER_NO_FLOATS)
 EA_CONSTEXPR inline int128_t_base::operator float() const              { return static_cast<float>(Low()); }
 EA_CONSTEXPR inline int128_t_base::operator double() const             { return static_cast<double>(Low()); }
 EA_CONSTEXPR inline int128_t_base::operator long double() const        { return static_cast<long double>(Low()); }
+#endif
 #if EA_INT128_INTRINSIC_AVAILABLE
 EA_CONSTEXPR inline int128_t_base::operator __int128() const           { return static_cast<__int128>(Low()); }
 EA_CONSTEXPR inline int128_t_base::operator unsigned __int128() const  { return static_cast<unsigned __int128>(Low()); }
