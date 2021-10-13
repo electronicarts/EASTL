@@ -73,9 +73,11 @@ struct EA_INT128_ALIGNAS int128_t_base
 	// EA_CONSTEXPR explicit operator char32_t() const;
 	// EA_CONSTEXPR explicit operator wchar_t() const;
 #endif
+#if !defined(EA_COMPILER_NO_FLOATS)
 	EA_CONSTEXPR explicit operator float() const;
 	EA_CONSTEXPR explicit operator double() const;
 	EA_CONSTEXPR explicit operator long double() const;
+#endif
 #if EA_INT128_INTRINSIC_AVAILABLE
 	EA_CONSTEXPR explicit operator __int128() const;
 	EA_CONSTEXPR explicit operator unsigned __int128() const;
