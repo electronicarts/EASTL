@@ -841,7 +841,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////
 // C++17 structured bindings support for eastl::pair
 //
-#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+#if !defined(EA_COMPILER_NO_STRUCTURED_BINDING) && !defined(EA_NO_HAVE_CPP11_TUPLES)
 	#include <tuple>
 	namespace std
 	{
