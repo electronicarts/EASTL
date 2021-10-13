@@ -1333,6 +1333,7 @@ namespace eastl
 	#endif
 
 
+#if !defined(EA_COMPILER_NO_FLOATS)
 	// numeric_limits<float>
 	template<>
 	struct numeric_limits<float>
@@ -1449,7 +1450,6 @@ namespace eastl
 
 		#endif
 	};
-
 
 	// numeric_limits<double>
 	template<>
@@ -1685,6 +1685,7 @@ namespace eastl
 
 		#endif
 	};
+#endif
 
 } // namespace eastl
 

@@ -2,6 +2,9 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <EABase/config/eacompiler.h>
+
+#if !defined(EA_COMPILER_NO_FLOATS)
 
 #include <EASTL/internal/hashtable.h>
 #include <EASTL/utility.h>
@@ -175,3 +178,5 @@ namespace eastl
 } // namespace eastl
 
 EA_RESTORE_VC_WARNING();
+
+#endif
