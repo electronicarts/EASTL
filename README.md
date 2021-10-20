@@ -42,13 +42,13 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on compiling and testi
 
 ## Credits And Maintainers
 
-EASTL was created by Paul Pedriana and he maintained the project for roughly 10 years.  
+EASTL was created by Paul Pedriana and he maintained the project for roughly 10 years.
 
 EASTL was subsequently maintained by Roberto Parolin for more than 8 years.
 He was the driver and proponent for getting EASTL opensourced.
 Rob was a mentor to all members of the team and taught us everything we ever wanted to know about C++ spookyness.
 
-Max Winkler is the current EASTL owner and primary maintainer within EA and is responsible for the open source repository.
+After Rob, maintenance of EASTL passed to Max Winkler for roughly a year, until landing with its current maintainer Liam Mitchell.
 
 Significant EASTL contributions were made by (in alphabetical order):
 
