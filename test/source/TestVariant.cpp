@@ -657,6 +657,7 @@ EA_NO_INLINE int TestVariantVisitNoInline(const eastl::variant<int, bool, unsign
 	struct MyVisitor
 	{
 		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
 
 		void operator()(int) { mVisited = true; }
 		void operator()(bool) { mVisited = true; }
@@ -681,6 +682,7 @@ EA_NO_INLINE int TestVariantVisit2NoInline(const eastl::variant<int, bool>& v0, 
 	struct MyVisitor
 	{
 		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
 
 		void operator()(int, int) { mVisited = true; }
 		void operator()(bool, int) { mVisited = true; }
@@ -706,6 +708,7 @@ EA_NO_INLINE int TestVariantVisit3tNoInline(const eastl::variant<int, bool>& v0,
 	struct MyVisitor
 	{
 		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
 
 		void operator()(int, int, int) { mVisited = true; }
 		void operator()(bool, int, int) { mVisited = true; }
@@ -979,6 +982,7 @@ int TestVariantVisitor()
 		struct MultipleVisitor
 		{
 			MultipleVisitor() = delete;
+			MultipleVisitor(bool& b) : mVisited(b) {}
 
 			void operator()(int, int) { mVisited = true; }
 			void operator()(int, bool) {}
