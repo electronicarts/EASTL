@@ -994,8 +994,18 @@ int TestHash()
 				EATEST_VERIFY(it != hashSet.end());
 			else
 				EATEST_VERIFY(it == hashSet.end());
+
+			string::CtorSprintf cs;
+		    string s(cs, "%d", i);
+
+			it = hashSet.find_as(s);
+		    if (i < kCount)
+			    EATEST_VERIFY(it != hashSet.end());
+		    else
+			    EATEST_VERIFY(it == hashSet.end());
 		}
 	}
+
 
 	{
 		// Test const containers.

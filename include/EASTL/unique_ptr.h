@@ -88,6 +88,7 @@ namespace eastl
 	template <typename T, typename Deleter = eastl::default_delete<T> > 
 	class unique_ptr
 	{
+		static_assert(!is_rvalue_reference<Deleter>::value, "The supplied Deleter cannot be a r-value reference.");
 	public:
 		typedef Deleter                                                                  deleter_type;
 		typedef T                                                                        element_type;
@@ -130,7 +131,7 @@ namespace eastl
 		/// Example usage:
 		///     eastl::smart_ptr_deleter<int> del;
 		///     unique_ptr<int> ptr(new int(3), del);
-		unique_ptr(pointer pValue, typename eastl::conditional<eastl::is_reference<deleter_type>::value, deleter_type, typename eastl::add_lvalue_reference<const deleter_type>::type>::type deleter) EA_NOEXCEPT
+		unique_ptr(pointer pValue, typename eastl::conditional<eastl::is_lvalue_reference<deleter_type>::value, deleter_type, typename eastl::add_lvalue_reference<const deleter_type>::type>::type deleter) EA_NOEXCEPT
 			: mPair(pValue, deleter) {}
 
 		/// unique_ptr
@@ -140,7 +141,7 @@ namespace eastl
 		unique_ptr(pointer pValue, typename eastl::remove_reference<deleter_type>::type&& deleter) EA_NOEXCEPT
 			: mPair(pValue, eastl::move(deleter))
 		{
-			static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
+			static_assert(!eastl::is_lvalue_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
 		}
 
 		/// unique_ptr
@@ -157,7 +158,7 @@ namespace eastl
 		///     unique_ptr<int> ptr(new int(3));
 		///     unique_ptr<int> newPtr = eastl::move(ptr);
 		template <typename U, typename E>
-		unique_ptr(unique_ptr<U, E>&& u, typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_convertible<E, deleter_type>::value && (is_same<deleter_type, E>::value || !is_reference<deleter_type>::value)>::type* = 0) EA_NOEXCEPT
+		unique_ptr(unique_ptr<U, E>&& u, typename enable_if<!is_array<U>::value && is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value && is_convertible<E, deleter_type>::value && (is_same<deleter_type, E>::value || !is_lvalue_reference<deleter_type>::value)>::type* = 0) EA_NOEXCEPT
 			: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
 
 		/// unique_ptr
@@ -383,7 +384,7 @@ namespace eastl
 		}
 
 		template <typename P>
-		unique_ptr(P pArray, typename eastl::conditional<eastl::is_reference<deleter_type>::value, deleter_type,
+		unique_ptr(P pArray, typename eastl::conditional<eastl::is_lvalue_reference<deleter_type>::value, deleter_type,
 														typename eastl::add_lvalue_reference<const deleter_type>::type>::type deleter,
 														typename eastl::enable_if<Internal::is_array_cv_convertible<P, pointer>::value>::type* = 0) EA_NOEXCEPT
 			: mPair(pArray, deleter) {}
@@ -392,7 +393,7 @@ namespace eastl
 		unique_ptr(P pArray, typename eastl::remove_reference<deleter_type>::type&& deleter, eastl::enable_if_t<Internal::is_array_cv_convertible<P, pointer>::value>* = 0) EA_NOEXCEPT
 			: mPair(pArray, eastl::move(deleter))
 		{
-			static_assert(!eastl::is_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
+			static_assert(!eastl::is_lvalue_reference<deleter_type>::value, "deleter_type reference refers to an rvalue deleter. The reference will probably become invalid before used. Change the deleter_type to not be a reference or construct with permanent deleter.");
 		}
 
 		unique_ptr(this_type&& x) EA_NOEXCEPT
@@ -401,7 +402,7 @@ namespace eastl
 		template <typename U, typename E>
 		unique_ptr(unique_ptr<U, E>&& u, typename enable_if<Internal::is_safe_array_conversion<T, pointer, U, typename unique_ptr<U, E>::pointer>::value && 
 															eastl::is_convertible<E, deleter_type>::value &&
-														   (!eastl::is_reference<deleter_type>::value || eastl::is_same<E, deleter_type>::value)>::type* = 0) EA_NOEXCEPT
+														   (!eastl::is_lvalue_reference<deleter_type>::value || eastl::is_same<E, deleter_type>::value)>::type* = 0) EA_NOEXCEPT
 			: mPair(u.release(), eastl::forward<E>(u.get_deleter())) {}
 
 		this_type& operator=(this_type&& x) EA_NOEXCEPT

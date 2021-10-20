@@ -13,6 +13,27 @@
 #include <EASTL/variant.h>
 
 
+#if EASTL_EXCEPTIONS_ENABLED
+
+// Intentionally Non-Trivial.
+// There are optimizations we can make in variant if the types are trivial that we don't currently do but can do.
+template <typename T>
+struct valueless_struct
+{
+	valueless_struct() {}
+
+	valueless_struct(const valueless_struct&) {}
+
+	~valueless_struct() {}
+
+	struct exception_tag {};
+
+	operator T() const { throw exception_tag{}; }
+};
+
+#endif
+
+
 int TestVariantAlternative()
 {
 	using namespace eastl;
@@ -625,6 +646,89 @@ int TestVariantInplaceCtors()
 	return nErrorCount;
 }
 
+// Many Compilers are smart and will fully inline the visitor in our unittests,
+// Thereby not actually testing the recursive call.
+EA_NO_INLINE int TestVariantVisitNoInline(const eastl::variant<int, bool, unsigned>& v)
+{
+	int nErrorCount = 0;
+
+	bool bVisited = false;
+
+	struct MyVisitor
+	{
+		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
+
+		void operator()(int) { mVisited = true; }
+		void operator()(bool) { mVisited = true; }
+		void operator()(unsigned) { mVisited = true; }
+
+		bool& mVisited;
+	};
+
+	eastl::visit(MyVisitor{bVisited}, v);
+
+	EATEST_VERIFY(bVisited);
+
+	return nErrorCount;
+}
+
+EA_NO_INLINE int TestVariantVisit2NoInline(const eastl::variant<int, bool>& v0, const eastl::variant<int, bool>& v1)
+{
+	int nErrorCount = 0;
+
+	bool bVisited = false;
+
+	struct MyVisitor
+	{
+		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
+
+		void operator()(int, int) { mVisited = true; }
+		void operator()(bool, int) { mVisited = true; }
+		void operator()(int, bool) { mVisited = true; }
+		void operator()(bool, bool) { mVisited = true; }
+
+		bool& mVisited;
+	};
+
+	eastl::visit(MyVisitor{bVisited}, v0, v1);
+
+	EATEST_VERIFY(bVisited);
+
+	return nErrorCount;
+}
+
+EA_NO_INLINE int TestVariantVisit3tNoInline(const eastl::variant<int, bool>& v0, const eastl::variant<int, bool>& v1, const eastl::variant<int, bool>& v2)
+{
+	int nErrorCount = 0;
+
+	bool bVisited = false;
+
+	struct MyVisitor
+	{
+		MyVisitor() = delete;
+		MyVisitor(bool& b) : mVisited(b) {}
+
+		void operator()(int, int, int) { mVisited = true; }
+		void operator()(bool, int, int) { mVisited = true; }
+		void operator()(int, bool, int) { mVisited = true; }
+		void operator()(bool, bool, int) { mVisited = true; }
+
+		void operator()(int, int, bool) { mVisited = true; }
+		void operator()(bool, int, bool) { mVisited = true; }
+		void operator()(int, bool, bool) { mVisited = true; }
+		void operator()(bool, bool, bool) { mVisited = true; }
+
+		bool& mVisited;
+	};
+
+	eastl::visit(MyVisitor{bVisited}, v0, v1, v2);
+
+	EATEST_VERIFY(bVisited);
+
+	return nErrorCount;
+}
 
 int TestVariantVisitor()
 {
@@ -662,6 +766,14 @@ int TestVariantVisitor()
 		}
 
 		VERIFY(count == EAArrayCount(arr));
+
+		count = 0;
+		for (auto& e : arr)
+		{
+			eastl::visit<void>([&](auto){ count++; }, e);
+		}
+
+		VERIFY(count == EAArrayCount(arr));
 	}
 
 	{
@@ -671,14 +783,171 @@ int TestVariantVisitor()
 
 		struct MyVisitor
 		{
-			MyVisitor& operator()(int)      { bVisited = true; return *this; };
-			MyVisitor& operator()(long)     { return *this; };
-			MyVisitor& operator()(string)   { return *this; };
-			MyVisitor& operator()(unsigned) { return *this; }; // not in variant
+			void operator()(int)      { bVisited = true; };
+			void operator()(long)     { };
+			void operator()(string)   { };
+			void operator()(unsigned) { }; // not in variant
 		};
 
 		visit(MyVisitor{}, v);
 		VERIFY(bVisited);
+
+		bVisited = false;
+
+		visit<void>(MyVisitor{}, v);
+		VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		variant<int, bool, unsigned> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool& operator()(int) { return bVisited; }
+			bool& operator()(bool) { return bVisited; }
+			bool& operator()(unsigned) { return bVisited; }
+		};
+
+		bool& ret = visit(MyVisitor{}, v);
+		ret = true;
+		VERIFY(bVisited);
+
+		bVisited = false;
+		bool& ret2 = visit<bool&>(MyVisitor{}, v);
+		ret2 = true;
+		VERIFY(bVisited);
+	}
+
+	{
+		variant<int, bool, unsigned> v = (int)1;
+
+		struct MyVisitor
+		{
+			void operator()(int& i) { i = 2; }
+			void operator()(bool&) {}
+			void operator()(unsigned&) {}
+		};
+
+		visit(MyVisitor{}, v);
+		EATEST_VERIFY(get<0>(v) == (int)2);
+
+		v = (int)1;
+		visit<void>(MyVisitor{}, v);
+		EATEST_VERIFY(get<0>(v) == (int)2);
+	}
+
+	{
+		static bool bVisited = false;
+
+		variant<int, bool, unsigned> v =(int)1;
+
+		struct MyVisitor
+		{
+			void operator()(const int&) { bVisited = true; }
+			void operator()(const bool&) {}
+			void operator()(const unsigned&) {}
+		};
+
+		visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+
+		bVisited = false;
+		visit<void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		const variant<int, bool, unsigned> v =(int)1;
+
+		struct MyVisitor
+		{
+			void operator()(const int&) { bVisited = true; }
+			void operator()(const bool&) {}
+			void operator()(const unsigned&) {}
+		};
+
+		visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+
+		bVisited = false;
+		visit<void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		struct MyVisitor
+		{
+			void operator()(int&&) { bVisited = true; }
+			void operator()(bool&&) {}
+			void operator()(unsigned&&) {}
+		};
+
+		visit(MyVisitor{}, variant<int, bool, unsigned>{(int)1});
+		EATEST_VERIFY(bVisited);
+
+		visit<void>(MyVisitor{}, variant<int, bool, unsigned>{(int)1});
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		variant<int, bool, unsigned> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool&& operator()(int) { return eastl::move(bVisited); }
+			bool&& operator()(bool) { return eastl::move(bVisited); }
+			bool&& operator()(unsigned) { return eastl::move(bVisited); }
+		};
+
+		bool&& ret = visit(MyVisitor{}, v);
+		ret = true;
+		VERIFY(bVisited);
+
+		bVisited = false;
+		bool&& ret2 = visit<bool&&>(MyVisitor{}, v);
+		ret2 = true;
+		VERIFY(bVisited);
+	}
+
+	{
+		variant<int, bool, unsigned> v = (int)1;
+
+		TestVariantVisitNoInline(v);
+		v = (bool)true;
+		TestVariantVisitNoInline(v);
+		v = (int)3;
+		TestVariantVisitNoInline(v);
+	}
+
+	{
+		variant<int, bool> v0 = (int)1;
+		variant<int, bool> v1 = (bool)true;
+
+		TestVariantVisit2NoInline(v0, v1);
+		v0 = (bool)false;
+		TestVariantVisit2NoInline(v0, v1);
+		v1 = (int)2;
+		TestVariantVisit2NoInline(v0, v1);
+	}
+
+	{
+		variant<int, bool> v0 = (int)1;
+		variant<int, bool> v1 = (int)2;
+		variant<int, bool> v2 = (int)3;
+
+		TestVariantVisit3tNoInline(v0, v1, v2);
+		v2 = (bool)false;
+		TestVariantVisit3tNoInline(v0, v1, v2);
+		v0 = (bool)true;
+		TestVariantVisit3tNoInline(v0, v1, v2);
 	}
 
 	{
@@ -695,8 +964,40 @@ int TestVariantVisitor()
 			MultipleVisitor& operator()(string, string) { return *this; }
 		};
 
-		visit(MultipleVisitor{}, i, s);
+		MultipleVisitor& ret = visit(MultipleVisitor{}, i, s);
+		EA_UNUSED(ret);
 		VERIFY(bVisited);
+
+		MultipleVisitor& ret2 = visit<MultipleVisitor&>(MultipleVisitor{}, i, s);
+		EA_UNUSED(ret2);
+		VERIFY(bVisited);
+	}
+
+	{
+		bool bVisited = false;
+
+		variant<int, bool> v0 = 0;
+		variant<int, bool> v1 = 1;
+
+		struct MultipleVisitor
+		{
+			MultipleVisitor() = delete;
+			MultipleVisitor(bool& b) : mVisited(b) {}
+
+			void operator()(int, int) { mVisited = true; }
+			void operator()(int, bool) {}
+			void operator()(bool, int) {}
+			void operator()(bool, bool) {}
+
+			bool& mVisited;
+		};
+
+		visit(MultipleVisitor{bVisited}, v0, v1);
+		EATEST_VERIFY(bVisited);
+
+		bVisited = false;
+		visit<void>(MultipleVisitor{bVisited}, v0, v1);
+		EATEST_VERIFY(bVisited);
 	}
 
 	{
@@ -724,23 +1025,127 @@ int TestVariantVisitor()
 		VERIFY(visit(ReturningVisitor{}, v) == 42);
 	}
 
-#if !defined(EA_COMPILER_MSVC)
-	{
-		variant<int, string> v = 42;
-
-		struct ReturningDifferentTypesVisitor
-		{
-			int    operator()(int i)    {return i;}
-			size_t operator()(string s) {return s.size();}
-		};
-
-		VERIFY(visit(ReturningDifferentTypesVisitor{}, v) == 42);
-	}
-#endif
-
 	return nErrorCount;
 }
 
+int TestVariantVisitorReturn()
+{
+	int nErrorCount = 0;
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool operator()(int) { bVisited = true; return true; }
+			bool operator()(bool) { return false; }
+		};
+
+		eastl::visit<void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool operator()(int) { bVisited = true; return true; }
+			bool operator()(bool) { return false; }
+		};
+
+		eastl::visit<const void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool operator()(int) { bVisited = true; return true; }
+			bool operator()(bool) { return false; }
+		};
+
+		eastl::visit<volatile void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool operator()(int) { bVisited = true; return true; }
+			bool operator()(bool) { return false; }
+		};
+
+		eastl::visit<const volatile void>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			bool operator()(int) { bVisited = true; return true; }
+			bool operator()(bool) { return false; }
+		};
+
+		int ret = eastl::visit<int>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		EATEST_VERIFY(ret);
+	}
+
+	{
+		static bool bVisited = false;
+
+		struct A {};
+		struct B : public A {};
+		struct C : public A {};
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			B operator()(int) { bVisited = true; return B{}; }
+			C operator()(bool) { return C{}; }
+		};
+
+		A ret = eastl::visit<A>(MyVisitor{}, v);
+		EA_UNUSED(ret);
+		EATEST_VERIFY(bVisited);
+	}
+
+	{
+		static bool bVisited = false;
+
+		eastl::variant<int, bool> v = (int)1;
+
+		struct MyVisitor
+		{
+			MyVisitor operator()(int) { bVisited = true; return MyVisitor{}; }
+			MyVisitor operator()(bool) { return MyVisitor{}; }
+		};
+
+		MyVisitor ret = eastl::visit<MyVisitor>(MyVisitor{}, v);
+		EA_UNUSED(ret);
+		EATEST_VERIFY(bVisited);
+	}
+
+	return nErrorCount;
+}
 
 int TestVariantAssignment()
 {
@@ -825,6 +1230,328 @@ int TestVariantUserRegressionCopyMoveAssignmentOperatorLeak()
 	return nErrorCount;
 }
 
+int TestVariantRelationalOperators()
+{
+	int nErrorCount = 0;
+
+	using VariantNoThrow = eastl::variant<int, bool, float>;
+
+	// Equality
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 == v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 == v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)0 };
+
+			EATEST_VERIFY((v1 == v2) == false);
+		}
+	}
+
+	// Inequality
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 != v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 != v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)0 };
+
+			EATEST_VERIFY((v1 != v2) == true);
+		}
+	}
+
+	// Less Than
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 < v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ true };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 < v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 < v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)0 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 < v2) == true);
+		}
+	}
+
+	// Greater Than
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 > v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ true };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 > v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 > v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)0 };
+
+			EATEST_VERIFY((v1 > v2) == true);
+		}
+	}
+
+	// Less Equal
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 <= v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ true };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 <= v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 <= v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)0 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 <= v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)0 };
+
+			EATEST_VERIFY((v1 <= v2) == false);
+		}
+	}
+
+	// Greater Equal
+	{
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ true };
+
+			EATEST_VERIFY((v1 >= v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ true };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 >= v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 >= v2) == true);
+		}
+
+		{
+			VariantNoThrow v1{ (int)0 };
+			VariantNoThrow v2{ (int)1 };
+
+			EATEST_VERIFY((v1 >= v2) == false);
+		}
+
+		{
+			VariantNoThrow v1{ (int)1 };
+			VariantNoThrow v2{ (int)0 };
+
+			EATEST_VERIFY((v1 >= v2) == true);
+		}
+	}
+
+#if EASTL_EXCEPTIONS_ENABLED
+
+	using VariantThrow = eastl::variant<int, bool, float>;
+
+	auto make_variant_valueless = [](VariantThrow& v)
+								  {
+									  try
+									  {
+										  v.emplace<0>(valueless_struct<int>{});
+									  }
+									  catch(const typename valueless_struct<int>::exception_tag &)
+									  {
+									  }
+								  };
+
+	// Equality
+	{
+		{
+			VariantThrow v0{ (int)0 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v0);
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 == v1) == true);
+		}
+	}
+
+	// Inequality
+	{
+		{
+			VariantThrow v0{ (int)0 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v0);
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 != v1) == false);
+		}
+	}
+
+	// Less Than
+	{
+		{
+			VariantThrow v0{ (int)0 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v0);
+
+			EATEST_VERIFY((v0 < v1) == true);
+		}
+
+		{
+			VariantThrow v0{ (int)0 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 < v1) == false);
+		}
+	}
+
+	// Greater Than
+	{
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)0 };
+
+			make_variant_valueless(v0);
+
+			EATEST_VERIFY((v0 > v1) == false);
+		}
+
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)0 };
+
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 > v1) == true);
+		}
+	}
+
+	// Less Equal
+	{
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v0);
+
+			EATEST_VERIFY((v0 <= v1) == true);
+		}
+
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)0 };
+
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 <= v1) == false);
+		}
+	}
+
+	// Greater Equal
+	{
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)1 };
+
+			make_variant_valueless(v0);
+
+			EATEST_VERIFY((v0 >= v1) == false);
+		}
+
+		{
+			VariantThrow v0{ (int)1 };
+			VariantThrow v1{ (int)0 };
+
+			make_variant_valueless(v1);
+
+			EATEST_VERIFY((v0 >= v1) == true);
+		}
+	}
+
+#endif
+
+	return nErrorCount;
+}
+
 
 int TestVariantUserRegressionIncompleteType()
 {
@@ -843,6 +1570,155 @@ int TestVariantUserRegressionIncompleteType()
 		{
 			vector<variant<A>> v;
 		};
+	}
+
+	return nErrorCount;
+}
+
+#define EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(Type, VarName)			\
+	bool operator==(const Type & rhs) const { return VarName == rhs.VarName; } \
+	bool operator!=(const Type & rhs) const { return VarName != rhs.VarName; } \
+	bool operator<(const Type & rhs) const { return VarName < rhs.VarName; } \
+	bool operator>(const Type & rhs) const { return VarName > rhs.VarName; } \
+	bool operator<=(const Type & rhs) const { return VarName <= rhs.VarName; } \
+	bool operator>=(const Type & rhs) const { return VarName >= rhs.VarName; }
+
+int TestBigVariantComparison()
+{
+	int nErrorCount = 0;
+
+	struct A;
+	struct B;
+	struct C;
+	struct D;
+	struct E;
+	struct F;
+	struct G;
+	struct H;
+	struct I;
+	struct J;
+	struct K;
+	struct L;
+	struct M;
+	struct N;
+	struct O;
+	struct P;
+	struct Q;
+	struct R;
+	struct S;
+	struct T;
+	struct U;
+	struct V;
+	struct W;
+	struct X;
+	struct Y;
+	struct Z;
+
+	using BigVariant = eastl::variant<A, B, C, D, E, F, G, H, I, J, K, L, M, N,
+									  O, P, Q, R, S, T, U, V, W, X, Y, Z>;
+
+	struct A { int a; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(A, a) };
+	struct B { int b; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(B, b) };
+	struct C { int c; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(C, c) };
+	struct D { int d; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(D, d) };
+	struct E { int e; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(E, e) };
+	struct F { int f; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(F, f) };
+	struct G { int g; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(G, g) };
+	struct H { int h; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(H, h) };
+	struct I { int i; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(I, i) };
+	struct J { int j; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(J, j) };
+	struct K { int k; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(K, k) };
+	struct L { int l; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(L, l) };
+	struct M { int m; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(M, m) };
+	struct N { int n; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(N, n) };
+	struct O { int o; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(O, o) };
+	struct P { int p; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(P, p) };
+	struct Q { int q; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(Q, q) };
+	struct R { int r; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(R, r) };
+	struct S { int s; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(S, s) };
+	struct T { int t; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(T, t) };
+	struct U { int u; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(U, u) };
+	struct V { int v; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(V, v) };
+	struct W { int w; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(W, w) };
+	struct X { int x; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(X, x) };
+	struct Y { int y; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(Y, y) };
+	struct Z { int z; EASTL_TEST_BIG_VARIANT_RELATIONAL_OPS(Z, z) };
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{1} };
+
+		VERIFY(v0 != v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{1} };
+
+		VERIFY(v0 < v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{0} };
+
+		VERIFY(v0 == v1);
+	}
+
+	{
+		BigVariant v0{ A{1} };
+		BigVariant v1{ A{0} };
+
+		VERIFY(v0 > v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{1} };
+
+		VERIFY(v0 <= v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{0} };
+
+		VERIFY(v0 <= v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ A{0} };
+
+		VERIFY(v0 >= v1);
+	}
+
+	{
+		BigVariant v0{ A{1} };
+		BigVariant v1{ A{0} };
+
+		VERIFY(v0 >= v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ B{0} };
+
+		VERIFY(v0 != v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ B{0} };
+
+		VERIFY(v0 < v1);
+	}
+
+	{
+		BigVariant v0{ A{0} };
+		BigVariant v1{ B{0} };
+
+		VERIFY(v1 > v0);
 	}
 
 	return nErrorCount;
@@ -872,6 +1748,8 @@ int TestVariant()
 	nErrorCount += TestVariantUserRegressionCopyMoveAssignmentOperatorLeak();
 	nErrorCount += TestVariantUserRegressionIncompleteType();
 	nErrorCount += TestVariantGeneratingComparisonOverloads();
+	nErrorCount += TestBigVariantComparison();
+	nErrorCount += TestVariantRelationalOperators();
 
 	return nErrorCount;
 }

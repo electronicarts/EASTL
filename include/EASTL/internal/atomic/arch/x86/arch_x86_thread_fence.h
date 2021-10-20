@@ -31,7 +31,7 @@
 #endif
 
 
-#if defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)
+#if defined(EA_COMPILER_MSVC) || defined(__clang__) || defined(EA_COMPILER_GNUC)
 
 	#define EASTL_ARCH_ATOMIC_THREAD_FENCE_SEQ_CST()	\
 		EASTL_ATOMIC_CPU_MB()

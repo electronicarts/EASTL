@@ -617,6 +617,12 @@ int TestIntrusiveHash()
 
 		itfc = ihmMW1Const.find_as(7.f);
 		VERIFY(itfc->mKey == 7);
+				
+		itf = ihmMW1.find_as(8);
+		VERIFY(itf->mKey == 8);
+
+		itfc = ihmMW1Const.find_as(8);
+		VERIFY(itfc->mKey == 8);
 
 
 		// iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);

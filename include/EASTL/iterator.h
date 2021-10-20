@@ -409,6 +409,9 @@ namespace eastl
 	template<typename Iterator>
 	class move_iterator // Don't inherit from iterator.
 	{
+	private:
+		using WrappedIteratorReference = typename iterator_traits<Iterator>::reference;
+
 	public:
 		typedef Iterator                                iterator_type;
 		typedef iterator_type                           wrapped_iterator_type;   // This is not in the C++ Standard; it's used by use to identify it as a wrapping iterator type.
@@ -417,7 +420,9 @@ namespace eastl
 		typedef typename traits_type::value_type        value_type;
 		typedef typename traits_type::difference_type   difference_type;
 		typedef Iterator                                pointer;
-		typedef value_type&&                            reference;
+		using reference = conditional_t<is_reference<WrappedIteratorReference>::value,
+										remove_reference_t<WrappedIteratorReference>&&,
+										WrappedIteratorReference>;
 
 	protected:
 		iterator_type mIterator;
@@ -440,8 +445,7 @@ namespace eastl
 		iterator_type base() const
 			{ return mIterator; }
 
-		reference operator*() const
-			{ return eastl::move(*mIterator); }
+		reference operator*() const { return static_cast<reference>(*mIterator); }
 
 		pointer operator->() const
 			{ return mIterator; }
@@ -1070,10 +1074,16 @@ namespace eastl
 			return container.begin();
 		}
 
-		template <typename Container>
-		EA_CPP14_CONSTEXPR inline auto cbegin(const Container& container) -> decltype(container.begin())
+		template<typename T, size_t arraySize>
+		EA_CPP14_CONSTEXPR inline T* begin(T (&arrayObject)[arraySize]) EA_NOEXCEPT
 		{
-			return container.begin();
+			return arrayObject;
+		}
+
+		template <typename Container>
+		EA_CPP14_CONSTEXPR inline auto cbegin(const Container& container) -> decltype(eastl::begin(container))
+		{
+			return eastl::begin(container);
 		}
 
 		template <typename Container>
@@ -1088,10 +1098,16 @@ namespace eastl
 			return container.end();
 		}
 
-		template <typename Container>
-		EA_CPP14_CONSTEXPR inline auto cend(const Container& container) -> decltype(container.end())
+		template<typename T, size_t arraySize>
+		EA_CPP14_CONSTEXPR inline T* end(T (&arrayObject)[arraySize]) EA_NOEXCEPT
 		{
-			return container.end();
+			return (arrayObject + arraySize);
+		}
+
+		template <typename Container>
+		EA_CPP14_CONSTEXPR inline auto cend(const Container& container) -> decltype(eastl::end(container))
+		{
+			return eastl::end(container);
 		}
 
 		template <typename Container>
@@ -1130,17 +1146,6 @@ namespace eastl
 			return container.rend();
 		}
 
-		template<typename T, size_t arraySize>
-		EA_CPP14_CONSTEXPR inline T* begin(T (&arrayObject)[arraySize])
-		{
-			return arrayObject;
-		}
-
-		template<typename T, size_t arraySize>
-		EA_CPP14_CONSTEXPR inline T* end(T (&arrayObject)[arraySize])
-		{
-			return (arrayObject + arraySize);
-		}
 
 		template <typename T, size_t arraySize>
 		EA_CPP14_CONSTEXPR inline reverse_iterator<T*> rbegin(T (&arrayObject)[arraySize])
@@ -1179,7 +1184,7 @@ namespace eastl
 // Some compilers (e.g. GCC 4.6) support range-based for loops, but have a bug with
 // respect to argument-dependent lookup which results on them unilaterally using std::begin/end
 // with range-based for loops. To work around this we #include <iterator> for this case in
-// order to make std::begin/end visible to users of <eastl/iterator.h>, for portability.
+// order to make std::begin/end visible to users of <EASTL/iterator.h>, for portability.
 #if !EASTL_BEGIN_END_ENABLED && !defined(EA_COMPILER_NO_RANGE_BASED_FOR_LOOP)
 	#include <iterator>
 #endif

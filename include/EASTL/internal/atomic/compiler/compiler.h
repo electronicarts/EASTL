@@ -15,7 +15,7 @@
 //
 // Include the compiler specific implementations
 //
-#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)
+#if defined(EA_COMPILER_GNUC) || defined(__clang__)
 
 	#include "gcc/compiler_gcc.h"
 

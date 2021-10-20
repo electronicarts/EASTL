@@ -500,13 +500,8 @@ namespace eastl
 	struct conjunction<B, Bn...> : conditional<bool(B::value), conjunction<Bn...>, B>::type {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		#if EASTL_INLINE_VARIABLE_ENABLED
-			template<class... Bn>
-			inline constexpr bool conjunction_v = conjunction<Bn...>::value;
-		#else
-			template<class... Bn>
-			static const constexpr bool conjunction_v = conjunction<Bn...>::value;
-		#endif
+		template <typename... Bn>
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool conjunction_v = conjunction<Bn...>::value;
 	#endif
 
 
@@ -529,13 +524,8 @@ namespace eastl
 	struct disjunction<B, Bn...> : conditional<bool(B::value), B, disjunction<Bn...>>::type {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		#if EASTL_INLINE_VARIABLE_ENABLED
-			template<class... B>
-			inline constexpr bool disjunction_v = disjunction<B...>::value;
-		#else
-			template<class... B>
-			static const constexpr bool disjunction_v = disjunction<B...>::value;
-		#endif
+		template <typename... B>
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool disjunction_v = disjunction<B...>::value;
 	#endif
 
 
@@ -552,13 +542,8 @@ namespace eastl
 	struct negation : eastl::bool_constant<!bool(B::value)> {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		#if EASTL_INLINE_VARIABLE_ENABLED
-			template<class B>
-			inline constexpr bool negation_v = negation<B>::value;
-		#else
-			template<class B>
-			static const constexpr bool negation_v = negation<B>::value;
-		#endif
+		template <typename B>
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool negation_v = negation<B>::value;
 	#endif
 
 
@@ -674,15 +659,16 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// is_reference
 	//
-	// is_reference<T>::value == true if and only if T is a reference type.
+	// is_reference<T>::value == true if and only if T is a reference type (l-value reference or r-value reference).
 	// This category includes reference to function types.
 	//
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_reference_CONFORMANCE 1    // is_reference is conforming; doesn't make mistakes.
 
-	template <typename T> struct is_reference     : public eastl::false_type{};
-	template <typename T> struct is_reference<T&> : public eastl::true_type{};
+	template <typename T> struct is_reference      : public eastl::false_type{};
+	template <typename T> struct is_reference<T&>  : public eastl::true_type{};
+	template <typename T> struct is_reference<T&&> : public eastl::true_type{};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
@@ -831,8 +817,10 @@ namespace eastl
 	//
 	// The add_reference transformation trait adds a level of indirection
 	// by reference to the type to which it is applied. For a given type T,
-	// add_reference<T>::type is equivalent to T& if is_reference<T>::value == false,
+	// add_reference<T>::type is equivalent to T& if is_lvalue_reference<T>::value == false,
 	// and T otherwise.
+	//
+	// Note: due to the reference collapsing rules, if you supply an r-value reference such as T&&, it will collapse to T&. 
 	//
 	///////////////////////////////////////////////////////////////////////
 

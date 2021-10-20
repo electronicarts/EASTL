@@ -6,12 +6,12 @@
 #ifndef EASTL_INTERNAL_COPY_HELP_H
 #define EASTL_INTERNAL_COPY_HELP_H
 
+#include <EASTL/internal/config.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif
 
-#include <EASTL/internal/config.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/iterator.h>
 #include <string.h> // memcpy, memcmp, memmove
@@ -19,15 +19,15 @@
 
 namespace eastl
 {
-	/// move / move_n / move_backward 
+	/// move / move_n / move_backward
 	/// copy / copy_n / copy_backward
 	///
 	/// We want to optimize move, move_n, move_backward, copy, copy_backward, copy_n to do memmove operations
-	/// when possible. 
+	/// when possible.
 	///
-	/// We could possibly use memcpy, though it has stricter overlap requirements than the move and copy 
-	/// algorithms and would require a runtime if/else to choose it over memmove. In particular, memcpy 
-	/// allows no range overlap at all, whereas move/copy allow output end overlap and move_backward/copy_backward 
+	/// We could possibly use memcpy, though it has stricter overlap requirements than the move and copy
+	/// algorithms and would require a runtime if/else to choose it over memmove. In particular, memcpy
+	/// allows no range overlap at all, whereas move/copy allow output end overlap and move_backward/copy_backward
 	/// allow output begin overlap. Despite this it might be useful to use memcpy for any platforms where
 	/// memcpy is significantly faster than memmove, and since in most cases the copy/move operation in fact
 	/// doesn't target overlapping memory and so memcpy would be usable.
@@ -36,13 +36,13 @@ namespace eastl
 	///     InputIterator and OutputIterator are of the same type.
 	///     InputIterator and OutputIterator are of type contiguous_iterator_tag or simply are pointers (the two are virtually synonymous).
 	///     is_trivially_copyable<T>::value is true. i.e. the constructor T(const T& t) (or T(T&& t) if present) can be replaced by memmove(this, &t, sizeof(T))
-	/// 
-	/// copy normally differs from move, but there is a case where copy is the same as move: when copy is 
-	/// used with a move_iterator. We handle that case here by detecting that copy is being done with a 
+	///
+	/// copy normally differs from move, but there is a case where copy is the same as move: when copy is
+	/// used with a move_iterator. We handle that case here by detecting that copy is being done with a
 	/// move_iterator and redirect it to move (which can take advantage of memmove/memcpy).
 	///
-	/// The generic_iterator class is typically used for wrapping raw memory pointers so they can act like 
-	/// formal iterators. Since pointers provide an opportunity for memmove/memcpy operations, we can 
+	/// The generic_iterator class is typically used for wrapping raw memory pointers so they can act like
+	/// formal iterators. Since pointers provide an opportunity for memmove/memcpy operations, we can
 	/// detect a generic iterator and use it's wrapped type as a pointer if it happens to be one.
 
 	// Implementation moving copying both trivial and non-trivial data via a lesser iterator than random-access.
@@ -61,7 +61,7 @@ namespace eastl
 	// Specialization for copying non-trivial data via a random-access iterator. It's theoretically faster because the compiler can see the count when its a compile-time const.
 	// This specialization converts the random access InputIterator last-first to an integral type. There's simple way for us to take advantage of a random access output iterator,
 	// as the range is specified by the input instead of the output, and distance(first, last) for a non-random-access iterator is potentially slow.
-	template <> 
+	template <>
 	struct move_and_copy_helper<EASTL_ITC_NS::random_access_iterator_tag, false, false>
 	{
 		template <typename InputIterator, typename OutputIterator>
@@ -88,7 +88,7 @@ namespace eastl
 			return result;
 		}
 	};
-	
+
 	// Specialization for moving non-trivial data via a random-access iterator. It's theoretically faster because the compiler can see the count when its a compile-time const.
 	template <>
 	struct move_and_copy_helper<EASTL_ITC_NS::random_access_iterator_tag, true, false>
@@ -130,9 +130,9 @@ namespace eastl
 		typedef typename eastl::iterator_traits<InputIterator>::value_type         value_type_input;
 		typedef typename eastl::iterator_traits<OutputIterator>::value_type        value_type_output;
 
-		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value && 
-								   eastl::is_same<value_type_input, value_type_output>::value && 
-								  (eastl::is_pointer<InputIterator>::value  || eastl::is_same<IIC, eastl::contiguous_iterator_tag>::value) && 
+		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value &&
+								   eastl::is_same<value_type_input, value_type_output>::value &&
+								  (eastl::is_pointer<InputIterator>::value  || eastl::is_same<IIC, eastl::contiguous_iterator_tag>::value) &&
 								  (eastl::is_pointer<OutputIterator>::value || eastl::is_same<OIC, eastl::contiguous_iterator_tag>::value);
 
 		return eastl::move_and_copy_helper<IIC, isMove, canBeMemmoved>::move_or_copy(first, last, result); // Need to chose based on the input iterator tag and not the output iterator tag, because containers accept input ranges of iterator types different than self.
@@ -149,11 +149,11 @@ namespace eastl
 
 	/// move
 	///
-	/// After this operation the elements in the moved-from range will still contain valid values of the 
-	/// appropriate type, but not necessarily the same values as before the move. 
+	/// After this operation the elements in the moved-from range will still contain valid values of the
+	/// appropriate type, but not necessarily the same values as before the move.
 	/// Returns the end of the result range.
 	/// Note: When moving between containers, the dest range must be valid; this function doesn't resize containers.
-	/// Note: if result is within [first, last), move_backward must be used instead of move. 
+	/// Note: if result is within [first, last), move_backward must be used instead of move.
 	///
 	/// Example usage:
 	///     eastl::move(myArray.begin(), myArray.end(), myDestArray.begin());
@@ -180,7 +180,7 @@ namespace eastl
 	/// starting from first and proceeding to last. For each nonnegative integer n < (last - first),
 	/// performs *(result + n) = *(first + n).
 	///
-	/// Returns: result + (last - first). That is, returns the end of the result. Note that this 
+	/// Returns: result + (last - first). That is, returns the end of the result. Note that this
 	/// is different from how memmove/memcpy work, as they return the beginning of the result.
 	///
 	/// Requires: result shall not be in the range [first, last). But the end of the result range
@@ -197,19 +197,4 @@ namespace eastl
 	}
 } // namespace eastl
 
-#endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif // EASTL_INTERNAL_COPY_HELP_H

@@ -39,7 +39,7 @@
 #endif
 
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(EA_COMPILER_CLANG_CL)
 	// VC++ has a long-standing bug: it fails to allow the definition of static const member variables
 	// outside the declaration within the class. The C++ Standard actually requires that they be defined
 	// and some other compilers fail to link if they aren't. So we simply don't define the members for VC++.
@@ -442,7 +442,7 @@
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<long long>::is_iec559;
 
 		// __uint128_t
-		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) // If __int128_t/__uint128_t is supported...
+		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<__uint128_t>::is_specialized;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__uint128_t>::digits;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__uint128_t>::digits10;
@@ -468,7 +468,7 @@
 		#endif
 
 		// __int128_t
-		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) // If __int128_t/__uint128_t is supported...
+		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<__int128_t>::is_specialized;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__int128_t>::digits;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__int128_t>::digits10;

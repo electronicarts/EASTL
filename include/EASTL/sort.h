@@ -1653,8 +1653,8 @@ namespace eastl
 			IntegerType)
 		{
 			RandomAccessIterator srcFirst = first;
-			constexpr size_t numBuckets = 1 << DigitBits;
-			constexpr IntegerType bucketMask = numBuckets - 1;
+			EA_CONSTEXPR_OR_CONST size_t numBuckets = 1 << DigitBits;
+			EA_CONSTEXPR_OR_CONST IntegerType bucketMask = numBuckets - 1;
 
 			// The alignment of this variable isn't required; it merely allows the code below to be faster on some platforms.
 			uint32_t EA_PREFIX_ALIGN(EASTL_PLATFORM_PREFERRED_ALIGNMENT) bucketSize[numBuckets];

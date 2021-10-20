@@ -32,22 +32,13 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 
-
-#if defined(EA_COMPILER_MSVC)
-
+#if (defined(__clang__) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64)
+	#define EASTL_ARCH_ATOMIC_HAS_128BIT
+#elif defined(EA_COMPILER_MSVC)
 	#if EA_PLATFORM_PTR_SIZE == 8
 		#define EASTL_ARCH_ATOMIC_HAS_128BIT
 	#endif
-
 #endif
-
-
-#if ((defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
-
-	#define EASTL_ARCH_ATOMIC_HAS_128BIT
-
-#endif
-
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -104,7 +95,7 @@
  * SSE 128-bit loads are not guaranteed to be atomic even though some CPUs
  * make them atomic such as AMD Ryzen or Intel SandyBridge.
  */
-#if ((defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
+#if ((defined(__clang__) || defined(EA_COMPILER_GNUC)) && defined(EA_PROCESSOR_X86_64))
 
 
 	#define EASTL_ARCH_ATOMIC_X86_NOP_PRE_COMPUTE_DESIRED(ret, observed, val) \

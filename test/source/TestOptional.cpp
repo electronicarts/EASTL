@@ -536,13 +536,13 @@ int TestOptional()
 
 	// optional rvalue tests
 	{
-		VERIFY(*optional<int>(1)                          == 1);
-		VERIFY( optional<int>(1).value()                  == 1);
-		VERIFY( optional<int>(1).value_or(0xdeadf00d)     == 1);
-		VERIFY( optional<int>().value_or(0xdeadf00d)      == 0xdeadf00d);
-		VERIFY( optional<int>(1).has_value()              == true);
-		VERIFY( optional<int>().has_value()               == false);
-		VERIFY( optional<IntStruct>(in_place, 10)->data   == 10);
+		VERIFY(*optional<uint32_t>(1u)						== 1u);
+	    VERIFY(optional<uint32_t>(1u).value()				== 1u);
+	    VERIFY(optional<uint32_t>(1u).value_or(0xdeadf00d)	== 1u);
+	    VERIFY(optional<uint32_t>().value_or(0xdeadf00d)	== 0xdeadf00d);
+	    VERIFY(optional<uint32_t>(1u).has_value() == true);
+	    VERIFY(optional<uint32_t>().has_value() == false);
+		VERIFY( optional<IntStruct>(in_place, 10)->data		== 10);
 
 	}
 
@@ -611,7 +611,7 @@ int TestOptional()
 			copyCtorCalledWithUninitializedValue = moveCtorCalledWithUninitializedValue = false;
 			struct local
 			{
-				int val;
+				uint32_t val;
 				local()
 					: val(0xabcdabcd)
 				{}

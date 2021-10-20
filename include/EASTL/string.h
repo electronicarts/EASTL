@@ -313,19 +313,19 @@ namespace eastl
 		// Masks used to determine if we are in SSO or Heap
 		#ifdef EA_SYSTEM_BIG_ENDIAN
 			// Big Endian use LSB, unless we want to reorder struct layouts on endianness, Bit is set when we are in Heap
-			static constexpr size_type kHeapMask = 0x1;
-			static constexpr size_type kSSOMask  = 0x1;
+			static EA_CONSTEXPR_OR_CONST size_type kHeapMask = 0x1;
+			static EA_CONSTEXPR_OR_CONST size_type kSSOMask  = 0x1;
 		#else
 			// Little Endian use MSB
-			static constexpr size_type kHeapMask = ~(size_type(~size_type(0)) >> 1);
-			static constexpr size_type kSSOMask  = 0x80;
+			static EA_CONSTEXPR_OR_CONST size_type kHeapMask = ~(size_type(~size_type(0)) >> 1);
+			static EA_CONSTEXPR_OR_CONST size_type kSSOMask  = 0x80;
 		#endif
 
 	public:
 		#ifdef EA_SYSTEM_BIG_ENDIAN
-			static constexpr size_type kMaxSize = (~kHeapMask) >> 1;
+			static EA_CONSTEXPR_OR_CONST size_type kMaxSize = (~kHeapMask) >> 1;
 		#else
-			static constexpr size_type kMaxSize = ~kHeapMask;
+			static EA_CONSTEXPR_OR_CONST size_type kMaxSize = ~kHeapMask;
 		#endif
 
 	protected:
@@ -353,7 +353,7 @@ namespace eastl
 		// The view of memory when the string data is able to store the string data locally (without a heap allocation).
 		struct SSOLayout
 		{
-			static constexpr size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
+			static EA_CONSTEXPR_OR_CONST size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
 
 			// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
 			// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.

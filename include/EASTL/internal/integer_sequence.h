@@ -67,6 +67,36 @@ using make_integer_sequence = typename make_integer_sequence_impl<T, N>::type;
 template<typename... T>
 using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
+namespace internal
+{
+
+template <typename T>
+struct integer_sequence_size_helper;
+
+template <typename T, T... Ints>
+struct integer_sequence_size_helper<eastl::integer_sequence<T, Ints...>> : public integral_constant<size_t, sizeof...(Ints)>
+{
+};
+
+template <typename T>
+struct integer_sequence_size : public integer_sequence_size_helper<eastl::remove_cv_t<T>>
+{
+};
+
+template <typename T>
+struct index_sequence_size : public integer_sequence_size_helper<eastl::remove_cv_t<T>>
+{
+};
+
+template <typename T>
+EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR size_t integer_sequence_size_v = integer_sequence_size<T>::value;
+
+template <typename T>
+EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR size_t index_sequence_size_v = index_sequence_size<T>::value;
+
+
+} // namespace internal
+
 #endif  // EASTL_VARIADIC_TEMPLATES_ENABLED
 
 }  // namespace eastl

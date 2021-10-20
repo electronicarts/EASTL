@@ -279,12 +279,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::operator[](size_type i)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(i >= N))
-				EASTL_FAIL_MSG("array::operator[] -- out of range");
-		#endif
-
-		EA_ANALYSIS_ASSUME(i < N);
 		return mValue[i];
 	}
 
@@ -293,13 +287,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::operator[](size_type i) const
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(i >= N))
-				EASTL_FAIL_MSG("array::operator[] -- out of range");
-
-		#endif
-
-		EA_ANALYSIS_ASSUME(i < N);
 		return mValue[i];
 	}
 
@@ -308,11 +295,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::front()
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(empty())) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("array::front -- empty array");
-		#endif
-
 		return mValue[0];
 	}
 
@@ -321,11 +303,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::front() const
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(empty())) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("array::front -- empty array");
-		#endif
-
 		return mValue[0];
 	}
 
@@ -334,11 +311,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::back()
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(empty())) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("array::back -- empty array");
-		#endif
-
 		return mValue[N - 1];
 	}
 
@@ -347,11 +319,6 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::back() const
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(empty())) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("array::back -- empty array");
-		#endif
-
 		return mValue[N - 1];
 	}
 
@@ -381,7 +348,6 @@ namespace eastl
 				EASTL_FAIL_MSG("array::at -- out of range");
 		#endif
 
-		EA_ANALYSIS_ASSUME(i < N);
 		return static_cast<const_reference>(mValue[i]);
 	}
 
@@ -397,7 +363,6 @@ namespace eastl
 				EASTL_FAIL_MSG("array::at -- out of range");
 		#endif
 
-		EA_ANALYSIS_ASSUME(i < N);
 		return static_cast<reference>(mValue[i]);
 	}
 

@@ -290,7 +290,7 @@ namespace eastl
 	//    is_convertible<D*, A*>::value; // Generates compiler error.
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_convertible_to)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_convertible_to)))
 		#define EASTL_TYPE_TRAIT_is_convertible_CONFORMANCE 1    // is_convertible is conforming.
 
 		// Problem: VC++ reports that int is convertible to short, yet if you construct a short from an int then VC++ generates a warning:
@@ -371,7 +371,7 @@ namespace eastl
 	// via 'msl::is_union<T>::value'. The user can force something to be 
 	// evaluated as a union via EASTL_DECLARE_UNION.
 	///////////////////////////////////////////////////////////////////////
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_union)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_union)))
 		#define EASTL_TYPE_TRAIT_is_union_CONFORMANCE 1    // is_union is conforming.
 
 		template <typename T> 
@@ -401,7 +401,7 @@ namespace eastl
 	// distinguish between unions and classes. As a result, is_class
 	// will erroneously evaluate to true for union types.
 	///////////////////////////////////////////////////////////////////////
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_class)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_class)))
 		#define EASTL_TYPE_TRAIT_is_class_CONFORMANCE 1    // is_class is conforming.
 
 		template <typename T> 
@@ -442,57 +442,6 @@ namespace eastl
 	#endif
 
 
-	///////////////////////////////////////////////////////////////////////
-	// is_enum
-	//
-	// is_enum<T>::value == true if and only if T is an enumeration type.
-	//
-	///////////////////////////////////////////////////////////////////////
-
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_enum)))
-		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1     // is_enum is conforming. 
-
-		template <typename T> 
-		struct is_enum : public integral_constant<bool, __is_enum(T)>{};
-	#else
-		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1    // is_enum is conforming.
-
-		struct int_convertible{ int_convertible(int); };
-
-		template <bool is_arithmetic_or_reference>
-		struct is_enum_helper { template <typename T> struct nest : public is_convertible<T, int_convertible>{}; };
-
-		template <>
-		struct is_enum_helper<true> { template <typename T> struct nest : public false_type {}; };
-
-		template <typename T>
-		struct is_enum_helper2
-		{
-			typedef type_or<is_arithmetic<T>::value, is_reference<T>::value, is_class<T>::value> selector;
-			typedef is_enum_helper<selector::value> helper_t;
-			typedef typename add_reference<T>::type ref_t;
-			typedef typename helper_t::template nest<ref_t> result;
-		};
-
-		template <typename T> 
-		struct is_enum : public integral_constant<bool, is_enum_helper2<T>::result::value>{};
-
-		template <> struct is_enum<void> : public false_type {};
-		template <> struct is_enum<void const> : public false_type {};
-		template <> struct is_enum<void volatile> : public false_type {};
-		template <> struct is_enum<void const volatile> : public false_type {};
-	#endif
-
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		template<typename T>
-		EA_CONSTEXPR bool is_enum_v = is_enum<T>::value;
-	#endif
-
-	#define EASTL_DECLARE_ENUM(T) namespace eastl{ template <> struct is_enum<T> : public true_type{}; template <> struct is_enum<const T> : public true_type{}; }
-
-
-
-
 
 	///////////////////////////////////////////////////////////////////////
 	// is_polymorphic
@@ -503,7 +452,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(EA_COMPILER_CLANG) && EA_COMPILER_HAS_FEATURE(is_polymorphic)))
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_polymorphic)))
 		#define EASTL_TYPE_TRAIT_is_polymorphic_CONFORMANCE 1    // is_polymorphic is conforming. 
 
 		template <typename T> 

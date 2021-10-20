@@ -1362,12 +1362,11 @@ namespace eastl
 		{
 		}
 
-		// Disabled because the default is sufficient.
-		//fixed_vector_allocator(const fixed_vector_allocator& x)
-		//{
-		//    mpPoolBegin        = x.mpPoolBegin;
-		//    mOverflowAllocator = x.mOverflowAllocator;
-		//}
+		fixed_vector_allocator(const fixed_vector_allocator& x)
+		{
+		   mpPoolBegin        = x.mpPoolBegin;
+		   mOverflowAllocator = x.mOverflowAllocator;
+		}
 
 		fixed_vector_allocator& operator=(const fixed_vector_allocator& x)
 		{

@@ -16,7 +16,9 @@
 // void EASTL_COMPILER_ATOMIC_COMPILER_BARRIER()
 //
 #define EASTL_COMPILER_ATOMIC_COMPILER_BARRIER()	\
-	_ReadWriteBarrier()
+	EA_DISABLE_CLANG_WARNING(-Wdeprecated-declarations)		\
+	_ReadWriteBarrier()										\
+	EA_RESTORE_CLANG_WARNING()
 
 
 /////////////////////////////////////////////////////////////////////////////////

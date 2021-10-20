@@ -679,7 +679,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline SListNode<T>* SListBase<T, Allocator>::DoAllocateNode()
 	{
-		return (node_type*)allocate_memory(internalAllocator(), sizeof(node_type), EASTL_ALIGN_OF(T), 0);
+		return (node_type*)allocate_memory(internalAllocator(), sizeof(node_type), EASTL_ALIGN_OF(node_type), 0);
 	}
 
 

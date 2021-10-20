@@ -62,7 +62,7 @@ namespace internal
 	template <typename T>
 	struct is_atomic_lockfree_size
 	{
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool value = false ||
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool value = false ||
 		#if defined(EASTL_ATOMIC_HAS_8BIT)
 			sizeof(T) == 1 ||
 		#endif
@@ -85,7 +85,7 @@ namespace internal
 	template <typename T>
 	struct is_user_type_suitable_for_primary_template
 	{
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool value = eastl::internal::is_atomic_lockfree_size<T>::value;
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool value = eastl::internal::is_atomic_lockfree_size<T>::value;
 	};
 
 
@@ -116,7 +116,7 @@ namespace internal
 																		\
 	public:																\
 																		\
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool is_always_lock_free = eastl::internal::is_atomic_lockfree_size<type>::value; \
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool is_always_lock_free = eastl::internal::is_atomic_lockfree_size<type>::value; \
 																		\
 	public: /* deleted ctors && assignment operators */					\
 																		\

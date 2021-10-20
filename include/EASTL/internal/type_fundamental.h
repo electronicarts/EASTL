@@ -139,7 +139,7 @@ namespace eastl
 	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled above...
 		template <> struct is_integral_helper<wchar_t>        : public true_type{};
 	#endif
-	#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+	#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
 		template <> struct is_integral_helper<__int128_t>     : public true_type{};
 		template <> struct is_integral_helper<__uint128_t>    : public true_type{};
 	#endif
@@ -261,6 +261,59 @@ namespace eastl
 		template<typename T>
 		EA_CONSTEXPR bool is_hat_type_v = is_hat_type<T>::value;
 	#endif
+
+		
+
+	///////////////////////////////////////////////////////////////////////
+	// is_enum
+	//
+	// is_enum<T>::value == true if and only if T is an enumeration type.
+	//
+	///////////////////////////////////////////////////////////////////////
+
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_enum)))
+		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1     // is_enum is conforming. 
+
+		template <typename T> 
+		struct is_enum : public integral_constant<bool, __is_enum(T)>{};
+	#else
+		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1    // is_enum is conforming.
+
+		struct int_convertible{ int_convertible(int); };
+
+		template <bool is_arithmetic_or_reference>
+		struct is_enum_helper { template <typename T> struct nest : public is_convertible<T, int_convertible>{}; };
+
+		template <>
+		struct is_enum_helper<true> { template <typename T> struct nest : public false_type {}; };
+
+		template <typename T>
+		struct is_enum_helper2
+		{
+			typedef type_or<is_arithmetic<T>::value, is_reference<T>::value, is_class<T>::value> selector;
+			typedef is_enum_helper<selector::value> helper_t;
+			typedef typename add_reference<T>::type ref_t;
+			typedef typename helper_t::template nest<ref_t> result;
+		};
+
+		template <typename T> 
+		struct is_enum : public integral_constant<bool, is_enum_helper2<T>::result::value>{};
+
+		template <> struct is_enum<void> : public false_type {};
+		template <> struct is_enum<void const> : public false_type {};
+		template <> struct is_enum<void volatile> : public false_type {};
+		template <> struct is_enum<void const volatile> : public false_type {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_enum_v = is_enum<T>::value;
+	#endif
+
+	#define EASTL_DECLARE_ENUM(T) namespace eastl{ template <> struct is_enum<T> : public true_type{}; template <> struct is_enum<const T> : public true_type{}; }
+
+
+
 
 } // namespace eastl
 

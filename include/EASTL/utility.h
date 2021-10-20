@@ -413,7 +413,7 @@ namespace eastl
 	//
 	// See bug submitted to LLVM for more details.
 	// https://bugs.llvm.org/show_bug.cgi?id=38374
-	#if !defined(EA_COMPILER_CLANG)
+	#if !defined(__clang__)
 		template<typename T>
 		using single_pair_ctor_sfinae = eastl::enable_if_t<eastl::is_default_constructible_v<T>>;
 	#else

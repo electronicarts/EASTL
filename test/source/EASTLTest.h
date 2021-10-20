@@ -82,6 +82,7 @@ int TestVectorMap();
 int TestVectorSet();
 int TestAtomicBasic();
 int TestAtomicAsm();
+int TestBitcast();
 
 
 // Now enable warnings as desired.

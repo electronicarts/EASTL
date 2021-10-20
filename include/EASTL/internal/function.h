@@ -5,6 +5,8 @@
 #ifndef EASTL_FUNCTION_H
 #define EASTL_FUNCTION_H
 
+#include <EASTL/internal/config.h>
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif

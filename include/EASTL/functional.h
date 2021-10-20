@@ -389,33 +389,27 @@ namespace eastl
 	// Dual type functions
 	///////////////////////////////////////////////////////////////////////
 
+
 	template <typename T, typename U>
 	struct equal_to_2 : public binary_function<T, U, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a == b; }
-		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const   // If you are getting a 'operator() already defined' error related to on this line while compiling a 
-			{ return b == a; }                                             // hashtable class (e.g. hash_map), it's likely that you are using hashtable::find_as when you should
-	};                                                                     // be using hashtable::find instead. The problem is that (const T, U) collide. To do: make this work.
 
-	template <typename T>
-	struct equal_to_2<T, T> : public equal_to<T>
-	{
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
+		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
+			{ return b == a; }
 	};
-
 
 	template <typename T, typename U>
 	struct not_equal_to_2 : public binary_function<T, U, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a != b; }
+
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
 		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
 			{ return b != a; }
-	};
-
-	template <typename T>
-	struct not_equal_to_2<T, T> : public not_equal_to<T>
-	{
 	};
 
 
@@ -424,16 +418,11 @@ namespace eastl
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a < b; }
+
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
 		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
 			{ return b < a; }
 	};
-
-	template <typename T>
-	struct less_2<T, T> : public less<T>
-	{
-	};
-
-
 
 
 	/// unary_negate

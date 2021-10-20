@@ -10,7 +10,6 @@
 	#pragma once
 #endif
 
-
 #if defined(EA_PROCESSOR_X86_64)
 
 	#define EASTL_MSVC_ATOMIC_CMPXCHG_STRONG_INTRIN_8 _InterlockedCompareExchange8

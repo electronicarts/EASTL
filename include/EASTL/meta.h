@@ -36,24 +36,24 @@ namespace eastl
 			template <int I, typename T, typename Head, typename... Types>
 			struct get_type_index<I, T, Head, Types...>
 			{
-				static const int value = is_same_v<T, Head> ? I : get_type_index<I + 1, T, Types...>::value;
+				static EA_CONSTEXPR_OR_CONST int value = is_same_v<T, Head> ? I : get_type_index<I + 1, T, Types...>::value;
 			};
 
 			template <int I, typename T>
 			struct get_type_index<I, T>
 			{
-				static const int value = -1;
+				static EA_CONSTEXPR_OR_CONST int value = -1;
 			};
 		}
 
 		template<typename T, typename... Types>
 		struct get_type_index
 		{
-			static const int value = Internal::get_type_index<0, T, Types...>::value;
+			static EA_CONSTEXPR_OR_CONST int value = Internal::get_type_index<0, T, Types...>::value;
 		};
 
 		template <typename T, typename... Ts>
-		constexpr int get_type_index_v = get_type_index<T, Ts...>::value;
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR int get_type_index_v = get_type_index<T, Ts...>::value;
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ namespace eastl
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////
-		// type_count_v 
+		// type_count_v
 		//
 		// Returns the number of occurrences of type T in a typelist.
 		//
@@ -87,33 +87,37 @@ namespace eastl
 		template <typename T, typename H, typename... Types>
 		struct type_count<T, H, Types...>
 		{
-			static const int value = (is_same_v<T, H> ? 1 : 0) + type_count<T, Types...>::value;
+			static EA_CONSTEXPR_OR_CONST int value = (is_same_v<T, H> ? 1 : 0) + type_count<T, Types...>::value;
 		};
 
-		template <typename T> struct type_count<T> { static const int value = 0; };
+		template <typename T>
+		struct type_count<T>
+		{
+			static EA_CONSTEXPR_OR_CONST int value = 0;
+		};
 
 		template <typename T, typename... Ts>
-		constexpr int type_count_v = type_count<T, Ts...>::value;
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR int type_count_v = type_count<T, Ts...>::value;
 
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////
 		// duplicate_type_check_v
-		// 
+		//
 		// Checks if a type T occurs in a typelist more than once.
 		//
 		template <typename T, typename... Types>
 		struct duplicate_type_check
 		{
-			static const bool value = (type_count<T, Types...>::value == 1);
+			static EA_CONSTEXPR_OR_CONST bool value = (type_count<T, Types...>::value == 1);
 		};
 
 		template <typename... Ts>
-		constexpr bool duplicate_type_check_v = duplicate_type_check<Ts...>::value;
+		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool duplicate_type_check_v = duplicate_type_check<Ts...>::value;
 
 
 		//////////////////////////////////////////////////////////////////////////////////
-		// type_list 
+		// type_list
 		//
 		// type_list is a simple struct that allows us to pass template parameter packs
 		// around in a single struct, and deduce parameter packs from function arguments
@@ -170,8 +174,8 @@ namespace eastl
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////
-		// overload_resolution_t 
-		// 
+		// overload_resolution_t
+		//
 		// Given an input type and a typelist (which is a stand-in for alternative
 		// function overloads) this traits will return the same type chosen as if
 		// overload_resolution has selected a function to run.
@@ -215,8 +219,29 @@ namespace eastl
 		template <typename T, typename OverloadSet>
 		using overload_resolution_t = typename overload_resolution<decay_t<T>, OverloadSet>::type;
 
-	} // namespace meta 
+
+		////////////////////////////////////////////////////////////////////////////////////////////
+		// double_pack_expansion
+		//
+		// MSVC 2017 has a hard time expanding two packs of different lengths.
+		// This is a helper meant to coerce MSVC 2017 into doing the expansion by adding another level
+		// of indirection.
+		//
+
+		template <typename T, size_t I>
+		struct double_pack_expansion;
+
+		template <size_t... Is, size_t I>
+		struct double_pack_expansion<index_sequence<Is...>, I>
+		{
+			using type = index_sequence<Is..., I>;
+		};
+
+		template <typename IndexSequence, size_t I>
+		using double_pack_expansion_t = typename double_pack_expansion<IndexSequence, I>::type;
+
+
+	} // namespace meta
 } // namespace eastl
 
 #endif // EASTL_META_H
-
