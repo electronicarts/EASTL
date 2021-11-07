@@ -70,7 +70,7 @@ namespace eastl
 
 		template <typename T>
 		struct has_unique_object_representations
-			: public integral_constant<bool, is_integral_v<remove_cv_t<remove_all_extents_t<T>>>> // only integral types (floating point types excluded).
+			: public integral_constant<bool, is_integral<remove_cv_t<remove_all_extents_t<T>>>::value> // only integral types (floating point types excluded).
 		{
 		};
 

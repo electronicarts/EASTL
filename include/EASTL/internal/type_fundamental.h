@@ -232,7 +232,7 @@ namespace eastl
 
 	template <typename T>
 	struct is_fundamental
-		: public bool_constant<is_void_v<T> || is_integral_v<T> || is_floating_point_v<T> || is_null_pointer_v<T>> {};
+		: public bool_constant<is_void<T>::value || is_integral<T>::value || is_floating_point<T>::value || is_null_pointer<T>::value> {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>

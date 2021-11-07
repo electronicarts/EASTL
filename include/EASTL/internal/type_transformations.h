@@ -157,7 +157,7 @@ namespace eastl
 		#endif
 	#endif
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <class T>
 		using make_signed_t = typename make_signed<T>::type;
 	#endif
@@ -227,7 +227,7 @@ namespace eastl
 		#endif
 	#endif
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <class T>
 		using make_unsigned_t = typename make_unsigned<T>::type;
 	#endif
@@ -273,7 +273,7 @@ namespace eastl
 	template<typename T> struct remove_pointer<T* volatile>       { typedef T type; };
 	template<typename T> struct remove_pointer<T* const volatile> { typedef T type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <class T>
 		using remove_pointer_t = typename remove_pointer<T>::type;
     #endif
@@ -293,7 +293,7 @@ namespace eastl
 	template<class T>
 	struct add_pointer { typedef typename eastl::remove_reference<T>::type* type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <class T>
 		using add_pointer_t = typename add_pointer<T>::type;
     #endif
@@ -573,7 +573,7 @@ namespace eastl
 	//                                 decltype(declval<T>().end())>> : true_type {};
 	//
 	///////////////////////////////////////////////////////////////////////
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <class...>
 		using void_t = void;
 	#endif

@@ -350,7 +350,7 @@ namespace eastl
 	template <typename ConditionIsTrueType, class ConditionIsFalseType>
 	struct type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
 		using type_select_t = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
 	#endif
@@ -444,7 +444,7 @@ namespace eastl
 	template <typename T>
 	struct enable_if<true, T> { typedef T type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <bool B, class T = void>
 		using enable_if_t = typename enable_if<B, T>::type;
 	#endif
@@ -456,7 +456,7 @@ namespace eastl
 	template <typename T>
 	struct disable_if<false, T> { typedef T type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <bool B, class T = void>
 		using disable_if_t = typename disable_if<B, T>::type;
 	#endif
@@ -475,7 +475,7 @@ namespace eastl
 	template <typename T, typename F>
 	struct conditional<false, T, F> { typedef F type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <bool B, class T, class F>
 		using conditional_t = typename conditional<B, T, F>::type;
 	#endif
@@ -580,7 +580,7 @@ namespace eastl
 	template <typename T>
 	struct identity { using type = T; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename T>
 		using identity_t = typename identity<T>::type;
 	#endif
@@ -598,7 +598,7 @@ namespace eastl
 	template <typename T>
 	struct type_identity { using type = T; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename T>
 		using type_identity_t = typename type_identity<T>::type;
 	#endif
@@ -765,7 +765,7 @@ namespace eastl
 	template <typename T>           struct remove_const<const T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_const<const T[N]> { typedef T type[N]; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename T>
 		using remove_const_t = typename remove_const<T>::type;
 	#endif
@@ -792,7 +792,7 @@ namespace eastl
 	template <typename T>           struct remove_volatile<volatile T[]>  { typedef T type[];  };
 	template <typename T, size_t N> struct remove_volatile<volatile T[N]> { typedef T type[N]; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename T>
 		using remove_volatile_t = typename remove_volatile<T>::type;
 	#endif
@@ -817,7 +817,7 @@ namespace eastl
 	template <typename T>
 	struct remove_cv { typedef typename eastl::remove_volatile<typename eastl::remove_const<T>::type>::type type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename T>
 		using remove_cv_t = typename remove_cv<T>::type;
 	#endif
@@ -866,7 +866,7 @@ namespace eastl
 	template <typename T> struct remove_reference<T&> { typedef T type; };
 	template <typename T> struct remove_reference<T&&>{ typedef T type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename T>
 		using remove_reference_t = typename remove_reference<T>::type;
 	#endif
@@ -889,7 +889,7 @@ namespace eastl
 	template <typename T>
 	struct remove_cvref { typedef typename eastl::remove_volatile<typename eastl::remove_const<typename eastl::remove_reference<T>::type>::type>::type type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template<typename T>
 		using remove_cvref_t = typename remove_cvref<T>::type;
 	#endif

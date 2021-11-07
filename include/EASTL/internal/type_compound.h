@@ -79,7 +79,7 @@ namespace eastl
 	template<typename T, size_t N>
 	struct is_array<T[N]> : public eastl::true_type {};
 
-	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		EA_CONSTEXPR bool is_array_v = is_array<T>::value;
 	#endif
@@ -257,7 +257,7 @@ namespace eastl
 	template <typename T> 
 	struct is_pointer : public integral_constant<bool, is_pointer_value<T>::value>{};
 
-	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		EA_CONSTEXPR bool is_pointer_v = is_pointer<T>::value;
 	#endif
@@ -329,7 +329,7 @@ namespace eastl
 
 	#endif
 
-	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename From, typename To>
 		EA_CONSTEXPR bool is_convertible_v = is_convertible<From, To>::value;
 	#endif
