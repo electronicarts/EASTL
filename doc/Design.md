@@ -306,7 +306,7 @@ EASTL algorithms very much follow the philosophy of standard C++ algorithms, as 
 
 EASTL algorithms are optimized at least as well as the best STL algorithms found in commercial libraries and are significantly optimized over the algorithms that come with the first-party STLs that come with compilers. Most significantly, EASTL algorithms take advantage of type traits of contained classes and take advantage of iterator types to optimize code generation. For example, if you resize an array of integers (or other "pod" type), EASTL will detect that this can be done with a memcpy instead of a slow object-by-object move as would Micrsoft STL.
 
-The optimizations found in EASTL algorithms and the supporting code in EASTL type traits consistts of some fairly tricky advanced C++ and while it is fairly easy to read, it requires a C++ expert (language lawyer, really) to implement confidently. The result of this is that it takes more effort to develop and maintain EASTL than it would to maintain a simpler library. However, the performance advantages have been deemed worth the tradeoff.
+The optimizations found in EASTL algorithms and the supporting code in EASTL type traits consists of some fairly tricky advanced C++ and while it is fairly easy to read, it requires a C++ expert (language lawyer, really) to implement confidently. The result of this is that it takes more effort to develop and maintain EASTL than it would to maintain a simpler library. However, the performance advantages have been deemed worth the tradeoff.
 
 ## Smart Pointer Design
 
