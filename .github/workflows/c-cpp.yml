@@ -1,0 +1,132 @@
+name: EASTL Build & Test Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  checkout:
+    name: Checkout EASTL and submodules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: EASTL/
+      - run: cd EASTL/ && git submodule update --init
+      - name: Upload checked out code
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: Code
+          path: EASTL/
+          
+  build:
+    needs: checkout
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        compiler: [ clang, gcc, msvc ]
+        configuration: [ Debug, Release ]
+        exclude:
+          - os: windows-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: clang
+          - os: ubuntu-latest
+            compiler: msvc
+        include:  
+          - os: windows-latest
+            compiler: msvc
+            cxxflags: '/std:c++20 /Zc:char8_t'
+          - os: ubuntu-latest
+            compiler: clang
+            cc: 'clang-11'
+            cxx: 'clang++-11'
+            cxxflags: '-std=c++20'
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: 'gcc-10'
+            cxx: 'g++-10'
+            cxxflags: '-std=c++2a'
+
+    name: Build EASTL
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.1.0
+        with:
+          name: Code
+          path: Code/
+
+      - run: mkdir build
+      - run: cd build && cmake ../Code -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
+        env:
+          CXXFLAGS: ${{ matrix.cxxflags }}
+          CXX: ${{ matrix.cxx }}
+          CC: ${{ matrix.cc }}
+      - run: cd build && cmake --build . --config ${{ matrix.configuration }}
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: Binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.configuration }}
+          path: build/
+    
+  test:
+    needs: build
+    name: Run EASTL tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        compiler: [ clang, msvc, gcc ]
+        configuration: [ Debug, Release ]
+        exclude:
+        - os: windows-latest
+          compiler: gcc
+        - os: windows-latest
+          compiler: clang
+        - os: ubuntu-latest
+          compiler: msvc
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.1.0
+        with:
+          name: Binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.configuration }}
+          path: Binaries/
+      - if: matrix.os == 'ubuntu-latest'
+        run: chmod 755 ./Binaries/test/EASTLTest
+      - run: cd Binaries/test && ctest -C ${{ matrix.configuration }} -V
+        
+  benchmark:
+    needs: build
+    name: Run EASTL benchmarks
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        compiler: [ clang, msvc, gcc ]
+        configuration: [ Release ]
+        exclude:
+        - os: windows-latest
+          compiler: gcc
+        - os: windows-latest
+          compiler: clang
+        - os: ubuntu-latest
+          compiler: msvc
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.1.0
+        with:
+          name: Binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.configuration }}
+          path: Binaries/
+      - if: matrix.os == 'ubuntu-latest'
+        run: chmod 755 ./Binaries/benchmark/EASTLBenchmarks
+      - run: cd Binaries/benchmark && ctest -C ${{ matrix.configuration }} -V
