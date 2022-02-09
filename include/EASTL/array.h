@@ -478,8 +478,95 @@ namespace eastl
 		return internal::to_array(eastl::move(a), eastl::make_index_sequence<N>{});
 	}
 
+#if EASTL_TUPLE_ENABLED
+
+	template <typename T, size_t N>
+	class tuple_size<array<T, N>> : public integral_constant<size_t, N>
+	{
+	};
+
+	template <typename T, size_t N>
+	class tuple_size<const array<T, N>> : public integral_constant<size_t, N>
+	{
+	};
+
+	template <size_t I, typename T, size_t N>
+	class tuple_element<I, array<T, N>>
+	{
+	public:
+		using type = T;
+	};
+
+	template <size_t I, typename T, size_t N>
+	class tuple_element<I, const array<T, N>>
+	{
+	public:
+		using type = const T;
+	};
+
+	template <size_t I>
+	struct GetArray
+	{
+		template <typename T, size_t N>
+		static EA_CONSTEXPR T& getInternal(array<T, N>& a)
+		{
+			return a[I];
+		}
+
+		template <typename T, size_t N>
+		static EA_CONSTEXPR const T& getInternal(const array<T, N>& a)
+		{
+			return a[I];
+		}
+
+		template <typename T, size_t N>
+		static EA_CONSTEXPR T&& getInternal(array<T, N>&& a)
+		{
+			return eastl::forward<T>(a[I]);
+		}
+	};
+
+	template <size_t I, typename T, size_t N>
+	EA_CONSTEXPR tuple_element_t<I, array<T, N>>& get(array<T, N>& p)
+	{
+		return GetArray<I>::getInternal(p);
+	}
+
+	template <size_t I, typename T, size_t N>
+	EA_CONSTEXPR const tuple_element_t<I, array<T, N>>& get(const array<T, N>& p)
+	{
+		return GetArray<I>::getInternal(p);
+	}
+
+	template <size_t I, typename T, size_t N>
+	EA_CONSTEXPR tuple_element_t<I, array<T, N>>&& get(array<T, N>&& p)
+	{
+		return GetArray<I>::getInternal(eastl::move(p));
+	}
+
+#endif  // EASTL_TUPLE_ENABLED
+
 
 } // namespace eastl
+
+///////////////////////////////////////////////////////////////
+// C++17 structured binding support for eastl::array
+//
+#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+	#include <tuple>
+
+	template <typename T, size_t N>
+	class std::tuple_size<::eastl::array<T, N>> : public ::eastl::integral_constant<size_t, N>
+	{
+	};
+
+	template <size_t I, typename T, size_t N>
+	struct std::tuple_element<I, ::eastl::array<T, N>>
+	{
+		static_assert(I < N, "index is out of bounds");
+		using type = T;
+	};
+#endif // EA_COMPILER_NO_STRUCTURED_BINDING
 
 
 #endif // Header include guard
