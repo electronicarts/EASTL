@@ -55,7 +55,7 @@ namespace eastl
 	inline void promote_heap_impl(RandomAccessIterator first, Distance topPosition, Distance position, T value)
 	{
 		for(Distance parentPosition = (position - 1) >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
-			(position > topPosition) && (*(first + parentPosition) < value);
+			(position > topPosition) && eastl::less<ValueType>()(*(first + parentPosition), value);
 			parentPosition = (position - 1) >> 1)
 		{
 			*(first + position) = eastl::forward<ValueType>(*(first + parentPosition)); // Swap the node with its parent.
@@ -170,7 +170,7 @@ namespace eastl
 
 		for(; childPosition < heapSize; childPosition = (2 * childPosition) + 2)
 		{
-			if(*(first + childPosition) < *(first + (childPosition - 1))) // Choose the larger of the two children.
+			if(eastl::less<ValueType>()(*(first + childPosition), *(first + (childPosition - 1)))) // Choose the larger of the two children.
 				--childPosition;
 			*(first + position) = eastl::forward<ValueType>(*(first + childPosition)); // Swap positions with this child.
 			position = childPosition;

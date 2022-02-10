@@ -806,18 +806,18 @@ namespace eastl
 	template <typename T>
 	inline T&& median_impl(T&& a, T&& b, T&& c)
 	{
-		if(a < b)
+		if(eastl::less<T>()(a, b))
 		{
-			if(b < c)
+			if(eastl::less<T>()(b, c))
 				return eastl::forward<T>(b);
-			else if(a < c)
+			else if(eastl::less<T>()(a, c))
 				return eastl::forward<T>(c);
 			else
 				return eastl::forward<T>(a);
 		}
-		else if(a < c)
+		else if(eastl::less<T>()(a, c))
 			return eastl::forward<T>(a);
-		else if(b < c)
+		else if(eastl::less<T>()(b, c))
 			return eastl::forward<T>(c);
 		return eastl::forward<T>(b);
 	}
