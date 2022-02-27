@@ -10,6 +10,8 @@
 	#pragma once
 #endif
 
+template<typename>
+constexpr bool eastl_atomic_always_false = false;
 
 #define EASTL_ATOMIC_INTERNAL_COMPILER_AVAILABLE(op)					\
 	EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_COMPILER_, op), _AVAILABLE)
@@ -18,7 +20,7 @@
 	EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ARCH_, op), _AVAILABLE)
 
 #define EASTL_ATOMIC_INTERNAL_NOT_IMPLEMENTED_ERROR(...)				\
-	static_assert(false, "eastl::atomic<T> atomic macro not implemented!")
+	static_assert(eastl_atomic_always_false<T>, "eastl::atomic<T> atomic macro not implemented!")
 
 
 /* Compiler && Arch Not Implemented */
