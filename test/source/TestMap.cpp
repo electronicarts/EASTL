@@ -167,6 +167,24 @@ int TestMap()
 		EATEST_VERIFY(map3.at(0) == 1);
 	}
 
+	// User regression test, exception must be throw if search element, smaller than the first one, is not present.
+	{
+		typedef eastl::map<int, int>     IntIntMap;
+		IntIntMap map1;
+
+		map1.emplace(2, 100);
+
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map1.at(0));
+		#endif
+
+		// Same test on const map
+		const IntIntMap& map2 = map1;
+		#if EASTL_EXCEPTIONS_ENABLED
+			EATEST_VERIFY_THROW(map2.at(0));
+		#endif
+	}
+
 	// User regression test
 	{
 	#if !EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR

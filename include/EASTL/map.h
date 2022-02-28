@@ -445,7 +445,7 @@ namespace eastl
 	{
 		iterator itLower(lower_bound(key)); // itLower->first is >= key.
 
-		if(itLower == end())
+		if(itLower == end() || compare(key, (*itLower).first))
 		{
 			#if EASTL_EXCEPTIONS_ENABLED
 				throw std::out_of_range("map::at key does not exist");
@@ -463,7 +463,7 @@ namespace eastl
 	{
 		const_iterator itLower(lower_bound(key)); // itLower->first is >= key.
 
-		if(itLower == end())
+		if(itLower == end() || compare(key, (*itLower).first))
 		{
 			#if EASTL_EXCEPTIONS_ENABLED
 				throw std::out_of_range("map::at key does not exist");
