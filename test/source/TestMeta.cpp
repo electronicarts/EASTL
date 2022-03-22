@@ -80,12 +80,12 @@ int TestOverloadResolution()
 	int nErrorCount = 0;
 
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<int>>, int>, "error");
-	static_assert(is_same_v<overload_resolution_t<int, overload_set<short>>, short>, "error");
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<long>>, long>, "error");
 	static_assert(is_same_v<overload_resolution_t<short, overload_set<int>>, int>, "error");
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<int, short, long>>, int>, "error");
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<short, int, long, float>>, int>, "error");
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<short, long, int, float, char>>, int>, "error");
+	static_assert(is_same_v<overload_resolution_t<int, overload_set<float, int, double>>, int>, "error");
 
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<int>>, int>, "error");
 	static_assert(is_same_v<overload_resolution_t<int, overload_set<int, short>>, int>, "error");
