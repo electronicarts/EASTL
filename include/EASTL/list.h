@@ -2006,9 +2006,9 @@ namespace eastl
 	{
 		node_type* const pNodeNew = DoCreateNode();
 		((ListNodeBase*)pNodeNew)->insert(pNode);
-#if EASTL_LIST_SIZE_CACHE
-		++mSize;
-#endif
+		#if EASTL_LIST_SIZE_CACHE
+			++mSize;
+		#endif
 	}
 
 
