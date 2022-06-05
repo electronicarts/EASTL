@@ -1906,7 +1906,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			::new((void*)&pNode->mValue) value_type;
+			::new((void*)&pNode->mValue) value_type();
 		#endif
 
 		return pNode;
