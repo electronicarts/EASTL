@@ -1086,6 +1086,32 @@ int TestDeque()
 		}
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+
+	{ // Test <=>
+	    eastl::deque<int> d1 = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	    eastl::deque<int> d2 = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+	    eastl::deque<int> d3 = {1, 2, 3, 4, 5};
+	    eastl::deque<int> d4 = {10};
+
+	    VERIFY(d1 != d2);
+	    VERIFY(d1 < d2);
+	    VERIFY(d1 != d3);
+	    VERIFY(d1 > d3);
+	    VERIFY(d4 > d1);
+	    VERIFY(d4 > d2);
+	    VERIFY(d4 > d3);
+
+	    VERIFY((d1 <=> d2) != 0);
+	    VERIFY((d1 <=> d2) < 0);
+	    VERIFY((d1 <=> d3) != 0);
+	    VERIFY((d1 <=> d3) > 0);
+	    VERIFY((d4 <=> d1) > 0);
+	    VERIFY((d4 <=> d2) > 0);
+	    VERIFY((d4 <=> d3) > 0);
+	}
+#endif
+
 	return nErrorCount;
 }
 

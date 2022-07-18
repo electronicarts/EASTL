@@ -451,63 +451,267 @@ namespace eastl
 
 	// global operators
 
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+	// }
+	//
+	// // type_identity_t is used in this context to forcefully trigger conversion operators towards basic_string_view.
+	// // Mostly we want basic_string::operator basic_string_view() to kick-in to be able to compare strings and string_views.
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator==(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+	// }
+
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator==(decay_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR auto operator<=>(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
-		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+		return static_cast<std::weak_ordering>(lhs.compare(rhs) <=> 0);
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, decay_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR auto operator<=>(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
-		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+		typedef basic_string_view<CharT> view_type;
+		return static_cast<std::weak_ordering>(lhs <=> static_cast<view_type>(rhs));
+	}
+
+#else
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator==(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		typedef basic_string_view<CharT> view_type;
+		return static_cast<view_type>(lhs) == rhs;
 	}
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator==(decay_t<basic_string_view<CharT>> lhs, decay_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator==(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
-		return (lhs.size() == rhs.size()) && (lhs.compare(rhs) == 0);
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		typedef basic_string_view<CharT> view_type;
+		return lhs == static_cast<view_type>(rhs);
 	}
 
-
-
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(lhs == rhs);
+	// }
+	//
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator!=(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(lhs == rhs);
+	// }
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return !(lhs == rhs);
 	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator!=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(lhs == rhs);
+	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(lhs == rhs);
+	}
+
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return lhs.compare(rhs) < 0;
+	// }
+	//
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator<(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return lhs.compare(rhs) < 0;
+	// }
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return lhs.compare(rhs) < 0;
 	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator<(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		typedef basic_string_view<CharT> view_type;
+		return static_cast<view_type>(lhs) < rhs;
+	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		typedef basic_string_view<CharT> view_type;
+		return lhs < static_cast<view_type>(rhs);
+	}
+
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(rhs < lhs);
+	// }
+	//
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator<=(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(rhs < lhs);
+	// }
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return !(rhs < lhs);
 	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator<=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(rhs < lhs);
+	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(rhs < lhs);
+	}
+
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return rhs < lhs;
+	// }
+	//
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator>(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return rhs < lhs;
+	// }
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return rhs < lhs;
 	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator>(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return rhs < lhs;
+	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return rhs < lhs;
+	}
+
+	// Disabling symmetric comparisons that require conversions, since they are causing an internal compiler error
+	// when compiled using MSVC when certain flags are enabled (/Zi /O2 /Zc:inline)
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(lhs < rhs);
+	// }
+	//
+	// template <class CharT>
+	// inline EA_CONSTEXPR bool operator>=(type_identity_t<basic_string_view<CharT>> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	// {
+	// 	return !(lhs < rhs);
+	// }
 
 	template <class CharT>
-	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, type_identity_t<basic_string_view<CharT>> rhs) EA_NOEXCEPT
 	{
 		return !(lhs < rhs);
 	}
-
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator>=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(lhs < rhs);
+	}
+	
+	template <class CharT>
+	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
+	{
+		// Workaround for basic_string_view comparisons that require conversions,
+		// since they are causing an internal compiler error when compiled using
+		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
+		
+		return !(lhs < rhs);
+	}
+#endif
 	// string_view / wstring_view 
 	typedef basic_string_view<char>    string_view;
 	typedef basic_string_view<wchar_t> wstring_view;

@@ -89,12 +89,15 @@ int TestDuration()
 
 			microseconds us = 2 * ms; // 6000 microseconds constructed from 3 milliseconds
 			VERIFY(us.count() == 6000);
+			
+			microseconds us2 = ms * 2; // 6000 microseconds constructed from 3 milliseconds
+			VERIFY(us2.count() == 6000);
 
-			microseconds us2 = us / 2;
-			VERIFY(us2.count() == 3000);
+			microseconds us3 = us / 2;
+			VERIFY(us3.count() == 3000);
 
-			microseconds us3 = us % 2;
-			VERIFY(us3.count() == 0);
+			microseconds us4 = us % 2;
+			VERIFY(us4.count() == 0);
 		}
 	}
 

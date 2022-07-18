@@ -233,6 +233,103 @@ namespace eastl
 	}
 
 
+	#if defined(EA_COMPILER_CPP20_ENABLED)
+	/// midpoint
+	///
+	/// Computes the midpoint between the LHS and RHS by adding them together, then dividing the sum by 2.
+	/// If the operands are of integer type and the sum is odd, the result will be rounded closer to the LHS.
+	/// If the operands are floating points, then at most one inexact operation occurs.
+	///
+	template <typename T>
+	constexpr eastl::enable_if_t<eastl::is_arithmetic_v<T> && !eastl::is_same_v<eastl::remove_cv_t<T>, bool>, T> midpoint(const T lhs, const T rhs) EA_NOEXCEPT
+	{
+		// If T is an integral type...
+		if constexpr(eastl::is_integral_v<T>)
+		{
+			using U = eastl::make_unsigned_t<T>;
+
+			int sign = 1;
+			U m = lhs;
+			U M = rhs;
+
+			if (lhs > rhs)
+			{
+				sign = -1;
+				m = rhs;
+				M = lhs;
+			}
+
+			return lhs + static_cast<T>(sign * static_cast<T>((U(M - m)) / 2 ));
+		}
+
+		// otherwise if T is a floating point
+		else
+		{
+			const T LO = eastl::numeric_limits<T>::min() * 2;
+			const T HI = eastl::numeric_limits<T>::max() / 2;
+
+			const T lhs_abs = (lhs < 0) ? -lhs : lhs;
+			const T rhs_abs = (rhs < 0) ? -rhs : rhs;
+
+			if (lhs_abs <= HI && rhs_abs <= HI)
+				return (lhs + rhs) / 2;
+			if (lhs_abs < LO)
+				return lhs + (rhs / 2);
+			if (rhs_abs < LO)
+				return (lhs / 2) + rhs;
+			return (lhs / 2) + (rhs / 2);
+		}
+	}
+
+
+	/// midpoint
+	///
+	/// Computes the midpoint address between pointers LHS and RHS.
+	/// The midpoint address closer to the LHS is chosen.
+	///
+	template <typename T>
+	constexpr eastl::enable_if_t<eastl::is_object_v<T>, T*> midpoint(T* lhs, T* rhs)
+	{
+		return lhs + ((rhs - lhs) / 2);
+	}
+
+
+	template <class T>
+	constexpr T shared_lerp(const T a, const T b, const T t) EA_NOEXCEPT
+	{
+		if ((a <= 0 && b >= 0) || (a >= 0 && b <= 0))
+		{
+			return t * b + (1 - t) * a;
+		}
+
+		if (t == 1)
+		{
+			return b;
+		}
+
+		const T X = a + t * (b - a);
+
+		if ((t > 1) == (b > a))
+		{
+			return (b > X) ? b : X;
+		}
+		return (b < X) ? b : X;
+	}
+
+	/// lerp
+	///
+	/// Calculates the linear interpolation of two points A and B expressed A + T * (B - A)
+	/// where T is some value in range [0, 1]. If T is outside this range, the linear extrapolation will be computed.
+	///
+	/// https://en.cppreference.com/w/cpp/numeric/lerp
+	///
+	/// C++ proposal paper:
+	/// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0811r3.html
+	///
+	constexpr float lerp(float a, float b, float t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
+	constexpr double lerp(double a, double b, double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
+	constexpr long double lerp(long double a, long double b, long double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
+	#endif
 
 } // namespace eastl
 

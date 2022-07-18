@@ -800,6 +800,38 @@ static int Test_unique_ptr()
 			}
 		#endif
 
+		#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+			{
+				unique_ptr<int> pT1(new int(5));
+				unique_ptr<int> pT2(new int(10));
+				unique_ptr<int> pT3(new int(0));
+
+				EATEST_VERIFY((pT1 <=> pT2) != 0);
+				EATEST_VERIFY((pT2 <=> pT1) != 0);
+
+				EATEST_VERIFY((pT1 <=> pT2) < 0);
+				EATEST_VERIFY((pT1 <=> pT2) <= 0);
+				EATEST_VERIFY((pT2 <=> pT1) > 0);
+				EATEST_VERIFY((pT2 <=> pT1) >= 0);
+
+				EATEST_VERIFY((pT3 <=> pT1) < 0);
+				EATEST_VERIFY((pT3 <=> pT2) < 0);
+				EATEST_VERIFY((pT1 <=> pT3) > 0);
+				EATEST_VERIFY((pT2 <=> pT3) > 0);
+
+				unique_ptr<A> pT4(new A(5));
+				unique_ptr<A> pT5(new A(10));
+
+				EATEST_VERIFY((pT4 <=> pT5) != 0);
+				EATEST_VERIFY((pT5 <=> pT4) != 0);
+
+				EATEST_VERIFY((pT4 <=> pT5) < 0);
+				EATEST_VERIFY((pT4 <=> pT5) <= 0);
+				EATEST_VERIFY((pT5 <=> pT4) > 0);
+				EATEST_VERIFY((pT5 <=> pT4) >= 0);
+			}
+		#endif
+
 			// ToDo: Test move assignment between two convertible types with an is_assignable deleter_type
 			//{
 			//	struct Base {};

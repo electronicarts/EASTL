@@ -6,6 +6,7 @@
 #define EASTL_TUPLE_H
 
 #include <EASTL/internal/config.h>
+#include <EASTL/compare.h>
 #include <EASTL/functional.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/utility.h>
@@ -199,7 +200,7 @@ namespace Internal
 
 		// We shouldn't need this explicit constructor as it should be handled by the template below but OSX clang
 		// is_constructible type trait incorrectly gives false for is_constructible<T&&, T&&>::value
-		explicit TupleLeaf(ValueType&& v) : mValue(eastl::move(v)) {}
+		explicit TupleLeaf(ValueType&& v) : mValue(eastl::forward<ValueType>(v)) {}
 
 		template <typename T, typename = typename enable_if<is_constructible<ValueType, T&&>::value>::type>
 		explicit TupleLeaf(T&& t)
@@ -231,50 +232,6 @@ namespace Internal
 
 	private:
 		ValueType mValue;  
-	};
-
-	// TupleLeaf: Specialize for when ValueType is a reference 
-	template <size_t I, typename ValueType, bool IsEmpty>
-	class TupleLeaf<I, ValueType&, IsEmpty>
-	{
-	public:
-		TupleLeaf(const TupleLeaf&) = default;
-		TupleLeaf& operator=(const TupleLeaf&) = delete;
-
-		template <typename T, typename = typename enable_if<is_constructible<ValueType, T&&>::value>::type>
-		explicit TupleLeaf(T&& t)
-			: mValue(eastl::forward<T>(t))
-		{
-		}
-
-		explicit TupleLeaf(ValueType& t) : mValue(t)
-		{
-		}
-
-		template <typename T>
-		explicit TupleLeaf(const TupleLeaf<I, T>& t)
-			: mValue(t.getInternal())
-		{
-		}
-
-		template <typename T>
-		TupleLeaf& operator=(T&& t)
-		{
-			mValue = eastl::forward<T>(t);
-			return *this;
-		}
-
-		int swap(TupleLeaf& t)
-		{
-			eastl::Internal::swap(*this, t);
-			return 0;
-		}
-
-		ValueType& getInternal() { return mValue; }
-		const ValueType& getInternal() const { return mValue; }
-
-	private:
-		ValueType& mValue;
 	};
 
 	// TupleLeaf: partial specialization for when we can use the Empty Base Class Optimization
@@ -609,7 +566,6 @@ namespace Internal
 		}
 	};
 
-
 	// TupleLess
 	//
 	//
@@ -718,6 +674,16 @@ namespace Internal
 			return TC2::DoCat2(eastl::forward<TupleArg1>(t1), eastl::forward<TupleArg2>(t2));
 		}
 	};
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename... T1s, typename... T2s, size_t... Is>
+	constexpr auto TupleThreeWay(const tuple<T1s...>& t1, const tuple<T2s...>& t2, index_sequence<Is...> is)
+	{
+		std::common_comparison_category_t<synth_three_way_result<T1s, T2s>...> result = std::strong_ordering::equal;
+		((result = synth_three_way{}(get<Is>(t1), get<Is>(t2)), result != 0) || ...);
+		return result;
+	}
+#endif
 }  // namespace Internal
 
 
@@ -868,6 +834,13 @@ inline bool operator==(const tuple<T1s...>& t1, const tuple<T2s...>& t2)
 	return Internal::TupleEqual<sizeof...(T1s)>()(t1, t2);
 }
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+template <typename... T1s, typename... T2s>
+inline constexpr std::common_comparison_category_t<synth_three_way_result<T1s, T2s>...> operator<=>(const tuple<T1s...>& t1, const tuple<T2s...>& t2)
+{
+	return Internal::TupleThreeWay(t1, t2, make_index_sequence<sizeof...(T1s)>{});
+}
+#else
 template <typename... T1s, typename... T2s>
 inline bool operator<(const tuple<T1s...>& t1, const tuple<T2s...>& t2)
 {
@@ -878,7 +851,7 @@ template <typename... T1s, typename... T2s> inline bool operator!=(const tuple<T
 template <typename... T1s, typename... T2s> inline bool operator> (const tuple<T1s...>& t1, const tuple<T2s...>& t2) { return t2 < t1; }
 template <typename... T1s, typename... T2s> inline bool operator<=(const tuple<T1s...>& t1, const tuple<T2s...>& t2) { return !(t2 < t1); }
 template <typename... T1s, typename... T2s> inline bool operator>=(const tuple<T1s...>& t1, const tuple<T2s...>& t2) { return !(t1 < t2); }
-
+#endif
 
 // tuple_cat 
 //

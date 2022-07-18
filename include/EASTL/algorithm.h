@@ -128,6 +128,7 @@
 //      iter_swap
 //      lexicographical_compare
 //      lexicographical_compare<Compare>
+//      lexicographical_compare_three_way
 //      lower_bound
 //      lower_bound<Compare>
 //      make_heap                                   Found in heap.h
@@ -247,6 +248,7 @@
 #include <EASTL/utility.h>
 #include <EASTL/internal/generic_iterator.h>
 #include <EASTL/random.h>
+#include <EASTL/compare.h>
 
 EA_DISABLE_ALL_VC_WARNINGS();
 
@@ -1265,8 +1267,8 @@ namespace eastl
 
 		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value &&
 								   eastl::is_same<value_type_input, value_type_output>::value &&
-								  (eastl::is_pointer<BidirectionalIterator1>::value || eastl::is_same<IIC, eastl::contiguous_iterator_tag>::value) &&
-								  (eastl::is_pointer<BidirectionalIterator2>::value || eastl::is_same<OIC, eastl::contiguous_iterator_tag>::value);
+								  (eastl::is_pointer<BidirectionalIterator1>::value || eastl::is_same<IIC, EASTL_ITC_NS::contiguous_iterator_tag>::value) &&
+								  (eastl::is_pointer<BidirectionalIterator2>::value || eastl::is_same<OIC, EASTL_ITC_NS::contiguous_iterator_tag>::value);
 
 		return eastl::move_and_copy_backward_helper<IIC, isMove, canBeMemmoved>::move_or_copy_backward(first, last, resultEnd); // Need to chose based on the input iterator tag and not the output iterator tag, because containers accept input ranges of iterator types different than self.
 	}
@@ -2113,6 +2115,42 @@ namespace eastl
 		return (first1 == last1) && (first2 != last2);
 	}
 
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+
+	/// lexicographical_compare_three_way
+	///
+	/// Returns: The comparison category ordering between both ranges. For the first non-equivalent pair in the ranges,
+	/// the comparison will be returned. Else if the first range is a subset (superset) of the second range, then the
+	/// less (greater) ordering will be returned.
+	///
+	/// Complexity: At most N iterations, where N = min(last1-first1, last2-first2) of the applications
+	/// of the corresponding comparison.
+	///
+	/// Note: If two sequences have the same number of elements and their
+	/// corresponding elements are equivalent, then neither sequence is
+	/// lexicographically less than the other. If one sequence is a prefix
+	/// of the other, then the shorter sequence is lexicographically less
+	/// than the longer sequence. Otherwise, the lexicographical comparison
+	/// of the sequences yields the same result as the comparison of the first
+	/// corresponding pair of elements that are not equivalent.
+	///
+	template <typename InputIterator1, typename InputIterator2, typename Compare>
+	constexpr auto lexicographical_compare_three_way(InputIterator1 first1, InputIterator1 last1,
+	                                                 InputIterator2 first2, InputIterator2 last2,
+	                                                 Compare compare) -> decltype(compare(*first1, *first2))
+	{
+		for (; (first1 != last1) && (first2 != last2); ++first1, ++first2)
+		{
+			if (auto c = compare(*first1, *first2); c != 0)
+				return c;
+		}
+
+		return (first1 != last1) ? std::strong_ordering::greater :
+		       (first2 != last2) ? std::strong_ordering::less :
+				std::strong_ordering::equal;
+	}
+#endif
 
 	/// mismatch
 	///

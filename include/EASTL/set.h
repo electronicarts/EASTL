@@ -416,6 +416,14 @@ namespace eastl
 		}
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <class Key, class Compare, class Allocator>
+	synth_three_way_result<Key> operator<=>(const set<Key, Compare, Allocator>& a, const set<Key, Compare, Allocator>& b)
+	{
+	    return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#endif
+
 
 	///////////////////////////////////////////////////////////////////////
 	// multiset
@@ -626,6 +634,14 @@ namespace eastl
 			}
 		}
 	}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <class Key, class Compare, class Allocator>
+	synth_three_way_result<Key> operator<=>(const multiset<Key, Compare, Allocator>& a, const multiset<Key, Compare, Allocator>& b)
+	{
+	    return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#endif
 
 
 } // namespace eastl

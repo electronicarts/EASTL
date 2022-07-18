@@ -1691,7 +1691,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if 0 // defined(_MSC_VER) && (_MSC_VER >= 1800) // VS2013+ -- Disabled due to __is_destructible being broken in VC++ versions up to at least VS2013. A ticket will be submitted for this
+	#if defined(_MSC_VER) && (_MSC_VER >= 1920)
 		#define EASTL_TYPE_TRAIT_is_destructible_CONFORMANCE 1
 
 		template <typename T>
@@ -1710,30 +1710,33 @@ namespace eastl
 		struct is_destructible
 			: public eastl::integral_constant<bool, !eastl::is_array_of_unknown_bounds<T>::value && 
 													!eastl::is_void<T>::value                    && 
-													!eastl::is_function<T>::value                && 
-													!eastl::is_abstract<T>::value> {};
+													!eastl::is_function<T>::value> {};
 	#else
 		#define EASTL_TYPE_TRAIT_is_destructible_CONFORMANCE 1
-
-		template <typename U>
-		struct destructible_test_helper{ U u; };
 
 		template <typename>
 		eastl::false_type destructible_test_function(...);
 		
-		template <typename T, typename U = decltype(eastl::declval<eastl::destructible_test_helper<T> >().~destructible_test_helper<T>())>
+		template <typename T, typename U = typename eastl::remove_all_extents<T>::type, typename V = decltype(eastl::declval<U&>().~U())>
 		eastl::true_type destructible_test_function(int);
 
 		template <typename T, bool = eastl::is_array_of_unknown_bounds<T>::value || // Exclude these types from being considered destructible.
 									 eastl::is_void<T>::value                    || 
-									 eastl::is_function<T>::value                || 
-									 eastl::is_abstract<T>::value>
+									 eastl::is_function<T>::value>
 		struct is_destructible_helper
 			: public eastl::identity<decltype(eastl::destructible_test_function<T>(0))>::type {}; // Need to wrap decltype with identity because some compilers otherwise don't like the bare decltype usage.
 
 		template <typename T>
 		struct is_destructible_helper<T, true>
 			: public eastl::false_type {};
+
+		template <typename T, bool Whatever>
+		struct is_destructible_helper<T&, Whatever> // Reference are trivially destructible.
+			: public eastl::true_type {};
+
+		template <typename T, bool Whatever>
+		struct is_destructible_helper<T&&, Whatever> // Reference are trivially destructible.
+			: public eastl::true_type {};
 
 		template <typename T>
 		struct is_destructible
@@ -1771,7 +1774,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if 0 // defined(_MSC_VER) && (_MSC_VER >= 1800) // VS2013+ -- Disabled due to __is_trivially_destructible being broken in VC++ versions up to at least VS2013. A ticket will be submitted for this
+	#if defined(_MSC_VER) && (_MSC_VER >= 1920) 
 		#define EASTL_TYPE_TRAIT_is_trivially_destructible_CONFORMANCE 1
 
 		template <typename T>
@@ -1822,7 +1825,7 @@ namespace eastl
 	//
 	///////////////////////////////////////////////////////////////////////
 
-	#if 0 // defined(_MSC_VER) && (_MSC_VER >= 1800) // VS2013+ -- Disabled due to __is_nothrow_destructible being broken in VC++ versions up to at least VS2013. A ticket will be submitted for this
+	#if defined(_MSC_VER) && (_MSC_VER >= 1920) 
 		#define EASTL_TYPE_TRAIT_is_nothrow_destructible_CONFORMANCE ((_MSC_VER >= 1900) ? 1 : 0) // VS2013 (1800) doesn't support noexcept and so can't support all usage of this properly (in particular default exception specifications defined in [C++11 Standard, 15.4 paragraph 14].
 
 		template <typename T>

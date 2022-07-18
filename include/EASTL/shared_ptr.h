@@ -970,6 +970,13 @@ namespace eastl
 		return (a.get() == b.get());
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename U>
+	std::strong_ordering operator<=>(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
+	{
+		return a.get() <=> b.get();
+	}
+#else
 	template <typename T, typename U> 
 	inline bool operator!=(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
@@ -1006,6 +1013,7 @@ namespace eastl
 	{
 		return !(a < b);
 	}
+#endif
 
 	template <typename T>
 	inline bool operator==(const shared_ptr<T>& a, std::nullptr_t) EA_NOEXCEPT
@@ -1013,6 +1021,13 @@ namespace eastl
 		return !a;
 	}
 
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T>
+	inline std::strong_ordering operator<=>(const shared_ptr<T>& a, std::nullptr_t) EA_NOEXCEPT
+	{
+		return a.get() <=> nullptr;
+	}
+	#else
 	template <typename T>
 	inline bool operator==(std::nullptr_t, const shared_ptr<T>& b) EA_NOEXCEPT
 	{
@@ -1078,7 +1093,7 @@ namespace eastl
 	{
 		return !(nullptr < b);
 	}
-
+#endif
 
 
 

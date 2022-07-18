@@ -227,10 +227,26 @@ int TestTuple()
 		EATEST_VERIFY(aTuple != aDefaultInitTuple);
 		EATEST_VERIFY(aDefaultInitTuple < aTuple);
 
+		#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		EATEST_VERIFY((aTuple <=> anotherTuple) == 0);
+		EATEST_VERIFY((aTuple <=> anotherTuple) >= 0);
+		EATEST_VERIFY((anotherTuple <=> aTuple) >= 0);
+		EATEST_VERIFY((aTuple <=> aDefaultInitTuple) != 0);
+		EATEST_VERIFY((aDefaultInitTuple <=> aTuple) < 0);
+		#endif
+
 		tuple<int, int, int> lesserTuple(1, 2, 3);
 		tuple<int, int, int> greaterTuple(1, 2, 4);
 		EATEST_VERIFY(lesserTuple < greaterTuple && !(greaterTuple < lesserTuple) && greaterTuple > lesserTuple &&
 					  !(lesserTuple > greaterTuple));
+
+		#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		EATEST_VERIFY((lesserTuple <=> greaterTuple) != 0);
+		EATEST_VERIFY((lesserTuple <=> greaterTuple) < 0);
+		EATEST_VERIFY((lesserTuple <=> greaterTuple) <= 0);
+		EATEST_VERIFY((greaterTuple <=> lesserTuple) > 0);
+		EATEST_VERIFY((greaterTuple <=> lesserTuple) >= 0);
+		#endif
 
 		tuple<int, float, TestObject> valTup(2, 2.0f, TestObject(2));
 		tuple<int&, float&, TestObject&> refTup(valTup);
@@ -269,6 +285,20 @@ int TestTuple()
 
 		tuple<MoveOnlyType&> aTupleWithRefToGetMoveOnly(get<0>(aTupleWithMoveOnlyMember));
 		EATEST_VERIFY(get<0>(aTupleWithRefToGetMoveOnly).mVal == 2);
+	}
+
+	{
+		// Test construction of tuple containing r-value references
+		int x = 42;
+		TestObject object{1337};
+		
+		tuple<int&&, TestObject&&> aTupleWithRValueReference(eastl::move(x), eastl::move(object));
+		static_assert(is_same<decltype(get<0>(aTupleWithRValueReference)), int&>::value, "wrong return type for get when using r-value reference.");
+		static_assert(is_same<decltype(get<1>(aTupleWithRValueReference)), TestObject&>::value, "wrong return type for get when using r-value reference.");
+		EATEST_VERIFY(get<0>(aTupleWithRValueReference) == 42);
+		EATEST_VERIFY(get<1>(aTupleWithRValueReference).mX == 1337);
+
+		static_assert(!is_constructible<decltype(aTupleWithRValueReference), int&, TestObject&>::value, "it shouldn't be possible to assign r-value references with l-values.");
 	}
 
 	{
@@ -479,6 +509,27 @@ int TestTuple()
 			{2, 2.0f}
 		};
 #endif
+	}
+
+	// Compilation test to make sure that we can handle reference to forward-declared types
+	{
+		struct ForwardDeclared;
+
+		auto fill_tuple = [](ForwardDeclared& f) {
+			eastl::tuple<ForwardDeclared&, const ForwardDeclared&> t{f, f};
+			return t;
+		};
+
+		struct ForwardDeclared
+		{
+			int x;
+		};
+
+		ForwardDeclared f{666};
+		auto t = fill_tuple(f);
+
+		EATEST_VERIFY(get<0>(t).x == 666);
+		EATEST_VERIFY(get<1>(t).x == 666);
 	}
 
 	#ifndef EA_COMPILER_NO_STRUCTURED_BINDING

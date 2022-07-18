@@ -5,6 +5,7 @@
 #include "EASTLTest.h"
 #include <EABase/eabase.h>
 #include <EASTL/numeric_limits.h>
+#include <EASTL/string.h>
 #include <EASTL/string_view.h>
 
 // Verify char8_t support is present if the test build requested it.

@@ -71,8 +71,9 @@ namespace eastl
 	};
 
 	bool operator==(const allocator& a, const allocator& b);
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	bool operator!=(const allocator& a, const allocator& b);
-
+#endif
 
 
 	/// dummy_allocator
@@ -97,8 +98,9 @@ namespace eastl
 	};
 
 	inline bool operator==(const dummy_allocator&, const dummy_allocator&) { return true;  }
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	inline bool operator!=(const dummy_allocator&, const dummy_allocator&) { return false; }
-
+#endif
 
 
 	/// Defines a static default allocator which is constant across all types.
@@ -299,12 +301,12 @@ namespace eastl
 			return true; // All allocators are considered equal, as they merely use global new/delete.
 		}
 
-
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 		inline bool operator!=(const allocator&, const allocator&)
 		{
 			return false; // All allocators are considered equal, as they merely use global new/delete.
 		}
-
+#endif
 
 	} // namespace eastl
 

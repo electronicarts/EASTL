@@ -825,6 +825,96 @@ int TestSList()
 		}
 	}
 
+	{ // Test global operators
+		{
+			slist<int> list1 = {0, 1, 2, 3, 4, 5};
+			slist<int> list2 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			slist<int> list3 = {5, 6, 7, 8};
+
+			VERIFY(list1 == list1);
+			VERIFY(!(list1 != list1));
+
+			VERIFY(list1 != list2);
+			VERIFY(list2 != list3);
+			VERIFY(list1 != list3);
+
+			VERIFY(list1 < list2);
+			VERIFY(list1 <= list2);
+
+			VERIFY(list2 > list1);
+			VERIFY(list2 >= list1);
+
+			VERIFY(list3 > list1);
+			VERIFY(list3 > list2);
+		}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		{
+			slist<int> list1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			slist<int> list2 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			slist<int> list3 = {-1, 0, 1, 2, 3, 4, 5};
+
+			// Verify equality between list1 and list2
+			VERIFY((list1 <=> list2) == 0);
+			VERIFY(!((list1 <=> list2) != 0));
+			VERIFY((list1 <=> list2) <= 0);
+			VERIFY((list1 <=> list2) >= 0);
+			VERIFY(!((list1 <=> list2) < 0));
+			VERIFY(!((list1 <=> list2) > 0));
+
+			list1.push_front(-2); // Make list1 less than list2.
+			list2.push_front(-1);
+
+			// Verify list1 < list2
+			VERIFY(!((list1 <=> list2) == 0));
+			VERIFY((list1 <=> list2) != 0);
+			VERIFY((list1 <=> list2) <= 0);
+			VERIFY(!((list1 <=> list2) >= 0));
+			VERIFY(((list1 <=> list2) < 0));
+			VERIFY(!((list1 <=> list2) > 0));
+
+
+			// Verify list3.size() < list2.size() and list3 is a subset of list2
+			VERIFY(!((list3 <=> list2) == 0));
+			VERIFY((list3 <=> list2) != 0);
+			VERIFY((list3 <=> list2) <= 0);
+			VERIFY(!((list3 <=> list2) >= 0));
+			VERIFY(((list3 <=> list2) < 0));
+			VERIFY(!((list3 <=> list2) > 0));
+		}
+
+		{
+			slist<int> list1 = {1, 2, 3, 4, 5, 6, 7};
+			slist<int> list2 = {7, 6, 5, 4, 3, 2, 1};
+			slist<int> list3 = {1, 2, 3, 4};
+
+			struct weak_ordering_slist
+			{
+				slist<int> slist;
+				inline std::weak_ordering operator<=>(const weak_ordering_slist& b) const { return slist <=> b.slist; }
+			};
+
+			VERIFY(synth_three_way{}(weak_ordering_slist{list1}, weak_ordering_slist{list2}) == std::weak_ordering::less);
+			VERIFY(synth_three_way{}(weak_ordering_slist{list3}, weak_ordering_slist{list1}) == std::weak_ordering::less);
+			VERIFY(synth_three_way{}(weak_ordering_slist{list2}, weak_ordering_slist{list1}) == std::weak_ordering::greater);
+			VERIFY(synth_three_way{}(weak_ordering_slist{list2}, weak_ordering_slist{list3}) == std::weak_ordering::greater);
+			VERIFY(synth_three_way{}(weak_ordering_slist{list1}, weak_ordering_slist{list1}) == std::weak_ordering::equivalent);
+
+			struct strong_ordering_slist
+			{
+				slist<int> slist;
+				inline std::strong_ordering operator<=>(const strong_ordering_slist& b) const { return slist <=> b.slist; }
+			};
+
+			VERIFY(synth_three_way{}(strong_ordering_slist{list1}, strong_ordering_slist{list2}) == std::strong_ordering::less);
+			VERIFY(synth_three_way{}(strong_ordering_slist{list3}, strong_ordering_slist{list1}) == std::strong_ordering::less);
+			VERIFY(synth_three_way{}(strong_ordering_slist{list2}, strong_ordering_slist{list1}) == std::strong_ordering::greater);
+			VERIFY(synth_three_way{}(strong_ordering_slist{list2}, strong_ordering_slist{list3}) == std::strong_ordering::greater);
+			VERIFY(synth_three_way{}(strong_ordering_slist{list1}, strong_ordering_slist{list1}) == std::strong_ordering::equal);
+		}
+#endif
+	}
+
 	return nErrorCount;
 }
 

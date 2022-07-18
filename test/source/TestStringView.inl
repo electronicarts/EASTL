@@ -5,6 +5,8 @@
 template<typename StringViewT>
 int TEST_STRING_NAME()
 {
+	using StringT = eastl::basic_string<typename StringViewT::value_type>;
+
 	int nErrorCount = 0;
 	{
 		// EA_CONSTEXPR basic_string_view() 
@@ -476,6 +478,84 @@ int TEST_STRING_NAME()
 			VERIFY(sw1 <= sw2);
 			VERIFY(sw2 > sw1);
 			VERIFY(sw2 >= sw1);
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+			VERIFY((sw1 <=> StringViewT(LITERAL("AAAAABBBBBCCCDDDDDEEEEEFFFGGH"))) == 0);
+			VERIFY((sw1 <=> StringViewT(LITERAL("abcdefghijklmnopqrstuvwxyz"))) != 0);
+			VERIFY((sw1 <=> sw2) < 0);
+			VERIFY((sw1 <=> sw2) <= 0);
+			VERIFY((sw2 <=> sw1) > 0);
+			VERIFY((sw2 <=> sw1) >= 0);
+#endif
+		}
+		
+		{
+			auto s = LITERAL("Hello, World");
+			StringViewT sv(s);
+			
+			VERIFY(s == sv);
+			VERIFY(sv == s);
+
+			VERIFY(s <= sv);
+			VERIFY(sv <= s);
+			VERIFY(s >= sv);
+			VERIFY(sv >= s);
+			VERIFY(!(s != sv));
+			VERIFY(!(sv != s));
+			VERIFY(!(s < sv));
+			VERIFY(!(sv < s));
+			VERIFY(!(s > sv));
+			VERIFY(!(sv > s));
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+			VERIFY((s <=> sv) == 0);
+			VERIFY((sv <=> s) == 0);
+
+			VERIFY((s <=> sv) <= 0);
+			VERIFY((sv <=> s) <= 0);
+			VERIFY((s <=> sv) >= 0);
+			VERIFY((sv <=> s) >= 0);
+			VERIFY(!((s <=> sv) != 0));
+			VERIFY(!((sv <=> s) != 0));
+			VERIFY(!((s <=> sv) > 0));
+			VERIFY(!((sv <=> s) < 0));
+#endif
+		}
+
+		// Regression comparison operators should work between basic_string_view and basic_string.
+		// The idea is that type_identity_t on some overloads will force basic_string::operator basic_string_view() to kick in.
+		{
+			StringT s(LITERAL("Hello, Stockholm"));	
+			StringViewT sv(s);
+
+			VERIFY(s == sv);
+			VERIFY(sv == s);
+
+			// All the operators bellow used to not work.
+			VERIFY(s <= sv);
+			VERIFY(sv <= s);
+			VERIFY(s >= sv);
+			VERIFY(sv >= s);
+			VERIFY(!(s != sv));
+			VERIFY(!(sv != s));
+			VERIFY(!(s < sv));
+			VERIFY(!(sv < s));
+			VERIFY(!(s > sv));
+			VERIFY(!(sv > s));
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+			VERIFY((s <=> sv) == 0);
+			VERIFY((sv <=> s) == 0);
+
+			VERIFY((s <=> sv) <= 0);
+			VERIFY((sv <=> s) <= 0);
+			VERIFY((s <=> sv) >= 0);
+			VERIFY((sv <=> s) >= 0);
+			VERIFY(!((s <=> sv) != 0));
+			VERIFY(!((sv <=> s) != 0));
+			VERIFY(!((s <=> sv) > 0));
+			VERIFY(!((sv <=> s) < 0));
+#endif
 		}
 
 		// template<> struct hash<std::string_view>;

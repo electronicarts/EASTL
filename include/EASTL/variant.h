@@ -224,11 +224,15 @@ namespace eastl
 	struct monostate {};
 
 	// 20.7.8, monostate relational operators
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	EA_CONSTEXPR std::strong_ordering operator<=>(monostate, monostate) EA_NOEXCEPT { return std::strong_ordering::equal; }
+#else
 	EA_CONSTEXPR bool operator> (monostate, monostate) EA_NOEXCEPT { return false; }
 	EA_CONSTEXPR bool operator< (monostate, monostate) EA_NOEXCEPT { return false; }
 	EA_CONSTEXPR bool operator!=(monostate, monostate) EA_NOEXCEPT { return false; }
 	EA_CONSTEXPR bool operator<=(monostate, monostate) EA_NOEXCEPT { return true; }
 	EA_CONSTEXPR bool operator>=(monostate, monostate) EA_NOEXCEPT { return true; }
+#endif
 	EA_CONSTEXPR bool operator==(monostate, monostate) EA_NOEXCEPT { return true; }
 
 	// 20.7.11, hash support
@@ -1434,7 +1438,6 @@ namespace eastl
 		//
 		struct variant_relational_comparison
 		{
-
 			template <typename Compare, size_t I, typename Variant>
 			static EA_CONSTEXPR bool invoke_relational_visitor(const Variant& lhs, const Variant& rhs)
 			{
@@ -1457,6 +1460,29 @@ namespace eastl
 				return call_index<Compare>(lhs, rhs, eastl::make_index_sequence<eastl::variant_size_v<eastl::decay_t<Variant>>>());
 			}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+			template <typename Compare, size_t I, typename Variant>
+			static EA_CONSTEXPR std::compare_three_way_result_t<Variant> invoke_relational_visitor_three_way(const Variant& lhs, const Variant& rhs)
+			{
+				return eastl::invoke(Compare{}, eastl::get<I>(lhs), eastl::get<I>(rhs));
+			}
+
+			template <typename Compare, typename Variant, size_t... VariantArgIndices>
+			static EA_CONSTEXPR std::compare_three_way_result_t<Variant> call_index_three_way(const Variant& lhs, const Variant& rhs, eastl::index_sequence<VariantArgIndices...>)
+			{
+				using invoke_relational_visitor_func_ptr = std::compare_three_way_result_t<Variant> (*)(const Variant&, const Variant&);
+
+				EA_CONSTEXPR invoke_relational_visitor_func_ptr visitors[] = {static_cast<invoke_relational_visitor_func_ptr>(&invoke_relational_visitor_three_way<Compare, VariantArgIndices, Variant>)...};
+
+				return visitors[lhs.index()](lhs, rhs);
+			}
+
+			template <typename Compare, typename Variant>
+			static EA_CONSTEXPR std::compare_three_way_result_t<Variant> call_three_way(const Variant& lhs, const Variant& rhs)
+			{
+				return call_index_three_way<Compare>(lhs, rhs, eastl::make_index_sequence<eastl::variant_size_v<eastl::decay_t<Variant>>>());
+			}
+#endif
 		};
 
 		template <typename Compare, typename Variant>
@@ -1464,6 +1490,14 @@ namespace eastl
 		{
 			return variant_relational_comparison::call<Compare>(lhs, rhs);
 		}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		template <typename Compare, typename Variant>
+		static EA_CONSTEXPR std::compare_three_way_result_t<Variant> CompareVariantRelationalThreeWay(const Variant& lhs, const Variant& rhs)
+		{
+			return variant_relational_comparison::call_three_way<Compare>(lhs, rhs);
+		}
+#endif
 
 	} // namespace internal
 
@@ -1532,6 +1566,20 @@ namespace eastl
 
 		return internal::CompareVariantRelational<eastl::greater_equal<>>(lhs, rhs);
 	}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <class... Types> requires (std::three_way_comparable<Types> && ...)
+	EA_CONSTEXPR std::common_comparison_category_t<std::compare_three_way_result_t<Types>...> operator<=>(const variant<Types...>& lhs, const variant<Types...>& rhs)
+	{
+		if (lhs.valueless_by_exception() && rhs.valueless_by_exception()) return std::strong_ordering::equal;
+		if (lhs.valueless_by_exception()) return std::strong_ordering::less;
+		if (rhs.valueless_by_exception()) return std::strong_ordering::greater;
+		if (auto result = (lhs.index() <=> rhs.index()); result != 0) return result;
+
+		return internal::CompareVariantRelationalThreeWay<std::compare_three_way>(lhs, rhs);
+
+	}
+#endif
 
 } // namespace eastl
 

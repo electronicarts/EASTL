@@ -7,6 +7,7 @@
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/sort.h>
+#include <EASTL/bonus/overloaded.h>
 
 #ifdef EA_COMPILER_CPP14_ENABLED
 #include "ConceptImpls.h"
@@ -730,31 +731,94 @@ EA_NO_INLINE int TestVariantVisit3tNoInline(const eastl::variant<int, bool>& v0,
 	return nErrorCount;
 }
 
+int TestVariantVisitorOverloaded()
+{
+	using namespace eastl;
+	int nErrorCount = 0;
+
+	using v_t = variant<int, string, double, long>;
+	v_t arr[] = {42, "jean", 42.0, 42L};
+	v_t v{42.0};
+
+
+	#ifdef __cpp_deduction_guides
+	{
+		int count = 0;
+
+		for (auto& e : arr)
+		{
+			eastl::visit(
+				overloaded{
+					[&](int)    { count++; },
+					[&](string) { count++; },
+					[&](double) { count++; },
+			   		[&](long)   { count++; }},
+				e
+			);
+		}
+
+		VERIFY(count == EAArrayCount(arr));
+	}
+
+	{
+		double visitedValue = 0.0f;
+
+		eastl::visit(
+			overloaded{
+				[](int)    { },
+				[](string) { },
+				[&](double d) { visitedValue = d; },
+				[](long)   { }},
+			v
+		);
+
+		VERIFY(visitedValue == 42.0f);
+	}
+
+	#endif
+
+	{
+		int count = 0;
+
+		for (auto& e : arr)
+		{
+			eastl::visit(
+				eastl::make_overloaded(
+					[&](int)    { count++; },
+					[&](string) { count++; },
+					[&](double) { count++; },
+					[&](long)   { count++; }), 
+				e
+			);
+		}
+
+		VERIFY(count == EAArrayCount(arr));
+	}
+
+	{
+		double visitedValue = 0.0f;
+
+		eastl::visit(
+			eastl::make_overloaded(
+				[](int)    { },
+				[](string) { },
+				[&](double d) { visitedValue = d; },
+				[](long)   { }),
+			v
+		);
+
+		VERIFY(visitedValue == 42.0f);
+	}
+
+	return nErrorCount;
+}
+
 int TestVariantVisitor()
 {
 	using namespace eastl;
 	int nErrorCount = 0;
 
 	using v_t = variant<int, string, double, long>;
-
-	// TODO(rparolin):  When we have a C++17 compiler
-	//
-	// template deduction guides test
-	// template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-	// template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
-	// {
-	//     v_t arr[] = {42, "rob", 42.0, 42L};
-
-	//     int count = 0;
-	//     for (auto& e : arr)
-	//     {
-	//         eastl::visit(overloaded{[&](int)    { count++; },
-	//                                 [&](string) { count++; },
-	//                                 [&](double) { count++; },
-	//                                 [&](long)   { count++; }}, e);
-	//     }
-	// }
 
 	{
 		v_t arr[] = {42, "hello", 42.0, 42L};
@@ -1742,6 +1806,7 @@ int TestVariant()
 	nErrorCount += TestVariantEmplace();
 	nErrorCount += TestVariantRelOps();
 	nErrorCount += TestVariantInplaceCtors();
+	nErrorCount += TestVariantVisitorOverloaded();
 	nErrorCount += TestVariantVisitor();
 	nErrorCount += TestVariantAssignment();
 	nErrorCount += TestVariantMoveOnly();

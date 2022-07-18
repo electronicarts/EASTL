@@ -1811,7 +1811,13 @@ namespace eastl
 		#endif
 	}
 
-
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename Allocator>
+	inline synth_three_way_result<T> operator<=>(const slist<T, Allocator>& a, const slist<T, Allocator>& b)
+	{
+		return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#else
 	template <typename T, typename Allocator>
 	inline bool operator<(const slist<T, Allocator>& a, const slist<T, Allocator>& b)
 	{
@@ -1845,7 +1851,7 @@ namespace eastl
 	{
 		return !(a < b);
 	}
-
+#endif
 
 	template <typename T, typename Allocator>
 	inline void swap(slist<T, Allocator>& a, slist<T, Allocator>& b)

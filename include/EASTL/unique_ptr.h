@@ -596,12 +596,20 @@ namespace eastl
 	{
 		return (a.get() == b.get());
 	}
-
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T1, typename D1, typename T2, typename D2>
+	requires std::three_way_comparable_with<typename unique_ptr<T1, D1>::pointer, typename unique_ptr<T2, D2>::pointer>
+	inline std::compare_three_way_result_t<typename unique_ptr<T1, D1>::pointer, typename unique_ptr<T2, D2>::pointer> operator<=>(const unique_ptr<T1, D1>& a, const unique_ptr<T2, D2>& b)
+	{
+		return a.get() <=> b.get();
+	}
+	#else
 	template <typename T1, typename D1, typename T2, typename D2>
 	inline bool operator!=(const unique_ptr<T1, D1>& a, const unique_ptr<T2, D2>& b)
 	{
 		return !(a.get() == b.get());
 	}
+	#endif
 
 	/// Returns which unique_ptr is 'less' than the other. Useful when storing
 	/// sorted containers of unique_ptr objects.
@@ -646,6 +654,14 @@ namespace eastl
 		return !a;
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename D>
+	requires std::three_way_comparable_with<typename unique_ptr<T, D>::pointer, std::nullptr_t>
+	inline std::compare_three_way_result_t<typename unique_ptr<T, D>::pointer, std::nullptr_t> operator<=>(const unique_ptr<T, D>& a, std::nullptr_t)
+	{
+		return a.get() <=> nullptr;
+	}
+#else
 	template <typename T, typename D>
 	inline bool operator==(std::nullptr_t, const unique_ptr<T, D>& a) EA_NOEXCEPT
 	{
@@ -663,6 +679,7 @@ namespace eastl
 	{
 		return static_cast<bool>(a);
 	}
+#endif
 
 	template <typename T, typename D>
 	inline bool operator<(const unique_ptr<T, D>& a, std::nullptr_t)

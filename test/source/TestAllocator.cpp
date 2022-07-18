@@ -151,6 +151,8 @@ static int TestFixedAllocator()
 		{
 			EATEST_VERIFY(buffer1[i].mValue == TEST_VALUE);
 		}
+
+		intList1.clear();
 	}
 
 	{  // fixed_allocator_with_overflow

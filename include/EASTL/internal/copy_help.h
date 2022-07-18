@@ -132,8 +132,8 @@ namespace eastl
 
 		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value &&
 								   eastl::is_same<value_type_input, value_type_output>::value &&
-								  (eastl::is_pointer<InputIterator>::value  || eastl::is_same<IIC, eastl::contiguous_iterator_tag>::value) &&
-								  (eastl::is_pointer<OutputIterator>::value || eastl::is_same<OIC, eastl::contiguous_iterator_tag>::value);
+								  (eastl::is_pointer<InputIterator>::value  || eastl::is_same<IIC, EASTL_ITC_NS::contiguous_iterator_tag>::value) &&
+								  (eastl::is_pointer<OutputIterator>::value || eastl::is_same<OIC, EASTL_ITC_NS::contiguous_iterator_tag>::value);
 
 		return eastl::move_and_copy_helper<IIC, isMove, canBeMemmoved>::move_or_copy(first, last, result); // Need to chose based on the input iterator tag and not the output iterator tag, because containers accept input ranges of iterator types different than self.
 	}
@@ -143,7 +143,7 @@ namespace eastl
 	template <bool isMove, typename InputIterator, typename OutputIterator>
 	inline OutputIterator move_and_copy_unwrapper(InputIterator first, InputIterator last, OutputIterator result)
 	{
-		return OutputIterator(eastl::move_and_copy_chooser<isMove>(eastl::unwrap_iterator(first), eastl::unwrap_iterator(last), eastl::unwrap_iterator(result))); // Have to convert to OutputIterator because result.base() could be a T*
+		return OutputIterator(eastl::move_and_copy_chooser<isMove>(eastl::unwrap_iterator(first), eastl::unwrap_iterator(last), eastl::unwrap_iterator(result))); // Have to convert to OutputIterator because unwrap_iterator(result) could be a T*
 	}
 
 

@@ -173,15 +173,16 @@ struct NonPod2
 	virtual void Function(){}
 };
 
-#if EASTL_VARIABLE_TEMPLATES_ENABLED
-	struct HasIncrementOperator { HasIncrementOperator& operator++() { return *this; } };
+struct HasIncrementOperator { HasIncrementOperator& operator++() { return *this; } };
 
-    template<typename, typename = eastl::void_t<>>
-	struct has_increment_operator : eastl::false_type {};
+template <class T>
+using has_increment_operator_detection = decltype(++eastl::declval<T>());
 
-	template <typename T>
-	struct has_increment_operator<T, eastl::void_t<decltype(++eastl::declval<T>())>> : eastl::true_type {};
-#endif
+template<typename, typename = eastl::void_t<>>
+struct has_increment_operator_using_void_t : eastl::false_type {};
+
+template <typename T>
+struct has_increment_operator_using_void_t<T, eastl::void_t<has_increment_operator_detection<T>>> : eastl::true_type {};
 
 
 // We use this for the is_copy_constructible test in order to verify that 
@@ -1395,14 +1396,16 @@ int TestTypeTraits()
 
 	// is_destructible
 	static_assert(is_destructible<int>::value              == true,  "is_destructible failure");
+	static_assert(is_destructible<int&>::value             == true,  "is_destructible failure");
+	static_assert(is_destructible<int&&>::value            == true,  "is_destructible failure");
 	static_assert(is_destructible<char>::value             == true,  "is_destructible failure");
 	static_assert(is_destructible<char*>::value            == true,  "is_destructible failure");
 	static_assert(is_destructible<PodA>::value             == true,  "is_destructible failure");
 	static_assert(is_destructible<void>::value             == false, "is_destructible failure");
 	static_assert(is_destructible<int[3]>::value           == true,  "is_destructible failure");
 	static_assert(is_destructible<int[]>::value            == false, "is_destructible failure"); // You can't call operator delete on this class.
-	static_assert(is_destructible<Abstract>::value         == false, "is_destructible failure"); // You can't call operator delete on this class.
-	static_assert(is_destructible<AbstractWithDtor>::value == false, "is_destructible failure"); // You can't call operator delete on this class.
+	static_assert(is_destructible<Abstract>::value         == true, "is_destructible failure");
+	static_assert(is_destructible<AbstractWithDtor>::value == true, "is_destructible failure");
 	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
 		static_assert(is_destructible<DeletedDtor>::value  == false, "is_destructible failure"); // You can't call operator delete on this class.
 	#endif
@@ -1420,18 +1423,25 @@ int TestTypeTraits()
 		static_assert(is_trivially_destructible<PodA>::value             == true,  "is_trivially_destructible failure");
 		static_assert(is_trivially_destructible<int[3]>::value           == true,  "is_trivially_destructible failure");
 		static_assert(is_trivially_destructible<int[]>::value            == false, "is_trivially_destructible failure");
-		static_assert(is_trivially_destructible<Abstract>::value         == false, "is_trivially_destructible failure");
-		static_assert(is_trivially_destructible<AbstractWithDtor>::value == false, "is_trivially_destructible failure");
+		static_assert(is_trivially_destructible<Abstract>::value         == true, "is_trivially_destructible failure");
+		static_assert(is_trivially_destructible<AbstractWithDtor>::value == false, "is_trivially_destructible failure"); // Having a user-defined destructor make it non-trivial.
+	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
 		static_assert(is_trivially_destructible<DeletedDtor>::value      == false, "is_trivially_destructible failure");
+	#endif
 		static_assert(is_trivially_destructible<NonPod2>::value          == false, "is_trivially_destructible failure");    // This case differs from is_destructible, because we have a declared destructor.
 	#endif
 
 
 	// is_nothrow_destructible
 	static_assert(is_nothrow_destructible<int>::value                      == true,  "is_nothrow_destructible failure");
-	static_assert(is_nothrow_destructible<int&>::value                      == true,  "is_nothrow_destructible failure");
-	static_assert(is_nothrow_destructible<int&&>::value                      == true,  "is_nothrow_destructible failure");
+	static_assert(is_nothrow_destructible<int&>::value                     == true,  "is_nothrow_destructible failure");
+	static_assert(is_nothrow_destructible<int&&>::value                    == true,  "is_nothrow_destructible failure");
 	static_assert(is_nothrow_destructible<void>::value                     == false, "is_nothrow_destructible failure");
+	static_assert(is_nothrow_destructible<Abstract>::value         	       == true, "is_nothrow_destructible failure");
+	static_assert(is_nothrow_destructible<AbstractWithDtor>::value         == true, "is_nothrow_destructible failure");
+	#if !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
+		static_assert(is_nothrow_destructible<DeletedDtor>::value          == false, "is_nothrow_destructible failure"); // You can't call operator delete on this class.
+	#endif
 	#if EASTL_TYPE_TRAIT_is_nothrow_destructible_CONFORMANCE
 		static_assert(is_nothrow_destructible<NonPod2>::value              == true,  "is_nothrow_destructible failure"); // NonPod2 is nothrow destructible because it has an empty destructor (makes no calls) which has no exception specification. Thus its exception specification defaults to noexcept(true) [C++11 Standard, 15.4 paragraph 14]
 		static_assert(is_nothrow_destructible<NoThrowDestructible>::value  == true,  "is_nothrow_destructible failure");
@@ -1979,26 +1989,71 @@ int TestTypeTraits()
 	}
 
 	// void_t
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 	{
 		{
-			static_assert(is_same_v<void_t<void>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<int>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<short>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<long>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<long long>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<ClassEmpty>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<ClassNonEmpty>, void>, "void_t failure");
-			static_assert(is_same_v<void_t<vector<int>>, void>, "void_t failure");
+			static_assert(is_same<void_t<void>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<int>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<short>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<long>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<long long>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<ClassEmpty>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<ClassNonEmpty>, void>::value, "void_t failure");
+			static_assert(is_same<void_t<vector<int>>, void>::value, "void_t failure");
 		}
 
 		// new sfinae mechansim test 
 		{
-			static_assert(has_increment_operator<HasIncrementOperator>::value, "void_t sfinae failure");
-			static_assert(!has_increment_operator<ClassEmpty>::value, "void_t sfinae failure");
+			static_assert(has_increment_operator_using_void_t<HasIncrementOperator>::value, "void_t sfinae failure");
+			static_assert(!has_increment_operator_using_void_t<ClassEmpty>::value, "void_t sfinae failure");
 		}
 	}
+
+	// detected idiom
+	{
+		static_assert(is_detected<has_increment_operator_detection, HasIncrementOperator>::value, "is_detected failure.");
+		static_assert(!is_detected<has_increment_operator_detection, ClassEmpty>::value, "is_detected failure.");
+
+		static_assert(is_same<detected_t<has_increment_operator_detection, HasIncrementOperator>, HasIncrementOperator&>::value, "is_detected_t failure.");
+		static_assert(is_same<detected_t<has_increment_operator_detection, ClassEmpty>, nonesuch>::value, "is_detected_t failure.");
+
+		using detected_or_positive_result = detected_or<float, has_increment_operator_detection, HasIncrementOperator>;
+		using detected_or_negative_result = detected_or<float, has_increment_operator_detection, ClassEmpty>;
+		static_assert(detected_or_positive_result::value_t::value, "detected_or failure.");
+		static_assert(!detected_or_negative_result::value_t::value, "detected_or failure.");
+		static_assert(is_same<detected_or_positive_result::type, HasIncrementOperator&>::value, "detected_or failure.");
+		static_assert(is_same<detected_or_negative_result::type, float>::value, "detected_or failure.");
+
+		static_assert(is_same<detected_or_t<float, has_increment_operator_detection, HasIncrementOperator>, HasIncrementOperator&>::value, "detected_or_t failure.");
+		static_assert(is_same<detected_or_t<float, has_increment_operator_detection, ClassEmpty>, float>::value, "detected_or_t failure.");
+
+		static_assert(is_detected_exact<HasIncrementOperator&, has_increment_operator_detection, HasIncrementOperator>::value, "is_detected_exact failure.");
+		static_assert(!is_detected_exact<float, has_increment_operator_detection, HasIncrementOperator>::value, "is_detected_exact failure.");
+		static_assert(is_detected_exact<nonesuch, has_increment_operator_detection, ClassEmpty>::value, "is_detected_exact failure.");
+		static_assert(!is_detected_exact<float, has_increment_operator_detection, ClassEmpty>::value, "is_detected_exact failure.");
+
+		static_assert(is_detected_convertible<HasIncrementOperator&, has_increment_operator_detection, HasIncrementOperator>::value, "is_detected_convertible failure.");
+		static_assert(is_detected_convertible<HasIncrementOperator, has_increment_operator_detection, HasIncrementOperator>::value, "is_detected_convertible failure.");
+		static_assert(!is_detected_convertible<float, has_increment_operator_detection, HasIncrementOperator>::value, "is_detected_convertible failure.");
+		static_assert(!is_detected_convertible<nonesuch, has_increment_operator_detection, ClassEmpty>::value, "is_detected_convertible failure.");
+		static_assert(!is_detected_convertible<float, has_increment_operator_detection, ClassEmpty>::value, "is_detected_convertible failure.");
+
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		static_assert(is_detected_v<has_increment_operator_detection, HasIncrementOperator>, "is_detected_v failure.");
+		static_assert(!is_detected_v<has_increment_operator_detection, ClassEmpty>, "is_detected_v failure.");
+
+		static_assert(is_detected_exact_v<HasIncrementOperator&, has_increment_operator_detection, HasIncrementOperator>, "is_detected_exact_v failure.");
+		static_assert(!is_detected_exact_v<float, has_increment_operator_detection, HasIncrementOperator>, "is_detected_exact_v failure.");
+		static_assert(is_detected_exact_v<nonesuch, has_increment_operator_detection, ClassEmpty>, "is_detected_exact_v failure.");
+		static_assert(!is_detected_exact_v<float, has_increment_operator_detection, ClassEmpty>, "is_detected_exact_v failure.");
+
+		static_assert(is_detected_convertible_v<HasIncrementOperator&, has_increment_operator_detection, HasIncrementOperator>, "is_detected_convertible_v failure.");
+		static_assert(is_detected_convertible_v<HasIncrementOperator, has_increment_operator_detection, HasIncrementOperator>, "is_detected_convertible_v failure.");
+		static_assert(!is_detected_convertible_v<float, has_increment_operator_detection, HasIncrementOperator>, "is_detected_convertible_v failure.");
+		static_assert(!is_detected_convertible_v<nonesuch, has_increment_operator_detection, ClassEmpty>, "is_detected_convertible_v failure.");
+		static_assert(!is_detected_convertible_v<float, has_increment_operator_detection, ClassEmpty>, "is_detected_convertible_v failure.");
 	#endif
+	}
 
 	// conjunction
 	{

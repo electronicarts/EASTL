@@ -285,7 +285,52 @@ namespace eastl
 			return (*base_type::DoInsertKey(true_type(), eastl::move(key)).first).second;
 		}
 
+		// try_emplace API added in C++17
+		template <class... Args>
+		inline insert_return_type try_emplace(const key_type& k, Args&&... args)
+		{
+			return try_emplace_forwarding(k, eastl::forward<Args>(args)...);
+		}
 
+		template <class... Args>
+		inline insert_return_type try_emplace(key_type&& k, Args&&... args) {
+			return try_emplace_forwarding(eastl::move(k), eastl::forward<Args>(args)...);
+		}
+
+		template <class... Args>
+		inline iterator try_emplace(const_iterator hint, const key_type& k, Args&&... args) {
+			// Currently, `hint` is ignored.
+			insert_return_type result = try_emplace(k, eastl::forward<Args>(args)...);
+			return base_type::DoGetResultIterator(true_type(), result);
+		}
+
+		template <class... Args>
+		inline iterator try_emplace(const_iterator hint, key_type&& k, Args&&... args) {
+			// Currently, `hint` is ignored.
+			insert_return_type result = try_emplace(eastl::move(k), eastl::forward<Args>(args)...);
+			return base_type::DoGetResultIterator(true_type(), result);
+		}
+
+	private:
+		template <class K, class... Args>
+		insert_return_type try_emplace_forwarding(K&& k, Args&&... args)
+		{
+			const auto key_data = base_type::DoFindKeyData(k);
+			if (key_data.node)
+			{ // Node exists, no insertion needed.
+				return eastl::pair<iterator, bool>(
+				    iterator(key_data.node, base_type::mpBucketArray + key_data.bucket_index), false);
+			}
+			else
+			{
+				node_type* const pNodeNew =
+				    base_type::DoAllocateNode(piecewise_construct, eastl::forward_as_tuple(eastl::forward<K>(k)),
+				                              forward_as_tuple(eastl::forward<Args>(args)...));
+				// the key might have been moved from above, so we can't use `k` anymore.
+				const auto& key = base_type::mExtractKey(pNodeNew->mValue);
+				return base_type::template DoInsertUniqueNode<true>(key, key_data.code, key_data.bucket_index, pNodeNew);
+			}
+		}
 	}; // hash_map
 
 	/// hash_map erase_if
@@ -339,7 +384,6 @@ namespace eastl
 		using base_type::insert;
 
 	private:
-		using base_type::try_emplace;
 		using base_type::insert_or_assign;
 
 	public:
@@ -503,13 +547,14 @@ namespace eastl
 		return true;
 	}
 
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
 	inline bool operator!=(const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
 						   const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
-
+#endif
 
 	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
 	inline bool operator==(const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
@@ -560,12 +605,14 @@ namespace eastl
 		return true;
 	}
 
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
 	inline bool operator!=(const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
 						   const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
+#endif
 
 
 } // namespace eastl

@@ -308,6 +308,14 @@ namespace eastl
 	{
 		return (a.c == b.c);
 	}
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename Container> requires std::three_way_comparable<Container>
+	
+	inline synth_three_way_result<T> operator<=>(const queue<T, Container>& a, const queue<T, Container>& b)
+	{
+		return a.c <=> b.c;
+	}
+#endif
 
 	template <typename T, typename Container>
 	inline bool operator!=(const queue<T, Container>& a, const queue<T, Container>& b)
@@ -338,7 +346,6 @@ namespace eastl
 	{
 		return !(a.c < b.c);
 	}
-
 
 	template <typename T, typename Container>
 	inline void swap(queue<T, Container>& a, queue<T, Container>& b) EA_NOEXCEPT_IF((eastl::is_nothrow_swappable<typename queue<T, Container>::container_type>::value)) // EDG has a bug and won't let us use Container in this noexcept statement

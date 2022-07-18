@@ -1509,6 +1509,82 @@ int TestAlgorithm()
 		EATEST_VERIFY( b);
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	{
+		// <compairison_category> lexicographical_compare_three_way(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, Compare compare)
+
+		int intArray1[6] = {0, 1, 2, 3, 4, 5};
+		int intArray2[6] = {0, 1, 2, 3, 4, 6};
+		int intArray3[5] = {0, 1, 2, 3, 4};
+		int intArray4[5] = {4, 3, 2, 1, 0};
+
+		// strong ordering
+		auto compare_strong = [](int first, int second)
+		{
+			return (first < second) ? std::strong_ordering::less :
+				(first > second) ? std::strong_ordering::greater :
+				std::strong_ordering::equal;
+		};
+
+		auto b = lexicographical_compare_three_way(intArray1, intArray1 + 6, intArray2, intArray2 + 6, compare_strong);
+		EATEST_VERIFY(b == std::strong_ordering::less);
+		b = lexicographical_compare_three_way(intArray3, intArray3 + 5, intArray2, intArray2 + 6, compare_strong);
+		EATEST_VERIFY(b == std::strong_ordering::less);
+		b = lexicographical_compare_three_way(intArray3, intArray3 + 5, intArray2, intArray2 + 6, synth_three_way{});
+		EATEST_VERIFY(b == std::strong_ordering::less);
+
+		b = lexicographical_compare_three_way(intArray2, intArray2 + 6, intArray1, intArray1 + 6, compare_strong);
+		EATEST_VERIFY(b == std::strong_ordering::greater);
+		b = lexicographical_compare_three_way(intArray2, intArray2 + 6, intArray1, intArray1 + 6, synth_three_way{});
+		EATEST_VERIFY(b == std::strong_ordering::greater);
+
+		b = lexicographical_compare_three_way(intArray1, intArray1 + 6, intArray3, intArray3 + 5, compare_strong);
+		EATEST_VERIFY(b == std::strong_ordering::greater);
+		b = lexicographical_compare_three_way(intArray1, intArray1 + 6, intArray3, intArray3 + 5, synth_three_way{});
+		EATEST_VERIFY(b == std::strong_ordering::greater);
+
+		b = lexicographical_compare_three_way(intArray1, intArray1, intArray2, intArray2, compare_strong); // Test empty range.
+		EATEST_VERIFY(b == std::strong_ordering::equal);
+		b = lexicographical_compare_three_way(intArray1, intArray1, intArray2, intArray2, synth_three_way{}); // Test empty range.
+		EATEST_VERIFY(b == std::strong_ordering::equal);
+
+		// weak ordering
+		auto compare_weak = [](int first, int second)
+		{
+		    return (first < second) ? std::weak_ordering::less :
+			    (first > second) ? std::weak_ordering::greater :
+			    std::weak_ordering::equivalent;
+		};
+
+		auto c = lexicographical_compare_three_way(intArray3, intArray3 + 5, intArray4, intArray4 + 5, compare_weak);
+		EATEST_VERIFY(c == std::weak_ordering::less);
+		c = lexicographical_compare_three_way(intArray4, intArray4 + 5, intArray3, intArray3 + 5, compare_weak);
+		EATEST_VERIFY(c == std::weak_ordering::greater);
+		c = lexicographical_compare_three_way(intArray3, intArray3 + 5, intArray4, intArray4 + 5, synth_three_way{});
+		EATEST_VERIFY(c == std::weak_ordering::less);
+		c = lexicographical_compare_three_way(intArray4, intArray4 + 5, intArray3, intArray3 + 5, synth_three_way{});
+		EATEST_VERIFY(c == std::weak_ordering::greater);
+	}
+
+	{
+		EATEST_VERIFY(synth_three_way{}(1, 1) == std::strong_ordering::equal);
+		EATEST_VERIFY(synth_three_way{}(2, 1) == std::strong_ordering::greater);
+		EATEST_VERIFY(synth_three_way{}(1, 2) == std::strong_ordering::less);
+
+		struct weak_struct
+		{
+			int val;
+			inline std::weak_ordering operator<=>(const weak_struct& b) const
+			{
+				return val <=> b.val;
+			}
+		};
+
+		EATEST_VERIFY(synth_three_way{}(weak_struct{1}, weak_struct{2}) == std::weak_ordering::less);
+		EATEST_VERIFY(synth_three_way{}(weak_struct{2}, weak_struct{1}) == std::weak_ordering::greater);
+		EATEST_VERIFY(synth_three_way{}(weak_struct{1}, weak_struct{1}) == std::weak_ordering::equivalent);
+	}
+#endif
 
 	{
 		// ForwardIterator lower_bound(ForwardIterator first, ForwardIterator last, const T& value)
