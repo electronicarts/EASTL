@@ -360,13 +360,19 @@ struct NonPolymorphic1
 	void Function(){}
 };
 
+// Disable the following warning:
+//     warning: ‘struct Abstract’ has virtual functions and accessible non-virtual destructor [-Wnon-virtual-dtor]
+// We explicitly want this class not to have a virtual destructor to test our type traits.
+EA_DISABLE_VC_WARNING(4265)
+EA_DISABLE_CLANG_WARNING(-Wnon-virtual-dtor)
+EA_DISABLE_GCC_WARNING(-Wnon-virtual-dtor)
 struct Abstract
 {
-	#if defined(EA_COMPILER_GNUC) // GCC warns about this, so we include it for this class, even though for this compiler it partly defeats the purpose of its usage.
-		virtual ~Abstract(){}
-	#endif
 	virtual void Function() = 0;
 };
+EA_RESTORE_GCC_WARNING()
+EA_RESTORE_CLANG_WARNING()
+EA_RESTORE_VC_WARNING()
 
 struct AbstractWithDtor
 {

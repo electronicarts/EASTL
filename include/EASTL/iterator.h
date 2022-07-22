@@ -173,16 +173,21 @@ namespace eastl
 	template<typename Iterator>
 	class is_iterator_wrapper
 	{
+#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 		// Using a default template type parameter trick here because
-		// of a bug in clang that makes the following not work when
-		// unwrap() is private and this is class is a friend:
-		//
-		// template <typename T>
-		// using detec_has_unwrap = decltype(eastl::declval<T>().unwrap())
-		//
+		// of a bug in clang that makes the other implementation not
+		// work when unwrap() is private and this is class is a
+		// friend.
 		// See: https://bugs.llvm.org/show_bug.cgi?id=25334
 		template<typename T, typename U = decltype(eastl::declval<T>().unwrap())>
 		using detect_has_unwrap = U;
+#else
+		// Note: the above implementation does not work on GCC when
+		// unwrap() is private and this class is a friend. So we're
+		// forced to diverge here to support both GCC and clang.
+		template<typename T>
+		using detect_has_unwrap = decltype(eastl::declval<T>().unwrap());
+#endif
 	public:
 		static const bool value = eastl::is_detected<detect_has_unwrap, Iterator>::value;
 	};
