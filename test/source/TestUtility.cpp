@@ -108,7 +108,7 @@ static int TestUtilityPair()
 		EATEST_VERIFY((p2.first == 0) && (p2.second == 1.f));
 
 		pair<const char*, int> p3 = eastl::make_pair("a", 1);
-		EATEST_VERIFY((EA::StdC::Strcmp(p3.first, "a") == 0) && (p2.second == 1));
+		EATEST_VERIFY((EA::StdC::Strcmp(p3.first, "a") == 0) && (p3.second == 1));
 
 		pair<const char*, int> p4 = eastl::make_pair<const char*, int>("a", 1);
 		EATEST_VERIFY((EA::StdC::Strcmp(p4.first, "a") == 0) && (p4.second == 1));
