@@ -12,7 +12,6 @@
 
 
 EA_DISABLE_ALL_VC_WARNINGS();
-#include <Windows.h>
 #include <intrin.h>
 EA_RESTORE_ALL_VC_WARNINGS();
 

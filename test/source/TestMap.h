@@ -1248,11 +1248,18 @@ int TestMapCpp17()
 			VERIFY(toMap.size() == 1);
 		}
 
+		auto ctorCount = TestObject::sTOCtorCount;
+
 		{ // verify duplicate not inserted
 			auto result = toMap.try_emplace(7, mapped_type(7)); // test fwding to copy-ctor
 			VERIFY(!result.second);
 			VERIFY(result.first->second == mapped_type(7));
 			VERIFY(toMap.size() == 1);
+
+			// we explicitly constructed an element for the parameter
+			// and one for the VERIFY check
+			ctorCount += 2;
+			VERIFY(ctorCount == TestObject::sTOCtorCount);
 		}
 
 		{ // verify duplicate not inserted
@@ -1261,6 +1268,9 @@ int TestMapCpp17()
 			VERIFY(result->first == 7);
 			VERIFY(result->second == mapped_type(7));
 			VERIFY(toMap.size() == 1);
+			// we explicitly constructed an element for the VERIFY check
+			++ctorCount;
+			VERIFY(ctorCount == TestObject::sTOCtorCount);
 		}
 
 		{ // verify duplicate not inserted
@@ -1269,20 +1279,36 @@ int TestMapCpp17()
 			VERIFY(result->first == 7);
 			VERIFY(result->second == mapped_type(7));
 			VERIFY(toMap.size() == 1);
+
+			// we explicitly constructed an element for the parameter
+			// and one for the VERIFY check
+			ctorCount += 2;
+			VERIFY(ctorCount == TestObject::sTOCtorCount);
 		}
 
 		{
 			{
-				auto result = toMap.try_emplace(8, 8); 
+				auto result = toMap.try_emplace(8, 8);
+				// emplacing a new value should call exactly one constructor,
+				// when the value is constructed in place inside the container.
+				++ctorCount;
 				VERIFY(result.second);
 				VERIFY(result.first->second == mapped_type(8));
+				// One more constructor for the temporary in the VERIFY
+				++ctorCount;
 				VERIFY(toMap.size() == 2);
+				VERIFY(ctorCount == TestObject::sTOCtorCount);
 			}
 			{
-				auto result = toMap.try_emplace(9, mapped_type(9)); 
+				auto result = toMap.try_emplace(9, mapped_type(9));
 				VERIFY(result.second);
 				VERIFY(result.first->second == mapped_type(9));
 				VERIFY(toMap.size() == 3);
+				// one more constructor for the temporary argument,
+				// one for moving it to the container, and one for the VERIFY
+				ctorCount += 3;
+				VERIFY(ctorCount == TestObject::sTOCtorCount);
+
 			}
 		}
 	}

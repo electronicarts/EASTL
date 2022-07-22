@@ -1411,7 +1411,6 @@ class move_iterator<TupleVecInternal::TupleVecIter<index_sequence<Indices...>, T
 {
 public:
 	typedef TupleVecInternal::TupleVecIter<index_sequence<Indices...>, Ts...> iterator_type;
-	typedef iterator_type wrapped_iterator_type; // This is not in the C++ Standard; it's used by use to identify it as
 												 // a wrapping iterator type.
 	typedef iterator_traits<iterator_type> traits_type;
 	typedef typename traits_type::iterator_category iterator_category;
@@ -1477,6 +1476,13 @@ private:
 	{
 		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
 	}
+
+	// Unwrapping interface, not part of the public API.
+	iterator_type unwrap() const { return mIterator; }
+
+	// The unwrapper helpers need access to unwrap().
+	friend is_iterator_wrapper_helper<this_type, true>;
+	friend is_iterator_wrapper<this_type>;
 };
 
 template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>

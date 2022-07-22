@@ -644,6 +644,13 @@ int TestSort()
 			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
 			EATEST_VERIFY(is_sorted(begin(input), end(input)));
 		}
+		{
+			// Test case for bug where the last histogram bucket was not being cleared to zero
+			uint32_t input[] = { 0xff00, 0xff };
+			uint32_t buffer[EAArrayCount(input)];
+			radix_sort<uint32_t*, identity_extract_radix_key<uint32_t>>(begin(input), end(input), buffer);
+			EATEST_VERIFY(is_sorted(begin(input), end(input)));
+		}
 	}
 
 	{

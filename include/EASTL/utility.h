@@ -10,6 +10,8 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/iterator.h>
+#include <EASTL/numeric_limits.h>
+#include <EASTL/compare.h>
 #include <EASTL/internal/functional_base.h>
 #include <EASTL/internal/move_help.h>
 #include <EABase/eahave.h>
@@ -352,6 +354,90 @@ namespace eastl
 	}
 
 
+	#if defined(EA_COMPILER_CPP20_ENABLED)
+	///////////////////////////////////////////////////////////////////////
+	/// Safe Integral Comparisons
+	///
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_equal(const T x, const U y) EA_NOEXCEPT
+	{
+		// Assert types are not chars, bools, etc.
+		static_assert(eastl::is_integral_v<T> && !eastl::is_same_v<eastl::remove_cv_t<T>, bool> && !eastl::is_same_v<eastl::remove_cv_t<T>, char>);
+		static_assert(eastl::is_integral_v<U> && !eastl::is_same_v<eastl::remove_cv_t<U>, bool> && !eastl::is_same_v<eastl::remove_cv_t<U>, char>);
+
+		using UT = eastl::make_unsigned_t<T>;
+		using UU = eastl::make_unsigned_t<U>;
+
+		if constexpr (eastl::is_signed_v<T> == eastl::is_signed_v<U>)
+		{
+			return x == y;
+		}
+		else if (eastl::is_signed_v<T>)
+		{
+			return (x < 0) ? false : UT(x) == y;
+		}
+		else
+		{
+			return (y < 0) ? false : x == UU(y);
+		}
+	}
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_not_equal(const T x, const U y) EA_NOEXCEPT
+		{ return !eastl::cmp_equal(x, y); }
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_less(const T x, const U y) EA_NOEXCEPT
+	{
+		static_assert(eastl::is_integral_v<T> && !eastl::is_same_v<eastl::remove_cv_t<T>, bool> && !eastl::is_same_v<eastl::remove_cv_t<T>, char>);
+		static_assert(eastl::is_integral_v<U> && !eastl::is_same_v<eastl::remove_cv_t<U>, bool> && !eastl::is_same_v<eastl::remove_cv_t<U>, char>);
+
+		using UT = eastl::make_unsigned_t<T>;
+		using UU = eastl::make_unsigned_t<U>;
+
+		if constexpr (eastl::is_signed_v<T> == eastl::is_signed_v<U>)
+		{
+			return x < y;
+		}
+		else if (eastl::is_signed_v<T>)
+		{
+			return (x < 0) ? true : UT(x) < y;
+		}
+		else
+		{
+			return (y < 0) ? false : x < UU(y);
+		}
+	}
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_greater(const T x, const U y) EA_NOEXCEPT
+		{ return eastl::cmp_less(y, x); }
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_less_equal(const T x, const U y) EA_NOEXCEPT
+		{ return !eastl::cmp_greater(x, y); }
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool cmp_greater_equal(const T x, const U y) EA_NOEXCEPT
+		{ return !eastl::cmp_less(x, y); }
+
+
+	template <typename T, typename U>
+	EA_CONSTEXPR bool in_range(const U x) EA_NOEXCEPT
+	{
+		static_assert(eastl::is_integral_v<T> && !eastl::is_same_v<eastl::remove_cv_t<T>, bool> && !eastl::is_same_v<eastl::remove_cv_t<T>, char>);
+		static_assert(eastl::is_integral_v<U> && !eastl::is_same_v<eastl::remove_cv_t<U>, bool> && !eastl::is_same_v<eastl::remove_cv_t<U>, char>);
+
+		return eastl::cmp_greater_equal(x, eastl::numeric_limits<T>::min()) && eastl::cmp_less_equal(x, eastl::numeric_limits<T>::max());
+	}
+	#endif
+
+
 	///////////////////////////////////////////////////////////////////////
 	/// pair_first_construct
 	///
@@ -360,7 +446,7 @@ namespace eastl
 	struct pair_first_construct_t {};
 	EA_CONSTEXPR pair_first_construct_t pair_first_construct = pair_first_construct_t();
 
-
+	
 	///////////////////////////////////////////////////////////////////////
 	/// pair
 	///
@@ -630,7 +716,17 @@ namespace eastl
 		return ((a.first == b.first) && (a.second == b.second));
 	}
 
-
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T1, typename T2>
+	EA_CONSTEXPR inline std::common_comparison_category_t<synth_three_way_result<T1>, synth_three_way_result<T2>> operator<=>(const pair<T1, T2>& a, const pair<T1, T2>& b)
+	{
+		if (auto result = synth_three_way{}(a.first, b.first); result != 0)
+		{
+			return result;
+		}
+		return synth_three_way{}(a.second, b.second);
+	}
+	#else
 	template <typename T1, typename T2>
 	EA_CPP14_CONSTEXPR inline bool operator<(const pair<T1, T2>& a, const pair<T1, T2>& b)
 	{
@@ -668,7 +764,7 @@ namespace eastl
 	{
 		return !(b < a);
 	}
-
+	#endif
 
 
 

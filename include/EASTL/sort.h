@@ -1714,6 +1714,7 @@ namespace eastl
 							bucketPosition[i + 1] = bucketPosition[i] + bucketSize[i];
 							bucketSize[i] = 0;	// Clear the bucket for the next pass
 						}
+						bucketSize[numBuckets - 1] = 0; 
 
 						uint32_t jNext = j + DigitBits;
 						for (temp = srcFirst; temp != last; ++temp)

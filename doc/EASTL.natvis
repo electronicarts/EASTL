@@ -70,7 +70,7 @@
 		<Item Name="[capacity]" Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity &amp; ~kHeapMask)</Item>
 		<Item Name="[value]"    Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
 
-		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize</Item>
+		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(SSOLayout::SSO_CAPACITY - mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize)</Item>
 		<Item Name="[capacity]" Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
 		<Item Name="[value]"    Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
 
@@ -87,7 +87,7 @@
 		<Item Name="[capacity]" Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity &amp; ~kHeapMask)</Item>
 		<Item Name="[value]"    Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,su</Item>
 
-		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize</Item>
+		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(SSOLayout::SSO_CAPACITY - mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize)</Item>
 		<Item Name="[capacity]" Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
 		<Item Name="[value]"    Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mData,su</Item>
 
@@ -407,14 +407,29 @@
 
 
 <Type Name="eastl::hashtable&lt;*&gt;">
-    <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
-	<DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
-	<Expand>
-		<ArrayItems>
-            <Size>mnBucketCount</Size>
-            <ValuePointer>mpBucketArray</ValuePointer>
-        </ArrayItems>
-	</Expand>
+  <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
+  <DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
+  <Expand>
+    <ArrayItems IncludeView="detailed">
+      <Size>mnBucketCount</Size>
+      <ValuePointer>mpBucketArray</ValuePointer>
+    </ArrayItems>
+    <CustomListItems ExcludeView="detailed">
+      <Variable Name="bucketIndex" InitialValue="0"/>
+      <Variable Name="entry" InitialValue ="mpBucketArray[bucketIndex]"/>
+      <Loop>
+        <Item Condition="entry != nullptr">entry->mValue</Item>
+        <If Condition="entry != nullptr">
+          <Exec>entry = entry->mpNext</Exec>
+        </If>
+        <If Condition="entry == nullptr">
+          <Exec>bucketIndex++</Exec>
+          <Break Condition="bucketIndex == mnBucketCount"/>
+          <Exec>entry = mpBucketArray[bucketIndex]</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
 </Type>
 
 <Type Name="eastl::hash_node&lt;*&gt;">
@@ -629,7 +644,88 @@
 </Type>
 
 
-<!-- TODO eastl::tuple -->
+<Type Name="eastl::tuple&lt;&gt;">
+  <DisplayString IncludeView="noparens"></DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand/>
+</Type>
+
+<Type Name="eastl::tuple&lt;*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[5]">(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;6,$T7,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[5]">(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[6]">(*((eastl::Internal::TupleLeaf&lt;6,$T7,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
 
 
 </AutoVisualizer>

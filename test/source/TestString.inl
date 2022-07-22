@@ -2064,6 +2064,28 @@ int TEST_STRING_NAME()
 		VERIFY(LocalHash(sw2) == LocalHash(sw3));
 	}
 
+	// test <=> operator
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	{
+		StringType sw1(LITERAL("Test String "));
+		StringType sw2(LITERAL("Test String 1"));
+		StringType sw3(LITERAL("Test String 2"));
+		StringType sw4(LITERAL("abcdef"));
+
+		VERIFY((sw1 <=> sw2) != 0);
+		VERIFY((sw1 <=> sw3) != 0);
+		VERIFY((sw2 <=> sw3) != 0);
+		VERIFY((sw1 <=> sw2) < 0);
+		VERIFY((sw1 <=> sw3) < 0);
+		VERIFY((sw2 <=> sw2) == 0);
+		VERIFY((sw2 <=> sw3) < 0);
+		VERIFY((sw2 <=> sw4) < 0);
+		VERIFY((sw4 <=> sw2) > 0);
+		VERIFY((sw4 <=> sw3) > 0);
+		VERIFY((sw3 <=> sw2) > 0);
+	}
+	#endif
+
 	return nErrorCount;
 }
 

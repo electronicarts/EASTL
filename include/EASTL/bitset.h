@@ -405,7 +405,9 @@ namespace eastl
 		size_type size() const;
 
 		bool operator==(const this_type& x) const;
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 		bool operator!=(const this_type& x) const;
+#endif
 
 		bool test(size_type i) const;
 	  //bool any() const;                   // We inherit this from the base class.
@@ -2078,13 +2080,13 @@ EA_RESTORE_GCC_WARNING()
 		return base_type::operator==(x);
 	}
 
-
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	template <size_t N, typename WordType>
 	inline bool bitset<N, WordType>::operator!=(const this_type& x) const
 	{
 		return !base_type::operator==(x);
 	}
-
+#endif
 
 	template <size_t N, typename WordType>
 	inline bool bitset<N, WordType>::test(size_type i) const

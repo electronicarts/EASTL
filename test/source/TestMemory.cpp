@@ -133,6 +133,23 @@ eastl::late_constructed<LCTestObject, false, true> gLCTestObjectFalseTrue;
 eastl::late_constructed<LCTestObject, false, false> gLCTestObjectFalseFalse;
 eastl::late_constructed<LCTestObject, true, false> gLCTestObjectTrueFalse;
 
+struct TypeWithPointerTraits {};
+
+namespace eastl
+{
+	template <>
+	struct pointer_traits<TypeWithPointerTraits>
+	{
+		// Note: only parts of the traits we are interested to test are defined here.
+		static const int* to_address(TypeWithPointerTraits)
+		{
+			return &a;
+		}
+
+		inline static constexpr int a = 42;
+	};
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestMemory
@@ -682,6 +699,33 @@ int TestMemory()
 
 			EA::StdC::Memset8(buffer, 0x00, sizeof(buffer));
 		}
+	}
+
+	// to_address
+	{
+		// Normal pointers.
+		int a;
+		int* ptrA = &a;
+		EATEST_VERIFY(ptrA == to_address(ptrA));
+
+		// Smart pointer.
+		struct MockSmartPointer
+		{
+			const int* operator->() const
+			{
+				return &a;
+			}
+
+			int a = 42;
+		};
+
+		MockSmartPointer sp;
+		EATEST_VERIFY(&sp.a == to_address(sp));
+
+		// Type with specialized pointer_traits.
+		TypeWithPointerTraits t;
+		const int* result = to_address(t);
+		EATEST_VERIFY(result != nullptr && *result == 42);
 	}
 
 	{

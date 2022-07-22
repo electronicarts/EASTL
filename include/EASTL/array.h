@@ -401,6 +401,13 @@ namespace eastl
 		return eastl::equal(&a.mValue[0], &a.mValue[N], &b.mValue[0]);
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, size_t N>
+	inline synth_three_way_result<T> operator<=>(const array<T, N>& a, const array<T,N>& b)
+	{
+	    return eastl::lexicographical_compare_three_way(&a.mValue[0], &a.mValue[N], &b.mValue[0], &b.mValue[N], synth_three_way{});
+	}
+#else
 
 	template <typename T, size_t N>
 	EA_CPP14_CONSTEXPR inline bool operator<(const array<T, N>& a, const array<T, N>& b)
@@ -435,7 +442,7 @@ namespace eastl
 	{
 		return !eastl::lexicographical_compare(&a.mValue[0], &a.mValue[N], &b.mValue[0], &b.mValue[N]);
 	}
-
+#endif
 
 	template <typename T, size_t N>
 	inline void swap(array<T, N>& a, array<T, N>& b)

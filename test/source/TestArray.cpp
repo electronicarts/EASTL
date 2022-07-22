@@ -125,6 +125,22 @@ int TestArray()
 		VERIFY(!(a >= c));
 		VERIFY(!(a  > c));
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		VERIFY( (a <=> b) == 0);
+		VERIFY(!((a <=> b) != 0));
+		VERIFY(!((a <=> b) < 0));
+		VERIFY( (a <=> b) <= 0);
+		VERIFY( (a <=> b) >= 0);
+		VERIFY(!((a <=> b) > 0));
+
+		VERIFY(!((a <=> c) == 0));
+		VERIFY( (a <=> c) != 0);
+		VERIFY( (a <=> c) < 0);
+		VERIFY( (a <=> c) <= 0);
+		VERIFY(!((a <=> c) >= 0));
+		VERIFY(!((a <=> c) > 0));
+#endif
+
 		// deduction guides
 		#ifdef __cpp_deduction_guides
 			array deduced {1,2,3,4,5};

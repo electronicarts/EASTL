@@ -18,10 +18,15 @@ struct IntStruct
 	int data;
 };
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+auto operator<=>(const IntStruct& lhs, const IntStruct& rhs) { return lhs.data <=> rhs.data; }
+#else
 bool operator<(const IntStruct& lhs, const IntStruct& rhs)
 	{ return lhs.data < rhs.data; }
+#endif
 bool operator==(const IntStruct& lhs, const IntStruct& rhs)
 	{ return lhs.data == rhs.data; }
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -475,6 +480,43 @@ int TestOptional()
 		VERIFY(nullopt <= o);
 		VERIFY(o >= nullopt);
 	}
+
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	{
+		optional<IntStruct> o(in_place, 10);
+		optional<IntStruct> e;
+
+		VERIFY((o <=> IntStruct(42)) < 0);
+		VERIFY((o <=> IntStruct(2)) >= 0);
+		VERIFY((o <=> IntStruct(10)) >= 0);
+		VERIFY((e <=> o) < 0);
+		VERIFY((e <=> IntStruct(10)) < 0);
+
+		VERIFY((o <=> IntStruct(4)) > 0);
+		VERIFY(o <=> IntStruct(42) <= 0);
+
+		VERIFY((o <=> IntStruct(4)) >= 0);
+		VERIFY((o <=> IntStruct(10)) >= 0);
+		VERIFY((IntStruct(4) <=> o) <= 0);
+		VERIFY((IntStruct(10) <=> o) <= 0);
+
+		VERIFY((o <=> IntStruct(10)) == 0);
+		VERIFY((o->data <=> IntStruct(10).data) == 0);
+
+		VERIFY((o <=> IntStruct(11)) != 0);
+		VERIFY((o->data <=> IntStruct(11).data) != 0);
+
+		VERIFY((e <=> nullopt) == 0);
+		VERIFY((nullopt <=> e) == 0);
+
+		VERIFY((o <=> nullopt) != 0);
+		VERIFY((nullopt <=> o) != 0);
+		VERIFY((nullopt <=> o) < 0);
+		VERIFY((o <=> nullopt) > 0);
+		VERIFY((nullopt <=> o) <= 0);
+		VERIFY((o <=> nullopt) >= 0);
+	}
+	#endif
 
 	// hash 
 	{

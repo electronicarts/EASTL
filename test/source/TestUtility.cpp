@@ -116,6 +116,20 @@ static int TestUtilityPair()
 		pair<int, const char*> p5 = eastl::make_pair<int, const char*>(1, "b");
 		EATEST_VERIFY((p5.first == 1) && (EA::StdC::Strcmp(p5.second, "b") == 0));
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+		pair<int, int> p6 = eastl::make_pair<int, int>(1, 2);
+		pair<int, int> p7 = eastl::make_pair<int, int>(2, 1);
+		pair<int, int> p8 = eastl::make_pair<int, int>(7, 8);
+		pair<int, int> p9 = eastl::make_pair<int, int>(10, 1);
+
+		EATEST_VERIFY( (p6 <=> p7) != 0);
+		EATEST_VERIFY( (p6 <=> p6) == 0);
+		EATEST_VERIFY( (p7 <=> p8) < 0);
+		EATEST_VERIFY( (p7 <=> p8) <= 0);
+		EATEST_VERIFY( (p9 <=> p8) > 0);
+		EATEST_VERIFY( (p9 <=> p8) >= 0);
+#endif
+
 #if !defined(EA_COMPILER_NO_AUTO)
 		auto p60 = eastl::make_pair("a", "b");  // Different strings of same length of 1.
 		EATEST_VERIFY((EA::StdC::Strcmp(p60.first, "a") == 0) && (EA::StdC::Strcmp(p60.second, "b") == 0));
@@ -495,13 +509,15 @@ static int TestUtilityIntegerSequence()
 	using namespace eastl;
 	int nErrorCount = 0;
 #if EASTL_VARIADIC_TEMPLATES_ENABLED
-// Android clang chokes with an internal compiler error on make_integer_sequence
-#if !defined(EA_PLATFORM_ANDROID)
+	
 	EATEST_VERIFY((integer_sequence<int, 0, 1, 2, 3, 4>::size() == 5));
 	EATEST_VERIFY((make_integer_sequence<int, 5>::size() == 5));
-#endif
+	static_assert(is_same<make_integer_sequence<int, 5>, integer_sequence<int, 0, 1, 2, 3, 4>>::value);
+
 	EATEST_VERIFY((index_sequence<0, 1, 2, 3, 4>::size() == 5));
 	EATEST_VERIFY((make_index_sequence<5>::size() == 5));
+	static_assert(is_same<make_index_sequence<5>, index_sequence<0, 1, 2, 3, 4>>::value);
+	static_assert(is_same<make_index_sequence<5>, integer_sequence<size_t, 0, 1, 2, 3, 4>>::value);
 #endif  // EASTL_VARIADIC_TEMPLATES_ENABLED
 
 	return nErrorCount;
@@ -614,6 +630,271 @@ static int TestUtilityExchange()
 	return nErrorCount;
 }
 
+#if defined(EA_COMPILER_CPP20_ENABLED)
+template <typename T>
+static int TestCmpCommon()
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_equal(T(0), T(0)));
+	EATEST_VERIFY(eastl::cmp_equal(T(1), T(1)));
+	EATEST_VERIFY(eastl::cmp_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(eastl::cmp_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_equal(T(0), T(1)));
+	EATEST_VERIFY(!eastl::cmp_equal(T(1), T(0)));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(eastl::cmp_equal(T(-1), T(-1)));
+		EATEST_VERIFY(!eastl::cmp_equal(T(-1), T(-2)));
+		EATEST_VERIFY(!eastl::cmp_equal(T(-2), T(-1)));
+	}
+
+	EATEST_VERIFY(eastl::cmp_not_equal(T(1), T(0)));
+	EATEST_VERIFY(eastl::cmp_not_equal(T(0), T(1)));
+	EATEST_VERIFY(eastl::cmp_not_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(eastl::cmp_not_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::min()));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(!eastl::cmp_not_equal(T(-1), T(-1)));
+		EATEST_VERIFY(eastl::cmp_not_equal(T(-1), T(-2)));
+		EATEST_VERIFY(eastl::cmp_not_equal(T(-2), T(-1)));
+	}
+
+	EATEST_VERIFY(eastl::cmp_less(T(0), T(1)));
+	EATEST_VERIFY(eastl::cmp_less(T(5), T(10)));
+	EATEST_VERIFY(!eastl::cmp_less(T(0), T(0)));
+	EATEST_VERIFY(!eastl::cmp_less(T(1), T(0)));
+	EATEST_VERIFY(eastl::cmp_less(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_less(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(!eastl::cmp_less(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_less(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::min()));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(!eastl::cmp_less(T(-1), T(-1)));
+		EATEST_VERIFY(!eastl::cmp_less(T(-1), T(-2)));
+		EATEST_VERIFY(eastl::cmp_less(T(-2), T(-1)));
+	}
+
+	EATEST_VERIFY(eastl::cmp_less_equal(T(0), T(1)));
+	EATEST_VERIFY(eastl::cmp_less_equal(T(5), T(10)));
+	EATEST_VERIFY(eastl::cmp_less_equal(T(0), T(0)));
+	EATEST_VERIFY(eastl::cmp_less_equal(T(1), T(1)));
+	EATEST_VERIFY(!eastl::cmp_less_equal(T(1), T(0)));
+	EATEST_VERIFY(eastl::cmp_less_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(eastl::cmp_less_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(eastl::cmp_less_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_less_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::min()));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(eastl::cmp_less_equal(T(-1), T(-1)));
+		EATEST_VERIFY(!eastl::cmp_less_equal(T(-1), T(-2)));
+		EATEST_VERIFY(eastl::cmp_less_equal(T(-2), T(-1)));
+	}
+
+	EATEST_VERIFY(eastl::cmp_greater(T(1), T(0)));
+	EATEST_VERIFY(eastl::cmp_greater(T(10), T(5)));
+	EATEST_VERIFY(!eastl::cmp_greater(T(0), T(0)));
+	EATEST_VERIFY(!eastl::cmp_greater(T(0), T(1)));
+	EATEST_VERIFY(eastl::cmp_greater(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(!eastl::cmp_greater(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(!eastl::cmp_greater(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_greater(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::max()));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(!eastl::cmp_greater(T(-1), T(-1)));
+		EATEST_VERIFY(eastl::cmp_greater(T(-1), T(-2)));
+		EATEST_VERIFY(!eastl::cmp_greater(T(-2), T(-1)));
+	}
+
+	EATEST_VERIFY(eastl::cmp_greater_equal(T(1), T(0)));
+	EATEST_VERIFY(eastl::cmp_greater_equal(T(10), T(5)));
+	EATEST_VERIFY(eastl::cmp_greater_equal(T(0), T(0)));
+	EATEST_VERIFY(!eastl::cmp_greater_equal(T(0), T(1)));
+	EATEST_VERIFY(eastl::cmp_greater_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(eastl::cmp_greater_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::min()));
+	EATEST_VERIFY(eastl::cmp_greater_equal(eastl::numeric_limits<T>::max(), eastl::numeric_limits<T>::max()));
+	EATEST_VERIFY(!eastl::cmp_greater_equal(eastl::numeric_limits<T>::min(), eastl::numeric_limits<T>::max()));
+	if (eastl::is_signed_v<T>)
+	{
+		EATEST_VERIFY(eastl::cmp_greater_equal(T(-1), T(-1)));
+		EATEST_VERIFY(eastl::cmp_greater_equal(T(-1), T(-2)));
+		EATEST_VERIFY(!eastl::cmp_greater_equal(T(-2), T(-1)));
+	}
+
+	return nErrorCount;
+}
+
+template <typename T, typename U>
+static int TestUtilityCmpEql(const T x, const U y)
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_equal(T(x), U(y)));
+	EATEST_VERIFY(eastl::cmp_equal(U(y), T(x)));
+	EATEST_VERIFY(!eastl::cmp_not_equal(T(x), U(y)));
+	EATEST_VERIFY(!eastl::cmp_not_equal(U(y), T(x)));
+
+	return nErrorCount;
+}
+
+template <typename T, typename U>
+static int TestUtilityCmpLess(const T x, const U y)
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_less(T(x), U(y)));
+	EATEST_VERIFY(!eastl::cmp_less(U(y), T(x)));
+
+	EATEST_VERIFY(!eastl::cmp_greater_equal(T(x), U(y)));
+	EATEST_VERIFY(eastl::cmp_greater_equal(U(y), T(x)));
+
+	return nErrorCount;
+}
+
+template <typename T, typename U>
+static int TestUtilityCmpGreater(const T x, const U y)
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_greater(T(x), U(y)));
+	EATEST_VERIFY(!eastl::cmp_greater(U(y), T(x)));
+
+	EATEST_VERIFY(!eastl::cmp_less_equal(T(x), U(y)));
+	EATEST_VERIFY(eastl::cmp_less_equal(U(y), T(x)));
+
+	return nErrorCount;
+}
+
+template <typename T, typename U>
+static int TestUtilityCmpLessEq(const T x, const U y)
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_less_equal(T(x), U(y)));
+	EATEST_VERIFY(eastl::cmp_less(T(x), U(y)) || eastl::cmp_equal(T(x), U(y)));
+
+	EATEST_VERIFY(eastl::cmp_greater_equal(U(y), T(x)));
+
+	return nErrorCount;
+}
+
+template <typename T, typename U>
+static int TestUtilityCmpGreaterEq(const T x, const U y)
+{
+	int nErrorCount = 0;
+
+	EATEST_VERIFY(eastl::cmp_greater_equal(T(x), U(y)));
+	EATEST_VERIFY(eastl::cmp_greater(T(x), U(y)) || eastl::cmp_equal(T(x), U(y)));
+
+	EATEST_VERIFY(eastl::cmp_less_equal(U(y), T(x)));
+
+	return nErrorCount;
+}
+
+static int TestUtilityIntegralComp()
+{
+	int nErrorCount = 0;
+
+	// Test integral comparisons among same types
+	nErrorCount += TestCmpCommon<int>();
+	nErrorCount += TestCmpCommon<short>();
+	nErrorCount += TestCmpCommon<long>();
+	nErrorCount += TestCmpCommon<long long>();
+
+	nErrorCount += TestCmpCommon<unsigned int>();
+	nErrorCount += TestCmpCommon<unsigned short>();
+	nErrorCount += TestCmpCommon<unsigned long>();
+	nErrorCount += TestCmpCommon<unsigned long long>();
+
+	// Test integral comparison among different types
+	nErrorCount += TestUtilityCmpEql(int(0), short(0));
+	nErrorCount += TestUtilityCmpEql(short(2), long(2));
+	nErrorCount += TestUtilityCmpEql(short(3), unsigned long(3));
+	nErrorCount += TestUtilityCmpEql(int(-5), long long(-5));
+	nErrorCount += TestUtilityCmpEql(short(-100), long long(-100));
+	nErrorCount += TestUtilityCmpEql(unsigned int(100), long(100));
+	nErrorCount += TestUtilityCmpEql(unsigned long long(100), int(100));
+
+	nErrorCount += TestUtilityCmpLess(int(0), long long(1));
+	nErrorCount += TestUtilityCmpLess(int(-1), unsigned long(1));
+	nErrorCount += TestUtilityCmpLess(short(-100), long long(100));
+	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<long>::min(), short(0));
+	nErrorCount += TestUtilityCmpLess(short(0), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<unsigned short>::min(), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<short>::max(), eastl::numeric_limits<long>::max());
+	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<int>::max(), eastl::numeric_limits<long long>::max());
+	nErrorCount += TestUtilityCmpLess(int(-100), unsigned int(0));
+	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<int>::min(), eastl::numeric_limits<unsigned int>::min());
+
+	nErrorCount += TestUtilityCmpGreater(int(1), short(0));
+	nErrorCount += TestUtilityCmpGreater(unsigned long(1), int(-1));
+	nErrorCount += TestUtilityCmpGreater(unsigned long long(100), short(-100));
+	nErrorCount += TestUtilityCmpGreater(short(0), eastl::numeric_limits<short>::min());
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long>::max(), unsigned short(5));
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long>::max(), eastl::numeric_limits<int>::min());
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::max());
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long long>::max(), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpGreater(unsigned int(0), int(-100));
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<unsigned int>::min(), eastl::numeric_limits<int>::min());
+
+	nErrorCount += TestUtilityCmpLessEq(int(0), short(1));
+	nErrorCount += TestUtilityCmpLessEq(int(-1), long long(-1));
+	nErrorCount += TestUtilityCmpLessEq(short(-100), unsigned long long(100));
+	nErrorCount += TestUtilityCmpLessEq(short(-100), long long(-100));
+	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::min(), short(0));
+	nErrorCount += TestUtilityCmpLessEq(short(0), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<short>::min(), eastl::numeric_limits<short>::min());
+	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<long long>::max());
+	nErrorCount += TestUtilityCmpLessEq(int(50), unsigned int(50));
+	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::min(), eastl::numeric_limits<unsigned int>::min());
+
+	nErrorCount += TestUtilityCmpGreaterEq(int(1), short(1));
+	nErrorCount += TestUtilityCmpGreaterEq(long long(-1), int(-1));
+	nErrorCount += TestUtilityCmpGreaterEq(long long(-100), short(-100));
+	nErrorCount += TestUtilityCmpGreaterEq(short(0), long(0));
+	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<long>::max(), eastl::numeric_limits<long>::max());
+	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::min());
+	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::max());
+	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<long long>::max(), eastl::numeric_limits<int>::max());
+	nErrorCount += TestUtilityCmpGreaterEq(unsigned int(0), int(0));
+	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<unsigned int>::min(), eastl::numeric_limits<int>::min());
+
+	// Test in_range
+	EATEST_VERIFY(eastl::in_range<int>(0));
+	EATEST_VERIFY(eastl::in_range<int>(eastl::numeric_limits<int>::min()));
+	EATEST_VERIFY(eastl::in_range<int>(eastl::numeric_limits<int>::max()));
+	EATEST_VERIFY(eastl::in_range<unsigned int>(0));
+	EATEST_VERIFY(eastl::in_range<unsigned int>(eastl::numeric_limits<unsigned int>::min()));
+	EATEST_VERIFY(eastl::in_range<unsigned int>(eastl::numeric_limits<unsigned int>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned int>(-1));
+	EATEST_VERIFY(!eastl::in_range<int>(eastl::numeric_limits<unsigned int>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned int>(eastl::numeric_limits<int>::min()));
+
+	EATEST_VERIFY(eastl::in_range<short>(100));
+	EATEST_VERIFY(eastl::in_range<short>(eastl::numeric_limits<short>::min()));
+	EATEST_VERIFY(eastl::in_range<short>(eastl::numeric_limits<short>::max()));
+	EATEST_VERIFY(eastl::in_range<unsigned short>(100));
+	EATEST_VERIFY(eastl::in_range<unsigned short>(eastl::numeric_limits<unsigned short>::min()));
+	EATEST_VERIFY(eastl::in_range<unsigned short>(eastl::numeric_limits<unsigned short>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned short>(-1));
+	EATEST_VERIFY(!eastl::in_range<short>(eastl::numeric_limits<unsigned int>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned short>(eastl::numeric_limits<int>::min()));
+
+	EATEST_VERIFY(eastl::in_range<long>(50));
+	EATEST_VERIFY(eastl::in_range<long>(eastl::numeric_limits<long>::min()));
+	EATEST_VERIFY(eastl::in_range<long>(eastl::numeric_limits<long>::max()));
+	EATEST_VERIFY(eastl::in_range<unsigned long>(50));
+	EATEST_VERIFY(eastl::in_range<unsigned long>(eastl::numeric_limits<unsigned long>::min()));
+	EATEST_VERIFY(eastl::in_range<unsigned long>(eastl::numeric_limits<unsigned long>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned long>(-1));
+	EATEST_VERIFY(!eastl::in_range<long>(eastl::numeric_limits<unsigned int>::max()));
+	EATEST_VERIFY(!eastl::in_range<unsigned long>(eastl::numeric_limits<int>::min()));
+
+	return nErrorCount;
+}
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestUtility
 //
@@ -627,6 +908,8 @@ int TestUtility()
 	nErrorCount += TestUtilityMove();
 	nErrorCount += TestUtilityIntegerSequence();
 	nErrorCount += TestUtilityExchange();
-
+#if defined(EA_COMPILER_CPP20_ENABLED)
+	nErrorCount += TestUtilityIntegralComp();
+#endif
 	return nErrorCount;
 }

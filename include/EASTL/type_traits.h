@@ -131,6 +131,7 @@
 //    remove_cv
 //    remove_const                          The member typedef type shall be the same as T except that any top level const-qualifier has been removed. remove_const<const volatile int>::type evaluates to volatile int, whereas remove_const<const int*> is const int*.
 //    remove_volatile
+//    remove_cvref
 //    add_cv
 //    add_const
 //    add_volatile
@@ -177,6 +178,12 @@
 //    is_nothrow_swappable                  "
 //    is_reference_wrapper                  Found in <EASTL/functional.h>
 //    remove_reference_wrapper              "
+//    is_detected                           Checks if some supplied arguments (Args) respect a constraint (Op).
+//    detected_t                            Check which type we obtain after expanding some arguments (Args) over a constraint (Op).
+//    detected_or                           Checks if some supplied arguments (Args) respect a constraint (Op) and allow to overwrite return type.
+//    detected_or_t                         Equivalent to detected_or<Default, Op, Args...>::type.
+//    is_detected_exact                     Check that the type we obtain after expanding some arguments (Args) over a constraint (Op) is equivalent to Expected.
+//    is_detected_convertible               Check that the type we obtain after expanding some arguments (Args) over a constraint (Op) is convertible to Expected.
 //
 // Deprecated pre-C++11 type traits
 //    has_trivial_constructor               The default constructor for T is trivial.
@@ -1040,9 +1047,11 @@ namespace eastl
 // The following files implement the type traits themselves.
 #include <EASTL/internal/type_fundamental.h>
 #include <EASTL/internal/type_transformations.h>
+#include <EASTL/internal/type_void_t.h>
 #include <EASTL/internal/type_properties.h>
 #include <EASTL/internal/type_compound.h>
 #include <EASTL/internal/type_pod.h>
+#include <EASTL/internal/type_detected.h>
 
 
 #endif // Header include guard
