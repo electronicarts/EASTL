@@ -340,13 +340,13 @@ struct TupleVecIterCompatible<TupleTypes<Us...>, TupleTypes<Ts...>> :
 // storing - and harmoniously updating on each modification - a full tuple of pointers to the tupleVec's data
 template <eastl_size_t... Indices, typename... Ts>
 struct TupleVecIter<index_sequence<Indices...>, Ts...>
-	: public iterator<random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>>
+	: public iterator<EASTL_ITC_NS::random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>>
 {
 private:
 	typedef TupleVecIter<index_sequence<Indices...>, Ts...> this_type;
 	typedef eastl_size_t size_type;
 
-	typedef iterator<random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>> iter_type;
+	typedef iterator<EASTL_ITC_NS::random_access_iterator_tag, tuple<Ts...>, eastl_size_t, tuple<Ts*...>, tuple<Ts&...>> iter_type;
 
 	template<typename U, typename... Us> 
 	friend struct TupleVecIter;
