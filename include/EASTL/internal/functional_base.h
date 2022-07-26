@@ -118,7 +118,8 @@ namespace eastl
 
 	template <typename R, typename F, typename... Args>
 	struct is_invocable_r_impl<R, F, void_t<typename invoke_result<F, Args...>::type>, Args...>
-		: public is_convertible<typename invoke_result<F, Args...>::type, R> {};
+		: public disjunction<is_convertible<typename invoke_result<F, Args...>::type, R>,
+							 is_same<typename remove_cv<R>::type, void>> {};
 
 	template <typename R, typename F, typename... Args>
 	struct is_invocable_r : public is_invocable_r_impl<R, F, void, Args...> {};
@@ -232,7 +233,7 @@ namespace eastl
 		T& get() const EA_NOEXCEPT;
 
 		template <typename... ArgTypes>
-		typename eastl::result_of<T&(ArgTypes&&...)>::type operator() (ArgTypes&&...) const;
+		typename eastl::invoke_result<T&, ArgTypes...>::type operator() (ArgTypes&&...) const;
 
 	private:
 		T* val;
@@ -269,7 +270,7 @@ namespace eastl
 
 	template <typename T>
 	template <typename... ArgTypes>
-	typename eastl::result_of<T&(ArgTypes&&...)>::type reference_wrapper<T>::operator() (ArgTypes&&... args) const
+	typename eastl::invoke_result<T&, ArgTypes...>::type reference_wrapper<T>::operator() (ArgTypes&&... args) const
 	{
 		return eastl::invoke(*val, eastl::forward<ArgTypes>(args)...);
 	}

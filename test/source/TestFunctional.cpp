@@ -1491,5 +1491,39 @@ struct TestInvokeResult
 };
 
 template struct eastl::invoke_result<decltype(&TestInvokeResult::f), TestInvokeResult, void>;
+
 static_assert(!eastl::is_invocable<decltype(&TestInvokeResult::f), TestInvokeResult, void>::value, "incorrect value for is_invocable");
+static_assert(!eastl::is_invocable<decltype(&TestInvokeResult::f), TestInvokeResult, int, int>::value, "incorrect value for is_invocable");
 static_assert(eastl::is_invocable<decltype(&TestInvokeResult::f), TestInvokeResult, int>::value, "incorrect value for is_invocable");
+
+static_assert(!eastl::is_invocable_r<int, decltype(&TestInvokeResult::f), TestInvokeResult, void>::value, "incorrect value for is_invocable_r");
+static_assert(!eastl::is_invocable_r<void, decltype(&TestInvokeResult::f), TestInvokeResult, int, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<void, decltype(&TestInvokeResult::f), TestInvokeResult, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<int, decltype(&TestInvokeResult::f), TestInvokeResult, int>::value, "incorrect value for is_invocable_r");
+
+struct TestCallableInvokeResult
+{
+	int operator()(int i) {return i;}
+};
+
+template struct eastl::invoke_result<TestCallableInvokeResult, void>;
+
+static_assert(!eastl::is_invocable<TestCallableInvokeResult, void>::value, "incorrect value for is_invocable");
+static_assert(!eastl::is_invocable<TestCallableInvokeResult, int, int>::value, "incorrect value for is_invocable");
+static_assert(eastl::is_invocable<TestCallableInvokeResult, int>::value, "incorrect value for is_invocable");
+
+static_assert(!eastl::is_invocable_r<int, TestCallableInvokeResult, void>::value, "incorrect value for is_invocable_r");
+static_assert(!eastl::is_invocable_r<void, TestCallableInvokeResult, int, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<void, TestCallableInvokeResult, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<int, TestCallableInvokeResult, int>::value, "incorrect value for is_invocable_r");
+
+typedef decltype(eastl::ref(eastl::declval<TestCallableInvokeResult&>())) TestCallableRefInvokeResult;
+
+static_assert(!eastl::is_invocable<TestCallableRefInvokeResult, void>::value, "incorrect value for is_invocable");
+static_assert(!eastl::is_invocable<TestCallableRefInvokeResult, int, int>::value, "incorrect value for is_invocable");
+static_assert(eastl::is_invocable<TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable");
+
+static_assert(!eastl::is_invocable_r<int, TestCallableRefInvokeResult, void>::value, "incorrect value for is_invocable_r");
+static_assert(!eastl::is_invocable_r<void, TestCallableRefInvokeResult, int, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<void, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
+static_assert(eastl::is_invocable_r<int, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
