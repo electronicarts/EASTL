@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(EABase 2.09)
+
+include("${CMAKE_CURRENT_LIST_DIR}/EASTLTargets.cmake")
+
+check_required_components(EASTL)
