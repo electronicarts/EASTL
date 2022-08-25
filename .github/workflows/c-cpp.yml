@@ -30,7 +30,7 @@ jobs:
         os: [ windows-latest, ubuntu-latest ]
         compiler: [ clang, gcc, msvc ]
         configuration: [ Debug, Release ]
-        std_iter_compatibility: [ STD_ITERATOR_CATEGORY_DISABLED, STD_ITERATOR_CATEGORY_ENABLED ]
+        std_iter_compatibility: [ std_iter_category_disabled, std_iter_category_enabled ]
         exclude:
           - os: windows-latest
             compiler: gcc
@@ -64,7 +64,7 @@ jobs:
           path: Code/
 
       - run: mkdir build
-      - run: cd build && cmake ../Code -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_STD_ITERATOR_CATEGORY_ENABLED:BOOL=${{ contains(matrix.std_iter_compatibility, 'ENABLED') && 'ON' || 'OFF' }}
+      - run: cd build && cmake ../Code -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_STD_ITERATOR_CATEGORY_ENABLED:BOOL=${{ contains(matrix.std_iter_compatibility, 'enabled') && 'ON' || 'OFF' }}
         env:
           CXXFLAGS: ${{ matrix.cxxflags }}
           CXX: ${{ matrix.cxx }}
