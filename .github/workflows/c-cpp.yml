@@ -30,7 +30,7 @@ jobs:
         os: [ windows-latest, ubuntu-latest ]
         compiler: [ clang, gcc, msvc ]
         configuration: [ Debug, Release ]
-		std_iter_compatibility: [ ON, OFF ]
+        std_iter_compatibility: [ ON, OFF ]
         exclude:
           - os: windows-latest
             compiler: gcc
