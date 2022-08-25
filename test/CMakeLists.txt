@@ -17,6 +17,9 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
+if (EASTL_STD_ITERATOR_CATEGORY_ENABLED)
+  add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED=1)
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags

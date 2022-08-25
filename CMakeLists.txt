@@ -9,6 +9,7 @@ project(EASTL CXX)
 #-------------------------------------------------------------------------------------------
 option(EASTL_BUILD_BENCHMARK "Enable generation of build files for benchmark" OFF)
 option(EASTL_BUILD_TESTS "Enable generation of build files for tests" OFF)
+option(EASTL_STD_ITERATOR_CATEGORY_ENABLED "Enable compatibility with std:: iterator categories" OFF)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -37,6 +38,9 @@ add_definitions(-D_CHAR16T)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE=1)
+if (EASTL_STD_ITERATOR_CATEGORY_ENABLED)
+  add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED=1)
+endif()
 
 #-------------------------------------------------------------------------------------------
 # Include dirs

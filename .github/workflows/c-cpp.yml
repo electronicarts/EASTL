@@ -30,6 +30,7 @@ jobs:
         os: [ windows-latest, ubuntu-latest ]
         compiler: [ clang, gcc, msvc ]
         configuration: [ Debug, Release ]
+		std_iter_compatibility [ ON, OFF ]
         exclude:
           - os: windows-latest
             compiler: gcc
@@ -63,7 +64,7 @@ jobs:
           path: Code/
 
       - run: mkdir build
-      - run: cd build && cmake ../Code -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON
+      - run: cd build && cmake ../Code -DEASTL_BUILD_BENCHMARK:BOOL=ON -DEASTL_BUILD_TESTS:BOOL=ON -DEASTL_STD_ITERATOR_CATEGORY_ENABLED:BOOL=${{ matrix.std_iter_compatibility }}
         env:
           CXXFLAGS: ${{ matrix.cxxflags }}
           CXX: ${{ matrix.cxx }}
