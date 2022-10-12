@@ -87,14 +87,14 @@ namespace eastl
 	/// more efficient use of the container and is consistent with the C++ language 
 	/// defect report #130 (DR 130)
 	///
-	template <typename Key, typename Compare = eastl::less<Key>, typename Allocator = EASTLAllocatorType, 
+	template <typename Key, typename Compare = eastl::less<Key>, typename Allocator = EASTLAllocatorType, //Allocator is not actually used if RandomAccessContainer has allocator
 			  typename RandomAccessContainer = eastl::vector<Key, Allocator> >
-	class vector_set : public RandomAccessContainer
+	class vector_set
 	{
 	public:
 		typedef RandomAccessContainer                                      base_type;
 		typedef vector_set<Key, Compare, Allocator, RandomAccessContainer> this_type;
-		typedef Allocator                                                  allocator_type;
+		typedef typename RandomAccessContainer::allocator_type             allocator_type;
 		typedef Key                                                        key_type;
 		typedef Key                                                        value_type;
 		typedef Compare                                                    key_compare;
@@ -111,12 +111,8 @@ namespace eastl
 		typedef typename base_type::const_reverse_iterator                 const_reverse_iterator;
 		typedef eastl::pair<iterator, bool>                                insert_return_type;
 
-		using base_type::begin;
-		using base_type::end;
-		using base_type::get_allocator;
-
 	protected:
-		value_compare mCompare; // To consider: Declare this instead as: 'key_compare mKeyCompare'
+		eastl::compressed_pair<base_type, value_compare> mContainerAndCompare; // allow empty struct optimization with compressed_pair
 
 	public:
 		// We have an empty ctor and a ctor that takes an allocator instead of one for both
@@ -147,31 +143,66 @@ namespace eastl
 
 		const value_compare& value_comp() const;
 		value_compare&       value_comp();
+		base_type & getContainer() {return mContainerAndCompare.first();}
+		const base_type & getContainer() const {return mContainerAndCompare.first();}
 
-		// Inherited from base class:
-		//
-		//     allocator_type& get_allocator();
-		//     void            set_allocator(const allocator_type& allocator);
-		//
-		//     iterator       begin();
-		//     const_iterator begin() const;
-		//     const_iterator cbegin() const;
-		//
-		//     iterator       end();
-		//     const_iterator end() const;
-		//     const_iterator cend() const;
-		//
-		//     reverse_iterator       rbegin();
-		//     const_reverse_iterator rbegin() const;
-		//     const_reverse_iterator crbegin() const;
-		//
-		//     reverse_iterator       rend();
-		//     const_reverse_iterator rend() const;
-		//     const_reverse_iterator crend() const;
-		//
-		//     size_type size() const;
-		//     bool      empty() const;
-		//     void      clear();
+		iterator begin() EA_NOEXCEPT {return getContainer().begin();}//to consider: remove me
+		const_iterator begin() const EA_NOEXCEPT {return getContainer().begin();}
+		const_iterator cbegin() const EA_NOEXCEPT {return getContainer().begin();}
+
+		iterator end() EA_NOEXCEPT {return getContainer().end();}//to consider: remove me
+		const_iterator end() const EA_NOEXCEPT {return getContainer().end();}
+		const_iterator cend() const EA_NOEXCEPT {return getContainer().end();}
+
+		allocator_type & get_allocator() EA_NOEXCEPT {return getContainer().get_allocator();}
+		const allocator_type & get_allocator() const EA_NOEXCEPT {return getContainer().get_allocator();}
+		void set_allocator(allocator_type &a) {return getContainer().set_allocator(a);}
+
+		reverse_iterator       rbegin() EA_NOEXCEPT {return getContainer().rbegin();}
+		const_reverse_iterator rbegin() const EA_NOEXCEPT {return getContainer().rbegin();}
+		const_reverse_iterator crbegin() const EA_NOEXCEPT {return getContainer().crbegin();}
+
+		reverse_iterator       rend() EA_NOEXCEPT {return getContainer().rend();}//to consider: remove me
+		const_reverse_iterator rend() const EA_NOEXCEPT {return getContainer().rend();}
+		const_reverse_iterator crend() const EA_NOEXCEPT {return getContainer().crend();}
+
+		pointer       data() EA_NOEXCEPT {return getContainer().data();}//to consider: remove me
+		const_pointer data() const EA_NOEXCEPT {return getContainer().data();}
+
+		reference       operator[](size_type n) {return getContainer()[n];}//to consider: remove me
+		const_reference operator[](size_type n) const {return getContainer()[n];}
+
+		reference       at(size_type n) {return getContainer().at(n);}//to consider: remove me
+		const_reference at(size_type n) const {return getContainer().at(n);}
+
+		reference       front() {return getContainer().front();}//to consider: remove me
+		const_reference front() const {return getContainer().front();}
+
+		reference       back() {return getContainer().back();}//to consider: remove me
+		const_reference back() const {return getContainer().back();}
+
+		void      pop_back() {getContainer().pop_back();}
+
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::reserve)>::value, void>::type
+		reserve(size_type n){getContainer().reserve(n);}
+
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::set_capacity)>::value, void>::type
+		set_capacity(size_type n = base_type::npos) {getContainer().set_capacity(n);}
+
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::shrink_to_fit)>::value, void>::type
+		shrink_to_fit() {getContainer().shrink_to_fit();}
+
+		size_type capacity() const EA_NOEXCEPT {return getContainer().capacity();}
+		size_type size() const EA_NOEXCEPT {return getContainer().size();}
+		bool      empty() const EA_NOEXCEPT {return getContainer().empty();}
+		void      clear() EA_NOEXCEPT {getContainer().clear();}
+
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::reset_lose_memory)>::value, void>::type
+		reset_lose_memory() EA_NOEXCEPT {getContainer().reset_lose_memory();}
 
 		template <class... Args>
 		eastl::pair<iterator, bool> emplace(Args&&... args);
@@ -190,6 +221,9 @@ namespace eastl
 
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
+
+		iterator erase_first(const Key& value) {return getContainer().erase_first(value);}
+		reverse_iterator erase_last(const Key& value) {return getContainer().erase_last(value);}
 
 		iterator  erase(const_iterator position);
 		iterator  erase(const_iterator first, const_iterator last);
@@ -224,13 +258,6 @@ namespace eastl
 		template <typename U, typename BinaryPredicate> 
 		eastl::pair<const_iterator, const_iterator> equal_range(const U& u, BinaryPredicate) const;
 
-		// Functions which are disallowed due to being unsafe. 
-		void      push_back(const value_type& value) = delete;
-		reference push_back()                        = delete;
-		void*     push_back_uninitialized()          = delete;
-		template <class... Args>
-		reference emplace_back(Args&&...)            = delete;
-
 		// NOTE(rparolin): It is undefined behaviour if user code fails to ensure the container
 		// invariants are respected by performing an explicit call to 'sort' before any other
 		// operations on the container are performed that do not clear the elements.
@@ -242,10 +269,17 @@ namespace eastl
 		// the intent of code by leaving a trace that a manual call to sort is required.
 		// 
 		template <typename... Args> decltype(auto) push_back_unsorted(Args&&... args)    
-			{ return base_type::push_back(eastl::forward<Args>(args)...); }
+			{ return getContainer().push_back(eastl::forward<Args>(args)...); }
 		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
-			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
+			{ return getContainer().emplace_back(eastl::forward<Args>(args)...); }
 
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::validate)>::value, bool>::type
+		validate() const EA_NOEXCEPT {return getContainer().validate();}
+
+		template<typename U = RandomAccessContainer>
+		typename eastl::enable_if<eastl::is_member_function_pointer<decltype(&U::validate_iterator)>::value, int>::type
+		validate_iterator(const_iterator i) const EA_NOEXCEPT {return getContainer().validate_iterator(i);}
 	}; // vector_set
 
 
@@ -258,7 +292,6 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set()
-		: base_type(), mCompare(C())
 	{
 		get_allocator().set_name(EASTL_VECTOR_SET_DEFAULT_NAME);
 	}
@@ -266,7 +299,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(const allocator_type& allocator)
-		: base_type(allocator), mCompare(C())
+		: mContainerAndCompare(base_type(allocator), C())
 	{
 		// Empty
 	}
@@ -274,7 +307,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(const key_compare& compare, const allocator_type& allocator)
-		: base_type(allocator), mCompare(compare)
+		: mContainerAndCompare(base_type(allocator), compare)
 	{
 		// Empty
 	}
@@ -282,7 +315,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(const this_type& x)
-		: base_type(x), mCompare(x.mCompare)
+		: mContainerAndCompare(x.mContainerAndCompare)
 	{
 		// Empty
 	}
@@ -290,7 +323,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(this_type&& x)
-		: base_type(eastl::move(x)), mCompare(x.mCompare)
+		: mContainerAndCompare(eastl::move(x.mContainerAndCompare))
 	{
 		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
 	}
@@ -298,7 +331,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(this_type&& x, const allocator_type& allocator)
-		: base_type(eastl::move(x), allocator), mCompare(x.mCompare)
+		: mContainerAndCompare(base_type(eastl::move(x.getContainer()), allocator), eastl::move(x.key_comp()))
 	{
 		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
 	}
@@ -306,7 +339,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_set<K, C, A, RAC>::vector_set(std::initializer_list<value_type> ilist, const key_compare& compare, const allocator_type& allocator)
-		: base_type(allocator), mCompare(compare)
+		: mContainerAndCompare(base_type(allocator), compare)
 	{
 		insert(ilist.begin(), ilist.end());
 	}
@@ -315,7 +348,7 @@ namespace eastl
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename InputIterator>
 	inline vector_set<K, C, A, RAC>::vector_set(InputIterator first, InputIterator last)
-		: base_type(EASTL_VECTOR_SET_DEFAULT_ALLOCATOR), mCompare(key_compare())
+		: mContainerAndCompare(base_type(EASTL_VECTOR_SET_DEFAULT_ALLOCATOR), key_compare())
 	{
 		insert(first, last);
 	}
@@ -324,7 +357,7 @@ namespace eastl
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename InputIterator>
 	inline vector_set<K, C, A, RAC>::vector_set(InputIterator first, InputIterator last, const key_compare& compare)
-		: base_type(EASTL_VECTOR_SET_DEFAULT_ALLOCATOR), mCompare(compare)
+		: mContainerAndCompare(EASTL_VECTOR_SET_DEFAULT_ALLOCATOR, compare)
 	{
 		insert(first, last);
 	}
@@ -334,8 +367,7 @@ namespace eastl
 	inline vector_set<K, C, A, RAC>&
 	vector_set<K, C, A, RAC>::operator=(const this_type& x)
 	{
-		base_type::operator=(x);
-		mCompare = value_compare(x.mCompare);
+		mContainerAndCompare = x.mContainerAndCompare;
 		return *this;
 	}
 
@@ -344,8 +376,7 @@ namespace eastl
 	inline vector_set<K, C, A, RAC>&
 	vector_set<K, C, A, RAC>::operator=(this_type&& x)
 	{
-		base_type::operator=(eastl::move(x));
-		eastl::swap(mCompare, x.mCompare);
+		mContainerAndCompare = eastl::move(x.mContainerAndCompare);
 		return *this;
 	}
 
@@ -354,7 +385,7 @@ namespace eastl
 	inline vector_set<K, C, A, RAC>&
 	vector_set<K, C, A, RAC>::operator=(std::initializer_list<value_type> ilist)
 	{
-		base_type::clear();
+		getContainer().clear();
 		insert(ilist.begin(), ilist.end());
 		return *this;
 	}
@@ -363,8 +394,8 @@ namespace eastl
 	template <typename K, typename C, typename A, typename RAC>
 	inline void vector_set<K, C, A, RAC>::swap(this_type& x)
 	{
-		base_type::swap(x);
-		eastl::swap(mCompare, x.mCompare);
+	    getContainer().swap(x.getContainer());
+		eastl::swap(key_comp(), x.key_comp());
 	}
 
 
@@ -372,7 +403,7 @@ namespace eastl
 	inline const typename vector_set<K, C, A, RAC>::key_compare&
 	vector_set<K, C, A, RAC>::key_comp() const
 	{
-		return mCompare;
+		return mContainerAndCompare.second();
 	}
 
 
@@ -380,7 +411,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::key_compare&
 	vector_set<K, C, A, RAC>::key_comp()
 	{
-		return mCompare;
+		return mContainerAndCompare.second();
 	}
 
 
@@ -388,7 +419,7 @@ namespace eastl
 	inline const typename vector_set<K, C, A, RAC>::value_compare&
 	vector_set<K, C, A, RAC>::value_comp() const
 	{
-		return mCompare;
+		return mContainerAndCompare.second();
 	}
 
 
@@ -396,7 +427,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::value_compare&
 	vector_set<K, C, A, RAC>::value_comp()
 	{
-		return mCompare;
+		return mContainerAndCompare.second();
 	}
 
 
@@ -435,9 +466,9 @@ namespace eastl
 	{
 		const iterator itLB(lower_bound(value));
 
-		if((itLB != end()) && !mCompare(value, *itLB))
+		if((itLB != end()) && !key_comp()(value, *itLB))
 			return eastl::pair<iterator, bool>(itLB, false);
-		return eastl::pair<iterator, bool>(base_type::insert(itLB, value), true);
+		return eastl::pair<iterator, bool>(getContainer().insert(itLB, value), true);
 	}
 
 
@@ -449,9 +480,9 @@ namespace eastl
 		value_type value(eastl::forward<P>(otherValue));
 		const iterator itLB(lower_bound(value));
 
-		if((itLB != end()) && !mCompare(value, *itLB))
+		if((itLB != end()) && !key_comp()(value, *itLB))
 			return eastl::pair<iterator, bool>(itLB, false);
-		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+		return eastl::pair<iterator, bool>(getContainer().insert(itLB, eastl::move(value)), true);
 	}
 
 
@@ -464,10 +495,10 @@ namespace eastl
 		// We do a test to see if the position is correct. If so then we insert, 
 		// if not then we ignore the input position.
 
-		if((position == end()) || mCompare(value, *position))  // If the element at position is greater than value...
+		if((position == end()) || key_comp()(value, *position))  // If the element at position is greater than value...
 		{
-			if((position == begin()) || mCompare(*(position - 1), value)) // If the element before position is less than value...
-				return base_type::insert(position, value);
+			if((position == begin()) || key_comp()(*(position - 1), value)) // If the element before position is less than value...
+				return getContainer().insert(position, value);
 		}
 
 		// In this case we either have an incorrect position or value is already present.
@@ -485,10 +516,10 @@ namespace eastl
 	vector_set<K, C, A, RAC>::insert(const_iterator position, value_type&& value)
 	{
 		// See the other version of this function for documentation.
-		if((position == end()) || mCompare(value, *position))  // If the element at position is greater than value...
+		if((position == end()) || key_comp()(value, *position))  // If the element at position is greater than value...
 		{
-			if((position == begin()) || mCompare(*(position - 1), value)) // If the element before position is less than value...
-				return base_type::insert(position, eastl::move(value));
+			if((position == begin()) || key_comp()(*(position - 1), value)) // If the element before position is less than value...
+				return getContainer().insert(position, eastl::move(value));
 		}
 
 		const eastl::pair<iterator, bool> result = insert(eastl::move(value));
@@ -527,7 +558,7 @@ namespace eastl
 	{
 		// Note that we return iterator and not void. This allows for more efficient use of 
 		// the container and is consistent with the C++ language defect report #130 (DR 130)
-		return base_type::erase(position);
+		return getContainer().erase(position);
 	}
 
 
@@ -535,7 +566,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::iterator
 	vector_set<K, C, A, RAC>::erase(const_iterator first, const_iterator last)
 	{
-		return base_type::erase(first, last);
+		return getContainer().erase(first, last);
 	}
 
 
@@ -558,7 +589,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::reverse_iterator 
 	vector_set<K, C, A, RAC>::erase(const_reverse_iterator position)
 	{
-		return reverse_iterator(base_type::erase((++position).base()));
+		return reverse_iterator(getContainer().erase((++position).base()));
 	}
 
 
@@ -566,7 +597,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::reverse_iterator
 	vector_set<K, C, A, RAC>::erase(const_reverse_iterator first, const_reverse_iterator last)
 	{
-		return reverse_iterator(base_type::erase((++last).base(), (++first).base()));
+		return reverse_iterator(getContainer().erase((++last).base(), (++first).base()));
 	}
 
 
@@ -621,7 +652,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::iterator
 	vector_set<K, C, A, RAC>::lower_bound(const key_type& k)
 	{
-		return eastl::lower_bound(begin(), end(), k, mCompare);
+		return eastl::lower_bound(begin(), end(), k, key_comp());
 	}
 
 
@@ -629,7 +660,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::const_iterator
 	vector_set<K, C, A, RAC>::lower_bound(const key_type& k) const
 	{
-		return eastl::lower_bound(begin(), end(), k, mCompare);
+		return eastl::lower_bound(begin(), end(), k, key_comp());
 	}
 
 
@@ -637,7 +668,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::iterator
 	vector_set<K, C, A, RAC>::upper_bound(const key_type& k)
 	{
-		return eastl::upper_bound(begin(), end(), k, mCompare);
+		return eastl::upper_bound(begin(), end(), k, key_comp());
 	}
 
 
@@ -645,7 +676,7 @@ namespace eastl
 	inline typename vector_set<K, C, A, RAC>::const_iterator
 	vector_set<K, C, A, RAC>::upper_bound(const key_type& k) const
 	{
-		return eastl::upper_bound(begin(), end(), k, mCompare);
+		return eastl::upper_bound(begin(), end(), k, key_comp());
 	}
 
 
@@ -659,7 +690,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || key_comp()(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<iterator, iterator>(itLower, itLower);
 
 		iterator itUpper(itLower);
@@ -677,7 +708,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const const_iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || key_comp()(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
 
 		const_iterator itUpper(itLower);
