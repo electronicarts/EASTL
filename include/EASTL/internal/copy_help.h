@@ -121,19 +121,40 @@ namespace eastl
 	};
 
 
+	namespace internal {
+		// This exists to handle the case when EASTL_ITC_NS is `std`
+		// and the C++ version is older than C++20, in this case
+		// std::contiguous_iterator_tag does not exist so we can't use
+		// is_same<> directly.
+	#if !EASTL_STD_ITERATOR_CATEGORY_ENABLED || defined(EA_COMPILER_CPP20_ENABLED)
+		template <typename IC>
+		using is_contiguous_iterator_helper = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
+	#else
+		template <typename IC>
+		using is_contiguous_iterator_helper = eastl::false_type;
+	#endif
+
+		template <typename InputIterator, typename OutputIterator>
+		struct can_be_memmoved_helper {
+			using IIC = typename eastl::iterator_traits<InputIterator>::iterator_category;
+			using OIC = typename eastl::iterator_traits<OutputIterator>::iterator_category;
+			using value_type_input = typename eastl::iterator_traits<InputIterator>::value_type;
+			using value_type_output = typename eastl::iterator_traits<OutputIterator>::value_type;
+
+			static constexpr bool value = eastl::is_trivially_copyable<value_type_output>::value &&
+				                          eastl::is_same<value_type_input, value_type_output>::value &&
+				                         (eastl::is_pointer<InputIterator>::value  || is_contiguous_iterator_helper<IIC>::value) &&
+				                         (eastl::is_pointer<OutputIterator>::value || is_contiguous_iterator_helper<OIC>::value);
+
+		};
+	}
 
 	template <bool isMove, typename InputIterator, typename OutputIterator>
 	inline OutputIterator move_and_copy_chooser(InputIterator first, InputIterator last, OutputIterator result)
 	{
 		typedef typename eastl::iterator_traits<InputIterator>::iterator_category  IIC;
-		typedef typename eastl::iterator_traits<OutputIterator>::iterator_category OIC;
-		typedef typename eastl::iterator_traits<InputIterator>::value_type         value_type_input;
-		typedef typename eastl::iterator_traits<OutputIterator>::value_type        value_type_output;
 
-		const bool canBeMemmoved = eastl::is_trivially_copyable<value_type_output>::value &&
-								   eastl::is_same<value_type_input, value_type_output>::value &&
-								  (eastl::is_pointer<InputIterator>::value  || eastl::is_same<IIC, EASTL_ITC_NS::contiguous_iterator_tag>::value) &&
-								  (eastl::is_pointer<OutputIterator>::value || eastl::is_same<OIC, EASTL_ITC_NS::contiguous_iterator_tag>::value);
+		const bool canBeMemmoved = internal::can_be_memmoved_helper<InputIterator, OutputIterator>::value;
 
 		return eastl::move_and_copy_helper<IIC, isMove, canBeMemmoved>::move_or_copy(first, last, result); // Need to chose based on the input iterator tag and not the output iterator tag, because containers accept input ranges of iterator types different than self.
 	}

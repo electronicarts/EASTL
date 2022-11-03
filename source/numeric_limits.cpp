@@ -197,6 +197,32 @@
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<wchar_t>::has_denorm_loss;
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<wchar_t>::is_iec559;
 
+		// char8_t
+		#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE // If char8_t is a true unique type (as called for by the C++20 Standard)
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_specialized;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::digits;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::digits10;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_signed;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_integer;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_exact;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::radix;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::min_exponent;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::min_exponent10;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::max_exponent;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::max_exponent10;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_bounded;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_modulo;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::traps;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::tinyness_before;
+			EA_CONSTEXPR_OR_CONST float_round_style     numeric_limits<char8_t>::round_style;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_infinity;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_quiet_NaN;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_signaling_NaN;
+			EA_CONSTEXPR_OR_CONST float_denorm_style    numeric_limits<char8_t>::has_denorm;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_denorm_loss;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_iec559;
+		#endif
+
 		// char16_t
 		#if EA_CHAR16_NATIVE // If char16_t is a true unique type (as called for by the C++11 Standard)...
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char16_t>::is_specialized;

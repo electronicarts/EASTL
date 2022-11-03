@@ -8,6 +8,7 @@
 #include "GetTypeName.h"
 #include <EAStdC/EAString.h>
 #include <EAStdC/EAStopwatch.h>
+#include <EASTL/atomic.h>
 #include <EASTL/core_allocator_adapter.h>
 #include <EASTL/core_allocator.h>
 #include <EASTL/intrusive_ptr.h>
@@ -1383,7 +1384,7 @@ static int Test_shared_ptr()
 	{
 		EA::Thread::ThreadParameters    mThreadParams;
 		EA::Thread::Thread              mThread;
-		volatile bool                   mbShouldContinue;
+		eastl::atomic<bool>             mbShouldContinue;
 		int                             mnErrorCount;
 		eastl::shared_ptr<TestObject>*  mpSPTO;
 		eastl::weak_ptr<TestObject>*    mpWPTO;
@@ -1396,7 +1397,7 @@ static int Test_shared_ptr()
 		{
 			int& nErrorCount = mnErrorCount; // declare nErrorCount so that EATEST_VERIFY can work, as it depends on it being declared.
 
-			while(mbShouldContinue)
+			while(mbShouldContinue.load(eastl::memory_order_relaxed))
 			{
 				EA::UnitTest::ThreadSleepRandom(1, 10);
 
@@ -1451,7 +1452,7 @@ static int Test_shared_ptr_thread()
 			EA::UnitTest::ThreadSleep(2000);
 
 			for(size_t i = 0; i < EAArrayCount(thread); i++)
-				thread[i].mbShouldContinue = false;
+				thread[i].mbShouldContinue.store(false, eastl::memory_order_relaxed);
 
 			for(size_t i = 0; i < EAArrayCount(thread); i++)
 			{

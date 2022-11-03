@@ -153,7 +153,7 @@ namespace eastl
 
 			struct int128_helper
 			{
-				#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
+				#if EASTL_GCC_STYLE_INT128_SUPPORTED
 					typedef __int128_t type;
 				#endif
 			};
@@ -168,7 +168,7 @@ namespace eastl
 			eastl::conditional_t<sizeof(T) <= sizeof(signed int), int_helper,
 			eastl::conditional_t<sizeof(T) <= sizeof(signed long), long_helper,
 			eastl::conditional_t<sizeof(T) <= sizeof(signed long long), longlong_helper,
-			#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) && defined(__clang__))
+			#if EASTL_GCC_STYLE_INT128_SUPPORTED
 				eastl::conditional_t<sizeof(T) <= sizeof(__int128_t), int128_helper,
 					no_type_helper
 				>
@@ -223,7 +223,7 @@ namespace eastl
 	template <> struct make_signed<unsigned long>            { typedef signed long            type; };
 	template <> struct make_signed<signed long long>         { typedef signed long long       type; };
 	template <> struct make_signed<unsigned long long>       { typedef signed long long       type; };
-	#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
+	#if EASTL_GCC_STYLE_INT128_SUPPORTED
 		template <> struct make_signed<__int128_t>           { typedef __int128_t			  type; };
 		template <> struct make_signed<__uint128_t>          { typedef __int128_t			  type; };
 	#endif
@@ -318,7 +318,7 @@ namespace eastl
 
 			struct int128_helper
 			{
-				#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
+				#if EASTL_GCC_STYLE_INT128_SUPPORTED
 					typedef __uint128_t type;
 				#endif
 			};
@@ -334,7 +334,7 @@ namespace eastl
 			eastl::conditional_t<sizeof(T) <= sizeof(unsigned int), int_helper,
 			eastl::conditional_t<sizeof(T) <= sizeof(unsigned long), long_helper,
 			eastl::conditional_t<sizeof(T) <= sizeof(unsigned long long), longlong_helper,
-			#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) && defined(__clang__))
+			#if EASTL_GCC_STYLE_INT128_SUPPORTED
 				eastl::conditional_t<sizeof(T) <= sizeof(__uint128_t), int128_helper,
 					no_type_helper
 				>
@@ -390,7 +390,7 @@ namespace eastl
 	template <> struct make_unsigned<unsigned long>          { typedef unsigned long            type; };
 	template <> struct make_unsigned<signed long long>       { typedef unsigned long long       type; };
 	template <> struct make_unsigned<unsigned long long>     { typedef unsigned long long       type; };
-	#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
+	#if EASTL_GCC_STYLE_INT128_SUPPORTED
 		template <> struct make_unsigned<__int128_t>         { typedef __uint128_t				type; };
 		template <> struct make_unsigned<__uint128_t>        { typedef __uint128_t				type; };
 	#endif

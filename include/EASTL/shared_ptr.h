@@ -48,6 +48,7 @@
 #include <EASTL/unique_ptr.h>
 #include <EASTL/functional.h>
 #include <EASTL/allocator.h>
+#include <EASTL/atomic.h>
 #if EASTL_RTTI_ENABLED
 	#include <typeinfo>
 #endif
@@ -117,8 +118,8 @@ namespace eastl
 	/// This is a small utility class used by shared_ptr and weak_ptr.
 	struct ref_count_sp
 	{
-		int32_t mRefCount;            /// Reference count on the contained pointer. Starts as 1 by default.
-		int32_t mWeakRefCount;        /// Reference count on contained pointer plus this ref_count_sp object itself. Starts as 1 by default.
+		atomic<int32_t> mRefCount;            /// Reference count on the contained pointer. Starts as 1 by default.
+		atomic<int32_t> mWeakRefCount;        /// Reference count on contained pointer plus this ref_count_sp object itself. Starts as 1 by default.
 
 	public:
 		ref_count_sp(int32_t refCount = 1, int32_t weakRefCount = 1) EA_NOEXCEPT;
@@ -147,44 +148,49 @@ namespace eastl
 
 	inline int32_t ref_count_sp::use_count() const EA_NOEXCEPT
 	{
-		return mRefCount;   // To figure out: is this right?
+		return mRefCount.load(memory_order_relaxed);   // To figure out: is this right?
 	}
 
 	inline void ref_count_sp::addref() EA_NOEXCEPT
 	{
-		Internal::atomic_increment(&mRefCount);
-		Internal::atomic_increment(&mWeakRefCount);
+		mRefCount.fetch_add(1, memory_order_relaxed);
+		mWeakRefCount.fetch_add(1, memory_order_relaxed);
 	}
 
 	inline void ref_count_sp::release()
 	{
-		EASTL_ASSERT((mRefCount > 0) && (mWeakRefCount > 0));
-		if(Internal::atomic_decrement(&mRefCount) == 0)
+		EASTL_ASSERT((mRefCount.load(memory_order_relaxed) > 0));
+		if(mRefCount.fetch_sub(1, memory_order_release) == 1)
+		{
+			atomic_thread_fence(memory_order_acquire);
 			free_value();
+		}
 
-		if(Internal::atomic_decrement(&mWeakRefCount) == 0)
-			free_ref_count_sp();
+		weak_release();
 	}
 
 	inline void ref_count_sp::weak_addref() EA_NOEXCEPT
 	{
-		Internal::atomic_increment(&mWeakRefCount);
+		mWeakRefCount.fetch_add(1, memory_order_relaxed);
 	}
 
 	inline void ref_count_sp::weak_release()
 	{
-		EASTL_ASSERT(mWeakRefCount > 0);
-		if(Internal::atomic_decrement(&mWeakRefCount) == 0)
+		EASTL_ASSERT(mWeakRefCount.load(memory_order_relaxed) > 0);
+		if(mWeakRefCount.fetch_sub(1, memory_order_release) == 1)
+		{
+			atomic_thread_fence(memory_order_acquire);
 			free_ref_count_sp();
+		}
 	}
 
 	inline ref_count_sp* ref_count_sp::lock() EA_NOEXCEPT
 	{
-		for(int32_t refCountTemp = mRefCount; refCountTemp != 0; refCountTemp = mRefCount)
+		for(int32_t refCountTemp = mRefCount.load(memory_order_relaxed); refCountTemp != 0; )
 		{
-			if(Internal::atomic_compare_and_swap(&mRefCount, refCountTemp + 1, refCountTemp))
+			if(mRefCount.compare_exchange_weak(refCountTemp, refCountTemp + 1, memory_order_relaxed))
 			{
-				Internal::atomic_increment(&mWeakRefCount);
+				mWeakRefCount.fetch_add(1, memory_order_relaxed);
 				return this;
 			}
 		}
@@ -810,14 +816,14 @@ namespace eastl
 		/// Returns: the number of shared_ptr objects, *this included, that share ownership with *this, or 0 when *this is empty.
 		int use_count() const EA_NOEXCEPT
 		{
-			return mpRefCount ? mpRefCount->mRefCount : 0;
+			return mpRefCount ? mpRefCount->use_count() : 0;
 		}
 
 		/// unique
 		/// Returns: use_count() == 1.
 		bool unique() const EA_NOEXCEPT
 		{
-			return (mpRefCount && (mpRefCount->mRefCount == 1));
+			return (mpRefCount && (mpRefCount->use_count() == 1));
 		}
 
 
@@ -1523,13 +1529,13 @@ namespace eastl
 		// Returns: 0 if *this is empty ; otherwise, the number of shared_ptr instances that share ownership with *this.
 		int use_count() const EA_NOEXCEPT
 		{
-			return mpRefCount ? mpRefCount->mRefCount : 0;
+			return mpRefCount ? mpRefCount->use_count() : 0;
 		}
 
 		// Returns: use_count() == 0
 		bool expired() const EA_NOEXCEPT
 		{
-			return (!mpRefCount || (mpRefCount->mRefCount == 0));
+			return (!mpRefCount || (mpRefCount->use_count() == 0));
 		}
 
 		void reset()

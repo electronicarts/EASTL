@@ -549,6 +549,7 @@ int TestTypeTraits()
 	EATEST_VERIFY(GetType(is_integral<float>()) == false);
 
 	static_assert(is_integral<bool>::value,               "is_integral failure");
+	static_assert(is_integral<char8_t>::value,            "is_integral failure");
 	static_assert(is_integral<char16_t>::value,           "is_integral failure");
 	static_assert(is_integral<char32_t>::value,           "is_integral failure");
 	static_assert(is_integral<char>::value,               "is_integral failure");
@@ -1074,7 +1075,24 @@ int TestTypeTraits()
 	static_assert(is_signed<double>::value == true,             "is_signed failure ");
 	static_assert(is_signed_v<double> == true,                  "is_signed failure ");
 	EATEST_VERIFY(GetType(is_signed<double>()) == true);
+	
+	static_assert(is_signed<char16_t>::value == false,			"is_signed failure ");
+	static_assert(is_signed_v<char16_t> == false,				"is_signed failure ");
+	EATEST_VERIFY(GetType(is_signed<char16_t>()) == false);
 
+	static_assert(is_signed<char32_t>::value == false,			"is_signed failure ");
+	static_assert(is_signed_v<char32_t> == false,				"is_signed failure ");
+	EATEST_VERIFY(GetType(is_signed<char32_t>()) == false);
+
+#if EASTL_GCC_STYLE_INT128_SUPPORTED
+	static_assert(is_signed<__int128_t>::value == true,			"is_signed failure ");
+	static_assert(is_signed_v<__int128_t> == true,				"is_signed failure ");
+	EATEST_VERIFY(GetType(is_signed<__int128_t>()) == true);
+
+	static_assert(is_signed<__uint128_t>::value == false,		"is_signed failure ");
+	static_assert(is_signed_v<__uint128_t> == false,			"is_signed failure ");
+	EATEST_VERIFY(GetType(is_signed<__uint128_t>()) == false);
+#endif
 
 	// is_unsigned
 	static_assert(is_unsigned<unsigned int>::value == true,        "is_unsigned failure ");
@@ -1100,6 +1118,24 @@ int TestTypeTraits()
 	static_assert(is_unsigned<double>::value == false,             "is_unsigned failure ");
 	static_assert(is_unsigned_v<double> == false,                  "is_unsigned failure ");
 	EATEST_VERIFY(GetType(is_unsigned<double>()) == false);
+	
+	static_assert(is_unsigned<char16_t>::value == true,			   "is_unsigned failure ");
+	static_assert(is_unsigned_v<char16_t> == true,				   "is_unsigned failure ");
+	EATEST_VERIFY(GetType(is_unsigned<char16_t>()) == true);
+
+	static_assert(is_unsigned<char32_t>::value == true,			   "is_unsigned failure ");
+	static_assert(is_unsigned_v<char32_t> == true,				   "is_unsigned failure ");
+	EATEST_VERIFY(GetType(is_unsigned<char32_t>()) == true);
+
+#if EASTL_GCC_STYLE_INT128_SUPPORTED
+	static_assert(is_unsigned<__int128_t>::value == false,		   "is_unsigned failure ");
+	static_assert(is_unsigned_v<__int128_t> == false,			   "is_unsigned failure ");
+	EATEST_VERIFY(GetType(is_unsigned<__int128_t>()) == false);
+
+	static_assert(is_unsigned<__uint128_t>::value == true,		   "is_unsigned failure ");
+	static_assert(is_unsigned_v<__uint128_t> == true,			   "is_unsigned failure ");
+	EATEST_VERIFY(GetType(is_unsigned<__uint128_t>()) == true);
+#endif
 
 
 	// is_lvalue_reference
@@ -1685,7 +1721,7 @@ int TestTypeTraits()
 		static_assert(eastl::is_same_v<unsigned long, eastl::make_unsigned<unsigned long>::type>);
 		static_assert(eastl::is_same_v<unsigned long long, eastl::make_unsigned<unsigned long long>::type>);
 
-		#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG))
+		#if EASTL_GCC_STYLE_INT128_SUPPORTED
 			static_assert(eastl::is_same_v<__uint128_t, eastl::make_unsigned<__int128_t>::type>);
 			static_assert(eastl::is_same_v<__uint128_t, eastl::make_unsigned<__uint128_t>::type>);
 
@@ -1696,12 +1732,17 @@ int TestTypeTraits()
 		// Char tests
 		static_assert(sizeof(char) == sizeof(eastl::make_signed<char>::type));
 		static_assert(sizeof(wchar_t) == sizeof(eastl::make_signed<wchar_t>::type));
+		static_assert(sizeof(char8_t) == sizeof(eastl::make_signed<char8_t>::type));
 		static_assert(sizeof(char16_t) == sizeof(eastl::make_signed<char16_t>::type));
 		static_assert(sizeof(char32_t) == sizeof(eastl::make_signed<char32_t>::type));
 		static_assert(sizeof(char) == sizeof(eastl::make_unsigned<char>::type));
 		static_assert(sizeof(wchar_t) == sizeof(eastl::make_unsigned<wchar_t>::type));
+		static_assert(sizeof(char8_t) == sizeof(eastl::make_unsigned<char8_t>::type));
 		static_assert(sizeof(char16_t) == sizeof(eastl::make_unsigned<char16_t>::type));
 		static_assert(sizeof(char32_t) == sizeof(eastl::make_unsigned<char32_t>::type));
+
+		static_assert(eastl::is_same_v<signed char, eastl::make_signed<char8_t>::type>);
+		static_assert(eastl::is_same_v<unsigned char, eastl::make_unsigned<char8_t>::type>);
 
 		// Enum tests
 		enum EnumUCharSize : unsigned char		{};

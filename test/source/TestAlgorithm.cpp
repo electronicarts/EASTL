@@ -1891,7 +1891,164 @@ int TestAlgorithm()
 	}
 
 
-	{
+    {
+	    // ForwardIterator apply_and_remove(ForwardIterator first, ForwardIterator last, Function function, const T&
+	    // value) ForwardIterator apply_and_remove_if(ForwardIterator first, ForwardIterator last, Function function,
+	    // Predicate predicate)
+
+	    // Test for empty range and full container range
+	    {
+		    int intArray[12] = {0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove(intArray, intArray, func, 1);
+		    EATEST_VERIFY(pInt == intArray);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove", 0, 0, 1, 1, 0, 0, 1, 1, 0,
+		                                 0, 1, 1, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", -1));
+		    pInt = apply_and_remove(intArray, intArray + 12, func, 1);
+		    EATEST_VERIFY(pInt == intArray + 6);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 6, int(), "apply_and_remove", 0, 0, 0, 0, 0, 0, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", 1, 1, 1, 1, 1, 1, -1));
+	    }
+
+	    // Test for no match on empty range and full container range
+	    {
+		    int intArray[12] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove(intArray, intArray, func, 1);
+		    EATEST_VERIFY(pInt == intArray);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove", 3, 3, 3, 3, 3, 3, 3, 3, 3,
+		                                 3, 3, 3, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", -1));
+		    pInt = apply_and_remove(intArray, intArray + 12, func, 1);
+		    EATEST_VERIFY(pInt == intArray + 12);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove", 3, 3, 3, 3, 3, 3, 3, 3, 3,
+		                                 3, 3, 3, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", -1));
+	    }
+
+	    // Test for empty range and full container range
+	    {
+		    int intArray[12] = {0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove_if(intArray, intArray, func, bind2nd(equal_to<int>(), (int)1));
+		    EATEST_VERIFY(pInt == intArray);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 0, 0, 1, 1, 0, 0, 1, 1,
+		                                 0, 0, 1, 1, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
+		    pInt = apply_and_remove_if(intArray, intArray + 12, func, bind2nd(equal_to<int>(), (int)1));
+		    EATEST_VERIFY(pInt == intArray + 6);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 6, int(), "apply_and_remove_if", 0, 0, 0, 0, 0, 0, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", 1, 1, 1, 1, 1, 1, -1));
+	    }
+
+	    // Test for no match on empty range and full container range
+	    {
+		    int intArray[12] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove_if(intArray, intArray, func, bind2nd(equal_to<int>(), (int)1));
+		    EATEST_VERIFY(pInt == intArray);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 3, 3, 3, 3, 3, 3, 3, 3,
+		                                 3, 3, 3, 3, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
+		    pInt = apply_and_remove_if(intArray, intArray + 12, func, bind2nd(equal_to<int>(), (int)1));
+		    EATEST_VERIFY(pInt == intArray + 12);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 3, 3, 3, 3, 3, 3, 3, 3,
+		                                 3, 3, 3, 3, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
+	    }
+
+	    auto even = [](int a) { return (a % 2) == 0; };
+	    // Test to verify that the remaining element have stable ordering
+	    {
+		    int intArray[12] = {7, 8, 2, 3, 4, 5, 6, 0, 1, 9, 10, 11};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove_if(intArray, intArray + 12, func, even);
+		    EATEST_VERIFY(pInt == intArray + 6);
+		    EATEST_VERIFY(VerifySequence(intArray, intArray + 6, int(), "apply_and_remove_if", 7, 3, 5, 1, 9, 11, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", 8, 2, 4, 6, 0, 10, -1));
+	    }
+	    {
+		    int intArray[12] = {7, 8, 0, 0, 4, 5, 6, 0, 1, 9, 0, 11};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    int* pInt = apply_and_remove(intArray, intArray + 12, func, 0);
+		    EATEST_VERIFY(pInt == intArray + 8);
+		    EATEST_VERIFY(
+		        VerifySequence(intArray, intArray + 8, int(), "apply_and_remove", 7, 8, 4, 5, 6, 1, 9, 11, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", 0, 0, 0, 0, -1));
+	    }
+
+	    // Tests on a list (i.e. non-contiguous memory container)
+	    {
+		    list<int> intList = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    auto listIter = apply_and_remove_if(intList.begin(), intList.begin(), func, even);
+		    EATEST_VERIFY(listIter == intList.begin());
+		    EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "apply_and_remove_if", 0, 1, 2, 3, 4, 5,
+		                                 6, 7, 8, 9, 10, 11, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
+		    listIter = apply_and_remove_if(intList.begin(), intList.end(), func, even);
+		    EATEST_VERIFY(listIter == next(intList.begin(), 6));
+		    EATEST_VERIFY(
+		        VerifySequence(intList.begin(), listIter, int(), "apply_and_remove_if", 1, 3, 5, 7, 9, 11, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", 0, 2, 4, 6, 8, 10, -1));
+	    }
+	    {
+		    list<int> intList = {0, 4, 2, 3, 4, 5, 6, 4, 4, 4, 10, 11};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    auto listIter = apply_and_remove(intList.begin(), intList.begin(), func, 4);
+		    EATEST_VERIFY(listIter == intList.begin());
+		    EATEST_VERIFY(VerifySequence(intList.begin(), intList.end(), int(), "apply_and_remove", 0, 4, 2, 3, 4, 5, 6,
+		                                 4, 4, 4, 10, 11, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", -1));
+		    listIter = apply_and_remove(intList.begin(), intList.end(), func, 4);
+		    EATEST_VERIFY(listIter == next(intList.begin(), 7));
+		    EATEST_VERIFY(
+		        VerifySequence(intList.begin(), listIter, int(), "apply_and_remove", 0, 2, 3, 5, 6, 10, 11, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", 4, 4, 4, 4, 4, -1));
+	    }
+
+	    // Tests on a part of a container
+	    {
+		    vector<int> intVector = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    auto vectorIter = apply_and_remove_if(next(intVector.begin(), 3), prev(intVector.end(), 2), func, even);
+		    EATEST_VERIFY(vectorIter == next(intVector.begin(), 7));
+		    EATEST_VERIFY(
+		        VerifySequence(intVector.begin(), vectorIter, int(), "apply_and_remove_if", 0, 1, 2, 3, 5, 7, 9, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(prev(intVector.end(), 2), intVector.end(), int(), "apply_and_remove_if", 10, 11, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", 4, 6, 8, -1));
+	    }
+	    {
+		    vector<int> intVector = {5, 1, 5, 3, 4, 5, 5, 7, 8, 5, 10, 5};
+		    vector<int> output;
+		    auto func = [&output](int a) { output.push_back(a); };
+		    auto vectorIter = apply_and_remove(next(intVector.begin(), 2), prev(intVector.end(), 3), func, 5);
+		    EATEST_VERIFY(vectorIter == next(intVector.begin(), 6));
+		    EATEST_VERIFY(
+		        VerifySequence(intVector.begin(), vectorIter, int(), "apply_and_remove", 5, 1, 3, 4, 7, 8, -1));
+		    EATEST_VERIFY(
+		        VerifySequence(prev(intVector.end(), 3), intVector.end(), int(), "apply_and_remove", 5, 10, 5, -1));
+		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove", 5, 5, 5, -1));
+	    }
+    }
+
+
+    {
 		// OutputIterator replace_copy(InputIterator first, InputIterator last, OutputIterator result, const T& old_value, const T& new_value)
 		// OutputIterator replace_copy_if(InputIterator first, InputIterator last, OutputIterator result, Predicate predicate, const T& new_value)
 

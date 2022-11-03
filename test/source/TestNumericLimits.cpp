@@ -64,6 +64,11 @@ int TestNumericLimits()
 	EATEST_VERIFY(eastl::numeric_limits<wchar_t>::is_bounded);
 	EATEST_VERIFY(eastl::numeric_limits<wchar_t>::max() != 0);
 
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+	EATEST_VERIFY(eastl::numeric_limits<char8_t>::is_bounded);
+	EATEST_VERIFY(eastl::numeric_limits<char8_t>::max() != 0);
+	#endif
+
 	EATEST_VERIFY(eastl::numeric_limits<char16_t>::is_bounded);
 	EATEST_VERIFY(eastl::numeric_limits<char16_t>::max() != 0);
 

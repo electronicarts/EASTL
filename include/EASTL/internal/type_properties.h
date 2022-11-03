@@ -143,6 +143,10 @@ namespace eastl
 		#endif
 	#endif
 
+#if EASTL_GCC_STYLE_INT128_SUPPORTED
+			template <> struct is_signed_helper<__int128_t> : public true_type {};
+#endif
+
 	template <typename T>
 	struct is_signed : public eastl::is_signed_helper<typename eastl::remove_cv<T>::type>{};
 
@@ -196,6 +200,16 @@ namespace eastl
 			template <> struct is_unsigned_helper<wchar_t>    : public true_type{};
 		#endif
 	#endif
+
+#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
+			template <> struct is_unsigned_helper<char16_t> : public true_type {};
+#endif
+#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
+			template <> struct is_unsigned_helper<char32_t> : public true_type {};
+#endif
+#if EASTL_GCC_STYLE_INT128_SUPPORTED
+			template <> struct is_unsigned_helper<__uint128_t> : public true_type {};
+#endif
 
 	template <typename T>
 	struct is_unsigned : public eastl::is_unsigned_helper<typename eastl::remove_cv<T>::type>{};

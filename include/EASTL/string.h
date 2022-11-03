@@ -4221,7 +4221,12 @@ namespace eastl
 	/// http://en.cppreference.com/w/cpp/string/basic_string/operator%22%22s
 	///
 	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-		EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
+		// Disabling the Clang/GCC/MSVC warning about using user
+		// defined literals without a leading '_' as they are reserved
+		// for standard libary usage.
+		EA_DISABLE_VC_WARNING(4455)
+		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
+		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
 	    inline namespace literals
 	    {
 		    inline namespace string_literals
@@ -4237,7 +4242,9 @@ namespace eastl
 				#endif
 		    }
 	    }
-		EA_RESTORE_VC_WARNING()  // warning: 4455
+		EA_RESTORE_GCC_WARNING()	// -Wliteral-suffix
+		EA_RESTORE_CLANG_WARNING()	// -Wuser-defined-literals
+		EA_RESTORE_VC_WARNING()		// warning: 4455
 	#endif
 
 
@@ -4245,17 +4252,40 @@ namespace eastl
 	///
 	/// https://en.cppreference.com/w/cpp/string/basic_string/erase2
 	template <class CharT, class Allocator, class U>
-	void erase(basic_string<CharT, Allocator>& c, const U& value)
+	typename basic_string<CharT, Allocator>::size_type erase(basic_string<CharT, Allocator>& c, const U& value)
 	{
 		// Erases all elements that compare equal to value from the container.
-		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+		auto origEnd = c.end();
+		auto newEnd = eastl::remove(c.begin(), origEnd, value);
+		auto numRemoved = eastl::distance(newEnd, origEnd);
+		c.erase(newEnd, origEnd);
+
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the
+		// string should not have more characters than fit in a
+		// uint32_t and so the distance here should fit in a
+		// size_type.
+		return static_cast<typename basic_string<CharT, Allocator>::size_type>(numRemoved);
 	}
 
 	template <class CharT, class Allocator, class Predicate>
-	void erase_if(basic_string<CharT, Allocator>& c, Predicate predicate)
+	typename basic_string<CharT, Allocator>::size_type erase_if(basic_string<CharT, Allocator>& c, Predicate predicate)
 	{
 		// Erases all elements that satisfy the predicate pred from the container.
-		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+		auto origEnd = c.end();
+		auto newEnd = eastl::remove_if(c.begin(), origEnd, predicate);
+		auto numRemoved = eastl::distance(newEnd, origEnd);
+		c.erase(newEnd, origEnd);
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the
+		// string should not have more characters than fit in a
+		// uint32_t and so the distance here should fit in a
+		// size_type.
+		return static_cast<typename basic_string<CharT, Allocator>::size_type>(numRemoved);
 	}
 } // namespace eastl
 

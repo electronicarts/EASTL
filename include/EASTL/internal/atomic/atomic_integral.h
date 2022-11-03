@@ -156,7 +156,7 @@ namespace internal
 	struct atomic_integral_width;
 
 #define EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits)						\
-	T retVal;															\
+	EASTL_ATOMIC_DEFAULT_INIT(T, retVal);	             				\
 	EA_PREPROCESSOR_JOIN(op, bits)(T, retVal, this->GetAtomicAddress(), arg); \
 	return retVal;
 
