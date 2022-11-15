@@ -1261,6 +1261,8 @@ public:
 		activeAllocatedMemory = 0;
 	}
 
+	virtual ~CountingAllocator() = default;
+
 	static uint64_t activeAllocCount;
 	static uint64_t totalAllocCount;
 	static uint64_t totalDeallocCount;

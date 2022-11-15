@@ -975,17 +975,21 @@ int TestList()
 		{
 			eastl::list<int> l = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-			eastl::erase(l, 3);
-			eastl::erase(l, 5);
-			eastl::erase(l, 7);
+			auto numErased = eastl::erase(l, 3);
+		    VERIFY(numErased == 1);
+			numErased = eastl::erase(l, 5);
+		    VERIFY(numErased == 1);
+			numErased = eastl::erase(l, 7);
+		    VERIFY(numErased == 1);
 
 			VERIFY((l == eastl::list<int>{1, 2, 4, 6, 8, 9}));
 		}
 
 		{
 			eastl::list<int> l = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-			eastl::erase_if(l, [](auto i) { return i % 2 == 0; });
+			auto numErased = eastl::erase_if(l, [](auto i) { return i % 2 == 0; });
 			VERIFY((l == eastl::list<int>{1, 3, 5, 7, 9}));
+		    VERIFY(numErased == 4);
 		}
 	}
 

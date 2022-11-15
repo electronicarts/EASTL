@@ -131,6 +131,58 @@ int TestFixedSubstring()
 		EATEST_VERIFY(str == "");
 	}
 
+
+	{
+		// Check that copies/moves don't become independent strings.
+		// They should all point to the same sub-string.
+		string str = "hello world";
+		fixed_substring<char> sub(str, 2, 5);
+
+		EATEST_VERIFY(sub.size() == 5);
+		EATEST_VERIFY(sub[0] == 'l');
+		EATEST_VERIFY(sub == "llo w");
+
+		vector<fixed_substring<char>> v;
+		for (eastl_size_t i = 0; i < 1000; ++i) {
+			v.push_back(sub);
+		}
+
+		sub[0] = 'g';
+		EATEST_VERIFY(str == "heglo world");
+		EATEST_VERIFY(sub == "glo w");
+
+		for (const auto& s : v){
+			EATEST_VERIFY(s == "glo w");
+		}
+
+		// copy construct
+		fixed_substring<char> sub2 = sub;
+
+		// copy assign
+		fixed_substring<char> sub3;
+		sub3 = sub;
+
+		// move construct
+		fixed_substring<char> sub4 = eastl::move(sub);
+
+		// move assign
+		fixed_substring<char> sub_again(str, 2, 5);
+		fixed_substring<char> sub5;
+		sub5 = eastl::move(sub_again);
+
+		EATEST_VERIFY(sub2 == "glo w");
+		EATEST_VERIFY(sub3 == "glo w");
+		EATEST_VERIFY(sub4 == "glo w");
+		EATEST_VERIFY(sub5 == "glo w");
+
+		str[5] = 'g';
+		EATEST_VERIFY(sub2 == "glogw");
+		EATEST_VERIFY(sub3 == "glogw");
+		EATEST_VERIFY(sub4 == "glogw");
+		EATEST_VERIFY(sub5 == "glogw");
+
+	}
+
 	return nErrorCount;
 }
 

@@ -494,7 +494,7 @@ namespace eastl
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		typedef basic_string_view<CharT> view_type;
 		return static_cast<view_type>(lhs) == rhs;
 	}
@@ -505,7 +505,7 @@ namespace eastl
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		typedef basic_string_view<CharT> view_type;
 		return lhs == static_cast<view_type>(rhs);
 	}
@@ -529,24 +529,24 @@ namespace eastl
 	{
 		return !(lhs == rhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator!=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(lhs == rhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator!=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(lhs == rhs);
 	}
 
@@ -569,25 +569,25 @@ namespace eastl
 	{
 		return lhs.compare(rhs) < 0;
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator<(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		typedef basic_string_view<CharT> view_type;
 		return static_cast<view_type>(lhs) < rhs;
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator<(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		typedef basic_string_view<CharT> view_type;
 		return lhs < static_cast<view_type>(rhs);
 	}
@@ -611,24 +611,24 @@ namespace eastl
 	{
 		return !(rhs < lhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator<=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(rhs < lhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator<=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(rhs < lhs);
 	}
 
@@ -651,24 +651,24 @@ namespace eastl
 	{
 		return rhs < lhs;
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator>(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return rhs < lhs;
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator>(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return rhs < lhs;
 	}
 
@@ -691,28 +691,28 @@ namespace eastl
 	{
 		return !(lhs < rhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator>=(typename basic_string_view<CharT>::const_pointer lhs, basic_string_view<CharT> rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(lhs < rhs);
 	}
-	
+
 	template <class CharT>
 	inline EA_CONSTEXPR bool operator>=(basic_string_view<CharT> lhs, typename basic_string_view<CharT>::const_pointer rhs) EA_NOEXCEPT
 	{
 		// Workaround for basic_string_view comparisons that require conversions,
 		// since they are causing an internal compiler error when compiled using
 		// MSVC when certain flags are enabled (/Zi /O2 /Zc:inline).
-		
+
 		return !(lhs < rhs);
 	}
 #endif
-	// string_view / wstring_view 
+	// string_view / wstring_view
 	typedef basic_string_view<char>    string_view;
 	typedef basic_string_view<wchar_t> wstring_view;
 
@@ -803,7 +803,13 @@ namespace eastl
 
 
 	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-		EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
+		// Disabling the Clang/GCC/MSVC warning about using user
+		// defined literals without a leading '_' as they are reserved
+		// for standard libary usage.
+		EA_DISABLE_VC_WARNING(4455)
+		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
+		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
+
 	    inline namespace literals
 	    {
 		    inline namespace string_view_literals
@@ -813,11 +819,16 @@ namespace eastl
 			    EA_CONSTEXPR inline u32string_view operator "" sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 			    EA_CONSTEXPR inline wstring_view operator "" sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 
+				// We've seen _sv trigger the following warning on clang:
+				// identifier '_sv' is reserved because it starts with '_' at global scope [-Wreserved-identifier]
+				// Temporarily disable the warning until we figure out why it thinks _sv is "at global scope".
+				EA_DISABLE_CLANG_WARNING(-Wreserved-identifier)
 				// Backwards compatibility.
 			    EA_CONSTEXPR inline string_view operator "" _sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 			    EA_CONSTEXPR inline u16string_view operator "" _sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 			    EA_CONSTEXPR inline u32string_view operator "" _sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 			    EA_CONSTEXPR inline wstring_view operator "" _sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+				EA_RESTORE_CLANG_WARNING()	// -Wreserved-identifier
 
 				// C++20 char8_t support.
 				#if EA_CHAR8_UNIQUE
@@ -826,7 +837,10 @@ namespace eastl
 				#endif
 		    }
 	    }
-		EA_RESTORE_VC_WARNING() // warning: 4455
+
+		EA_RESTORE_GCC_WARNING()	// -Wliteral-suffix
+		EA_RESTORE_CLANG_WARNING()	// -Wuser-defined-literals
+		EA_RESTORE_VC_WARNING()		// warning: 4455
 	#endif
 
 } // namespace eastl

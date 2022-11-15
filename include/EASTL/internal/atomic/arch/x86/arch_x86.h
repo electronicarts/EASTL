@@ -68,7 +68,7 @@
 
 	#define EASTL_ARCH_ATOMIC_X86_OP_64_IMPL(type, ret, ptr, val, MemoryOrder, PRE_COMPUTE_DESIRED, POST_COMPUTE_RET) \
 		{																	\
-			bool cmpxchgRet;												\
+			EASTL_ATOMIC_DEFAULT_INIT(bool, cmpxchgRet);					\
 			EASTL_ATOMIC_LOAD_RELAXED_64(type, ret, ptr);					\
 			do																\
 			{																\
@@ -106,7 +106,7 @@
 
 	#define EASTL_ARCH_ATOMIC_X86_OP_128_IMPL(type, ret, ptr, val, MemoryOrder, PRE_COMPUTE_DESIRED, POST_COMPUTE_RET) \
 		{																	\
-			bool cmpxchgRet;												\
+			EASTL_ATOMIC_DEFAULT_INIT(bool, cmpxchgRet);					\
 			/* This is intentionally a non-atomic 128-bit load which may observe shearing. */ \
 			/* Either we do not observe *(ptr) but then the cmpxchg will fail and the observed */ \
 			/* atomic load will be returned. Or the non-atomic load got lucky and the cmpxchg succeeds */ \

@@ -746,14 +746,16 @@ int TestHash()
 
 	{ // hash_set erase_if
 		hash_set<int> m = {0, 1, 2, 3, 4};
-		eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
+		auto numErased = eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
 		VERIFY((m == hash_set<int>{1, 3}));
+	    VERIFY(numErased == 3);
 	}
 
 	{ // hash_multiset erase_if
 		hash_multiset<int> m = {0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4};
-		eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
+		auto numErased = eastl::erase_if(m, [](auto i) { return i % 2 == 0; });
 		VERIFY((m == hash_multiset<int>{1, 1, 1, 3}));
+	    VERIFY(numErased == 12);
 	}
 
 
@@ -943,15 +945,17 @@ int TestHash()
 
 	{ // hash_map erase_if
 		hash_map<int, int> m = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}};
-		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		auto numErased = eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
 		VERIFY((m == hash_map<int, int>{{1, 1}, {3, 3}}));
+	    VERIFY(numErased == 3);
 	}
 
 	{ // hash_multimap erase_if
 		hash_multimap<int, int> m = {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {1, 1}, {2, 2},
 		                             {2, 2}, {2, 2}, {2, 2}, {3, 3}, {3, 3}, {4, 4}};
-		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		auto numErased = eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
 		VERIFY((m == hash_multimap<int, int>{{1, 1}, {3, 3}, {3, 3}}));
+	    VERIFY(numErased == 9);
 	}
 
 

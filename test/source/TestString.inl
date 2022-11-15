@@ -2024,19 +2024,25 @@ int TEST_STRING_NAME()
 	// test eastl::erase
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		eastl::erase(str, LITERAL('a'));
-		eastl::erase(str, LITERAL('f'));
-		eastl::erase(str, LITERAL('l'));
-		eastl::erase(str, LITERAL('w'));
-		eastl::erase(str, LITERAL('y'));
+		auto numErased = eastl::erase(str, LITERAL('a'));
+	    VERIFY(numErased == 1);
+		numErased = eastl::erase(str, LITERAL('f'));
+	    VERIFY(numErased == 1);
+		numErased = eastl::erase(str, LITERAL('l'));
+	    VERIFY(numErased == 1);
+		numErased = eastl::erase(str, LITERAL('w'));
+	    VERIFY(numErased == 1);
+		numErased = eastl::erase(str, LITERAL('y'));
+	    VERIFY(numErased == 1);
 		VERIFY(str == LITERAL("bcdeghijkmnopqrstuvxz"));
 	}
 
 	// test eastl::erase_if
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		eastl::erase_if(str, [](auto c) { return c == LITERAL('a') || c == LITERAL('v'); });
+		auto numErased = eastl::erase_if(str, [](auto c) { return c == LITERAL('a') || c == LITERAL('v'); });
 		VERIFY(str == LITERAL("bcdefghijklmnopqrstuwxyz"));
+	    VERIFY(numErased == 2);
 	}
 
 	// template<> struct hash<eastl::string>;

@@ -1395,7 +1395,7 @@ int TestVector()
 		eastl::vector<TestObject> toTest;
 
 		// InputIterator
-		demoted_iterator<TestObject*, eastl::forward_iterator_tag> toInput(&to);
+		demoted_iterator<TestObject*, EASTL_ITC_NS::forward_iterator_tag> toInput(&to);
 		toTest.assign(toInput, toInput);
 
 		// ForwardIterator
@@ -1715,7 +1715,7 @@ int TestVector()
 		{
 			struct iterator
 			{
-				typedef eastl::input_iterator_tag iterator_category;
+				typedef EASTL_ITC_NS::input_iterator_tag iterator_category;
 				typedef int value_type;
 				typedef ptrdiff_t difference_type;
 				typedef int* pointer;
@@ -1796,20 +1796,24 @@ int TestVector()
 		{
 			eastl::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-			eastl::erase(v, 5);
+			auto numErased = eastl::erase(v, 5);
 			VERIFY((v == eastl::vector<int> {1, 2, 3, 4, 6, 7, 8, 9}));
+			VERIFY(numErased == 1);
 
-			eastl::erase(v, 2);
+			numErased = eastl::erase(v, 2);
 			VERIFY((v == eastl::vector<int> {1, 3, 4, 6, 7, 8, 9}));
+			VERIFY(numErased == 1);
 
-			eastl::erase(v, 9);
+			numErased = eastl::erase(v, 9);
 			VERIFY((v == eastl::vector<int> {1, 3, 4, 6, 7, 8}));
+			VERIFY(numErased == 1);
 		}
 
 		{
 			eastl::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-			eastl::erase_if(v, [](auto i) { return i % 2 == 0; });
+			auto numErased = eastl::erase_if(v, [](auto i) { return i % 2 == 0; });
 			VERIFY((v == eastl::vector<int>{1, 3, 5, 7, 9}));
+			VERIFY(numErased == 4);
 		}
 	}
 

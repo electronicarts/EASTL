@@ -489,8 +489,9 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/map/erase_if
 	///////////////////////////////////////////////////////////////////////
 	template <class Key, class T, class Compare, class Allocator, class Predicate>
-	void erase_if(map<Key, T, Compare, Allocator>& c, Predicate predicate)
+	typename map<Key, T, Compare, Allocator>::size_type erase_if(map<Key, T, Compare, Allocator>& c, Predicate predicate)
 	{
+		auto oldSize = c.size();
 		for (auto i = c.begin(), last = c.end(); i != last;)
 		{
 			if (predicate(*i))
@@ -502,6 +503,7 @@ namespace eastl
 				++i;
 			}
 		}
+		return oldSize - c.size();
 	}
 
 
@@ -740,8 +742,9 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/multimap/erase_if
 	///////////////////////////////////////////////////////////////////////
 	template <class Key, class T, class Compare, class Allocator, class Predicate>
-	void erase_if(multimap<Key, T, Compare, Allocator>& c, Predicate predicate)
+	typename multimap<Key, T, Compare, Allocator>::size_type erase_if(multimap<Key, T, Compare, Allocator>& c, Predicate predicate)
 	{
+		auto oldSize = c.size();
 		// Erases all elements that satisfy the predicate pred from the container.
 		for (auto i = c.begin(), last = c.end(); i != last;)
 		{
@@ -754,7 +757,17 @@ namespace eastl
 				++i;
 			}
 		}
+		return oldSize - c.size();
 	}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename Key, typename T, typename Compare, typename Allocator>
+	inline synth_three_way_result<eastl::pair<const Key, T>> operator<=>(const multimap<Key, T, Compare, Allocator>& a, 
+			const multimap<Key, T, Compare, Allocator>& b)
+	{
+		return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#endif
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	template <typename Key, typename T, typename Compare, typename Allocator>

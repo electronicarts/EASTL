@@ -79,12 +79,18 @@ int TestStringView()
 		static_assert(eastl::is_same_v<decltype(U"abcdef"_sv), eastl::u32string_view>, "string_view literal type mismatch");
 		static_assert(eastl::is_same_v<decltype(L"abcdef"_sv), eastl::wstring_view>, "string_view literal type mismatch");
 
-		// TODO:  Need to resolve this.  Not sure why on Clang the user literal 'operator ""sv' can't be found.
-		// VERIFY("cplusplus"sv.compare("cplusplus") == 0);
-		// VERIFY(L"cplusplus"sv.compare(L"cplusplus") == 0);
-		// VERIFY(u"cplusplus"sv.compare(u"cplusplus") == 0);
-		// VERIFY(U"cplusplus"sv.compare(U"cplusplus") == 0);
-		// VERIFY(u8"cplusplus"sv.compare(u8"cplusplus") == 0);
+
+		VERIFY("cplusplus"sv.compare("cplusplus") == 0);
+		VERIFY(L"cplusplus"sv.compare(L"cplusplus") == 0);
+		VERIFY(u"cplusplus"sv.compare(u"cplusplus") == 0);
+		VERIFY(U"cplusplus"sv.compare(U"cplusplus") == 0);
+		VERIFY(u8"cplusplus"sv.compare(u8"cplusplus") == 0);
+
+		static_assert(eastl::is_same_v<decltype("abcdef"sv), eastl::string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(u8"abcdef"sv), eastl::u8string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(u"abcdef"sv), eastl::u16string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(U"abcdef"sv), eastl::u32string_view>, "string_view literal type mismatch");
+		static_assert(eastl::is_same_v<decltype(L"abcdef"sv), eastl::wstring_view>, "string_view literal type mismatch");
 	}
 	#endif
 

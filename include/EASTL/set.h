@@ -401,8 +401,9 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/set/erase_if
 	///////////////////////////////////////////////////////////////////////
 	template <class Key, class Compare, class Allocator, class Predicate>
-	void erase_if(set<Key, Compare, Allocator>& c, Predicate predicate)
+	typename set<Key, Compare, Allocator>::size_type erase_if(set<Key, Compare, Allocator>& c, Predicate predicate)
 	{
+		auto oldSize = c.size();
 		for (auto i = c.begin(), last = c.end(); i != last;)
 		{
 			if (predicate(*i))
@@ -414,6 +415,7 @@ namespace eastl
 				++i;
 			}
 		}
+		return oldSize - c.size();
 	}
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
@@ -619,8 +621,9 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/multiset/erase_if
 	///////////////////////////////////////////////////////////////////////
 	template <class Key, class Compare, class Allocator, class Predicate>
-	void erase_if(multiset<Key, Compare, Allocator>& c, Predicate predicate)
+	typename multiset<Key, Compare, Allocator>::size_type erase_if(multiset<Key, Compare, Allocator>& c, Predicate predicate)
 	{
+		auto oldSize = c.size();
 		// Erases all elements that satisfy the predicate pred from the container.
 		for (auto i = c.begin(), last = c.end(); i != last;)
 		{
@@ -633,6 +636,7 @@ namespace eastl
 				++i;
 			}
 		}
+		return oldSize - c.size();
 	}
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)

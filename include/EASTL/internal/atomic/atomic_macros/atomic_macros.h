@@ -10,6 +10,7 @@
 	#pragma once
 #endif
 
+#include <EABase/eabase.h>
 
 #include "atomic_macros_base.h"
 
@@ -140,6 +141,16 @@
 	#define EASTL_ATOMIC_FIXED_WIDTH_TYPE_128 EASTL_COMPILER_ATOMIC_FIXED_WIDTH_TYPE_128
 
 #endif
+
+// We write some of our variables in inline assembly, which MSAN
+// doesn't understand.  This macro forces initialization of those
+// variables when MSAN is enabled and doesn't pay the initialization
+// cost when it's not enabled.
+#if EA_MSAN_ENABLED
+	#define EASTL_ATOMIC_DEFAULT_INIT(type, var) type var{}
+#else
+	#define EASTL_ATOMIC_DEFAULT_INIT(type, var) type var
+#endif // EA_MSAN_ENABLED
 
 
 #endif /* EASTL_ATOMIC_INTERNAL_ATOMIC_MACROS_H */

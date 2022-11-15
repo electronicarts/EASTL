@@ -231,14 +231,16 @@ int TestMap()
 
 	{ // Test erase_if
 		eastl::map<int, int> m = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}};
-		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		auto numErased = eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
 		VERIFY((m == eastl::map<int, int>{{1, 1},{3, 3}}));
+		VERIFY(numErased == 3);
 	}
 
 	{ // Test erase_if
 		eastl::multimap<int, int> m = {{0, 0}, {0, 0}, {0, 0}, {1, 1}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {4, 4}, {4, 4}};
-		eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
-		VERIFY((m == eastl::multimap<int, int>{{1, 1}, {1, 1}, {3, 3}}));
+		auto numErased = eastl::erase_if(m, [](auto p) { return p.first % 2 == 0; });
+		VERIFY((m == eastl::multimap<int, int>{{1, 1}, {1, 1}, {3, 3}}));;
+		VERIFY(numErased == 7);
 	}
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)

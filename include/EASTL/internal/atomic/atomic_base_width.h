@@ -64,7 +64,7 @@ namespace internal
 
 
 #define EASTL_ATOMIC_CMPXCHG_FUNC_IMPL(op, bits)						\
-	bool retVal;														\
+	EASTL_ATOMIC_DEFAULT_INIT(bool, retVal);					        \
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
 	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
 								   retVal,								\

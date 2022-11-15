@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.19.03"
-	#define EASTL_VERSION_N  31903
+	#define EASTL_VERSION   "3.19.05"
+	#define EASTL_VERSION_N  31905
 #endif
 
 
@@ -836,11 +836,26 @@ namespace eastl
 // Defined as 0 or 1.
 //
 #ifndef EASTL_INT128_SUPPORTED
-	#if defined(__SIZEOF_INT128__) || (defined(EA_COMPILER_INTMAX_SIZE) && (EA_COMPILER_INTMAX_SIZE >= 16))
+	#if defined(EA_COMPILER_INTMAX_SIZE) && (EA_COMPILER_INTMAX_SIZE >= 16)
 		#define EASTL_INT128_SUPPORTED 1
 	#else
 		#define EASTL_INT128_SUPPORTED 0
 	#endif
+#endif
+
+
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_GCC_STYLE_INT128_SUPPORTED
+//
+// Defined as 0 or 1.
+// Specifies whether __int128_t/__uint128_t are defined.
+//
+#ifndef EASTL_GCC_STYLE_INT128_SUPPORTED
+#if EASTL_INT128_SUPPORTED && (defined(EA_COMPILER_GNUC) || defined(__clang__))
+#define EASTL_GCC_STYLE_INT128_SUPPORTED 1
+#else
+#define EASTL_GCC_STYLE_INT128_SUPPORTED 0
+#endif
 #endif
 
 
@@ -870,12 +885,15 @@ namespace eastl
 //
 // Defined as 0 or 1.
 // Specifies whether eastl_int128_t/eastl_uint128_t have been typedef'd yet.
+// NB: these types are not considered fundamental, arithmetic or integral when using the EAStdC implementation.
+// this changes the compiler type traits defined in type_traits.h.
+// eg. is_signed<eastl_int128_t>::value may be false, because it is not arithmetic.
 //
 #ifndef EASTL_INT128_DEFINED
 	#if EASTL_INT128_SUPPORTED
 		#define EASTL_INT128_DEFINED 1
 
-		#if defined(__SIZEOF_INT128__) || defined(EA_COMPILER_GNUC) || defined(__clang__)
+		#if EASTL_GCC_STYLE_INT128_SUPPORTED
 			typedef __int128_t   eastl_int128_t;
 			typedef __uint128_t eastl_uint128_t;
 		#else
@@ -884,7 +902,6 @@ namespace eastl
 		#endif
 	#endif
 #endif
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1790,16 +1807,6 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 #ifndef EASTL_USER_LITERALS_ENABLED
 	#if defined(EA_COMPILER_CPP14_ENABLED)
 		#define EASTL_USER_LITERALS_ENABLED 1
-
-		// Disabling the Clang/GCC/MSVC warning about using user defined literals without a leading '_' as they are
-		// reserved for standard libary usage.
-		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
-		EA_DISABLE_CLANG_WARNING(-Wreserved-user-defined-literal)
-		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
-		#ifdef _MSC_VER
-			#pragma warning(disable: 4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
-		#endif
-
 	#else
 		#define EASTL_USER_LITERALS_ENABLED 0
 	#endif

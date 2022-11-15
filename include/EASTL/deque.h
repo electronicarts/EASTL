@@ -2670,17 +2670,39 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/deque/erase2
 	///////////////////////////////////////////////////////////////////////
 	template <class T, class Allocator, class U>
-	void erase(deque<T, Allocator>& c, const U& value)
+	typename deque<T, Allocator>::size_type erase(deque<T, Allocator>& c, const U& value)
 	{
-		// Erases all elements that compare equal to value from the container.
-		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+		// Erases all elements that compare equal to value from the container. 
+		auto origEnd = c.end();
+		auto newEnd = eastl::remove(c.begin(), origEnd, value);
+		auto numRemoved = eastl::distance(newEnd, origEnd);
+		c.erase(newEnd, origEnd);
+
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the deque
+		// should not have more elements than fit in a uint32_t and so
+		// the distance here should fit in a size_type.
+		return static_cast<typename deque<T, Allocator>::size_type>(numRemoved);
 	}
 
 	template <class T, class Allocator, class Predicate>
-	void erase_if(deque<T, Allocator>& c, Predicate predicate)
+	typename deque<T, Allocator>::size_type erase_if(deque<T, Allocator>& c, Predicate predicate)
 	{
-		// Erases all elements that satisfy the predicate pred from the container.
-		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+		// Erases all elements that satisfy the predicate pred from the container. 
+		auto origEnd = c.end();
+		auto newEnd = eastl::remove_if(c.begin(), origEnd, predicate);
+		auto numRemoved = eastl::distance(newEnd, origEnd);
+		c.erase(newEnd, origEnd);
+
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the deque
+		// should not have more elements than fit in a uint32_t and so
+		// the distance here should fit in a size_type.
+		return static_cast<typename deque<T, Allocator>::size_type>(numRemoved);
 	}
 
 

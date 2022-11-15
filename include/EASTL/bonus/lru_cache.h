@@ -122,7 +122,7 @@ namespace eastl
 		}
 
 		lru_cache(std::initializer_list<eastl::pair<Key, Value>> il)
-			: lru_cache(il.size())
+			: lru_cache(static_cast<size_type>(il.size()))
 		{
 			for(auto& p : il)
 				insert_or_assign(p.first, p.second);

@@ -403,10 +403,10 @@ namespace eastl
 		void clear() EA_NOEXCEPT;
 		void reset_lose_memory() EA_NOEXCEPT;    // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 
-		void remove(const T& x);
+		size_type remove(const T& x);
 
 		template <typename Predicate>
-		void remove_if(Predicate);
+		size_type remove_if(Predicate);
 
 		void reverse() EA_NOEXCEPT;
 
@@ -1457,9 +1457,10 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	void list<T, Allocator>::remove(const value_type& value)
+	typename list<T, Allocator>::size_type list<T, Allocator>::remove(const value_type& value)
 	{
 		iterator current((ListNodeBase*)internalNode().mpNext);
+		size_type numRemoved = 0;
 
 		while(current.mpNode != &internalNode())
 		{
@@ -1469,23 +1470,30 @@ namespace eastl
 			{
 				++current;
 				DoErase((ListNodeBase*)current.mpNode->mpPrev);
+				++numRemoved;
 			}
 		}
+		return numRemoved;
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename Predicate>
-	inline void list<T, Allocator>::remove_if(Predicate predicate)
+	inline typename list<T, Allocator>::size_type list<T, Allocator>::remove_if(Predicate predicate)
 	{
+		size_type numRemoved = 0;
 		for(iterator first((ListNodeBase*)internalNode().mpNext), last((ListNodeBase*)&internalNode()); first != last; )
 		{
 			iterator temp(first);
 			++temp;
 			if(predicate(first.mpNode->mValue))
+			{
 				DoErase((ListNodeBase*)first.mpNode);
+				++numRemoved;
+			}
 			first = temp;
 		}
+		return numRemoved;
 	}
 
 
@@ -2150,17 +2158,17 @@ namespace eastl
 	// https://en.cppreference.com/w/cpp/container/list/erase2
 	///////////////////////////////////////////////////////////////////////
 	template <class T, class Allocator, class U>
-	void erase(list<T, Allocator>& c, const U& value)
+	typename list<T, Allocator>::size_type erase(list<T, Allocator>& c, const U& value)
 	{
 		// Erases all elements that compare equal to value from the container.
-		c.remove_if([&](auto& elem) { return elem == value; });
+		return c.remove(value);
 	}
 
 	template <class T, class Allocator, class Predicate>
-	void erase_if(list<T, Allocator>& c, Predicate predicate)
+	typename list<T, Allocator>::size_type erase_if(list<T, Allocator>& c, Predicate predicate)
 	{
 		// Erases all elements that satisfy the predicate pred from the container.
-		c.remove_if(predicate);
+		return c.remove_if(predicate);
 	}
 
 

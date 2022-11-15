@@ -614,6 +614,65 @@ namespace eastl
 	};
 
 
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+	template<>
+	struct numeric_limits<char8_t>
+	{
+		typedef char8_t value_type;
+
+		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
+		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
+		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
+		static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
+		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
+		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
+		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
+		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
+		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
+		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
+ 		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
+		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
+		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
+		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
+		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
+		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
+		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
+		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
+		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
+		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
+		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+
+		static EA_CONSTEXPR value_type min()
+			{ return EASTL_LIMITS_MIN(value_type); }
+
+		static EA_CONSTEXPR value_type max()
+			{ return EASTL_LIMITS_MAX(value_type); }
+
+		static EA_CONSTEXPR value_type lowest()
+			{ return EASTL_LIMITS_MIN(value_type); }
+
+		static EA_CONSTEXPR value_type epsilon()
+			{ return 0; }
+
+		static EA_CONSTEXPR value_type round_error()
+			{ return 0; }
+
+		static EA_CONSTEXPR value_type infinity()
+			{ return 0; }
+
+		static EA_CONSTEXPR value_type quiet_NaN()
+			{ return 0; }
+
+		static EA_CONSTEXPR value_type signaling_NaN()
+			{ return 0; }
+
+		static EA_CONSTEXPR value_type denorm_min()
+			{ return (value_type)0; }
+	};
+	#endif
+
 	#if EA_CHAR16_NATIVE // If char16_t is a true unique type (as called for by the C++11 Standard)...
 
 		// numeric_limits<char16_t>

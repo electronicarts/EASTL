@@ -108,6 +108,10 @@ namespace eastl
 		{
 		}
 
+		fixed_substring(const fixed_substring& x)
+			: fixed_substring(static_cast<const base_type&>(x))
+		{}
+
 		fixed_substring(const base_type& x)
 			: base_type()
 		{
@@ -154,6 +158,12 @@ namespace eastl
 			// We need to reset, as otherwise the parent destructor will
 			// attempt to free our memory.
 			AllocateSelf();
+		}
+
+		this_type& operator=(const this_type& x)
+		{
+			assign(x);
+			return *this;
 		}
 
 		this_type& operator=(const base_type& x)
