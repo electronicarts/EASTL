@@ -54,6 +54,12 @@ int TestList()
 
 		VERIFY(eastl::all_of(l.begin(), l.end(), [](int e)
 		                     { return e == 0; }));
+
+		TestObject::Reset();
+		eastl::list<TestObject> l2(test_size);
+		VERIFY(TestObject::sTOCtorCount == test_size);
+		VERIFY(TestObject::sTOCopyAssignCount == 0);
+		VERIFY(TestObject::sTOCopyCtorCount == 0);
 	}
 
 	// list(size_type n, const value_type& value, const allocator_type& allocator = EASTL_LIST_DEFAULT_ALLOCATOR);
