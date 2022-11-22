@@ -251,6 +251,7 @@
 #include <EASTL/internal/generic_iterator.h>
 #include <EASTL/random.h>
 #include <EASTL/compare.h>
+#include <EASTL/allocator_malloc.h>
 
 EA_DISABLE_ALL_VC_WARNINGS();
 
@@ -3067,7 +3068,6 @@ namespace eastl
 				if(*lookAhead == value)
 				{
 					remainder = skipOffset;
-
 					for(backTrack = lookAhead - 1; *backTrack == value; --backTrack)
 					{
 						if(--remainder == 0)
@@ -3086,6 +3086,12 @@ namespace eastl
 						tailSize -= (prevRemainder - remainder);
 					}
 					else
+						eastl::deallocate(&tailSize, sizeOf(tailSize));
+						eastl::deallocate(&skipOffset, sizeOf(skipOffset));
+						eastl::deallocate(&remainder, sizeOf(remainder));
+						eastl::deallocate(&prevRemainder, sizeOf(prevRemainder));
+						eastl::deallocate(&lookAhead, sizeOf(lookAhead));
+						eastl::deallocate(&backTrack, sizeOf(backTrack));
 						return last; // failure
 				}
 
