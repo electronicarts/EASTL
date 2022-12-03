@@ -1415,8 +1415,14 @@ namespace eastl
 					pointer pOldBegin = internalLayout().BeginPtr();
 					const size_type nOldCap = internalLayout().GetHeapCapacity();
 
-					CharStringUninitializedCopy(pOldBegin, pOldBegin + n, internalLayout().SSOBeginPtr());
-					internalLayout().SetSSOSize(n);
+					// Usually the SSO capacity is smaller than the heap
+					// capacity. However, fixed_string's internal buffer is
+					// handled as heap memory and might actually be smaller than
+					// the SSO buffer. 
+					const size_type nCopyOverSize = min(nOldCap, n);
+
+					CharStringUninitializedCopy(pOldBegin, pOldBegin + nCopyOverSize, internalLayout().SSOBeginPtr());
+					internalLayout().SetSSOSize(nCopyOverSize);
 					*internalLayout().SSOEndPtr() = 0;
 
 					DoFree(pOldBegin, nOldCap + 1);

@@ -449,6 +449,20 @@ int TestFixedString()
 	}
 
 	{
+		// Test overflow allocator while within SSO
+		typedef fixed_string<char8_t, 8, true, MallocAllocator> FixedString8Malloc;
+		FixedString8Malloc fs;
+		for (char c = 'a'; c <= 'l'; ++c) {
+			fs.push_back(c);
+		}
+
+		// We expect the string content to reside in the SSO buffer.
+		EATEST_VERIFY(fs.internalLayout().IsSSO());
+		EATEST_VERIFY(fs == "abcdefghijkl");
+		EATEST_VERIFY(fs.size() == 12);
+	}
+
+	{
 		// Test construction of a container with an overflow allocator constructor argument.
 		MallocAllocator overflowAllocator;
 		void* p = overflowAllocator.allocate(1);
