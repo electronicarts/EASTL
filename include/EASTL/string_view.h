@@ -28,6 +28,10 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
+#if EASTL_STRING_VIEW_STD_CONVERSION_ENABLED
+	#include <string_view>
+#endif
+
 EA_DISABLE_VC_WARNING(4814)
 
 namespace eastl
@@ -62,6 +66,11 @@ namespace eastl
 		EA_CONSTEXPR basic_string_view(const T* s, size_type count) : mpBegin(s), mnCount(count) {}
 		EA_CONSTEXPR basic_string_view(const T* s) : mpBegin(s), mnCount(s != nullptr ? CharStrlen(s) : 0) {}
 		basic_string_view& operator=(const basic_string_view& view) = default;
+
+		#if EASTL_STRING_VIEW_STD_CONVERSION_ENABLED
+			EA_CONSTEXPR basic_string_view(const std::basic_string_view<T>& stdView) : basic_string_view(stdView.data(), stdView.size()) {}
+		#endif
+
 
 		// 21.4.2.2, iterator support
 		EA_CONSTEXPR const_iterator begin() const EA_NOEXCEPT { return mpBegin; }
@@ -446,6 +455,13 @@ namespace eastl
 		{
 			return ends_with(basic_string_view(s));
 		}
+
+		#if EASTL_STRING_VIEW_STD_CONVERSION_ENABLED
+			EA_CONSTEXPR operator std::string_view()
+			{
+				return std::string_view{begin(), size()};
+			}
+		#endif
 	};
 
 
