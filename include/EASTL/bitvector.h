@@ -240,12 +240,10 @@ namespace eastl
 		explicit bitvector(const allocator_type& allocator);
 		explicit bitvector(size_type n, const allocator_type& allocator = EASTL_BITVECTOR_DEFAULT_ALLOCATOR);
 		bitvector(size_type n, value_type value, const allocator_type& allocator = EASTL_BITVECTOR_DEFAULT_ALLOCATOR);
-		bitvector(const bitvector& copy);
 
 		template <typename InputIterator>
 		bitvector(InputIterator first, InputIterator last);
 
-		bitvector& operator=(const bitvector& x);
 		void swap(this_type& x);
 
 		template <typename InputIterator>
@@ -1337,18 +1335,6 @@ namespace eastl
 
 
 	template <typename Allocator, typename Element, typename Container>
-	bitvector<Allocator, Element, Container>&
-	bitvector<Allocator, Element, Container>::operator=(const bitvector& rhs)
-	{
-		// The following is OK if (&rhs == this)
-		mContainer = rhs.mContainer;
-		mFreeBitCount = rhs.mFreeBitCount;
-
-		return *this;
-	}
-
-
-	template <typename Allocator, typename Element, typename Container>
 	bitvector<Allocator, Element, Container>::bitvector()
 	  : mContainer(), 
 		mFreeBitCount(0)
@@ -1383,14 +1369,6 @@ namespace eastl
 
 		if(mFreeBitCount == kBitCount)
 			mFreeBitCount = 0;
-	}
-
-
-	template <typename Allocator, typename Element, typename Container>
-	bitvector<Allocator, Element, Container>::bitvector(const bitvector& copy)
-	  : mContainer(copy.mContainer), 
-		mFreeBitCount(copy.mFreeBitCount)
-	{
 	}
 
 
