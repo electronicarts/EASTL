@@ -58,6 +58,9 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)  # silence std::hash_map deprecation warnings
+if (EASTL_STD_ITERATOR_CATEGORY_ENABLED)
+  add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED=1)
+endif()
 
 if(NOT EASTL_BUILD_TESTS)
     add_subdirectory(../test/packages/EAStdC ../test/EAStdC)
