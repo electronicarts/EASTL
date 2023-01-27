@@ -693,7 +693,7 @@ namespace eastl
 		//
 
 		template <typename T>
-		struct is_trivially_copyable { static const bool value = __is_trivially_copyable(T); };
+		struct is_trivially_copyable : public bool_constant<__is_trivially_copyable(T)> {};
 
 	#elif EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_GNUC))
 		#define EASTL_TYPE_TRAIT_is_trivially_copyable_CONFORMANCE 1
@@ -850,7 +850,7 @@ namespace eastl
 		// whether the __is_trivially_constructible compiler intrinsic is available.
 
 		// If the compiler has this trait built-in (which ideally all compilers would have since it's necessary for full conformance) use it.
-		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
+		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible)) || defined(EA_COMPILER_MSVC))
 
 			template <typename T, typename Arg0 = eastl::unused>
 			struct is_trivially_constructible 
@@ -915,7 +915,7 @@ namespace eastl
 	#else
 
 		// If the compiler has this trait built-in (which ideally all compilers would have since it's necessary for full conformance) use it.
-		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible))
+		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible)) || defined(EA_COMPILER_MSVC))
 			#define EASTL_TYPE_TRAIT_is_trivially_constructible_CONFORMANCE 1
 
 			// We have a problem with clang here as of clang 3.4: __is_trivially_constructible(int[]) is false, yet I believe it should be true.

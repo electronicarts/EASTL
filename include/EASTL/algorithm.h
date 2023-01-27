@@ -4309,9 +4309,8 @@ namespace eastl
 	template <class T, class Compare>
 	EA_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
 	{
-		// code collapsed to a single line due to constexpr requirements
-		return [&] { EASTL_ASSERT(!comp(hi, lo)); }(),
-			   comp(v, lo) ? lo : comp(hi, v) ? hi : v;
+		EASTL_ASSERT(!comp(hi, lo));
+		return comp(v, lo) ? lo : comp(hi, v) ? hi : v;
 	}
 
 	template <class T>

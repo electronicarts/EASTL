@@ -624,6 +624,42 @@ int TestTypeTraits()
 	EATEST_VERIFY(GetType(is_array<uint32_t*>()) == false);
 
 
+	//is_bounded_array
+	static_assert(is_bounded_array<Array>::value == true, "is_bounded_array failure");
+	EATEST_VERIFY(GetType(is_bounded_array<Array>()) == true);
+
+	static_assert(is_bounded_array<ArrayConst>::value == true,   "is_bounded_array failure");
+	EATEST_VERIFY(GetType(is_bounded_array<ArrayConst>()) == true);
+
+	static_assert(is_bounded_array<int>::value == false,        "is_bounded_array failure");
+	static_assert(is_bounded_array<int[32]>::value == true,        "is_bounded_array failure");
+	static_assert(is_bounded_array<int[]>::value == false,        "is_bounded_array failure");
+
+	static_assert(is_bounded_array<uint32_t>::value == false,    "is_bounded_array failure");
+	EATEST_VERIFY(GetType(is_bounded_array<uint32_t>()) == false);
+
+	static_assert(is_bounded_array<uint32_t*>::value == false,   "is_bounded_array failure");
+	EATEST_VERIFY(GetType(is_bounded_array<uint32_t*>()) == false);
+
+
+	//is_unbounded_array
+	static_assert(is_unbounded_array<Array>::value == false, "is_unbounded_array failure");
+	EATEST_VERIFY(GetType(is_unbounded_array<Array>()) == false);
+
+	static_assert(is_unbounded_array<ArrayConst>::value == false,   "is_unbounded_array failure");
+	EATEST_VERIFY(GetType(is_unbounded_array<ArrayConst>()) == false);
+
+	static_assert(is_unbounded_array<int>::value == false,        "is_unbounded_array failure");
+	static_assert(is_unbounded_array<int[32]>::value == false,        "is_unbounded_array failure");
+	static_assert(is_unbounded_array<int[]>::value == true,        "is_unbounded_array failure");
+
+	static_assert(is_unbounded_array<uint32_t>::value == false,    "is_unbounded_array failure");
+	EATEST_VERIFY(GetType(is_unbounded_array<uint32_t>()) == false);
+
+	static_assert(is_unbounded_array<uint32_t*>::value == false,   "is_unbounded_array failure");
+	EATEST_VERIFY(GetType(is_unbounded_array<uint32_t*>()) == false);
+
+
 	// is_reference
 	static_assert(is_reference<Class&>::value == true,        "is_reference failure");
 	EATEST_VERIFY(GetType(is_reference<Class&>()) == true);
@@ -648,6 +684,10 @@ int TestTypeTraits()
 	static_assert(is_member_function_pointer<int>::value == false,            "is_member_function_pointer failure");
 	static_assert(is_member_function_pointer<int(Class::*)>::value == false,  "is_member_function_pointer failure");
 	static_assert(is_member_function_pointer<int(Class::*)()>::value == true, "is_member_function_pointer failure");
+	static_assert(is_member_function_pointer<int(Class::*)(...)>::value == true, "is_member_function_pointer failure");
+	static_assert(is_member_function_pointer<int(Class::*)() noexcept>::value == true, "is_member_function_pointer failure");
+	static_assert(is_member_function_pointer<int(Class::*)() &>::value == true, "is_member_function_pointer failure");
+	static_assert(is_member_function_pointer<int(Class::*)() &&>::value == true, "is_member_function_pointer failure");
 
 
 	// is_member_object_pointer
@@ -660,6 +700,9 @@ int TestTypeTraits()
 	static_assert(is_member_pointer<int>::value == false,            "is_member_pointer failure");
 	static_assert(is_member_pointer<int(Class::*)>::value == true,   "is_member_pointer failure");
 	static_assert(is_member_pointer<int(Class::*)()>::value == true, "is_member_pointer failure");
+	static_assert(is_member_pointer<int(Class::* const)>::value == true, "is_member_pointer failure");
+	static_assert(is_member_pointer<int(Class::* volatile)>::value == true, "is_member_pointer failure");
+	static_assert(is_member_pointer<int(Class::* const volatile)>::value == true, "is_member_pointer failure");
 
 
 	// is_pointer
@@ -727,7 +770,7 @@ int TestTypeTraits()
 	// is_function
 	static_assert(is_function<void>::value == false,                      "is_function failure");
 	static_assert(is_function<FunctionVoidVoid>::value == true,           "is_function failure");
-	static_assert(is_function<FunctionVoidVoid&>::value == false,         "is_function failure");
+	static_assert(is_function<FunctionVoidVoid&>::value == false,		  "is_function failure");
 	static_assert(is_function<FunctionIntVoid>::value == true,            "is_function failure");
 	static_assert(is_function<FunctionIntFloat>::value == true,           "is_function failure");
 	static_assert(is_function<FunctionVoidVoidPtr>::value == false,       "is_function failure");
@@ -739,6 +782,16 @@ int TestTypeTraits()
 		// typedef int PrintfConst(const char*, ...) const;
 		static_assert(is_function<int (const char*, ...)>::value == true, "is_function failure");  // This is the signature of printf.
 	#endif
+		
+	static_assert(is_function<int (float)>::value == true, "is_function failure");
+	static_assert(is_function<int (float) const>::value == true, "is_function failure");
+	static_assert(is_function<int(float) volatile>::value == true, "is_function failure");
+	static_assert(is_function<int(float) const volatile>::value == true, "is_function failure");
+	static_assert(is_function<int(float)&>::value == true, "is_function failure");
+	static_assert(is_function<int(float)&&>::value == true, "is_function failure");
+	static_assert(is_function<int(float) noexcept>::value == true, "is_function failure");
+	static_assert(is_function<FunctionIntFloat &>::value == false, "is_function failure"); // reference to function, not a l-value reference qualified function
+	static_assert(is_function<FunctionIntFloat &&>::value == false, "is_function failure");
 
 	static_assert(is_function_v<void> == false,                           "is_function failure");
 	static_assert(is_function_v<FunctionVoidVoid> == true,                "is_function failure");
@@ -828,6 +881,8 @@ int TestTypeTraits()
 	static_assert(is_const<ConstVolatileIntReference>::value == false, "is_const failure"); // Note here that the int is const, not the reference to the int.
 	EATEST_VERIFY(GetType(is_const<ConstVolatileIntReference>()) == false);
 
+	static_assert(is_const<void() const>::value == false, "is_const failure");
+	EATEST_VERIFY(GetType(is_const<void() const>()) == false);
 
 	// is_volatile
 	static_assert(is_volatile<Int>::value == false, "is_volatile failure");
@@ -850,6 +905,9 @@ int TestTypeTraits()
 
 	static_assert(is_volatile<ConstVolatileIntReference>::value == false, "is_volatile failure"); // Note here that the int is volatile, not the reference to the int.
 	EATEST_VERIFY(GetType(is_volatile<ConstVolatileIntReference>()) == false);
+
+	static_assert(is_volatile<void() const>::value == false, "is_volatile failure");
+	EATEST_VERIFY(GetType(is_volatile<void() const>()) == false);
 
 
 	// underlying_type and to_underlying
@@ -1107,9 +1165,9 @@ int TestTypeTraits()
 	static_assert(is_unsigned_v<int32_t> == false,                 "is_unsigned failure ");
 	EATEST_VERIFY(GetType(is_unsigned<int32_t>()) == false);
 
-	static_assert(is_unsigned<bool>::value == false,               "is_unsigned failure ");
-	static_assert(is_unsigned_v<bool> == false,                    "is_unsigned failure ");
-	EATEST_VERIFY(GetType(is_unsigned<bool>()) == false);
+	static_assert(is_unsigned<bool>::value == true,                "is_unsigned failure ");
+	static_assert(is_unsigned_v<bool> == true,                     "is_unsigned failure ");
+	EATEST_VERIFY(GetType(is_unsigned<bool>()) == true);
 
 	static_assert(is_unsigned<float>::value == false,              "is_unsigned failure ");
 	static_assert(is_unsigned_v<float> == false,                   "is_unsigned failure ");
@@ -1295,6 +1353,7 @@ int TestTypeTraits()
 
 	// is_trivially_copyable
 	static_assert(is_trivially_copyable<void>::value           == false,  "is_trivially_copyable failure");
+	EATEST_VERIFY(GetType(is_trivially_copyable<void>())	   == false);
 	static_assert(is_trivially_copyable<int>::value            == true,   "is_trivially_copyable failure");
 	static_assert(is_trivially_copyable<int*>::value           == true,   "is_trivially_copyable failure");
 	static_assert(is_trivially_copyable<int[]>::value          == true,   "is_trivially_copyable failure");
@@ -1890,6 +1949,28 @@ int TestTypeTraits()
 		yValue = 3;
 		EATEST_VERIFY(yValue == 3);
 
+		// ref to T
+		//   -> T*
+		static_assert(is_same_v<add_pointer_t<int&>, int*>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<int(&)()>, int(*)()>, "add_pointer failure");
+
+		// object type (a (possibly cv-qualified) type other than function type, reference type or void), or
+		// a function type that is not cv- or ref-qualified, or a (possibly cv-qualified) void type
+		//   -> T*
+		static_assert(is_same_v<add_pointer_t<int>, int*>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<int*>, int**>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<int()>, int(*)()>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<void>, void*>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<const void>, const void*>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<volatile void>, volatile void*>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<const volatile void>, const volatile void*>, "add_pointer failure");
+
+		// otherwise (cv- or ref-qualified function type)
+		//   -> T
+		static_assert(is_same_v<add_pointer_t<int() const>, int() const>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<int() volatile>, int() volatile>, "add_pointer failure");
+		static_assert(is_same_v<add_pointer_t<int() const volatile>, int() const volatile>, "add_pointer failure");
+
 		// remove_extent
 		// If T is an array of some type X, provides the member typedef type equal to X, otherwise 
 		// type is T. Note that if T is a multidimensional array, only the first dimension is removed. 
@@ -1901,6 +1982,55 @@ int TestTypeTraits()
 		typedef int IntArray2[37][54];
 		typedef eastl::remove_all_extents<IntArray2>::type Int2;
 		static_assert((eastl::is_same<Int2, int>::value == true), "remove_all_extents/is_same failure");
+	}
+
+	// add_lvalue_reference
+	{
+		// function type with no cv- or ref-qualifier
+		//   -> T&
+		static_assert(is_same_v<add_lvalue_reference_t<void()>, void(&)()>, "add_lvalue_reference failure");
+
+		// object type (a (possibly cv-qualified) type other than function type, reference type or void)
+		//   -> T&
+		static_assert(is_same_v<add_lvalue_reference_t<int>, int&>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<const int>, const int&>, "add_lvalue_reference failure");
+
+		// if T is an rvalue reference (to some type U)
+		//   -> U&
+		static_assert(is_same_v<add_lvalue_reference_t<int&&>, int&>, "add_lvalue_reference failure");
+
+		// otherwise (cv- or ref-qualified function type, or reference type, or (possibly cv-qualified) void)
+		//   -> T
+		static_assert(is_same_v<add_lvalue_reference_t<void() const>, void() const>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<void()&>, void()&>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<void()&&>, void()&&>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<int&>, int&>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<const int&>, const int&>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<void>, void>, "add_lvalue_reference failure");
+		static_assert(is_same_v<add_lvalue_reference_t<const void>, const void>, "add_lvalue_reference failure");
+	}
+
+	// add_rvalue_reference
+	{
+		// function type with no cv- or ref-qualifier
+		//   -> T&&
+		static_assert(is_same_v<add_rvalue_reference_t<void()>, void(&&)()>, "add_rvalue_reference failure");
+
+		// object type (a (possibly cv-qualified) type other than function type, reference type or void)
+		//   -> T&&
+		static_assert(is_same_v<add_rvalue_reference_t<int>, int&&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<const int>, const int&&>, "add_rvalue_reference failure");
+
+		// otherwise (cv- or ref-qualified function type, or reference type, or (possibly cv-qualified) void)
+		//   -> T
+		static_assert(is_same_v<add_rvalue_reference_t<void() const>, void() const>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<void()&>, void()&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<void()&&>, void()&&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<int&>, int&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<int&&>, int&&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<const int&>, const int&>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<void>, void>, "add_rvalue_reference failure");
+		static_assert(is_same_v<add_rvalue_reference_t<const void>, const void>, "add_rvalue_reference failure");
 	}
 
 
@@ -2262,8 +2392,10 @@ int TestTypeTraits()
 			static_assert(!is_aggregate_v<NotAggregrate>, "is_aggregate failure");
 		}
 
-		#ifndef EA_COMPILER_MSVC
-		// NOTE(rparolin): MSVC is incorrectly categorizing the aggregate type in this test-case.
+		#if defined(EA_COMPILER_CPP11_ENABLED) && !defined(EA_COMPILER_CPP14_ENABLED)
+		// See https://en.cppreference.com/w/cpp/language/aggregate_initialization
+		// In C++11 the requirement was added to aggregate types that no default member initializers exist,
+		// however this requirement was removed in C++14.
 		{
 			struct NotAggregrate { int data = 42; }; // default member initializer 
 			static_assert(!is_aggregate_v<NotAggregrate>, "is_aggregate failure");

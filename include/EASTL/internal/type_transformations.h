@@ -477,15 +477,33 @@ namespace eastl
 	// add_pointer
 	//
 	// Add pointer to a type.
-	// Provides the member typedef type which is the type T*. If T is a 
-	// reference type, then type is a pointer to the referred type. 
+	// Provides the member typedef type which is the type T*.
+	// 
+	// If T is a reference type,
+	//		type member is a pointer to the referred type.
+	// If T is an object type, a function type that is not cv- or ref-qualified,
+	// or a (possibly cv-qualified) void type,
+	//		type member is T*.
+	// Otherwise (T is a cv- or ref-qualified function type),
+	//		type member is T (ie. not a pointer).
 	//
+	// cv- and ref-qualified function types are invalid, which is why there is a specific clause for it.
+	// See https://cplusplus.github.io/LWG/issue2101 for more.
+	// 
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_add_pointer_CONFORMANCE 1
 
-	template<class T>
-	struct add_pointer { typedef typename eastl::remove_reference<T>::type* type; };
+	namespace internal
+	{
+		template <typename T>
+		auto try_add_pointer(int) -> type_identity<typename std::remove_reference<T>::type*>;
+		template <typename T>
+		auto try_add_pointer(...) -> type_identity<T>;
+	}
+ 
+	template <typename T>
+	struct add_pointer : decltype(internal::try_add_pointer<T>(0)) {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <class T>
