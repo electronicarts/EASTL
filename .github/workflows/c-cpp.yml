@@ -44,13 +44,13 @@ jobs:
             cxxflags: '/std:c++20 /Zc:char8_t'
           - os: ubuntu-latest
             compiler: clang
-            cc: 'clang-11'
-            cxx: 'clang++-11'
+            cc: 'clang-14'
+            cxx: 'clang++-14'
             cxxflags: '-std=c++20'
           - os: ubuntu-latest
             compiler: gcc
-            cc: 'gcc-10'
-            cxx: 'g++-10'
+            cc: 'gcc-12'
+            cxx: 'g++-12'
             cxxflags: '-std=c++2a'
 
     name: Build EASTL
