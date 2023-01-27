@@ -536,27 +536,12 @@ namespace eastl
 	///
 	///     auto pArray = make_unique<Test[]>(4);
 	///
-	namespace Internal
-	{
-		template <typename T>
-		struct unique_type
-			{ typedef unique_ptr<T>   unique_type_single; };
-
-		template <typename T>
-		struct unique_type<T[]>
-			{ typedef unique_ptr<T[]> unique_type_unbounded_array; };
-
-		template <typename T, size_t N>
-		struct unique_type<T[N]>
-			{ typedef void            unique_type_bounded_array; };
-	}
-
 	template <typename T, typename... Args>
-	inline typename Internal::unique_type<T>::unique_type_single make_unique(Args&&... args)
+	inline typename eastl::enable_if<!eastl::is_array<T>::value, eastl::unique_ptr<T>>::type make_unique(Args&&... args)
 		{ return unique_ptr<T>(new T(eastl::forward<Args>(args)...)); }
 
 	template <typename T>
-	inline typename Internal::unique_type<T>::unique_type_unbounded_array make_unique(size_t n)
+	inline typename eastl::enable_if<eastl::is_unbounded_array<T>::value, eastl::unique_ptr<T>>::type make_unique(size_t n)
 	{
 		typedef typename eastl::remove_extent<T>::type TBase;
 		return unique_ptr<T>(new TBase[n]);
@@ -564,7 +549,7 @@ namespace eastl
 
 	// It's not possible to create a unique_ptr for arrays of a known bound (e.g. int[4] as opposed to int[]).
 	template <typename T, typename... Args>
-	typename Internal::unique_type<T>::unique_type_bounded_array
+	typename eastl::enable_if<eastl::is_bounded_array<T>::value>::type
 	make_unique(Args&&...) = delete;
 
 

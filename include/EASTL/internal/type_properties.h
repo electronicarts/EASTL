@@ -104,51 +104,31 @@ namespace eastl
     ///////////////////////////////////////////////////////////////////////
 	// is_signed
 	//
-	// is_signed<T>::value == true if and only if T is one of the following types:
-	//    [const] [volatile] char (maybe)
-	//    [const] [volatile] signed char
-	//    [const] [volatile] short
-	//    [const] [volatile] int
-	//    [const] [volatile] long
-	//    [const] [volatile] long long
-	//    [const] [volatile] float
-	//    [const] [volatile] double
-	//    [const] [volatile] long double
+	// is_signed<T>::value == true if T is a (possibly cv-qualified) floating-point or signed integer type.
 	//
-	// Used to determine if a integral type is signed or unsigned.
+	// Used to determine if a type is signed.
 	// Given that there are some user-made classes which emulate integral
 	// types, we provide the EASTL_DECLARE_SIGNED macro to allow you to
 	// set a given class to be identified as a signed type.
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_signed_CONFORMANCE 1    // is_signed is conforming.
-
-	template <typename T> struct is_signed_helper : public false_type{};
-
-	template <> struct is_signed_helper<signed char>      : public true_type{};
-	template <> struct is_signed_helper<signed short>     : public true_type{};
-	template <> struct is_signed_helper<signed int>       : public true_type{};
-	template <> struct is_signed_helper<signed long>      : public true_type{};
-	template <> struct is_signed_helper<signed long long> : public true_type{};
-	template <> struct is_signed_helper<float>            : public true_type{};
-	template <> struct is_signed_helper<double>           : public true_type{};
-	template <> struct is_signed_helper<long double>      : public true_type{};
-
-	#if (CHAR_MAX == SCHAR_MAX)
-		template <> struct is_signed_helper<char>         : public true_type{};
-	#endif
-	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type...
-		#if defined(__WCHAR_MAX__) && ((__WCHAR_MAX__ == 2147483647) || (__WCHAR_MAX__ == 32767)) // GCC defines __WCHAR_MAX__ for most platforms.
-			template <> struct is_signed_helper<wchar_t>  : public true_type{};
-		#endif
-	#endif
-
-#if EASTL_GCC_STYLE_INT128_SUPPORTED
-			template <> struct is_signed_helper<__int128_t> : public true_type {};
+		
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable: 4296)  // '<': expression is always false
+#endif
+	template<typename T, bool = is_arithmetic<T>::value>
+	struct is_signed_helper : bool_constant<T(-1) < T(0)> {};
+#ifdef _MSC_VER
+	#pragma warning(pop)
 #endif
 
+	template<typename T>
+	struct is_signed_helper<T, false> : false_type {};
+
 	template <typename T>
-	struct is_signed : public eastl::is_signed_helper<typename eastl::remove_cv<T>::type>{};
+	struct is_signed : public eastl::is_signed_helper<T>::type {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <class T>
@@ -168,51 +148,31 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// is_unsigned
 	//
-	// is_unsigned<T>::value == true if and only if T is one of the following types:
-	//    [const] [volatile] char (maybe)
-	//    [const] [volatile] unsigned char
-	//    [const] [volatile] unsigned short
-	//    [const] [volatile] unsigned int
-	//    [const] [volatile] unsigned long
-	//    [const] [volatile] unsigned long long
+	// is_unsigned<T>::value == true if T is a (possibly cv-qualified) bool or unsigned integer type.
 	//
-	// Used to determine if a integral type is signed or unsigned.
+	// Used to determine if a type is unsigned.
 	// Given that there are some user-made classes which emulate integral
 	// types, we provide the EASTL_DECLARE_UNSIGNED macro to allow you to
 	// set a given class to be identified as an unsigned type.
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_unsigned_CONFORMANCE 1    // is_unsigned is conforming.
-
-	template <typename T> struct is_unsigned_helper : public false_type{};
-
-	template <> struct is_unsigned_helper<unsigned char>      : public true_type{};
-	template <> struct is_unsigned_helper<unsigned short>     : public true_type{};
-	template <> struct is_unsigned_helper<unsigned int>       : public true_type{};
-	template <> struct is_unsigned_helper<unsigned long>      : public true_type{};
-	template <> struct is_unsigned_helper<unsigned long long> : public true_type{};
-
-	#if (CHAR_MAX == UCHAR_MAX)
-		template <> struct is_unsigned_helper<char>           : public true_type{};
-	#endif
-	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type...
-		#if defined(_MSC_VER) || (defined(__WCHAR_MAX__) && ((__WCHAR_MAX__ == 4294967295U) || (__WCHAR_MAX__ == 65535))) // GCC defines __WCHAR_MAX__ for most platforms.
-			template <> struct is_unsigned_helper<wchar_t>    : public true_type{};
-		#endif
-	#endif
-
-#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
-			template <> struct is_unsigned_helper<char16_t> : public true_type {};
+		
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable: 4296)  // '<': expression is always false
 #endif
-#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
-			template <> struct is_unsigned_helper<char32_t> : public true_type {};
+	template<typename T, bool = is_arithmetic<T>::value>
+	struct is_unsigned_helper : integral_constant<bool, T(0) < T(-1)> {};
+#ifdef _MSC_VER
+	#pragma warning(pop)
 #endif
-#if EASTL_GCC_STYLE_INT128_SUPPORTED
-			template <> struct is_unsigned_helper<__uint128_t> : public true_type {};
-#endif
+
+	template<typename T>
+	struct is_unsigned_helper<T, false> : false_type {};
 
 	template <typename T>
-	struct is_unsigned : public eastl::is_unsigned_helper<typename eastl::remove_cv<T>::type>{};
+	struct is_unsigned : public eastl::is_unsigned_helper<T>::type {};
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <class T>
@@ -227,7 +187,53 @@ namespace eastl
 		template <> struct is_unsigned<const volatile T> : public true_type{};    \
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	// is_bounded_array
+	//
+	// is_bounded_array<T>::value == true if T is an array type of known bound.
+	//
+	// is_bounded_array<int>::value is false.
+	// is_bounded_array<int[5]>::value is true.
+	// is_bounded_array<int[]>::value is false.
+	//
+	///////////////////////////////////////////////////////////////////////
 
+	#define EASTL_TYPE_TRAIT_is_bounded_array_CONFORMANCE 1    // is_bounded_array is conforming.
+
+	template<class T>
+	struct is_bounded_array: eastl::false_type {};
+
+	template<class T, size_t N>
+	struct is_bounded_array<T[N]> : eastl::true_type {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_bounded_array_v = is_bounded_array<T>::value;
+	#endif
+
+	///////////////////////////////////////////////////////////////////////
+	// is_unbounded_array
+	//
+	// is_unbounded_array<T>::value == true if T is an array type of known bound.
+	//
+	// is_unbounded_array<int>::value is false.
+	// is_unbounded_array<int[5]>::value is false.
+	// is_unbounded_array<int[]>::value is true.
+	//
+	///////////////////////////////////////////////////////////////////////
+
+	#define EASTL_TYPE_TRAIT_is_unbounded_array_CONFORMANCE 1    // is_unbounded_array is conforming.
+
+	template<class T>
+	struct is_unbounded_array: eastl::false_type {};
+
+	template<class T>
+	struct is_unbounded_array<T[]> : eastl::true_type {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_unbounded_array_v = is_unbounded_array<T>::value;
+	#endif
 
 	///////////////////////////////////////////////////////////////////////
 	// alignment_of
@@ -255,7 +261,7 @@ namespace eastl
 
     ///////////////////////////////////////////////////////////////////////
 	// is_aligned
-	//
+	// 
 	// Defined as true if the type has alignment requirements greater
 	// than default alignment, which is taken to be 8. This allows for
 	// doing specialized object allocation and placement for such types.

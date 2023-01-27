@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.19.05"
-	#define EASTL_VERSION_N  31905
+	#define EASTL_VERSION   "3.20.02"
+	#define EASTL_VERSION_N  32002
 #endif
 
 
@@ -1855,15 +1855,46 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 
 /// EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE
 #if defined(__clang__)
+	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
 	#if !__is_identifier(__has_unique_object_representations)
 		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
 	#else
 		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
 	#endif
-#elif defined(_MSC_VER) && (_MSC_VER >= 1913)  // VS2017+
+#elif defined(_MSC_VER) && (_MSC_VER >= 1913)  // VS2017 15.6+
 	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
 #else
 	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
+#endif
+
+#if defined(__clang__)
+	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
+	#if !__is_identifier(__is_final)
+		#define EASTL_IS_FINAL_AVAILABLE 1
+	#else
+		#define EASTL_IS_FINAL_AVAILABLE 0
+	#endif
+#elif defined(_MSC_VER) && (_MSC_VER >= 1914)	// VS2017 15.7+
+	#define EASTL_IS_FINAL_AVAILABLE 1
+#elif defined(EA_COMPILER_GNUC)
+	#define EASTL_IS_FINAL_AVAILABLE 1
+#else
+	#define EASTL_IS_FINAL_AVAILABLE 0
+#endif
+
+#if defined(__clang__)
+	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
+	#if !__is_identifier(__is_aggregate)
+		#define EASTL_IS_AGGREGATE_AVAILABLE 1
+	#else
+		#define EASTL_IS_AGGREGATE_AVAILABLE 0
+	#endif
+#elif defined(_MSC_VER) && (_MSC_VER >= 1915)  // VS2017 15.8+
+	#define EASTL_IS_AGGREGATE_AVAILABLE 1
+#elif defined(EA_COMPILER_GNUC)
+	#define EASTL_IS_AGGREGATE_AVAILABLE 1
+#else
+	#define EASTL_IS_AGGREGATE_AVAILABLE 0
 #endif
 
 

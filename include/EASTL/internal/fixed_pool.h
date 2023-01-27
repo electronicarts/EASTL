@@ -1363,9 +1363,8 @@ namespace eastl
 		}
 
 		fixed_vector_allocator(const fixed_vector_allocator& x)
+			: mOverflowAllocator(x.mOverflowAllocator), mpPoolBegin(x.mpPoolBegin)
 		{
-		   mpPoolBegin        = x.mpPoolBegin;
-		   mOverflowAllocator = x.mOverflowAllocator;
 		}
 
 		fixed_vector_allocator& operator=(const fixed_vector_allocator& x)

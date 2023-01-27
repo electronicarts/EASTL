@@ -392,9 +392,9 @@
 		<Synthetic Name="NOTE!">
 		  <DisplayString>It is possible to expand parents that do not exist.</DisplayString> 
 		</Synthetic>
-		<Item Name="Parent">*(eastl::rbtree_node&lt;$T2&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
-		<Item Name="Left">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeLeft</Item>
-		<Item Name="Right">*(eastl::rbtree_node&lt;$T2&gt;*)mpNodeRight</Item>
+		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeParent</Item>
+		<Item Name="Left">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeLeft</Item>
+		<Item Name="Right">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeRight</Item>
 	</Expand>
 </Type>
 
