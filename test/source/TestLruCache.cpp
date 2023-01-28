@@ -22,7 +22,7 @@ namespace TestLruCacheInternal
 		int a;
 		int b;
 
-		bool operator==(const Foo &other)
+		bool operator==(const Foo &other) const
 		{
 			return this->a == other.a && this->b == other.b;
 		}
