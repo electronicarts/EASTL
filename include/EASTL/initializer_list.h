@@ -56,6 +56,14 @@
 			initializer_list() EA_NOEXCEPT  // EA_NOEXCEPT requires a recent version of EABase.  
 			  : mpArray(NULL), mArraySize(0) { }
 
+#if defined(EA_COMPILER_MSVC)
+			// MSVC generates constructor calls with two pointers instead of one pointer + size. The constructor is
+			// public.
+			// See: https://docs.microsoft.com/en-us/cpp/standard-library/initializer-list-class#initializer_list
+			initializer_list(const_iterator pFirst, const_iterator pLast) EA_NOEXCEPT
+			  : mpArray(pFirst), mArraySize(pLast - pFirst) { }
+#endif
+
 			size_type      size()  const EA_NOEXCEPT { return mArraySize; }
 			const_iterator begin() const EA_NOEXCEPT { return mpArray; }            // Must be const_iterator, as initializer_list (and its mpArray) is an immutable temp object.
 			const_iterator end()   const EA_NOEXCEPT { return mpArray + mArraySize; }
