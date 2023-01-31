@@ -23,6 +23,15 @@ include(CommonCppFlags)
 file(GLOB EASTL_SOURCES "source/*.cpp")
 add_library(EASTL ${EASTL_SOURCES})
 
+if (MSVC)
+    set(EASTL_NATVIS_DIR "doc")
+    set(EASTL_NATVIS_FILE "${EASTL_NATVIS_DIR}/EASTL.natvis")
+    target_sources(EASTL INTERFACE
+        $<INSTALL_INTERFACE:${EASTL_NATVIS_FILE}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${EASTL_NATVIS_FILE}>
+    )
+endif()
+
 if(EASTL_BUILD_BENCHMARK)
     add_subdirectory(benchmark)
 endif()
@@ -61,3 +70,7 @@ target_link_libraries(EASTL EABase)
 #-------------------------------------------------------------------------------------------
 install(TARGETS EASTL DESTINATION lib)
 install(DIRECTORY include/EASTL DESTINATION include)
+
+if (MSVC)
+    install(FILES ${EASTL_NATVIS_FILE} DESTINATION ${EASTL_NATVIS_DIR})
+endif()
