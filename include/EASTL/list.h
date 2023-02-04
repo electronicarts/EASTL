@@ -471,9 +471,13 @@ namespace eastl
 		void DoInsert(ListNodeBase* pNode, InputIterator first, InputIterator last, false_type);
 
 		void DoInsertValues(ListNodeBase* pNode, size_type n, const value_type& value);
+
+		void DoInsertValues(ListNodeBase* pNode, size_type n);
 	   
 		template<typename... Args>
 		void DoInsertValue(ListNodeBase* pNode, Args&&... args);
+
+		void DoInsertValue(ListNodeBase* pNode);
 
 		void DoErase(ListNodeBase* pNode);
 
@@ -832,7 +836,7 @@ namespace eastl
 	inline list<T, Allocator>::list(size_type n, const allocator_type& allocator)
 		: base_type(allocator)
 	{
-		DoInsertValues((ListNodeBase*)&internalNode(), n, value_type());
+		DoInsertValues((ListNodeBase*)&internalNode(), n);
 	}
 
 
@@ -1910,7 +1914,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			::new((void*)&pNode->mValue) value_type;
+			::new((void*)&pNode->mValue) value_type();
 		#endif
 
 		return pNode;
@@ -1986,12 +1990,29 @@ namespace eastl
 			DoInsertValue(pNode, value);
 	}
 
+	template <typename T, typename Allocator>
+	inline void list<T, Allocator>::DoInsertValues(ListNodeBase* pNode, size_type n)
+	{
+		for (; n > 0; --n)
+			DoInsertValue(pNode);
+	}
+
 
 	template <typename T, typename Allocator>
 	template<typename... Args>
 	inline void list<T, Allocator>::DoInsertValue(ListNodeBase* pNode, Args&&... args)
 	{
 		node_type* const pNodeNew = DoCreateNode(eastl::forward<Args>(args)...);
+		((ListNodeBase*)pNodeNew)->insert(pNode);
+		#if EASTL_LIST_SIZE_CACHE
+			++mSize;
+		#endif
+	}
+
+	template <typename T, typename Allocator>
+	inline void list<T, Allocator>::DoInsertValue(ListNodeBase* pNode)
+	{
+		node_type* const pNodeNew = DoCreateNode();
 		((ListNodeBase*)pNodeNew)->insert(pNode);
 		#if EASTL_LIST_SIZE_CACHE
 			++mSize;
