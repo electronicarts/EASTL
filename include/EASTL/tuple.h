@@ -947,7 +947,7 @@ EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
 ///////////////////////////////////////////////////////////////
 // C++17 structured bindings support for eastl::tuple
 //
-#ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+#if !defined(EA_NO_HAVE_CPP11_TUPLES) && !defined(EA_COMPILER_NO_STRUCTURED_BINDING)
 	#include <tuple>
 	namespace std
 	{
