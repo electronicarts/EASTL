@@ -10,21 +10,16 @@ Add to your CMakeLists.txt:
 
 ```cmake
 set(EASTL_ROOT_DIR C:/EASTL)
-include_directories (${EASTL_ROOT_DIR}/include)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EAAssert/include)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EABase/include/Common)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EAMain/include)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EAStdC/include)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EATest/include)
-include_directories (${EASTL_ROOT_DIR}/test/packages/EAThread/include)
-set(EASTL_LIBRARY debug ${EASTL_ROOT_DIR}/build/Debug/EASTL.lib optimized ${EASTL_ROOT_DIR}/build/Release/EASTL.lib)
-add_custom_target(NatVis SOURCES ${EASTL_ROOT_DIR}/doc/EASTL.natvis)
+
+add_subdirectory(${EASTL_ROOT_DIR})
+
+target_include_directories(... PUBLIC "${EASTL_ROOT_DIR}/include")
 ```
 
 And then add the library into the linker 
 
 ```
-target_link_libraries(... ${EASTL_LIBRARY})
+target_link_libraries(... ${EASTL})
 ```
 
 ### Using Visual Studio
@@ -86,8 +81,13 @@ ${EASTL_ROOT_DIR}/doc/EASTL.natvis
 EASTL requires you to have an overload for the operator new[], here is an example that just forwards to global new[]:
 
 ```c
-void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
-{
-	return new uint8_t[size];
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags,
+                     const char* file, int line) {
+    return new uint8_t[size];
+}
+
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName,
+                     int flags, unsigned debugFlags, const char* file, int line) {
+    return new uint8_t[size];
 }
 ```
