@@ -22,6 +22,7 @@ include(CommonCppFlags)
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTL_SOURCES "source/*.cpp")
 add_library(EASTL ${EASTL_SOURCES})
+target_compile_features(EASTL PUBLIC cxx_std_14)
 
 if (MSVC)
     set(EASTL_NATVIS_DIR "doc")
