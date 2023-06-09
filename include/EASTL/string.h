@@ -876,7 +876,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::basic_string(const view_type& sv, const allocator_type& allocator)
-	    : basic_string(sv.data(), sv.size(), allocator)
+	    : basic_string(sv.data(), static_cast<size_type>(sv.size()), allocator)
 	{
 	}
 
@@ -1962,7 +1962,8 @@ namespace eastl
 		const size_type n = (size_type)(pEnd - pBegin);
 		if(n <= internalLayout().GetSize())
 		{
-			memmove(internalLayout().BeginPtr(), pBegin, (size_t)n * sizeof(value_type));
+			if(n)
+				memmove(internalLayout().BeginPtr(), pBegin, (size_t)n * sizeof(value_type));
 			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else

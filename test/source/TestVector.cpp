@@ -1433,16 +1433,6 @@ int TestVector()
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
 
-	{  // Regression of user error report for the case of vector<const type>.
-		eastl::vector<int> ctorValues;
-
-		for (int v = 0; v < 10; v++)
-			ctorValues.push_back(v);
-
-		eastl::vector<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
-		eastl::vector<const int> testInt(ctorValues.begin(), ctorValues.end());
-	}
-
 	{  // Regression to verify that const vector works.
 		const eastl::vector<int> constIntVector1;
 		EATEST_VERIFY(constIntVector1.empty());

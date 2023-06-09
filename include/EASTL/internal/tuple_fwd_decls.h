@@ -15,19 +15,33 @@ namespace eastl
 	class tuple;
 
 	template <typename Tuple>
-	class tuple_size;
+	struct tuple_size;
+
+#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	template <class T>
+	EA_CONSTEXPR size_t tuple_size_v = tuple_size<T>::value;
+#endif
 
 	template <size_t I, typename Tuple>
-	class tuple_element;
+	struct tuple_element;
 
 	template <size_t I, typename Tuple>
 	using tuple_element_t = typename tuple_element<I, Tuple>::type;
+
+	template<typename T> struct is_lvalue_reference;
+
+	template<bool B, typename T, typename F>
+	struct conditional;
+
+	template <typename T> struct add_lvalue_reference;
+
+	template <typename T> struct remove_reference;
 
 	// const typename for tuple_element_t, for when tuple or TupleImpl cannot itself be const
 	template <size_t I, typename Tuple>
 	using const_tuple_element_t = typename conditional<
 						is_lvalue_reference<tuple_element_t<I, Tuple>>::value,
-							 add_lvalue_reference_t<const remove_reference_t<tuple_element_t<I, Tuple>>>,
+							 typename add_lvalue_reference<const typename remove_reference<tuple_element_t<I, Tuple>>::type>::type,
 							 const tuple_element_t<I, Tuple>
 						>::type;
 

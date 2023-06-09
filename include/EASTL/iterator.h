@@ -77,14 +77,19 @@ namespace eastl
 		struct forward_iterator_tag       : public input_iterator_tag { };
 		struct bidirectional_iterator_tag : public forward_iterator_tag { };
 		struct random_access_iterator_tag : public bidirectional_iterator_tag { };
-		struct contiguous_iterator_tag    : public random_access_iterator_tag { };  // Extension to the C++ standard. Contiguous ranges are more than random access, they are physically contiguous.
+		// Originally an extension to the C++ standard, standardized in C++20.
+		// Contiguous ranges are more than random access, they are physically contiguous.
+		// Note: Pointers are contiguous but the specialization of iterator_traits for pointers defines
+		// iterator_traits<T>::iterator_category as random_access_iterator_tag and thus users must
+		// explicitly check both the iterator_category and the type.
+		struct contiguous_iterator_tag    : public random_access_iterator_tag { };
 	#endif
 
 
 	// struct iterator
 	template <typename Category, typename T, typename Distance = ptrdiff_t,
 			  typename Pointer = T*, typename Reference = T&>
-	struct iterator
+	struct EASTL_REMOVE_AT_2024_APRIL iterator
 	{
 		typedef Category  iterator_category;
 		typedef T         value_type;
@@ -249,11 +254,7 @@ namespace eastl
 	/// beginning of an array.
 	///
 	template <typename Iterator>
-	class reverse_iterator : public iterator<typename eastl::iterator_traits<Iterator>::iterator_category,
-											 typename eastl::iterator_traits<Iterator>::value_type,
-											 typename eastl::iterator_traits<Iterator>::difference_type,
-											 typename eastl::iterator_traits<Iterator>::pointer,
-											 typename eastl::iterator_traits<Iterator>::reference>
+	class reverse_iterator
 	{
 	private:
 		using base_wrapped_iterator_type =
@@ -261,10 +262,12 @@ namespace eastl
 		                                               eastl::is_iterator_wrapper<Iterator>::value>::iterator_type;
 
 	public:
-		typedef Iterator                                                   iterator_type;
-		typedef typename eastl::iterator_traits<Iterator>::pointer         pointer;
-		typedef typename eastl::iterator_traits<Iterator>::reference       reference;
-		typedef typename eastl::iterator_traits<Iterator>::difference_type difference_type;
+		typedef Iterator														iterator_type;
+		typedef typename eastl::iterator_traits<Iterator>::iterator_category	iterator_category;
+		typedef typename eastl::iterator_traits<Iterator>::value_type			value_type;
+		typedef typename eastl::iterator_traits<Iterator>::difference_type		difference_type;
+		typedef typename eastl::iterator_traits<Iterator>::pointer				pointer;
+		typedef typename eastl::iterator_traits<Iterator>::reference			reference;
 
 	protected:
 		Iterator mIterator;
@@ -662,12 +665,17 @@ namespace eastl
 	/// assign a value to it, it calls push_back on the container with the value.
 	///
 	template <typename Container>
-	class back_insert_iterator : public iterator<EASTL_ITC_NS::output_iterator_tag, void, void, void, void>
+	class back_insert_iterator
 	{
 	public:
 		typedef back_insert_iterator<Container>     this_type;
 		typedef Container                           container_type;
 		typedef typename Container::const_reference const_reference;
+		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef void								value_type;
+		typedef void								difference_type;
+		typedef void								pointer;
+		typedef void								reference;
 
 	protected:
 		Container& container;
@@ -719,12 +727,17 @@ namespace eastl
 	/// assign a value to it, it calls push_front on the container with the value.
 	///
 	template <typename Container>
-	class front_insert_iterator : public iterator<EASTL_ITC_NS::output_iterator_tag, void, void, void, void>
+	class front_insert_iterator
 	{
 	public:
 		typedef front_insert_iterator<Container>    this_type;
 		typedef Container                           container_type;
 		typedef typename Container::const_reference const_reference;
+		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef void								value_type;
+		typedef void								difference_type;
+		typedef void								pointer;
+		typedef void								reference;
 
 	protected:
 		Container& container;
@@ -784,12 +797,17 @@ namespace eastl
 	/// iterator p, and the new range will be inserted immediately before p.
 	///
 	template <typename Container>
-	class insert_iterator : public iterator<EASTL_ITC_NS::output_iterator_tag, void, void, void, void>
+	class insert_iterator
 	{
 	public:
 		typedef Container                           container_type;
 		typedef typename Container::iterator        iterator_type;
 		typedef typename Container::const_reference const_reference;
+		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef void								value_type;
+		typedef void								difference_type;
+		typedef void								pointer;
+		typedef void								reference;
 
 	protected:
 		Container&     container;

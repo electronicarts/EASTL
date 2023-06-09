@@ -67,7 +67,7 @@ namespace eastl
 	///    fixedVector.resize(200);
 	///    fixedVector.clear();
 	///
-	template <typename T, size_t nodeCount, bool bEnableOverflow = true, typename OverflowAllocator = typename eastl::type_select<bEnableOverflow, EASTLAllocatorType, EASTLDummyAllocatorType>::type>
+	template <typename T, size_t nodeCount, bool bEnableOverflow = true, typename OverflowAllocator = typename eastl::conditional<bEnableOverflow, EASTLAllocatorType, EASTLDummyAllocatorType>::type>
 	class fixed_vector : public vector<T, fixed_vector_allocator<sizeof(T), nodeCount, EASTL_ALIGN_OF(T), 0, bEnableOverflow, OverflowAllocator> >
 	{
 	public:
@@ -86,21 +86,26 @@ namespace eastl
 		enum { kMaxSize = nodeCount };
 
 		using base_type::get_allocator;
-		using base_type::mpBegin;
-		using base_type::mpEnd;
-		using base_type::internalCapacityPtr;
 		using base_type::resize;
 		using base_type::clear;
 		using base_type::size;
 		using base_type::assign;
 		using base_type::npos;
-		using base_type::DoAllocate;
-		using base_type::DoFree;
-		using base_type::DoAssign;
-		using base_type::DoAssignFromIterator;
+
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+		static_assert(!is_const<value_type>::value, "fixed_vector<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "fixed_vector<T> value_type must be non-volatile.");
+#endif
 
 	protected:
 		aligned_buffer_type mBuffer;
+
+		using base_type::mpBegin;
+		using base_type::mpEnd;
+		using base_type::internalCapacityPtr;
+		using base_type::DoAllocate;
+		using base_type::DoFree;
+		using base_type::DoAssign;
 
 	public:
 		fixed_vector();
@@ -468,7 +473,7 @@ namespace eastl
 	template <typename T, size_t nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline void* fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::push_back_uninitialized()
 	{
-		return DoPushBackUninitialized(typename type_select<bEnableOverflow, true_type, false_type>::type());
+		return DoPushBackUninitialized(typename conditional<bEnableOverflow, true_type, false_type>::type());
 	}
 
 
@@ -491,7 +496,7 @@ namespace eastl
 	template <typename T, size_t nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline void fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::push_back(const value_type& value)
 	{
-		DoPushBack(typename type_select<bEnableOverflow, true_type, false_type>::type(), value);
+		DoPushBack(typename conditional<bEnableOverflow, true_type, false_type>::type(), value);
 	}
 
 
@@ -516,7 +521,7 @@ namespace eastl
 	template <typename T, size_t nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline typename fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::reference fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::push_back()
 	{
-		return DoPushBack(typename type_select<bEnableOverflow, true_type, false_type>::type());
+		return DoPushBack(typename conditional<bEnableOverflow, true_type, false_type>::type());
 	}
 
 
@@ -543,7 +548,7 @@ namespace eastl
 	template <typename T, size_t nodeCount, bool bEnableOverflow, typename OverflowAllocator>
 	inline void fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::push_back(value_type&& value)
 	{
-		DoPushBackMove(typename type_select<bEnableOverflow, true_type, false_type>::type(), eastl::move(value));
+		DoPushBackMove(typename conditional<bEnableOverflow, true_type, false_type>::type(), eastl::move(value));
 	}
 
 

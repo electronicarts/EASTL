@@ -88,19 +88,20 @@ namespace eastl
 		enum { kMaxSize = nodeCount - 1 }; // -1 because we need to save one element for the silent terminating null.
 
 		using base_type::npos;
-		using base_type::mPair;
 		using base_type::append;
 		using base_type::resize;
 		using base_type::clear;
 		using base_type::capacity;
 		using base_type::size;
 		using base_type::sprintf_va_list;
-		using base_type::DoAllocate;
-		using base_type::DoFree;
-		using base_type::internalLayout;
 		using base_type::get_allocator;
 
 	protected:
+		using base_type::mPair;
+		using base_type::DoAllocate;
+		using base_type::DoFree;
+		using base_type::internalLayout;
+
 		union // We define a union in order to avoid strict pointer aliasing issues with compilers like GCC.
 		{
 			value_type          mArray[1];
@@ -671,6 +672,24 @@ namespace eastl
 	{
 		get_allocator().set_overflow_allocator(allocator);
 	}
+
+	template <class T>
+	inline size_t hash_string(const T* p)
+	{
+		unsigned int c, result = 2166136261U;
+		while ((c = *p++) != 0) // To consider: limit p to at most 256 chars.
+			result = (result * 16777619) ^ c;
+		return (size_t)result;
+	}
+
+	template <typename T, int nodeCount, bool bEnableOverflow, typename OverflowAllocator>
+	struct hash<fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>>
+	{
+		size_t operator()(const fixed_string<T, nodeCount, bEnableOverflow, OverflowAllocator>& x) const
+		{
+			return hash_string(x.c_str());
+		}
+	};
 
 
 	///////////////////////////////////////////////////////////////////////

@@ -340,18 +340,93 @@ int TestTuple()
 			tie(a, ignore, b) = make_tuple(1, 3, 5);
 			EATEST_VERIFY(a == 1 && b == 5.0f);
 
-			// tuple_cat
-			auto tcatRes = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true));
-			EATEST_VERIFY(get<0>(tcatRes) == 1 && get<1>(tcatRes) == 2.0f && get<2>(tcatRes) == 3.0 &&
-					get<3>(tcatRes) == true);
-
-			auto tcatRes2 = tuple_cat(make_tuple(1, 2.0f), make_tuple(3.0, true), make_tuple(5u, '6'));
-			EATEST_VERIFY(get<0>(tcatRes2) == 1 && get<1>(tcatRes2) == 2.0f && get<2>(tcatRes2) == 3.0 &&
-					get<3>(tcatRes2) == true && get<4>(tcatRes2) == 5u && get<5>(tcatRes2) == '6');
-
 			auto aCattedRefTuple = tuple_cat(make_tuple(1), tie(a, ignore, b));
 			get<1>(aCattedRefTuple) = 2;
 			EATEST_VERIFY(a == 2);
+		}
+
+		// tuple_cat
+		{
+			// zero args
+			{				
+				auto result = tuple_cat();
+				static_assert(eastl::is_same_v<decltype(result), tuple<>>, "type mismatch");
+			}
+
+			// one arg - l-value
+			{
+				tuple<int, bool> t{42, true};
+				
+				auto result = tuple_cat(t);
+				
+				static_assert(eastl::is_same_v<decltype(result), tuple<int, bool>>, "type mismatch");
+				
+				EATEST_VERIFY(get<0>(result) == 42);
+				EATEST_VERIFY(get<1>(result));
+			}
+
+			// one arg - r-value
+			{
+				tuple<int, unique_ptr<bool>> t{42, new bool(true)};
+				
+				auto result = tuple_cat(eastl::move(t));
+
+				static_assert(eastl::is_same_v<decltype(result), tuple<int, unique_ptr<bool>>>, "type mismatch");
+				
+				EATEST_VERIFY(get<0>(result) == 42);
+				EATEST_VERIFY(get<1>(result) != nullptr && *get<1>(result));
+				EATEST_VERIFY(get<1>(t) == nullptr);
+			}
+			
+			// two args - l-values
+			{
+				tuple<int, bool> t1{42, true};
+				tuple<float, int> t2{3.14f, 1337};
+				
+				auto result = tuple_cat(t1, t2);
+
+				static_assert(eastl::is_same_v<decltype(result), tuple<int, bool, float, int>>, "type mismatch");
+				
+				EATEST_VERIFY(get<0>(result) == 42);
+				EATEST_VERIFY(get<1>(result));
+				EATEST_VERIFY(get<2>(result) == 3.14f);
+				EATEST_VERIFY(get<3>(result) == 1337);
+			}
+
+			// two args - r-values
+			{
+				tuple<int, unique_ptr<bool>> t1{42, new bool(true)};
+				tuple<unique_ptr<float>, int> t2{new float(3.14f), 1337};
+				
+				auto result = tuple_cat(eastl::move(t1), eastl::move(t2));
+
+				static_assert(eastl::is_same_v<decltype(result), tuple<int, unique_ptr<bool>, unique_ptr<float>, int>>, "type mismatch");
+				
+				EATEST_VERIFY(get<0>(result) == 42);
+				EATEST_VERIFY(get<1>(result) != nullptr && *get<1>(result));
+				EATEST_VERIFY(get<1>(t1) == nullptr);
+				EATEST_VERIFY(get<2>(result) != nullptr && *get<2>(result) == 3.14f);
+				EATEST_VERIFY(get<3>(result) == 1337);
+				EATEST_VERIFY(get<0>(t2) == nullptr);
+			}
+
+			// More than two parameters and empty tuples.
+			{
+				tuple<int, bool> t1{42, true};
+				tuple<unique_ptr<float>, int> t2{new float(3.14f), 1337};
+				tuple<> t3{};
+				tuple<unique_ptr<short>> t4{new short(10)};
+				
+				auto result = tuple_cat(t1, eastl::move(t2), t3, eastl::move(t4));
+
+				static_assert(eastl::is_same_v<decltype(result), tuple<int, bool, unique_ptr<float>, int, unique_ptr<short>>>, "type mismatch");
+				
+				EATEST_VERIFY(get<0>(result) == 42);
+				EATEST_VERIFY(get<1>(result));
+				EATEST_VERIFY(get<2>(result) != nullptr && *get<2>(result) == 3.14f);
+				EATEST_VERIFY(get<3>(result) == 1337);
+				EATEST_VERIFY(get<4>(result) != nullptr && *get<4>(result) == 10);
+			}
 		}
 
 		{
@@ -551,20 +626,6 @@ int TestTuple()
 	}
 	#endif
 
-	// user regression for tuple_cat
-	{
-		void* empty = nullptr;
-		auto t = eastl::make_tuple(empty, true);
-		auto tc = eastl::tuple_cat(eastl::make_tuple("asd", 1), t);
-
-		static_assert(eastl::is_same_v<decltype(tc), eastl::tuple<const char*, int, void*, bool>>, "type mismatch");
-
-		EATEST_VERIFY(eastl::string("asd") == eastl::get<0>(tc));
-		EATEST_VERIFY(eastl::get<1>(tc) == 1);
-		EATEST_VERIFY(eastl::get<2>(tc) == nullptr);
-		EATEST_VERIFY(eastl::get<3>(tc) == true);
-	}
-
 	// user reported regression that exercises type_traits trying to pull out the element_type from "fancy pointers"
 	{
 		auto up = eastl::make_unique<int[]>(100);
@@ -573,6 +634,34 @@ int TestTuple()
 		using ResultTuple_t = decltype(t);
 		static_assert(eastl::is_same_v<ResultTuple_t, eastl::tuple<eastl::unique_ptr<int[]>>>); 
 		static_assert(eastl::is_same_v<eastl::tuple_element_t<0, ResultTuple_t>, eastl::unique_ptr<int[]>>);
+	}
+
+	// user reported issue that a tuple was not default constructible if a tuple element type had no members (ie. is_empty_v<T>).
+	{
+		tuple<> emptyTuple;
+		EA_UNUSED(emptyTuple);
+
+		tuple<NoDataMembers> tupleWithEmptyMember;
+		EA_UNUSED(tupleWithEmptyMember);
+		tuple<NoDataMembers, int> tupleWithEmptyMember2;
+		EA_UNUSED(tupleWithEmptyMember2);
+		tuple<int, NoDataMembers> tupleWithEmptyMember3;
+		EA_UNUSED(tupleWithEmptyMember3);
+
+		static_assert(sizeof(tuple<NoDataMembers, int>) <= sizeof(tuple<int>));
+		static_assert(sizeof(tuple<int, NoDataMembers>) <= sizeof(tuple<int>));
+
+		tuple<NoDataMembers> tupleWithEmptyMember4(NoDataMembers{});
+		EA_UNUSED(tupleWithEmptyMember4);
+
+		struct EmptyNoDefaultCtor
+		{
+			EmptyNoDefaultCtor() = delete;
+			EmptyNoDefaultCtor(int) {}
+		};
+
+		tuple<EmptyNoDefaultCtor> tupleWithEmptyMember5(EmptyNoDefaultCtor{3});
+		EA_UNUSED(tupleWithEmptyMember5);
 	}
 
 	return nErrorCount;

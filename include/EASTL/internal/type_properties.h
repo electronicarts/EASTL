@@ -107,9 +107,6 @@ namespace eastl
 	// is_signed<T>::value == true if T is a (possibly cv-qualified) floating-point or signed integer type.
 	//
 	// Used to determine if a type is signed.
-	// Given that there are some user-made classes which emulate integral
-	// types, we provide the EASTL_DECLARE_SIGNED macro to allow you to
-	// set a given class to be identified as a signed type.
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_signed_CONFORMANCE 1    // is_signed is conforming.
@@ -137,10 +134,10 @@ namespace eastl
 
 	#define EASTL_DECLARE_SIGNED(T)                                             \
 	namespace eastl{                                                            \
-		template <> struct is_signed<T>                : public true_type{};    \
-		template <> struct is_signed<const T>          : public true_type{};    \
-		template <> struct is_signed<volatile T>       : public true_type{};    \
-		template <> struct is_signed<const volatile T> : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<T>                : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<const T>          : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<volatile T>       : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<const volatile T> : public true_type{};    \
 	}
 
 
@@ -151,9 +148,6 @@ namespace eastl
 	// is_unsigned<T>::value == true if T is a (possibly cv-qualified) bool or unsigned integer type.
 	//
 	// Used to determine if a type is unsigned.
-	// Given that there are some user-made classes which emulate integral
-	// types, we provide the EASTL_DECLARE_UNSIGNED macro to allow you to
-	// set a given class to be identified as an unsigned type.
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_unsigned_CONFORMANCE 1    // is_unsigned is conforming.
@@ -181,10 +175,10 @@ namespace eastl
 
 	#define EASTL_DECLARE_UNSIGNED(T)                                             \
 	namespace eastl{                                                              \
-		template <> struct is_unsigned<T>                : public true_type{};    \
-		template <> struct is_unsigned<const T>          : public true_type{};    \
-		template <> struct is_unsigned<volatile T>       : public true_type{};    \
-		template <> struct is_unsigned<const volatile T> : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<T>                : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<const T>          : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<volatile T>       : public true_type{};    \
+		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<const volatile T> : public true_type{};    \
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -373,13 +367,17 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// result_of
 	//
+	// Deprecated in C++17.
+	// 
+	// Use invoke_result instead.
+	// See https://en.cppreference.com/w/cpp/types/result_of#Notes for an explanation of issues with result_of.
 	///////////////////////////////////////////////////////////////////////
 	#define EASTL_TYPE_TRAIT_result_of_CONFORMANCE 1    // result_of is conforming.
 
-	template<typename> struct result_of;
+	template<typename> struct EASTL_REMOVE_AT_2024_APRIL result_of;
 
 	template<typename F, typename... ArgTypes>
-	struct result_of<F(ArgTypes...)>
+	struct EASTL_REMOVE_AT_2024_APRIL result_of<F(ArgTypes...)>
 		{ typedef decltype(eastl::declval<F>()(eastl::declval<ArgTypes>()...)) type; };
 
 
@@ -389,7 +387,7 @@ namespace eastl
 		#define EASTL_RESULT_OF_T(T) typename result_of<T>::type
 	#else
 		template <typename T>
-		using result_of_t = typename result_of<T>::type;
+		using result_of_t EASTL_REMOVE_AT_2024_APRIL = typename result_of<T>::type;
 		#define EASTL_RESULT_OF_T(T) result_of_t<T>
 	#endif
 

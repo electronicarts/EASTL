@@ -66,6 +66,13 @@ namespace std__
 
 namespace
 {
+	// Exists for the purpose testing PODs that are larger than built-in types.
+	template <size_t kSize>
+	struct SizedPOD
+	{
+		char memory[kSize];
+	};
+
 	void TestFindEndStd(EA::StdC::Stopwatch& stopwatch, const std::string& sTest, const char* pSearchStringBegin, const char* pSearchStringEnd)
 	{
 		stopwatch.Restart();

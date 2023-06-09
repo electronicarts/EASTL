@@ -354,7 +354,7 @@ int TestIterator()
 			EATEST_VERIFY(intSetIterator == eastl::end(intSet));
 
 			eastl::array<int, 0> intArray;
-			eastl::array<int>::iterator intArrayIterator = eastl::begin(intArray);
+			eastl::array<int, 0>::iterator intArrayIterator = eastl::begin(intArray);
 			EATEST_VERIFY(intArrayIterator == eastl::end(intArray));
 
 			eastl::intrusive_list<IListNode> intIList;
@@ -455,12 +455,12 @@ int TestIterator()
 		static_assert((eastl::is_iterator_wrapper<void>::value													== false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<int>::value													== false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<int*>::value													== false),  "is_iterator_wrapper failure");
-		static_assert((eastl::is_iterator_wrapper<eastl::array<int>::iterator>::value							== false),   "is_iterator_wrapper failure");
-		static_assert((eastl::is_iterator_wrapper<eastl::array<char>*>::value									== false),  "is_iterator_wrapper failure");
+		static_assert((eastl::is_iterator_wrapper<eastl::array<int, 2>::iterator>::value							== false),   "is_iterator_wrapper failure");
+		static_assert((eastl::is_iterator_wrapper<eastl::array<char, 2>*>::value									== false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::vector<char> >::value									== false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::generic_iterator<int*> >::value						== true),   "is_iterator_wrapper failure");
-		static_assert((eastl::is_iterator_wrapper<eastl::move_iterator<eastl::array<int>::iterator> >::value	== true),   "is_iterator_wrapper failure");
-		static_assert((eastl::is_iterator_wrapper<eastl::reverse_iterator<eastl::array<int>::iterator> >::value == false),  "is_iterator_wrapper failure");
+		static_assert((eastl::is_iterator_wrapper<eastl::move_iterator<eastl::array<int, 2>::iterator> >::value	== true),   "is_iterator_wrapper failure");
+		static_assert((eastl::is_iterator_wrapper<eastl::reverse_iterator<eastl::array<int, 2>::iterator> >::value == false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::reverse_iterator<int*> >::value						== false),  "is_iterator_wrapper failure");
 		static_assert((eastl::is_iterator_wrapper<eastl::reverse_iterator<eastl::move_iterator<int*>> >::value  == true),   "is_iterator_wrapper failure");
 	}

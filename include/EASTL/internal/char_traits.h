@@ -230,7 +230,10 @@ namespace eastl
 
 	inline int Compare(const char* p1, const char* p2, size_t n)
 	{
-		return memcmp(p1, p2, n);
+		if (n > 0)
+			return memcmp(p1, p2, n);
+		else
+			return 0;
 	}
 
 
@@ -278,6 +281,7 @@ namespace eastl
 	}
 
 
+	// If either pDestination or pSource is an invalid or null pointer, the behavior is undefined, even if (pSourceEnd - pSource) is zero.
 	template <typename T>
 	inline T* CharStringUninitializedCopy(const T* pSource, const T* pSourceEnd, T* pDestination)
 	{

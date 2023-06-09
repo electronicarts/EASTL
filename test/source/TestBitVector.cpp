@@ -173,6 +173,28 @@ int TestBitVector()
 		}
 	}
 
+	{
+		// move constructor/assignment
+		const eastl_size_t kTestSize = 100;
+		const eastl_size_t kTestIncrement = 5;
+		bitvector<> bv1(kTestSize, false);
+		bitvector<> bv2(kTestSize, false);
+		for (eastl_size_t i = 0; i < kTestSize; i += kTestIncrement)
+		{
+			bv1[i] = true;
+			bv2[i] = true;
+		}
+
+		bitvector<> bv3(std::move(bv1));
+		bitvector<> bv4(kTestSize / 2, true);
+		bv4 = std::move(bv2);
+
+		for (eastl_size_t i = 0; i < kTestSize; i++)
+		{
+			EATEST_VERIFY(bv3[i] == (i % kTestIncrement == 0));
+			EATEST_VERIFY(bv4[i] == (i % kTestIncrement == 0));
+		}
+	}
 
 	{
 		// iterator       begin();

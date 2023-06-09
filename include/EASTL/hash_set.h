@@ -94,7 +94,7 @@ namespace eastl
 	///
 	/// Example find_as usage (namespaces omitted for brevity):
 	///     hash_set<string> hashSet;
-	///     i = hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
+	///     i = hashSet.find_as("hello", hash<char*>(), equal_to<>());
 	///
 	template <typename Value, typename Hash = eastl::hash<Value>, typename Predicate = eastl::equal_to<Value>, 
 			  typename Allocator = EASTLAllocatorType, bool bCacheHashCode = false>

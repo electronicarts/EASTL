@@ -84,47 +84,14 @@ namespace eastl
 	struct SListNodeBase
 	{
 		SListNodeBase* mpNext;
-	} EASTL_LIST_PROXY_MAY_ALIAS;
+	};
 
 
-	#if EASTL_LIST_PROXY_ENABLED
-
-		/// SListNodeBaseProxy
-		///
-		/// In debug builds, we define SListNodeBaseProxy to be the same thing as
-		/// SListNodeBase, except it is templated on the parent SListNode class.
-		/// We do this because we want users in debug builds to be able to easily
-		/// view the slist's contents in a debugger GUI. We do this only in a debug
-		/// build for the reasons described above: that SListNodeBase needs to be
-		/// as efficient as possible and not cause code bloat or extra function 
-		/// calls (inlined or not).
-		///
-		/// SListNodeBaseProxy *must* be separate from its parent class SListNode 
-		/// because the slist class must have a member node which contains no T value.
-		/// It is thus incorrect for us to have one single SListNode class which
-		/// has both mpNext and mValue. So we do a recursive template trick in the 
-		/// definition and use of SListNodeBaseProxy.
-		///
-		template <typename SLN>
-		struct SListNodeBaseProxy
-		{
-			SLN* mpNext;
-		};
-
-		template <typename T>
-		struct SListNode : public SListNodeBaseProxy< SListNode<T> >
-		{
-			T mValue;
-		};
-
-	#else
-		template <typename T>
-		struct SListNode : public SListNodeBase
-		{
-			T mValue;
-		};
-	#endif
-
+	template <typename T>
+	struct SListNode : public SListNodeBase
+	{
+		T mValue;
+	};
 
 	/// SListIterator
 	///
@@ -137,13 +104,14 @@ namespace eastl
 		typedef eastl_size_t                           size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                              difference_type;
 		typedef T                                      value_type;
+		typedef SListNodeBase                          base_node_type;
 		typedef SListNode<T>                           node_type;
 		typedef Pointer                                pointer;
 		typedef Reference                              reference;
 		typedef EASTL_ITC_NS::forward_iterator_tag     iterator_category;
 
 	public:
-		node_type* mpNode;
+		base_node_type* mpNode;
 
 	public:
 		SListIterator();
@@ -172,11 +140,7 @@ namespace eastl
 		typedef SListNode<T>                           node_type;
 		typedef eastl_size_t                           size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                              difference_type;
-		#if EASTL_LIST_PROXY_ENABLED
-			typedef SListNodeBaseProxy< SListNode<T> > base_node_type;
-		#else
-			typedef SListNodeBase                      base_node_type; // We use SListNodeBase instead of SListNode<T> because we don't want to create a T.
-		#endif
+		typedef SListNodeBase                      base_node_type; // We use SListNodeBase instead of SListNode<T> because we don't want to create a T.
 
 	protected:
 		eastl::compressed_pair<base_node_type, allocator_type>  mNodeAllocator;
@@ -242,6 +206,17 @@ namespace eastl
 		typedef SListBase<T, Allocator>              base_type;
 		typedef slist<T, Allocator>                  this_type;
 
+	protected:
+		using base_type::mNodeAllocator;
+		using base_type::DoEraseAfter;
+		using base_type::DoAllocateNode;
+		using base_type::DoFreeNode;
+#if EASTL_SLIST_SIZE_CACHE
+		using base_type::mSize;
+#endif
+		using base_type::internalNode;
+		using base_type::internalAllocator;
+
 	public:
 		typedef T                                    value_type;
 		typedef value_type*                          pointer;
@@ -255,16 +230,6 @@ namespace eastl
 		typedef typename base_type::allocator_type   allocator_type;
 		typedef typename base_type::node_type        node_type;
 		typedef typename base_type::base_node_type   base_node_type;
-
-		using base_type::mNodeAllocator;
-		using base_type::DoEraseAfter;
-		using base_type::DoAllocateNode;
-		using base_type::DoFreeNode;
-		#if EASTL_SLIST_SIZE_CACHE
-			using base_type::mSize;
-		#endif
-		using base_type::internalNode;
-		using base_type::internalAllocator;
 
 	public:
 		slist();
@@ -380,8 +345,8 @@ namespace eastl
 		// The following splice_after funcions are deprecated, as they don't allow for recognizing 
 		// the allocator, cannot maintain the source mSize, and are not in the C++11 Standard definition 
 		// of std::forward_list (which is the equivalent of this class).
-		void splice_after(const_iterator position, const_iterator before_first, const_iterator before_last);  // before_first and before_last come from a source container.
-		void splice_after(const_iterator position, const_iterator previous);                                  // previous comes from a source container.
+		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator before_first, const_iterator before_last);  // before_first and before_last come from a source container.
+		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator previous);                                  // previous comes from a source container.
 
 		// Sorting functionality
 		// This is independent of the global sort algorithms, as lists are 
@@ -538,7 +503,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline SListIterator<T, Pointer, Reference>::SListIterator(const SListNodeBase* pNode)
-		: mpNode(static_cast<node_type*>((SListNode<T>*)const_cast<SListNodeBase*>(pNode))) // All this casting is in the name of making runtime debugging much easier on the user.
+		: mpNode(const_cast<base_node_type*>(pNode))
 	{
 		// Empty
 	}
@@ -546,7 +511,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline SListIterator<T, Pointer, Reference>::SListIterator(const iterator& x)
-		: mpNode(const_cast<node_type*>(x.mpNode))
+		: mpNode(const_cast<base_node_type*>(x.mpNode))
 	{
 		// Empty
 	}
@@ -556,7 +521,7 @@ namespace eastl
 	inline typename SListIterator<T, Pointer, Reference>::reference
 	SListIterator<T, Pointer, Reference>::operator*() const
 	{
-		return mpNode->mValue;
+		return static_cast<node_type*>(mpNode)->mValue;
 	}
 
 
@@ -564,7 +529,7 @@ namespace eastl
 	inline typename SListIterator<T, Pointer, Reference>::pointer
 	SListIterator<T, Pointer, Reference>::operator->() const
 	{
-		return &mpNode->mValue;
+		return &static_cast<node_type*>(mpNode)->mValue;
 	}
 
 
@@ -572,7 +537,7 @@ namespace eastl
 	inline typename SListIterator<T, Pointer, Reference>::this_type&
 	SListIterator<T, Pointer, Reference>::operator++()
 	{
-		mpNode = static_cast<node_type*>(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return *this;
 	}
 
@@ -582,7 +547,7 @@ namespace eastl
 	SListIterator<T, Pointer, Reference>::operator++(int)
 	{
 		this_type temp(*this);
-		mpNode = static_cast<node_type*>(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return temp;
 	}
 
@@ -647,7 +612,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline SListBase<T, Allocator>::~SListBase()
 	{
-		DoEraseAfter((SListNodeBase*)&internalNode(), NULL);
+		DoEraseAfter(&internalNode(), NULL);
 	}
 
 
@@ -694,7 +659,7 @@ namespace eastl
 	SListNodeBase* SListBase<T, Allocator>::DoEraseAfter(SListNodeBase* pNode)
 	{
 		node_type*     const pNodeNext     = static_cast<node_type*>((base_node_type*)pNode->mpNext);
-		SListNodeBase* const pNodeNextNext = (SListNodeBase*)pNodeNext->mpNext;
+		SListNodeBase* const pNodeNextNext = pNodeNext->mpNext;
 
 		pNode->mpNext = pNodeNextNext;
 		pNodeNext->~node_type();
@@ -752,7 +717,7 @@ namespace eastl
 	inline slist<T, Allocator>::slist(size_type n, const allocator_type& allocator)
 		: base_type(allocator)
 	{
-		DoInsertValuesAfter((SListNodeBase*)&internalNode(), n, value_type());
+		DoInsertValuesAfter(&internalNode(), n, value_type());
 	}
 
 
@@ -760,7 +725,7 @@ namespace eastl
 	inline slist<T, Allocator>::slist(size_type n, const value_type& value, const allocator_type& allocator)
 		: base_type(allocator)
 	{
-		DoInsertValuesAfter((SListNodeBase*)&internalNode(), n, value);
+		DoInsertValuesAfter(&internalNode(), n, value);
 	}
 
 
@@ -768,7 +733,7 @@ namespace eastl
 	inline slist<T, Allocator>::slist(const slist& x)
 		: base_type(x.internalAllocator())
 	{
-		DoInsertAfter((SListNodeBase*)&internalNode(), const_iterator((SListNodeBase*)x.internalNode().mpNext), const_iterator(NULL), false_type());
+		DoInsertAfter(&internalNode(), const_iterator(x.internalNode().mpNext), const_iterator(NULL), false_type());
 	}
 
 
@@ -791,7 +756,7 @@ namespace eastl
 	inline slist<T, Allocator>::slist(std::initializer_list<value_type> ilist, const allocator_type& allocator)
 		: base_type(allocator)
 	{
-		DoInsertAfter((SListNodeBase*)&internalNode(), ilist.begin(), ilist.end());
+		DoInsertAfter(&internalNode(), ilist.begin(), ilist.end());
 	}
 
 
@@ -800,7 +765,7 @@ namespace eastl
 	inline slist<T, Allocator>::slist(InputIterator first, InputIterator last)
 		: base_type(EASTL_SLIST_DEFAULT_ALLOCATOR)
 	{
-		DoInsertAfter((SListNodeBase*)&internalNode(), first, last);
+		DoInsertAfter(&internalNode(), first, last);
 	}
 
 
@@ -808,7 +773,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::begin() EA_NOEXCEPT
 	{
-		return iterator((SListNodeBase*)internalNode().mpNext);
+		return iterator(internalNode().mpNext);
 	}
 
 
@@ -816,7 +781,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::const_iterator
 	slist<T, Allocator>::begin() const EA_NOEXCEPT
 	{
-		return const_iterator((SListNodeBase*)internalNode().mpNext);
+		return const_iterator(internalNode().mpNext);
 	}
 
 
@@ -824,7 +789,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::const_iterator
 	slist<T, Allocator>::cbegin() const EA_NOEXCEPT
 	{
-		return const_iterator((SListNodeBase*)internalNode().mpNext);
+		return const_iterator(internalNode().mpNext);
 	}
 
 
@@ -856,7 +821,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::before_begin() EA_NOEXCEPT
 	{
-		return iterator((SListNodeBase*)&internalNode());
+		return iterator(&internalNode());
 	}
 
 
@@ -864,7 +829,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::const_iterator
 	slist<T, Allocator>::before_begin() const EA_NOEXCEPT
 	{
-		return const_iterator((SListNodeBase*)&internalNode());
+		return const_iterator(&internalNode());
 	}
 
 
@@ -872,7 +837,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::const_iterator
 	slist<T, Allocator>::cbefore_begin() const EA_NOEXCEPT
 	{
-		return const_iterator((SListNodeBase*)&internalNode());
+		return const_iterator(&internalNode());
 	}
 
 
@@ -880,7 +845,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::previous(const_iterator position)
 	{
-		return iterator(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode));
+		return iterator(SListNodeGetPrevious(&internalNode(), position.mpNode));
 	}
 
 
@@ -888,7 +853,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::const_iterator
 	slist<T, Allocator>::previous(const_iterator position) const
 	{
-		return const_iterator(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode));
+		return const_iterator(SListNodeGetPrevious(&internalNode(), position.mpNode));
 	}
 
 
@@ -926,14 +891,14 @@ namespace eastl
 	template <class... Args>
 	void slist<T, Allocator>::emplace_front(Args&&... args)
 	{
-		DoInsertValueAfter((SListNodeBase*)&internalNode(), eastl::forward<Args>(args)...);
+		DoInsertValueAfter(&internalNode(), eastl::forward<Args>(args)...);
 	}
 
 
 	template <typename T, typename Allocator>
 	inline void slist<T, Allocator>::push_front(const value_type& value)
 	{
-		SListNodeInsertAfter((SListNodeBase*)&internalNode(), (SListNodeBase*)DoCreateNode(value));
+		SListNodeInsertAfter(&internalNode(), DoCreateNode(value));
 		#if EASTL_SLIST_SIZE_CACHE
 		   ++mSize;
 		#endif
@@ -944,7 +909,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::reference
 	slist<T, Allocator>::push_front()
 	{
-		SListNodeInsertAfter((SListNodeBase*)&internalNode(), (SListNodeBase*)DoCreateNode());
+		SListNodeInsertAfter(&internalNode(), DoCreateNode());
 		#if EASTL_SLIST_SIZE_CACHE
 		   ++mSize;
 		#endif
@@ -1079,14 +1044,14 @@ namespace eastl
 	inline typename slist<T, Allocator>::size_type
 	slist<T, Allocator>::size() const EA_NOEXCEPT
 	{
-		return SListNodeGetSize((SListNodeBase*)internalNode().mpNext);
+		return SListNodeGetSize(internalNode().mpNext);
 	}
 
 
 	template <typename T, typename Allocator>
 	inline void slist<T, Allocator>::clear() EA_NOEXCEPT
 	{
-		DoEraseAfter((SListNodeBase*)&internalNode(), NULL);
+		DoEraseAfter(&internalNode(), NULL);
 	}
 
 
@@ -1107,7 +1072,7 @@ namespace eastl
 	template <typename T, typename Allocator>
 	void slist<T, Allocator>::resize(size_type n, const value_type& value)
 	{
-		SListNodeBase* pNode = (SListNodeBase*)&internalNode();
+		SListNodeBase* pNode = &internalNode();
 
 		for(; pNode->mpNext && (n > 0); --n)
 			pNode = pNode->mpNext;
@@ -1130,7 +1095,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert(const_iterator position)
 	{
-		return iterator((SListNodeBase*)DoInsertValueAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode), value_type()));
+		return iterator(DoInsertValueAfter(SListNodeGetPrevious(&internalNode(), position.mpNode), value_type()));
 	}
 
 
@@ -1138,7 +1103,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert(const_iterator position, const value_type& value)
 	{
-		return iterator((SListNodeBase*)DoInsertValueAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode), value));
+		return iterator(DoInsertValueAfter(SListNodeGetPrevious(&internalNode(), position.mpNode), value));
 	}
 
 
@@ -1146,7 +1111,7 @@ namespace eastl
 	inline void slist<T, Allocator>::insert(const_iterator position, size_type n, const value_type& value)
 	{
 		// To do: get rid of DoAssignValues and put its implementation directly here.
-		DoInsertValuesAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode), n, value);
+		DoInsertValuesAfter(SListNodeGetPrevious(&internalNode(), position.mpNode), n, value);
 	}
 
 
@@ -1154,7 +1119,7 @@ namespace eastl
 	template <typename InputIterator>
 	inline void slist<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
 	{
-		DoInsertAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode), first, last);
+		DoInsertAfter(SListNodeGetPrevious(&internalNode(), position.mpNode), first, last);
 	}
 
 
@@ -1170,7 +1135,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert_after(const_iterator position, const value_type& value)
 	{
-		return iterator((SListNodeBase*)DoInsertValueAfter((SListNodeBase*)position.mpNode, value));
+		return iterator(DoInsertValueAfter(position.mpNode, value));
 	}
 
 
@@ -1178,7 +1143,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert_after(const_iterator position, size_type n, const value_type& value)
 	{
-		return iterator((SListNodeBase*)DoInsertValuesAfter((SListNodeBase*)position.mpNode, n, value));
+		return iterator(DoInsertValuesAfter(position.mpNode, n, value));
 	}
 
 
@@ -1186,7 +1151,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert_after(const_iterator position, std::initializer_list<value_type> ilist)
 	{
-		return iterator((SListNodeBase*)DoInsertAfter((SListNodeBase*)position.mpNode, ilist.begin(), ilist.end(), false_type()));
+		return iterator(DoInsertAfter(position.mpNode, ilist.begin(), ilist.end(), false_type()));
 	}
 
 
@@ -1195,7 +1160,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::insert_after(const_iterator position, InputIterator first, InputIterator last)
 	{
-		return iterator((SListNodeBase*)DoInsertAfter((SListNodeBase*)position.mpNode, first, last));
+		return iterator(DoInsertAfter(position.mpNode, first, last));
 	}
 
 
@@ -1212,7 +1177,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::emplace_after(const_iterator position, Args&&... args)
 	{
-		return iterator((SListNodeBase*)DoInsertValueAfter(position.mpNode, eastl::forward<Args>(args)...));
+		return iterator(DoInsertValueAfter(position.mpNode, eastl::forward<Args>(args)...));
 	}
 
 
@@ -1220,7 +1185,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::erase(const_iterator position)
 	{
-		return DoEraseAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode));
+		return DoEraseAfter(SListNodeGetPrevious(&internalNode(), position.mpNode));
 	}
 
 
@@ -1228,7 +1193,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::erase(const_iterator first, const_iterator last)
 	{
-		return DoEraseAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)first.mpNode), (SListNodeBase*)last.mpNode);
+		return DoEraseAfter(SListNodeGetPrevious(&internalNode(), first.mpNode), last.mpNode);
 	}
 
 
@@ -1236,7 +1201,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::erase_after(const_iterator position)
 	{
-		return iterator(DoEraseAfter((SListNodeBase*)position.mpNode));
+		return iterator(DoEraseAfter(position.mpNode));
 	}
 
 
@@ -1244,7 +1209,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::iterator
 	slist<T, Allocator>::erase_after(const_iterator before_first, const_iterator last)
 	{
-		return iterator(DoEraseAfter((SListNodeBase*)before_first.mpNode, (SListNodeBase*)last.mpNode));
+		return iterator(DoEraseAfter(before_first.mpNode, last.mpNode));
 	}
 
 
@@ -1258,7 +1223,7 @@ namespace eastl
 		{
 			if (static_cast<node_type*>(pNode->mpNext)->mValue == value)
 			{
-				DoEraseAfter((SListNodeBase*)pNode); // This will take care of modifying pNode->mpNext.
+				DoEraseAfter(pNode); // This will take care of modifying pNode->mpNext.
 				++numErased;
 			}
 			else
@@ -1278,7 +1243,7 @@ namespace eastl
 		{
 			if (predicate(static_cast<node_type*>(pNode->mpNext)->mValue))
 			{
-				DoEraseAfter((SListNodeBase*)pNode); // This will take care of modifying pNode->mpNext.
+				DoEraseAfter(pNode); // This will take care of modifying pNode->mpNext.
 				++numErased;
 			}
 			else
@@ -1303,9 +1268,9 @@ namespace eastl
 		{
 			if(internalAllocator() == x.internalAllocator())
 			{
-				SListNodeSpliceAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode),
-									 (SListNodeBase*)&x.internalNode(),
-									 SListNodeGetPrevious((SListNodeBase*)&x.internalNode(), NULL));
+				SListNodeSpliceAfter(SListNodeGetPrevious(&internalNode(), position.mpNode),
+									 &x.internalNode(),
+									 SListNodeGetPrevious(&x.internalNode(), NULL));
 
 				#if EASTL_SLIST_SIZE_CACHE
 					mSize += x.mSize;
@@ -1326,9 +1291,9 @@ namespace eastl
 	{
 		if(internalAllocator() == x.internalAllocator())
 		{
-			SListNodeSpliceAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(), (SListNodeBase*)position.mpNode), 
-								 SListNodeGetPrevious((SListNodeBase*)&x.internalNode(), (SListNodeBase*)i.mpNode), 
-								 (SListNodeBase*)i.mpNode);
+			SListNodeSpliceAfter(SListNodeGetPrevious(&internalNode(), position.mpNode),
+								 SListNodeGetPrevious(&x.internalNode(), i.mpNode),
+								 i.mpNode);
 
 			#if EASTL_SLIST_SIZE_CACHE
 				++mSize;
@@ -1356,9 +1321,9 @@ namespace eastl
 					x.mSize -= n;
 				#endif
 
-				SListNodeSpliceAfter(SListNodeGetPrevious((SListNodeBase*)&internalNode(),       (SListNodeBase*)position.mpNode),
-									 SListNodeGetPrevious((SListNodeBase*)&x.internalNode(),     (SListNodeBase*)first.mpNode),
-									 SListNodeGetPrevious((SListNodeBase*)first.mpNode, (SListNodeBase*)last.mpNode));
+				SListNodeSpliceAfter(SListNodeGetPrevious(&internalNode(),       position.mpNode),
+									 SListNodeGetPrevious(&x.internalNode(),     first.mpNode),
+									 SListNodeGetPrevious(first.mpNode, last.mpNode));
 			}
 			else
 			{
@@ -1395,7 +1360,7 @@ namespace eastl
 		{
 			if(internalAllocator() == x.internalAllocator())
 			{
-				SListNodeSpliceAfter((SListNodeBase*)position.mpNode, (SListNodeBase*)&x.internalNode());
+				SListNodeSpliceAfter(position.mpNode, &x.internalNode());
 
 				#if EASTL_SLIST_SIZE_CACHE
 					mSize += x.mSize;
@@ -1416,7 +1381,7 @@ namespace eastl
 	{
 		if(internalAllocator() == x.internalAllocator())
 		{
-			SListNodeSpliceAfter((SListNodeBase*)position.mpNode, (SListNodeBase*)i.mpNode);
+			SListNodeSpliceAfter(position.mpNode, i.mpNode);
 
 			#if EASTL_SLIST_SIZE_CACHE
 				mSize++;
@@ -1445,7 +1410,7 @@ namespace eastl
 					x.mSize -= n;
 				#endif
 
-				SListNodeSpliceAfter((SListNodeBase*)position.mpNode, (SListNodeBase*)first.mpNode, (SListNodeBase*)last.mpNode);
+				SListNodeSpliceAfter(position.mpNode, first.mpNode, last.mpNode);
 			}
 			else
 			{
@@ -1488,7 +1453,7 @@ namespace eastl
 				// it may come from some other list. We have no choice but to implement an O(n)
 				// brute-force search in our list for 'previous'.
 
-				iterator i((SListNodeBase*)&internalNode());
+				iterator i(&internalNode());
 				iterator iEnd(NULL);
 
 				for( ; i != iEnd; ++i)
@@ -1504,7 +1469,7 @@ namespace eastl
 			#endif
 
 			// Insert the range of [before_first + 1, before_last + 1) after position.
-			SListNodeSpliceAfter((SListNodeBase*)position.mpNode, (SListNodeBase*)before_first.mpNode, (SListNodeBase*)before_last.mpNode);
+			SListNodeSpliceAfter(position.mpNode, before_first.mpNode, before_last.mpNode);
 		}
 	}
 
@@ -1520,7 +1485,7 @@ namespace eastl
 			// it may come from some other list. We have no choice but to implement an O(n)
 			// brute-force search in our list for 'previous'.
 
-			iterator i((SListNodeBase*)&internalNode());
+			iterator i(&internalNode());
 			iterator iEnd(NULL);
 
 			for( ; i != iEnd; ++i)
@@ -1536,7 +1501,7 @@ namespace eastl
 		#endif
 
 		// Insert the element at previous + 1 after position.
-		SListNodeSpliceAfter((SListNodeBase*)position.mpNode, (SListNodeBase*)previous.mpNode, (SListNodeBase*)previous.mpNode->mpNext);
+		SListNodeSpliceAfter(position.mpNode, previous.mpNode, previous.mpNode->mpNext);
 	}
 
 
@@ -1562,7 +1527,7 @@ namespace eastl
 	inline void slist<T, Allocator>::reverse() EA_NOEXCEPT
 	{
 		if(internalNode().mpNext)
-			internalNode().mpNext = static_cast<node_type*>((base_node_type*)SListNodeReverse((SListNodeBase*)internalNode().mpNext));
+			internalNode().mpNext = static_cast<node_type*>((base_node_type*)SListNodeReverse(internalNode().mpNext));
 	}
 
 
@@ -1626,19 +1591,19 @@ namespace eastl
 	void slist<T, Allocator>::DoAssign(InputIterator first, InputIterator last, false_type)
 	{
 		base_node_type* pNodePrev = &internalNode();
-		node_type*      pNode     = static_cast<node_type*>(internalNode().mpNext);
+		base_node_type* pNode     = internalNode().mpNext;
 
 		for(; pNode && (first != last); ++first)
 		{
-			pNode->mValue = *first;
+			static_cast<node_type*>(pNode)->mValue = *first;
 			pNodePrev     = pNode;
-			pNode         = static_cast<node_type*>(pNode->mpNext);
+			pNode         = pNode->mpNext;
 		}
 
 		if(first == last)
-			DoEraseAfter((SListNodeBase*)pNodePrev, NULL);
+			DoEraseAfter(pNodePrev, NULL);
 		else
-			DoInsertAfter((SListNodeBase*)pNodePrev, first, last);
+			DoInsertAfter(pNodePrev, first, last);
 	}
 
 
@@ -1646,19 +1611,19 @@ namespace eastl
 	void slist<T, Allocator>::DoAssignValues(size_type n, const value_type& value)
 	{
 		base_node_type* pNodePrev = &internalNode();
-		node_type*      pNode     = static_cast<node_type*>(internalNode().mpNext);
+		base_node_type* pNode     = internalNode().mpNext;
 
 		for(; pNode && (n > 0); --n)
 		{
-			pNode->mValue = value;
+			static_cast<node_type*>(pNode)->mValue = value;
 			pNodePrev     = pNode;
-			pNode         = static_cast<node_type*>(pNode->mpNext);
+			pNode         = pNode->mpNext;
 		}
 
 		if(n)
-			DoInsertValuesAfter((SListNodeBase*)pNodePrev, n, value);
+			DoInsertValuesAfter(pNodePrev, n, value);
 		else
-			DoEraseAfter((SListNodeBase*)pNodePrev, NULL);
+			DoEraseAfter(pNodePrev, NULL);
 	}
 		
 
@@ -1687,7 +1652,7 @@ namespace eastl
 	{
 		for(; first != last; ++first)
 		{
-			pNode = SListNodeInsertAfter((SListNodeBase*)pNode, (SListNodeBase*)DoCreateNode(*first));
+			pNode = SListNodeInsertAfter(pNode, DoCreateNode(*first));
 			#if EASTL_SLIST_SIZE_CACHE
 				++mSize;
 			#endif
@@ -1702,11 +1667,11 @@ namespace eastl
 	slist<T, Allocator>::DoInsertValueAfter(SListNodeBase* pNode)
 	{
 		#if EASTL_SLIST_SIZE_CACHE
-			pNode = SListNodeInsertAfter((SListNodeBase*)pNode, (SListNodeBase*)DoCreateNode());
+			pNode = SListNodeInsertAfter(pNode, DoCreateNode());
 			++mSize;
 			return static_cast<node_type*>((base_node_type*)pNode);
 		#else
-			return static_cast<node_type*>((base_node_type*)SListNodeInsertAfter((SListNodeBase*)pNode, (SListNodeBase*)DoCreateNode()));
+			return static_cast<node_type*>((base_node_type*)SListNodeInsertAfter(pNode, DoCreateNode()));
 		#endif
 	}
 
@@ -1716,7 +1681,7 @@ namespace eastl
 	inline typename slist<T, Allocator>::node_type*
 	slist<T, Allocator>::DoInsertValueAfter(SListNodeBase* pNode, Args&&... args)
 	{
-		SListNodeBase* pNodeNew = (SListNodeBase*)DoCreateNode(eastl::forward<Args>(args)...);
+		SListNodeBase* pNodeNew = DoCreateNode(eastl::forward<Args>(args)...);
 		pNode = SListNodeInsertAfter(pNode, pNodeNew);
 		#if EASTL_LIST_SIZE_CACHE
 			++mSize; // Increment the size after the node creation because we need to assume an exception can occur in the creation.
@@ -1731,7 +1696,7 @@ namespace eastl
 	{
 		for(size_type i = 0; i < n; ++i)
 		{
-			pNode = SListNodeInsertAfter((SListNodeBase*)pNode, (SListNodeBase*)DoCreateNode(value));
+			pNode = SListNodeInsertAfter(pNode, DoCreateNode(value));
 			#if EASTL_SLIST_SIZE_CACHE
 				++mSize; // We don't do a single mSize += n at the end because an exception may result in only a partial range insertion.
 			#endif

@@ -219,6 +219,10 @@ namespace eastl
 		}
 
 		optional(const optional& other)
+			// This silences the warning about the base class not being explicitly initialised in the copy constructor
+			// We call the default constructor instead of the copy constructor because we're about to stomp the memory
+			// that would be copied
+			: base_type()
 		{
 			engaged = other.engaged;
 
@@ -230,6 +234,8 @@ namespace eastl
 		}
 
 		optional(optional&& other)
+			// See comments above
+			: base_type()
 		{
 			engaged = other.engaged;
 
@@ -683,10 +689,10 @@ namespace eastl
 	template <typename T>
 	struct hash<eastl::optional<T>>
 	{
-		typedef eastl::optional<T> argument_type;
-		typedef size_t result_type;
+		EASTL_REMOVE_AT_2024_APRIL typedef eastl::optional<T> argument_type;
+		EASTL_REMOVE_AT_2024_APRIL typedef size_t result_type;
 
-	    result_type operator()(const argument_type& opt) const EA_NOEXCEPT
+		size_t operator()(const eastl::optional<T>& opt) const EA_NOEXCEPT
 	    {
 		    if (opt)
 			    return eastl::hash<T>()(*opt);

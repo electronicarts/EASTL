@@ -148,6 +148,7 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Bitcast",				TestBitcast);
 
 
+
 	nErrorCount += testSuite.Run();
 
 	nErrorCount += EASTLTest_CheckMemory();

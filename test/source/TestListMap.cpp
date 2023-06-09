@@ -199,12 +199,12 @@ int TestListMap()
 		testStringMap.push_back(eastl::string("hello"), 750);
 		EATEST_VERIFY(testStringMap.size() == 1);
 
-		strIter = testStringMap.find_as("hello", eastl::less_2<eastl::string, const char*>());
+		strIter = testStringMap.find_as("hello", eastl::less<>());
 		EATEST_VERIFY(strIter != testStringMap.end());
 		EATEST_VERIFY(strIter->first == "hello");
 		EATEST_VERIFY(strIter->second == 750);
 
-		strIter = testStringMap.find_as("fake_string", eastl::less_2<eastl::string, const char*>());
+		strIter = testStringMap.find_as("fake_string", eastl::less<>());
 		EATEST_VERIFY(strIter == testStringMap.end());
 		EATEST_VERIFY(testStringMap.validate());
 	}
