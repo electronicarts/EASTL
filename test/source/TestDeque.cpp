@@ -4,6 +4,7 @@
 
 
 #include "EASTLTest.h"
+#include "EASTLTestIterators.h"
 #include <EABase/eabase.h>
 #include <EASTL/deque.h>
 #include <EASTL/list.h>
@@ -13,70 +14,15 @@
 #include <EASTL/unique_ptr.h>
 #include "ConceptImpls.h"
 
-#if !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
-	EA_DISABLE_ALL_VC_WARNINGS()
-	#include <deque>
-	#include <list>
-	#include <vector>
-	#include <algorithm>
-	#include <stdio.h>
-	EA_RESTORE_ALL_VC_WARNINGS()
-#endif
-
 
 using namespace eastl;
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// DequeObject
-// 
-struct DequeObject
-{
-	int mX;                         // Value for the DequeObject.
-	uint32_t mMagicValue;           // 
-	static int sDOCount;            // Count of all current existing DequeObjects.
-	static int sMagicErrorCount;    // Number of magic number mismatch errors.
-
-	DequeObject(int x = 0) : mX(x), mMagicValue(kMagicValue)
-		{ ++sDOCount; }
-
-	DequeObject(const DequeObject& dequeObject) : mX(dequeObject.mX), mMagicValue(kMagicValue)
-		{ ++sDOCount; }
-
-	DequeObject& operator=(const DequeObject& dequeObject)
-	{
-		mX = dequeObject.mX;
-		return *this;
-	}
-
-   ~DequeObject()
-	{
-		if(mMagicValue != kMagicValue)
-			++sMagicErrorCount;
-		mMagicValue = 0;
-		--sDOCount;
-	}
-};
-
-int DequeObject::sDOCount = 0;
-int DequeObject::sMagicErrorCount = 0;
-
-
-bool operator==(const DequeObject& de1, const DequeObject& de2)
-	{ return de1.mX == de2.mX; }
-
-bool operator<(const DequeObject& de1, const DequeObject& de2)
-	{ return de1.mX < de2.mX; }
-///////////////////////////////////////////////////////////////////////////////
 
 
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
 template class eastl::deque<int>;
-template class eastl::deque<DequeObject>;
+template class eastl::deque<TestObject>;
 
 
 // Test compiler issue that appeared in VS2012 relating to deque::kAlignment.
@@ -95,157 +41,81 @@ struct StructWithContainerOfStructs
 
 
 ///////////////////////////////////////////////////////////////////////////////
-typedef eastl::deque<int>                            EIntDeque;
-typedef eastl::deque<int, EASTLAllocatorType, 1>     EIntDeque1;
-typedef eastl::deque<int, EASTLAllocatorType, 32768> EIntDeque32768;
+typedef eastl::deque<int>                            IntDeque;
+typedef eastl::deque<int, EASTLAllocatorType, 1>     IntDeque1;
+typedef eastl::deque<int, EASTLAllocatorType, 32768> IntDeque32768;
 
 
-typedef eastl::deque<DequeObject>                            EDODeque;
-typedef eastl::deque<DequeObject, EASTLAllocatorType, 1>     EDODeque1;
-typedef eastl::deque<DequeObject, EASTLAllocatorType, 32768> EDODeque32768;
-
-
-#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-	typedef std::deque<int>         SIntDeque;
-	typedef std::deque<DequeObject> SDODeque;
-#endif
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-
-
-template <typename D1, typename D2>
-int CompareDeques(const D1& d1, const D2& d2, const char* pTestName)
-{
-	int nErrorCount = 0;
-
-	// Compare emptiness.
-	VERIFY(d1.empty() == d2.empty());
-
-	// Compare sizes.
-	const size_t nSize1 = d1.size();
-	const size_t nSize2 = d2.size();
-
-	VERIFY(nSize1 == nSize2);
-	if(nSize1 != nSize2)
-		EASTLTest_Printf("%s: Deque size difference: %u, %u", pTestName, (unsigned)nSize1, (unsigned)nSize2);
-
-	// Compare values.
-	if(nSize1 == nSize2)
-	{
-		// Test operator[]
-		for(unsigned i = 0; i < nSize1; i++)
-		{
-			const typename D1::value_type& t1 = d1[i];
-			const typename D2::value_type& t2 = d2[i];
-
-			VERIFY(t1 == t2);
-			if(!(t1 == t2))
-			{
-				EASTLTest_Printf("%s: Deque index difference at index %d", pTestName, i);
-				break;  
-			}
-		}
-
-		// Test iteration
-		typename D1::const_iterator it1 = d1.begin();
-		typename D2::const_iterator it2 = d2.begin();
-
-		for(unsigned j = 0; it1 != d1.end(); ++it1, ++it2, ++j)
-		{
-			const typename D1::value_type& t1 = *it1;
-			const typename D2::value_type& t2 = *it2;
-
-			VERIFY(t1 == t2);
-			if(!(t1 == t2))
-			{
-				EASTLTest_Printf("%s: Deque iterator difference at index %d", pTestName, j);
-				break;  
-			}
-		}
-
-		// Test reverse iteration
-		typename D1::const_reverse_iterator itr1 = d1.rbegin();
-		typename D2::const_reverse_iterator itr2 = d2.rbegin();
-
-		for(typename D1::size_type j = d1.size() - 1; itr1 != d1.rend(); ++itr1, ++itr2, --j)
-		{
-			const typename D1::value_type& t1 = *itr1;
-			const typename D2::value_type& t2 = *itr2;
-
-			VERIFY(t1 == t2);
-			if(!(t1 == t2))
-			{
-				EASTLTest_Printf("%s: Deque reverse iterator difference at index %u", pTestName, (unsigned)j);
-				break;  
-			}
-		}
-	}
-
-	return nErrorCount;
-}
-
-
+typedef eastl::deque<TestObject>                            TestObjectDeque;
+typedef eastl::deque<TestObject, EASTLAllocatorType, 1>     TestObjectDeque1;
+typedef eastl::deque<TestObject, EASTLAllocatorType, 32768> TestObjectDeque32768;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestDequeConstruction
 //
-template <typename D1, typename D2>
+template <typename Deque>
 int TestDequeConstruction()
 {
+	typedef typename Deque::value_type value_type;
+	typedef typename Deque::size_type size_type;
+
 	int nErrorCount = 0;
 
 	{
-		D1 d1A;
-		D2 d2A;
-		nErrorCount += CompareDeques(d1A, d2A, "Deque ctor");
+		// constructors
+		Deque dA;
+		EATEST_VERIFY(dA.size() == 0);
 
-		D1 d1B((typename D1::size_type)0);
-		D2 d2B((typename D2::size_type)0);
-		nErrorCount += CompareDeques(d1B, d2B, "Deque ctor");
+		Deque dB((size_type)0);
+		EATEST_VERIFY(dB.size() == 0);
 
-		D1 d1C(1000);
-		D2 d2C(1000);
-		nErrorCount += CompareDeques(d1C, d2C, "Deque ctor");
+		Deque dC(1000);
+		EATEST_VERIFY(dC.size() == 1000);
+		for (const auto& elem : dC)
+			EATEST_VERIFY(elem == value_type());
 
-		D1 d1D(2000, 1);
-		D2 d2D(2000, 1);
-		nErrorCount += CompareDeques(d1D, d2D, "Deque ctor");
+		Deque dD(2000, value_type(1));
+		EATEST_VERIFY(dD.size() == 2000);
+		for (const auto& elem : dD)
+			EATEST_VERIFY(elem == value_type(1));
 
-		D1 d1E(d1C);
-		D2 d2E(d2C);
-		nErrorCount += CompareDeques(d1E, d2E, "Deque ctor");
+		Deque dE(dC);
+		EATEST_VERIFY(dE.size() == 1000);
+		for (const auto& elem : dE)
+			EATEST_VERIFY(elem == value_type());
 
-		D1 d1F(d1C.begin(), d1C.end());
-		D2 d2F(d2C.begin(), d2C.end());
-		nErrorCount += CompareDeques(d1F, d2F, "Deque ctor");
+		Deque dF(dC.begin(), dC.end());
+		EATEST_VERIFY(dF.size() == 1000);
+		for (const auto& elem : dF)
+			EATEST_VERIFY(elem == value_type());
 
 		// operator=
-		d1E = d1D;
-		d2E = d2D;
-		nErrorCount += CompareDeques(d1D, d2D, "Deque operator=");
-		nErrorCount += CompareDeques(d1E, d2E, "Deque operator=");
+		dE = dD;
+		EATEST_VERIFY(dE.size() == 2000);
+		for (const auto& elem : dE)
+			EATEST_VERIFY(elem == value_type(1));
 
 		// swap
-		d1E.swap(d1D);
-		d2E.swap(d2D);
-		nErrorCount += CompareDeques(d1D, d2D, "Deque swap");
-		nErrorCount += CompareDeques(d1E, d2E, "Deque swap");
+		dE.swap(dC);
+		EATEST_VERIFY(dE.size() == 1000);
+		for (const auto& elem : dE)
+			EATEST_VERIFY(elem == value_type());
+		EATEST_VERIFY(dC.size() == 2000);
+		for (const auto& elem : dC)
+			EATEST_VERIFY(elem == value_type(1));
 
 		// clear
-		d1A.clear();
-		d2A.clear();
-		nErrorCount += CompareDeques(d1A, d2A, "Deque clear");
+		dA.clear();
+		EATEST_VERIFY(dA.size() == 0);
+		EATEST_VERIFY(dA.empty());
 
-		d1B.clear();
-		d2B.clear();
-		nErrorCount += CompareDeques(d1B, d2B, "Deque clear");
+		dB.clear();
+		EATEST_VERIFY(dB.size() == 0);
+		EATEST_VERIFY(dB.empty());
 	}
 
-	VERIFY(DequeObject::sDOCount == 0);
-	VERIFY(DequeObject::sMagicErrorCount == 0);
+	EATEST_VERIFY(TestObject::sTOCount == 0);
+	EATEST_VERIFY(TestObject::sMagicErrorCount == 0);
 
 	return nErrorCount;
 }
@@ -255,200 +125,186 @@ int TestDequeConstruction()
 ///////////////////////////////////////////////////////////////////////////////
 // TestDequeSimpleMutation
 //
-template <typename D1, typename D2>
+template <typename Deque>
 int TestDequeSimpleMutation()
 {
+	typedef typename Deque::value_type value_type;
+	typedef typename Deque::size_type size_type;
+
 	int nErrorCount = 0;
 
 	{
-		D1 d1;
-		D2 d2;
+		Deque d;
 
 		// push_back(value_type&)
 		// front
 		// back
-		for(int i = 0; i < 1000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			d1.push_back(i);
-			d2.push_back(i);
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.push_back(value_type(i));
+			EATEST_VERIFY(d.back() == value_type(i));
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque push_back(value_type&)");
+		EATEST_VERIFY(d.front() == value_type(0));
 
 		// operator[]
 		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
+		for (unsigned int i = 0; i < d.size(); ++i)
 		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
+			EATEST_VERIFY(d[i] == value_type(i));
+			EATEST_VERIFY(d.at(i) == value_type(i));
 		}
+	}
+
+	{
+		Deque d;
 
 		// push_back()
-		for(int i = 0; i < 1000; i++)
+		// this overloads is an EASTL extension.
+		for (int i = 0; i < 1000; i++)
 		{
-			d1.push_back(int());
-			typename D2::value_type& ref = d2.push_back();       // d2 here must be the EASTL version.
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
-			VERIFY(&ref       == &d2.back()); 
+			value_type& ref = d.push_back();
+			EATEST_VERIFY(&ref == &d.back());
+			EATEST_VERIFY(d.back() == value_type());
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque push_back()");
+		EATEST_VERIFY(d.front() == value_type());
 
 		// operator[]
 		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
+		for (size_type i = 0, iEnd = d.size(); i < iEnd; i++)
 		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
+			EATEST_VERIFY(d[i] == value_type());
+			EATEST_VERIFY(d.at(i) == value_type());
 		}
+	}
+
+	{
+		Deque d;
 
 		// push_front(value_type&)
-		for(int i = 0; i < 1000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			d1.push_front(i);
-			d2.push_front(i);
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.push_front(value_type(i));
+			EATEST_VERIFY(d.front() == value_type(i));
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque push_front(value_type&)");
 
 		// operator[]
 		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
+		EATEST_VERIFY(d.size() == 1000);
+		for (int i = 0; i < 1000; i++)
 		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
+			EATEST_VERIFY(d[1000 - 1 - i] == value_type(i));
+			EATEST_VERIFY(d.at(1000 - 1 - i) == value_type(i));
 		}
+	}
+
+	{
+		Deque d;
 
 		// push_front()
-		for(int i = 0; i < 1000; i++)
+		// this overloads is an EASTL extension.
+		for (int i = 0; i < 1000; i++)
 		{
-			d1.push_front(int());
-			typename D2::value_type& ref = d2.push_front();
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
-			VERIFY(&ref == &d2.front()); 
+			value_type& ref = d.push_front();
+			EATEST_VERIFY(&ref == &d.front());
+			EATEST_VERIFY(d.front() == value_type());
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque push_front()");
+		EATEST_VERIFY(d.back() == value_type());
 
 		// operator[]
 		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
+		for (size_type i = 0, iEnd = d.size(); i < iEnd; i++)
 		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
+			EATEST_VERIFY(d[i] == value_type());
+			EATEST_VERIFY(d.at(i) == value_type());
 		}
 
 		// pop_back()
-		for(int i = 0; i < 500; i++)
+		for (int i = 0; i < 500; i++)
 		{
-			d1.pop_back();
-			d2.pop_back();
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.pop_back();
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque pop_back()");
-
-		// operator[]
-		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
-		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
-		}
+		EATEST_VERIFY(d.size() == 500);
+		for (const auto& elem : d)
+			EATEST_VERIFY(elem == value_type());
 
 		// pop_front()
-		for(int i = 0; i < 500; i++)
+		for (int i = 0; i < 500; i++)
 		{
-			d1.pop_front();
-			d2.pop_front();
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.pop_front();
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque pop_front()");
+		EATEST_VERIFY(d.size() == 0);
+	}
 
-		// operator[]
-		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
-		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
-		}
+	{
+		Deque d;
 
 		// resize(value_type&)
 		for(int i = 0; i < 500; i++)
 		{
-			d1.resize(d1.size() + 3, i);
-			d2.resize(d2.size() + 3, i);
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.resize(d.size() + 3, value_type(i));
+			EATEST_VERIFY(d.size() == size_type((i + 1) * 3));
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque resize(value_type&)");
+		
+		EATEST_VERIFY(d.size() == 1500);
 
-		// operator[]
-		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
+		for (int i = 0; i < 500; ++i)
 		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
+			EATEST_VERIFY(d[i * 3 + 0] == value_type(i));
+			EATEST_VERIFY(d[i * 3 + 1] == value_type(i));
+			EATEST_VERIFY(d[i * 3 + 2] == value_type(i));
 		}
 
 		// resize()
 		for(int i = 0; i < 500; i++)
 		{
-			d1.resize(d1.size() - 2);
-			d2.resize(d2.size() - 2);
-			VERIFY(d1.front() == d2.front()); 
-			VERIFY(d1.back()  == d2.back()); 
+			d.resize(d.size() - 2);
+			EATEST_VERIFY(d.size() == size_type(1500 - ((i + 1) * 2)));
 		}
-		nErrorCount += CompareDeques(d1, d2, "Deque resize()");
-
-		// operator[]
-		// at()
-		for(typename D1::size_type i = 0, iEnd = d1.size(); i < iEnd; i++)
-		{
-			VERIFY(d1[(unsigned)i]    == d2[(unsigned)i]); 
-			VERIFY(d1.at((unsigned)i) == d2.at((unsigned)i)); 
-		}
+		EATEST_VERIFY(d.size() == 500);
 	}
 
-	VERIFY(DequeObject::sDOCount == 0);
-	VERIFY(DequeObject::sMagicErrorCount == 0);
+	EATEST_VERIFY(TestObject::sTOCount == 0);
+	EATEST_VERIFY(TestObject::sMagicErrorCount == 0);
 
 	return nErrorCount;
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // TestDequeComplexMutation
 //
-template <typename D1, typename D2>
+template <typename Deque>
 int TestDequeComplexMutation()
 {
+	typedef typename Deque::value_type value_type;
+	typedef typename Deque::size_type size_type;
+	typedef typename Deque::iterator iterator;
+	typedef typename Deque::reverse_iterator reverse_iterator;
+
 	int nErrorCount = 0;
 
 	{
-		D1 d1;
-		D2 d2;
+		Deque d;
 
 
 		//////////////////////////////////////////////////////////////////
 		// void assign(size_type n, const value_type& value);
 		//////////////////////////////////////////////////////////////////
 
-		d1.assign(100, 1);
-		d2.assign(100, 1);
-		nErrorCount += CompareDeques(d1, d2, "Deque assign(size_type n, const value_type& value)");
+		d.assign(100, 1);
+		EATEST_VERIFY(d.size() == 100);
+		for (const auto& elem : d)
+			EATEST_VERIFY(elem == value_type(1));
 
-		d1.assign(50, 2);
-		d2.assign(50, 2);
-		nErrorCount += CompareDeques(d1, d2, "Deque assign(size_type n, const value_type& value)");
+		d.assign(50, 2);
+		EATEST_VERIFY(d.size() == 50);
+		for (const auto& elem : d)
+			EATEST_VERIFY(elem == value_type(2));
 
-		d1.assign(150, 2);
-		d2.assign(150, 2);
-		nErrorCount += CompareDeques(d1, d2, "Deque assign(size_type n, const value_type& value)");
+		d.assign(150, 3);
+		EATEST_VERIFY(d.size() == 150);
+		for (const auto& elem : d)
+			EATEST_VERIFY(elem == value_type(3));
 
 
 
@@ -457,161 +313,151 @@ int TestDequeComplexMutation()
 		// void assign(InputIterator first, InputIterator last);
 		//////////////////////////////////////////////////////////////////
 
-		std::list<int> intList1;
+		list<value_type> valueList;
 		for(int i = 0; i < 100; i++)
-			intList1.push_back(i);
+			valueList.push_back(value_type(i));
 
-		eastl::list<int> intList2;
-		for(int i = 0; i < 100; i++)
-			intList2.push_back(i);
-
-		d1.assign(intList1.begin(), intList1.end());
-		d2.assign(intList2.begin(), intList2.end());
-		nErrorCount += CompareDeques(d1, d2, "Deque assign(InputIterator first, InputIterator last)");
-
+		d.assign(valueList.begin(), valueList.end());
+		EATEST_VERIFY(d.size() == 100);
+		for (int i = 0; i < 100; i++)
+			EATEST_VERIFY(d[i] == value_type(i));
 
 
 		//////////////////////////////////////////////////////////////////
 		// iterator insert(iterator position, const value_type& value);
 		//////////////////////////////////////////////////////////////////
 
-		d1.insert(d1.begin(), d1[1]);
-		d2.insert(d2.begin(), d2[1]);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, const value_type& value)");
+		iterator itFirstInserted = d.insert(d.begin(), d[1]);
+		EATEST_VERIFY(itFirstInserted == d.begin());
+		EATEST_VERIFY(d[0] == value_type(1));
 
-		d1.insert(d1.end(), d1[d1.size() - 2]);
-		d2.insert(d2.end(), d2[d2.size() - 2]);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, const value_type& value)");
+		value_type value = d[d.size() - 2];
+		itFirstInserted = d.insert(d.end(), value);
+		EATEST_VERIFY(itFirstInserted == d.end() - 1);
+		EATEST_VERIFY(*(d.end() - 1) == value);
 
-		typename D1::iterator itD1NearBegin = d1.begin();
-		typename D2::iterator itD2NearBegin = d2.begin();
+		iterator itNearBegin = d.begin();
+		advance(itNearBegin, 1);
 
-		std::advance(itD1NearBegin, 1);
-		eastl::advance(itD2NearBegin, 1);
+		value = d[3];
+		itFirstInserted = d.insert(itNearBegin, value);
+		EATEST_VERIFY(itFirstInserted == d.begin() + 1);
+		EATEST_VERIFY(d[1] == value);
 
-		d1.insert(itD1NearBegin, d1[3]);
-		d2.insert(itD2NearBegin, d2[3]);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, const value_type& value)");
+		iterator itNearEnd = d.begin();
+		advance(itNearEnd, d.size() - 1);
 
-		typename D1::iterator itD1NearEnd = d1.begin();
-		typename D2::iterator itD2NearEnd = d2.begin();
-
-		std::advance(itD1NearEnd, d1.size() - 1);
-		eastl::advance(itD2NearEnd, d2.size() - 1);
-
-		d1.insert(itD1NearEnd, d1[d1.size() - 2]);
-		d2.insert(itD2NearEnd, d2[d2.size() - 2]);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, const value_type& value)");
+		value = d[d.size() - 2];
+		itFirstInserted = d.insert(itNearEnd, value);
+		EATEST_VERIFY(itFirstInserted == d.end() - 2);
+		EATEST_VERIFY(d[d.size() - 2] == value);
 
 
 		//////////////////////////////////////////////////////////////////
-		// void insert(iterator position, size_type n, const value_type& value);
+		// iterator insert(iterator position, size_type n, const value_type& value);
 		//////////////////////////////////////////////////////////////////
 
-		d1.insert(d1.begin(), d1.size() * 2, 3); // Insert a large number of items at the front.
-		d2.insert(d2.begin(), d2.size() * 2, 3);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, size_type n, const value_type& value)");
+		itFirstInserted = d.insert(d.begin(), d.size() * 2, value_type(3)); // Insert a large number of items at the front.
+		EATEST_VERIFY(itFirstInserted == d.begin());
+		for (size_type i = 0; i < d.size() / 2; i++)
+			EATEST_VERIFY(d[i] == value_type(3));
 
-		d1.insert(d1.end(), d1.size() * 2, 3); // Insert a large number of items at the end.
-		d2.insert(d2.end(), d2.size() * 2, 3);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, size_type n, const value_type& value)");
+		itFirstInserted = d.insert(d.end(), d.size() * 2, value_type(3)); // Insert a large number of items at the end.
+		EATEST_VERIFY(itFirstInserted == d.begin() + (d.size() / 3));
+		for (size_type i = 0; i < d.size() / 2; i++)
+			EATEST_VERIFY(d[d.size() - 1 - i] == value_type(3));
 
-		itD1NearBegin = d1.begin();
-		itD2NearBegin = d2.begin();
+		itNearBegin = d.begin();
+		advance(itNearBegin, 3);
 
-		std::advance(itD1NearBegin, 3);
-		eastl::advance(itD2NearBegin, 3);
+		itFirstInserted = d.insert(itNearBegin, 3, value_type(4));
+		EATEST_VERIFY(itFirstInserted == d.begin() + 3);
+		EATEST_VERIFY(VerifySequence(d.begin() + 3, d.begin() + 6, { value_type(4), value_type(4), value_type(4) }, "insert()"));
 
-		d1.insert(itD1NearBegin, 3, 4);
-		d2.insert(itD2NearBegin, 3, 4);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, size_type n, const value_type& value)");
+		itNearEnd = d.begin();
+		advance(itNearEnd, d.size() - 1);
 
-		itD1NearEnd = d1.begin();
-		itD2NearEnd = d2.begin();
+		itFirstInserted = d.insert(d.end(), 5, value_type(6));
+		EATEST_VERIFY(itFirstInserted == d.end() - 5);
+		EATEST_VERIFY(VerifySequence(d.end() - 5, d.end(), { value_type(6), value_type(6), value_type(6), value_type(6), value_type(6) }, "insert()"));
 
-		std::advance(itD1NearEnd, d1.size() - 1);
-		eastl::advance(itD2NearEnd, d2.size() - 1);
 
-		d1.insert(d1.end(), 5, 6);
-		d2.insert(d2.end(), 5, 6);
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, size_type n, const value_type& value)");
-
+		EATEST_VERIFY(d.begin() == d.insert(d.begin(), 0, value_type(9)));
 
 
 		//////////////////////////////////////////////////////////////////
 		// template <typename InputIterator>
-		// void insert(iterator position, InputIterator first, InputIterator last);
+		// iterator insert(iterator position, InputIterator first, InputIterator last);
 		//////////////////////////////////////////////////////////////////
 
-		itD1NearBegin = d1.begin();
-		itD2NearBegin = d2.begin();
+		itNearBegin = d.begin();
+		advance(itNearBegin, 3);
 
-		std::advance(itD1NearBegin, 3);
-		eastl::advance(itD2NearBegin, 3);
+		itFirstInserted = d.insert(itNearBegin, valueList.begin(), valueList.end());
+		for (int i = 0; i < 100; ++i, ++itFirstInserted)
+			EATEST_VERIFY(*itFirstInserted == value_type(i));
 
-		d1.insert(itD1NearBegin, intList1.begin(), intList1.end());
-		d2.insert(itD2NearBegin, intList2.begin(), intList2.end());
-		nErrorCount += CompareDeques(d1, d2, "Deque insert(iterator position, InputIterator first, InputIterator last)");
+		value_type x(0);
+		itFirstInserted = d.insert(d.begin(), InputIterator<value_type>(&x), InputIterator<value_type>(EndSentinel(), value_type(5)));
+		EATEST_VERIFY(itFirstInserted == d.begin());
+		EATEST_VERIFY(VerifySequence(d.begin(), d.begin() + 5, { value_type(0), value_type(1), value_type(2), value_type(3), value_type(4) }, "deque::insert() with input iterators"));
 
+		auto inputEnd = InputIterator<value_type>(EndSentinel(), value_type(5));
+		EATEST_VERIFY(d.begin() == d.insert(d.begin(), inputEnd, inputEnd));
 
+		value_type* itContiguous = nullptr;
+		EATEST_VERIFY(d.begin() == d.insert(d.begin(), itContiguous, itContiguous));
 
 		//////////////////////////////////////////////////////////////////
 		// iterator erase(iterator position);
 		//////////////////////////////////////////////////////////////////
 
-		itD1NearBegin = d1.begin();
-		itD2NearBegin = d2.begin();
+		itNearBegin = d.begin();
 
-		while(itD1NearBegin != d1.end()) // Run a loop whereby we erase every third element.
+		size_type sizeBeforeErase = d.size();
+		while(itNearBegin != d.end()) // Run a loop whereby we erase every fourth element.
 		{
-			for(int i = 0; (i < 3) && (itD1NearBegin != d1.end()); ++i)
+			for(int i = 0; (i < 3) && (itNearBegin != d.end()); ++i)
 			{
-				++itD1NearBegin;
-				++itD2NearBegin;
+				++itNearBegin;
 			}
 
-			if(itD1NearBegin != d1.end())
+			if(itNearBegin != d.end())
 			{
-				itD1NearBegin = d1.erase(itD1NearBegin);
-				itD2NearBegin = d2.erase(itD2NearBegin);
-				nErrorCount += CompareDeques(d1, d2, "Deque erase(iterator position)");
+				itNearBegin = d.erase(itNearBegin);
 			}
 		}
+		EATEST_VERIFY(sizeBeforeErase - (sizeBeforeErase / 4) == d.size());
 
 
 		//////////////////////////////////////////////////////////////////
 		// iterator erase(iterator first, iterator last);
 		//////////////////////////////////////////////////////////////////
 
-		itD1NearBegin = d1.begin();
-		itD2NearBegin = d2.begin();
+		itNearBegin = d.begin();
 
-		while(itD1NearBegin != d1.end()) // Run a loop whereby we erase spans of elements.
+		while(itNearBegin != d.end()) // Run a loop whereby we erase spans of elements.
 		{
-			typename D1::iterator itD1Saved = itD1NearBegin;
-			typename D2::iterator itD2Saved = itD2NearBegin;
+			iterator itSaved = itNearBegin;
 
-			for(int i = 0; (i < 11) && (itD1NearBegin != d1.end()); ++i)
+			size_type numElementsToErase = 0;
+			for(; (numElementsToErase < 22) && (itNearBegin != d.end()); ++numElementsToErase)
 			{
-				++itD1NearBegin;
-				++itD2NearBegin;
+				++itNearBegin;
 			}
 
-			if(itD1NearBegin != d1.end())
+			if(itNearBegin != d.end())
 			{
-				itD1NearBegin = d1.erase(itD1Saved, itD1NearBegin);
-				itD2NearBegin = d2.erase(itD2Saved, itD2NearBegin);
-				nErrorCount += CompareDeques(d1, d2, "Deque erase(iterator position)");
+				size_type numElementsPrior = d.size();
+				itNearBegin = d.erase(itSaved, itNearBegin);
+				EATEST_VERIFY(d.size() == numElementsPrior - numElementsToErase);
 			}
 
-			for(int i = 0; (i < 17) && (itD1NearBegin != d1.end()); ++i)
+			for(int i = 0; (i < 17) && (itNearBegin != d.end()); ++i)
 			{
-				++itD1NearBegin;
-				++itD2NearBegin;
+				++itNearBegin;
 			}
-
 		}
-
 	}
 
 
@@ -621,99 +467,93 @@ int TestDequeComplexMutation()
 		// reverse_iterator erase(reverse_iterator first, reverse_iterator last);
 		//////////////////////////////////////////////////////////////////
 
-		//D1 d1Erase;
-		D2 d2Erase;
+		Deque dErase;
 
 		for(int i = 0; i < 20; i++)
 		{
-			typename D2::value_type val(i);
-			d2Erase.push_back(val);
+			value_type val(i);
+			dErase.push_back(val);
 		}
-		VERIFY((d2Erase.size() == 20) && (d2Erase[0] == 0) && (d2Erase[19] == 19));
+		EATEST_VERIFY((dErase.size() == 20) && (dErase[0] == value_type(0)) && (dErase[19] == value_type(19)));
 
 
-		typename D2::reverse_iterator r2A = d2Erase.rbegin();
-		typename D2::reverse_iterator r2B = r2A + 3;
-		d2Erase.erase(r2A, r2B);
-		VERIFY((d2Erase.size() == 17));
-		VERIFY((d2Erase[0] == 0));
-		VERIFY((d2Erase[16] == 16));
+		reverse_iterator rA = dErase.rbegin();
+		reverse_iterator rB = rA + 3;
+		dErase.erase(rA, rB);
+		EATEST_VERIFY((dErase.size() == 17));
+		EATEST_VERIFY((dErase[0] == value_type(0)));
+		EATEST_VERIFY((dErase[16] == value_type(16)));
 
 
-		r2B = d2Erase.rend();
-		r2A = r2B - 3;
-		d2Erase.erase(r2A, r2B);
-		VERIFY((d2Erase.size() == 14));
-		VERIFY((d2Erase[0] == 3));
-		VERIFY((d2Erase[13] == 16));
+		rB = dErase.rend();
+		rA = rB - 3;
+		dErase.erase(rA, rB);
+		EATEST_VERIFY((dErase.size() == 14));
+		EATEST_VERIFY((dErase[0] == value_type(3)));
+		EATEST_VERIFY((dErase[13] == value_type(16)));
 
 
-		r2B = d2Erase.rend() - 1;
-		d2Erase.erase(r2B);
-		VERIFY((d2Erase.size() == 13));
-		VERIFY((d2Erase[0] == 4));
-		VERIFY((d2Erase[12] == 16));
+		rB = dErase.rend() - 1;
+		dErase.erase(rB);
+		EATEST_VERIFY((dErase.size() == 13));
+		EATEST_VERIFY((dErase[0] == value_type(4)));
+		EATEST_VERIFY((dErase[12] == value_type(16)));
 
 
-		r2B = d2Erase.rbegin();
-		d2Erase.erase(r2B);
-		VERIFY((d2Erase.size() == 12));
-		VERIFY((d2Erase[0] == 4));
-		VERIFY((d2Erase[11] == 15));
+		rB = dErase.rbegin();
+		dErase.erase(rB);
+		EATEST_VERIFY((dErase.size() == 12));
+		EATEST_VERIFY((dErase[0] == value_type(4)));
+		EATEST_VERIFY((dErase[11] == value_type(15)));
 
 
-		r2A = d2Erase.rbegin();
-		r2B = d2Erase.rend();
-		d2Erase.erase(r2A, r2B);
-		VERIFY(d2Erase.size() == 0);
+		rA = dErase.rbegin();
+		rB = dErase.rend();
+		dErase.erase(rA, rB);
+		EATEST_VERIFY(dErase.size() == 0);
 	}
 
 
-	VERIFY(DequeObject::sDOCount == 0);
-	VERIFY(DequeObject::sMagicErrorCount == 0);
+	EATEST_VERIFY(TestObject::sTOCount == 0);
+	EATEST_VERIFY(TestObject::sMagicErrorCount == 0);
 
 	return nErrorCount;
 }
-
-#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
 
 int TestDeque()
 {
 	int nErrorCount = 0;
 
-	#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-		{   // Test construction
-			nErrorCount += TestDequeConstruction<SIntDeque, EIntDeque>();
-			nErrorCount += TestDequeConstruction<SIntDeque, EIntDeque1>();
-			nErrorCount += TestDequeConstruction<SIntDeque, EIntDeque32768>();
+	{   // Test construction
+		nErrorCount += TestDequeConstruction<IntDeque>();
+		nErrorCount += TestDequeConstruction<IntDeque1>();
+		nErrorCount += TestDequeConstruction<IntDeque32768>();
 
-			nErrorCount += TestDequeConstruction<SIntDeque, EDODeque>();
-			nErrorCount += TestDequeConstruction<SIntDeque, EDODeque1>();
-			nErrorCount += TestDequeConstruction<SIntDeque, EDODeque32768>();
-		}
+		nErrorCount += TestDequeConstruction<TestObjectDeque>();
+		nErrorCount += TestDequeConstruction<TestObjectDeque1>();
+		nErrorCount += TestDequeConstruction<TestObjectDeque32768>();
+	}
 
+	{   // Test simple mutating functionality.
+		nErrorCount += TestDequeSimpleMutation<IntDeque>();
+		nErrorCount += TestDequeSimpleMutation<IntDeque1>();
+		nErrorCount += TestDequeSimpleMutation<IntDeque32768>();
 
-		{   // Test simple mutating functionality.
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EIntDeque>();
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EIntDeque1>();
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EIntDeque32768>();
+		nErrorCount += TestDequeSimpleMutation<TestObjectDeque>();
+		nErrorCount += TestDequeSimpleMutation<TestObjectDeque1>();
+		nErrorCount += TestDequeSimpleMutation<TestObjectDeque32768>();
+	}
 
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EDODeque>();
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EDODeque1>();
-			nErrorCount += TestDequeSimpleMutation<SIntDeque, EDODeque32768>();
-		}
+	{   // Test complex mutating functionality.
+		nErrorCount += TestDequeComplexMutation<IntDeque>();
+		nErrorCount += TestDequeComplexMutation<IntDeque1>();
+		nErrorCount += TestDequeComplexMutation<IntDeque32768>();
 
-		{   // Test complex mutating functionality.
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque>();
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque1>();
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EIntDeque32768>();
-
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque>();
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque1>();
-			nErrorCount += TestDequeComplexMutation<SIntDeque, EDODeque32768>();
-		}
-	#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
+		nErrorCount += TestDequeComplexMutation<TestObjectDeque>();
+		nErrorCount += TestDequeComplexMutation<TestObjectDeque1>();
+		nErrorCount += TestDequeComplexMutation<TestObjectDeque32768>();
+	}
 
 	// test deque support of move-only types
 	{
@@ -801,16 +641,16 @@ int TestDeque()
 		// iterator insert(iterator position, std::initializer_list<value_type> ilist);
 		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
 			eastl::deque<int> intDeque = { 0, 1, 2 };
-			EATEST_VERIFY(VerifySequence(intDeque.begin(), intDeque.end(), int(), "deque std::initializer_list", 0, 1, 2, -1));
+			EATEST_VERIFY(VerifySequence(intDeque, { 0, 1, 2 }, "deque std::initializer_list"));
 
 			intDeque = { 13, 14, 15 };
-			EATEST_VERIFY(VerifySequence(intDeque.begin(), intDeque.end(), int(), "deque std::initializer_list", 13, 14, 15, -1));
+			EATEST_VERIFY(VerifySequence(intDeque, { 13, 14, 15 }, "deque std::initializer_list"));
 
 			intDeque.assign({ 16, 17, 18 });
-			EATEST_VERIFY(VerifySequence(intDeque.begin(), intDeque.end(), int(), "deque std::initializer_list", 16, 17, 18, -1));
+			EATEST_VERIFY(VerifySequence(intDeque, { 16, 17, 18 }, "deque std::initializer_list"));
 
 			eastl::deque<int>::iterator it = intDeque.insert(intDeque.begin(), { 14, 15 });
-			EATEST_VERIFY(VerifySequence(intDeque.begin(), intDeque.end(), int(), "deque std::initializer_list", 14, 15, 16, 17, 18, -1));
+			EATEST_VERIFY(VerifySequence(intDeque, { 14, 15, 16, 17, 18 }, "deque std::initializer_list"));
 			EATEST_VERIFY(*it == 14);
 		#endif
 	}
@@ -917,13 +757,13 @@ int TestDeque()
 
 
 	{   // Regression of kDequeSubarraySize calculations
-		VERIFY(EIntDeque::kSubarraySize      >= 4);
-		VERIFY(EIntDeque1::kSubarraySize     == 1);
-		VERIFY(EIntDeque32768::kSubarraySize == 32768);
+		EATEST_VERIFY(IntDeque::kSubarraySize      >= 4);
+		EATEST_VERIFY(IntDeque1::kSubarraySize     == 1);
+		EATEST_VERIFY(IntDeque32768::kSubarraySize == 32768);
 
-		VERIFY(EDODeque::kSubarraySize       >= 2);
-		VERIFY(EDODeque1::kSubarraySize      == 1);
-		VERIFY(EDODeque32768::kSubarraySize  == 32768);
+		EATEST_VERIFY(TestObjectDeque::kSubarraySize       >= 2);
+		EATEST_VERIFY(TestObjectDeque1::kSubarraySize      == 1);
+		EATEST_VERIFY(TestObjectDeque32768::kSubarraySize  == 32768);
 	}
 
 
@@ -987,32 +827,21 @@ int TestDeque()
 		allocVolumeX2 = maX.mAllocVolume; // Save the allocated volume after 1001 iterations.
 		allocVolumeY2 = maY.mAllocVolume;
 
-		VERIFY((allocVolumeX1 == allocVolumeX2) && (allocVolumeX2 < 350));  // Test that the volume has not changed and is below some nominal value.
-		VERIFY((allocVolumeY1 == allocVolumeY2) && (allocVolumeY2 < 350));  // This value is somewhat arbitrary and slightly hardware dependent (e.g. 32 vs. 64 bit). I bumped it up from 300 to 350 when Linux64 showed it to be 320, which was ~still OK.
-	}
-
-
-	{ // Regression of user error report for the case of deque<const type>.
-		eastl::vector<int> ctorValues;
-
-		for(int v = 0; v < 10; v++)
-			ctorValues.push_back(v);
-
-		eastl::deque<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
-		eastl::deque<const int>       testInt(ctorValues.begin(), ctorValues.end());
+		EATEST_VERIFY((allocVolumeX1 == allocVolumeX2) && (allocVolumeX2 < 350));  // Test that the volume has not changed and is below some nominal value.
+		EATEST_VERIFY((allocVolumeY1 == allocVolumeY2) && (allocVolumeY2 < 350));  // This value is somewhat arbitrary and slightly hardware dependent (e.g. 32 vs. 64 bit). I bumped it up from 300 to 350 when Linux64 showed it to be 320, which was ~still OK.
 	}
 
 
 	{ // Regression to verify that const deque works.
 		const eastl::deque<int> constIntDeque1;
-		VERIFY(constIntDeque1.empty());
+		EATEST_VERIFY(constIntDeque1.empty());
 
 		int intArray[3] = { 37, 38, 39 };
 		const eastl::deque<int> constIntDeque2(intArray, intArray + 3);
-		VERIFY(constIntDeque2.size() == 3);
+		EATEST_VERIFY(constIntDeque2.size() == 3);
 
 		const eastl::deque<int> constIntDeque3(4, 37);
-		VERIFY(constIntDeque3.size() == 4);
+		EATEST_VERIFY(constIntDeque3.size() == 4);
 
 		const eastl::deque<int> constIntDeque4;
 		const eastl::deque<int> constIntDeque5 = constIntDeque4;
@@ -1025,7 +854,7 @@ int TestDeque()
 
 		auto prev = d.get_allocator().getActiveAllocationSize();
 		d.shrink_to_fit();
-		VERIFY(d.get_allocator().getActiveAllocationSize() < prev);
+		EATEST_VERIFY(d.get_allocator().getActiveAllocationSize() < prev);
 	}
 
 	{
@@ -1043,7 +872,12 @@ int TestDeque()
 			};
 			EA_RESTORE_VC_WARNING()
 
+			EASTL_INTERNAL_DISABLE_DEPRECATED() // 'eastl::has_trivial_relocate<TestDeque::a>': was declared deprecated
 			static_assert(eastl::has_trivial_relocate<a>::value == false, "failure");
+			EASTL_INTERNAL_RESTORE_DEPRECATED()
+			static_assert(eastl::is_trivial<a>::value == false, "failure");
+			static_assert(eastl::is_trivially_constructible<a>::value == false, "failure");
+			static_assert(eastl::is_trivially_copyable<a>::value == false, "failure");
 
 			eastl::deque<a> d;
 
@@ -1054,7 +888,7 @@ int TestDeque()
 			d.erase(d.begin() + 1);
 		}
 	#ifndef EASTL_OPENSOURCE
-		VERIFY(gEASTLTest_AllocationCount == prevAllocCount);
+		EATEST_VERIFY(gEASTLTest_AllocationCount == prevAllocCount);
 	#endif
 	}
 
@@ -1064,32 +898,54 @@ int TestDeque()
 			eastl::deque<int> d = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 			auto numErased = eastl::erase(d, 2);
-			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 7, 8, 9}));
-		    VERIFY(numErased == 1);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 7, 8, 9}));
+		    EATEST_VERIFY(numErased == 1);
 
 			numErased = eastl::erase(d, 7);
-			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8, 9}));
-		    VERIFY(numErased == 1);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8, 9}));
+		    EATEST_VERIFY(numErased == 1);
 
 			numErased = eastl::erase(d, 9);
-			VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8}));
-		    VERIFY(numErased == 1);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 4, 5, 6, 8}));
+		    EATEST_VERIFY(numErased == 1);
 
 			numErased = eastl::erase(d, 5);
-			VERIFY((d == eastl::deque<int>{1, 3, 4, 6, 8}));
-		    VERIFY(numErased == 1);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 4, 6, 8}));
+		    EATEST_VERIFY(numErased == 1);
 
 			numErased = eastl::erase(d, 3);
-			VERIFY((d == eastl::deque<int>{1, 4, 6, 8}));
-		    VERIFY(numErased == 1);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 4, 6, 8}));
+		    EATEST_VERIFY(numErased == 1);
 		}
 
 		{
 			eastl::deque<int> d = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 			auto numErased = eastl::erase_if(d, [](auto i) { return i % 2 == 0; });
-			VERIFY((d == eastl::deque<int>{1, 3, 5, 7, 9}));
-		    VERIFY(numErased == 4);
+			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 5, 7, 9}));
+		    EATEST_VERIFY(numErased == 4);
 		}
+	}
+
+	{
+		eastl::deque<TriviallyCopyableWithCopy> d1;
+		eastl::deque<TriviallyCopyableWithCopy> d2{d1};
+	}
+
+	{
+		eastl::deque<TriviallyCopyableWithMove> d1;
+		eastl::deque<TriviallyCopyableWithMove> d2{ eastl::move(d1) };
+	}
+
+	{
+		// unusual type - not well supported: eastl containers implicitly assume that ctor and operator= are both defined.
+		eastl::deque<TriviallyCopyableWithCopyCtor> d1;
+		eastl::deque<TriviallyCopyableWithCopyCtor> d2{ d1 };
+	}
+
+	{
+		// unusual type - not well supported: eastl containers implicitly assume that ctor and operator= are both defined.
+		eastl::deque<TriviallyCopyableWithMoveCtor> d1;
+		eastl::deque<TriviallyCopyableWithMoveCtor> d2{ eastl::move(d1) };
 	}
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
@@ -1100,21 +956,21 @@ int TestDeque()
 	    eastl::deque<int> d3 = {1, 2, 3, 4, 5};
 	    eastl::deque<int> d4 = {10};
 
-	    VERIFY(d1 != d2);
-	    VERIFY(d1 < d2);
-	    VERIFY(d1 != d3);
-	    VERIFY(d1 > d3);
-	    VERIFY(d4 > d1);
-	    VERIFY(d4 > d2);
-	    VERIFY(d4 > d3);
+		EATEST_VERIFY(d1 != d2);
+		EATEST_VERIFY(d1 < d2);
+		EATEST_VERIFY(d1 != d3);
+		EATEST_VERIFY(d1 > d3);
+		EATEST_VERIFY(d4 > d1);
+		EATEST_VERIFY(d4 > d2);
+		EATEST_VERIFY(d4 > d3);
 
-	    VERIFY((d1 <=> d2) != 0);
-	    VERIFY((d1 <=> d2) < 0);
-	    VERIFY((d1 <=> d3) != 0);
-	    VERIFY((d1 <=> d3) > 0);
-	    VERIFY((d4 <=> d1) > 0);
-	    VERIFY((d4 <=> d2) > 0);
-	    VERIFY((d4 <=> d3) > 0);
+		EATEST_VERIFY((d1 <=> d2) != 0);
+		EATEST_VERIFY((d1 <=> d2) < 0);
+		EATEST_VERIFY((d1 <=> d3) != 0);
+		EATEST_VERIFY((d1 <=> d3) > 0);
+		EATEST_VERIFY((d4 <=> d1) > 0);
+		EATEST_VERIFY((d4 <=> d2) > 0);
+		EATEST_VERIFY((d4 <=> d3) > 0);
 	}
 #endif
 

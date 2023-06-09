@@ -230,7 +230,8 @@ int TestFixedVector()
 		// Test for potential bug reported Sep. 19, 2006.
 		typedef eastl::fixed_vector<void*, 160, false> FixedVector;
 		FixedVector v;
-		int* p = (int*)(uintptr_t)0;
+		int arr[100] = {};
+		int* p = arr;
 
 		for(int i = 0; i < 100; i++, p++)
 			v.push_back(p);

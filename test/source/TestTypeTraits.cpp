@@ -13,6 +13,8 @@
 
 using namespace eastl;
 
+EASTL_INTERNAL_DISABLE_DEPRECATED() // *: was declared deprecated
+
 
 bool GetType(const true_type&)
 {
@@ -634,6 +636,8 @@ int TestTypeTraits()
 	static_assert(is_bounded_array<int>::value == false,        "is_bounded_array failure");
 	static_assert(is_bounded_array<int[32]>::value == true,        "is_bounded_array failure");
 	static_assert(is_bounded_array<int[]>::value == false,        "is_bounded_array failure");
+	static_assert(is_bounded_array<int[0]>::value == false,		"is_bounded_array failure");
+	static_assert(is_bounded_array<void>::value == false,		"is_bounded_array failure");
 
 	static_assert(is_bounded_array<uint32_t>::value == false,    "is_bounded_array failure");
 	EATEST_VERIFY(GetType(is_bounded_array<uint32_t>()) == false);
@@ -652,12 +656,15 @@ int TestTypeTraits()
 	static_assert(is_unbounded_array<int>::value == false,        "is_unbounded_array failure");
 	static_assert(is_unbounded_array<int[32]>::value == false,        "is_unbounded_array failure");
 	static_assert(is_unbounded_array<int[]>::value == true,        "is_unbounded_array failure");
+	static_assert(is_unbounded_array<int[0]>::value == false,		"is_unbounded_array failure");
+	static_assert(is_unbounded_array<void>::value == false,			"is_unbounded_array failure");
 
 	static_assert(is_unbounded_array<uint32_t>::value == false,    "is_unbounded_array failure");
 	EATEST_VERIFY(GetType(is_unbounded_array<uint32_t>()) == false);
 
 	static_assert(is_unbounded_array<uint32_t*>::value == false,   "is_unbounded_array failure");
 	EATEST_VERIFY(GetType(is_unbounded_array<uint32_t*>()) == false);
+
 
 
 	// is_reference
@@ -1343,12 +1350,14 @@ int TestTypeTraits()
 	static_assert(is_array_of_known_bounds<PodA>::value        == false,  "is_array_of_known_bounds failure");
 	static_assert(is_array_of_known_bounds<int[3]>::value      == true,   "is_array_of_known_bounds failure");
 	static_assert(is_array_of_known_bounds<int[]>::value       == false,  "is_array_of_known_bounds failure");
+	static_assert(is_array_of_known_bounds<int[0]>::value	   == false,  "is_array_of_known_bounds failure");
 
-	static_assert(is_array_of_unknown_bounds<void>::value      == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int>::value       == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_unknown_bounds<PodA>::value      == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int[3]>::value    == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int[]>::value     == true,   "is_array_of_known_bounds failure");
+	static_assert(is_array_of_unknown_bounds<void>::value      == false,  "is_array_of_unknown_bounds failure");
+	static_assert(is_array_of_unknown_bounds<int>::value       == false,  "is_array_of_unknown_bounds failure");
+	static_assert(is_array_of_unknown_bounds<PodA>::value      == false,  "is_array_of_unknown_bounds failure");
+	static_assert(is_array_of_unknown_bounds<int[3]>::value    == false,  "is_array_of_unknown_bounds failure");
+	static_assert(is_array_of_unknown_bounds<int[]>::value     == true,   "is_array_of_unknown_bounds failure");
+	static_assert(is_array_of_unknown_bounds<int[0]>::value	   == false,  "is_array_of_unknown_bounds failure");
 
 
 	// is_trivially_copyable
@@ -2437,3 +2446,5 @@ int TestTypeTraits()
 
 	return nErrorCount;
 }
+
+EASTL_INTERNAL_RESTORE_DEPRECATED() // *: was declared deprecated

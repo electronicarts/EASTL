@@ -95,9 +95,9 @@ namespace eastl
 
 		enum { kMaxSize = nodeCount };
 
+	protected:
 		using base_type::mAllocator;
 
-	protected:
 		node_type** mBucketBuffer[bucketCount + 1]; // '+1' because the hash table needs a null terminating bucket.
 		char        mNodeBuffer[fixed_allocator_type::kBufferSize]; // kBufferSize will take into account alignment requirements.
 
@@ -183,9 +183,9 @@ namespace eastl
 
 		enum { kMaxSize = nodeCount };
 
+	protected:
 		using base_type::mAllocator;
 
-	protected:
 		node_type** mBucketBuffer[bucketCount + 1]; // '+1' because the hash table needs a null terminating bucket.
 		char        mNodeBuffer[fixed_allocator_type::kBufferSize]; // kBufferSize will take into account alignment requirements.
 
@@ -325,7 +325,7 @@ namespace eastl
 	inline fixed_hash_set<Value, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::
 	fixed_hash_set(const this_type& x)
 		: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), x.hash_function(),
-					x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer))
+					x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer))
 	{
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
@@ -346,7 +346,7 @@ namespace eastl
 	template <typename Key, size_t nodeCount, size_t bucketCount, bool bEnableOverflow, typename Hash, typename Predicate, bool bCacheHashCode, typename OverflowAllocator>
 	inline fixed_hash_set<Key, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::fixed_hash_set(this_type&& x)
 	: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), x.hash_function(),
-					x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer))
+					x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer))
 	{
 		// This implementation is the same as above. If we could rely on using C++11 delegating constructor support then we could just call that here.
 		mAllocator.copy_overflow_allocator(x.mAllocator);
@@ -368,7 +368,7 @@ namespace eastl
 	template <typename Key, size_t nodeCount, size_t bucketCount, bool bEnableOverflow, typename Hash, typename Predicate, bool bCacheHashCode, typename OverflowAllocator>
 	inline fixed_hash_set<Key, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::fixed_hash_set(this_type&& x, const overflow_allocator_type& overflowAllocator)
 		: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), 
-					x.hash_function(), x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer, overflowAllocator))
+					x.hash_function(), x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer, overflowAllocator))
 	{
 		// This implementation is the same as above. If we could rely on using C++11 delegating constructor support then we could just call that here.
 		mAllocator.copy_overflow_allocator(x.mAllocator);
@@ -598,7 +598,7 @@ namespace eastl
 	inline fixed_hash_multiset<Value, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::
 	fixed_hash_multiset(const this_type& x)
 		: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), x.hash_function(), 
-					x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer))
+					x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer))
 	{
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
@@ -619,7 +619,7 @@ namespace eastl
 	template <typename Key, size_t nodeCount, size_t bucketCount, bool bEnableOverflow, typename Hash, typename Predicate, bool bCacheHashCode, typename OverflowAllocator>
 	inline fixed_hash_multiset<Key, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::fixed_hash_multiset(this_type&& x)
 		: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), x.hash_function(),
-						x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer))
+						x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer))
 	{
 		// This implementation is the same as above. If we could rely on using C++11 delegating constructor support then we could just call that here.
 		mAllocator.copy_overflow_allocator(x.mAllocator);
@@ -641,7 +641,7 @@ namespace eastl
 	template <typename Key, size_t nodeCount, size_t bucketCount, bool bEnableOverflow, typename Hash, typename Predicate, bool bCacheHashCode, typename OverflowAllocator>
 	inline fixed_hash_multiset<Key, nodeCount, bucketCount, bEnableOverflow, Hash, Predicate, bCacheHashCode, OverflowAllocator>::fixed_hash_multiset(this_type&& x, const overflow_allocator_type& overflowAllocator)
 		: base_type(prime_rehash_policy::GetPrevBucketCountOnly(bucketCount), 
-					x.hash_function(), x.equal_function(), fixed_allocator_type(NULL, mBucketBuffer, overflowAllocator))
+					x.hash_function(), x.key_eq(), fixed_allocator_type(NULL, mBucketBuffer, overflowAllocator))
 	{
 		// This implementation is the same as above. If we could rely on using C++11 delegating constructor support then we could just call that here.
 		mAllocator.copy_overflow_allocator(x.mAllocator);

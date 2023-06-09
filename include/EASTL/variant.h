@@ -1288,6 +1288,7 @@ namespace eastl
 
 	};
 
+
 	template <typename R>
 	struct visitor_r
 	{
@@ -1310,7 +1311,6 @@ namespace eastl
 						  eastl::get<I>(eastl::forward<Variant>(variant)));
 		}
 	};
-
 	template<> struct visitor_r<const void> : public visitor_r<void> {};
 	template<> struct visitor_r<volatile void> : public visitor_r<void> {};
 	template<> struct visitor_r<const volatile void> : public visitor_r<void> {};
@@ -1366,9 +1366,10 @@ namespace eastl
 		}
 	#endif
 	}
+	EA_RESTORE_VC_WARNING()
 
 	template <typename... Variants>
-	static EA_CONSTEXPR void visit_static_assert_check(Variants&&... variants)
+	static EA_CONSTEXPR void visit_static_assert_check(Variants&&...)
 	{
 		static_assert(sizeof...(Variants) > 0, "`visit` at least one variant instance must be passed as an argument to the visit function");
 
@@ -1376,7 +1377,6 @@ namespace eastl
 		static_assert(conjunction_v<is_same<variant_type, decay_t<Variants>>...>,
 					  "`visit` all variants passed to eastl::visit() must have the same type");
 	}
-	EA_RESTORE_VC_WARNING()
 
 	// visit
 	//

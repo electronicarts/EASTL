@@ -571,16 +571,16 @@ int TestSetSearch()
 		for(i = 0; i < 1000; i++)
 		{
 			TC k = typename T1::key_type(i);
-			it = t1A.find_as(k, eastl::less_2<typename T1::key_type, TC>());
+			it = t1A.find_as(k, eastl::less<>());
 
 			VERIFY(it != t1A.end());
 			VERIFY(*it == k);
 		}
 
-		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less<>());
 		VERIFY(it == t1A.end());
 
-		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less<>());
 		VERIFY(it == t1A.end());
 
 

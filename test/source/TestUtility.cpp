@@ -16,6 +16,10 @@ inline bool operator==(const BasicObject& t1, const BasicObject& t2) { return t1
 
 inline bool operator<(const BasicObject& t1, const BasicObject& t2) { return t1.mX < t2.mX; }
 
+static_assert(eastl::is_trivially_copyable_v<eastl::pair<int, int>>, "EASTL extension, pair is trivially copyable.");
+static_assert(eastl::is_trivially_copyable_v<eastl::pair<float, int>>, "EASTL extension, pair is trivially copyable.");
+static_assert(eastl::is_trivially_copyable_v<eastl::pair<int, float>>, "EASTL extension, pair is trivially copyable.");
+
 ///////////////////////////////////////////////////////////////////////////////
 // TestUtilityPair
 //

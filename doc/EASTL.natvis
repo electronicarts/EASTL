@@ -242,7 +242,7 @@
 <Type Name="eastl::ListIterator&lt;*&gt;">
 	<DisplayString>{*mpNode}</DisplayString>
 	<Expand>
-		<ExpandedItem>mpNode</ExpandedItem>
+		<ExpandedItem>*(eastl::ListNode&lt;$T1&gt;*)mpNode</ExpandedItem>
 	</Expand>
 </Type>
 
@@ -299,7 +299,7 @@
 <Type Name="eastl::SListIterator&lt;*&gt;">
 	<DisplayString>{*mpNode}</DisplayString>
 	<Expand>
-		<ExpandedItem>*mpNode</ExpandedItem>
+		<ExpandedItem>*(eastl::SListNode&lt;$T1&gt;*)mpNode</ExpandedItem>
 	</Expand>
 </Type>
 
@@ -320,9 +320,9 @@
 </Type>
 
 <Type Name="eastl::intrusive_list_iterator&lt;*&gt;">
-	<DisplayString>{*mpNode}</DisplayString>
+	<DisplayString>{*($T1*)mpNode}</DisplayString>
 	<Expand>
-		<ExpandedItem>*mpNode</ExpandedItem>
+		<ExpandedItem>*($T1*)mpNode</ExpandedItem>
 	</Expand>
 </Type>
 
@@ -399,9 +399,9 @@
 </Type>
 
 <Type Name="eastl::rbtree_iterator&lt;*&gt;">
-	<DisplayString>{*mpNode}</DisplayString>
+	<DisplayString>{*(eastl::rbtree_node&lt;$T1&gt;*)mpNode}</DisplayString>
 	<Expand>
-		<ExpandedItem>mpNode</ExpandedItem>
+		<Item Name="Node">*(eastl::rbtree_node&lt;$T1&gt;*)mpNode</Item>
 	</Expand>
 </Type>
 
@@ -419,6 +419,30 @@
       <Variable Name="entry" InitialValue ="mpBucketArray[bucketIndex]"/>
       <Loop>
         <Item Condition="entry != nullptr">entry->mValue</Item>
+        <If Condition="entry != nullptr">
+          <Exec>entry = entry->mpNext</Exec>
+        </If>
+        <If Condition="entry == nullptr">
+          <Exec>bucketIndex++</Exec>
+          <Break Condition="bucketIndex == mnBucketCount"/>
+          <Exec>entry = mpBucketArray[bucketIndex]</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
+</Type>
+
+<!-- specifically for hash_map (instead of base implementation hashtable),
+     show the key as name, and value as value, instead of index -> pair<key, value> -->
+<Type Name="eastl::hash_map&lt;*&gt;">
+  <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
+  <DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
+  <Expand>
+    <CustomListItems ExcludeView="detailed">
+      <Variable Name="bucketIndex" InitialValue="0"/>
+      <Variable Name="entry" InitialValue ="mpBucketArray[bucketIndex]"/>
+      <Loop>
+        <Item Name="[{entry->mValue.first}]" Condition="entry != nullptr">entry->mValue.second</Item>
         <If Condition="entry != nullptr">
           <Exec>entry = entry->mpNext</Exec>
         </If>
@@ -568,6 +592,12 @@
 </Type>
 
 
+<Type Name="eastl::atomic&lt;*&gt;">
+	<DisplayString>{mAtomic}</DisplayString>
+	<Expand>
+		<ExpandedItem>mAtomic</ExpandedItem>
+	</Expand>
+</Type>
 
 <Type Name="eastl::atomic_flag">
 	<DisplayString>{mFlag.mAtomic}</DisplayString>

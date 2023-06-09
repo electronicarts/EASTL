@@ -87,12 +87,12 @@ namespace eastl
 		typedef typename base_type::const_iterator  const_iterator;
 
 		using base_type::npos;
-		using base_type::mPair;
-		using base_type::AllocateSelf;
-		using base_type::internalLayout;
 		using base_type::get_allocator;
 
 	private:
+		using base_type::mPair;
+		using base_type::AllocateSelf;
+		using base_type::internalLayout;
 
 		void SetInternalHeapLayout(value_type* pBeginPtr, size_type nSize, size_type nCap)
 		{

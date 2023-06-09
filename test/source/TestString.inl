@@ -266,6 +266,48 @@ int TEST_STRING_NAME()
 			VERIFY(str == LITERAL("Hello, 42 42 42 42 42 42 42 42 42"));
 			VERIFY(str.validate());
 		}
+
+		{
+			constexpr eastl_ssize_t signedValue = -42;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %" EASTL_PRIdSIZE), signedValue);
+			VERIFY(str == LITERAL("Hello, -42"));
+			VERIFY(str.validate());
+		}
+
+		{
+			constexpr eastl_ssize_t signedValue = -42;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %" EASTL_PRIiSIZE), signedValue);
+			VERIFY(str == LITERAL("Hello, -42"));
+			VERIFY(str.validate());
+		}
+
+		{
+			constexpr eastl_size_t unsignedValue = 42u;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, 0%" EASTL_PRIoSIZE), unsignedValue);
+			VERIFY(str == LITERAL("Hello, 052"));
+			VERIFY(str.validate());
+		}
+
+		{
+			constexpr eastl_size_t unsignedValue = 42u;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, %" EASTL_PRIuSIZE), unsignedValue);
+			VERIFY(str == LITERAL("Hello, 42"));
+			VERIFY(str.validate());
+		}
+
+		{
+			constexpr eastl_size_t unsignedValue = 42u;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, 0x%" EASTL_PRIxSIZE), unsignedValue);
+			VERIFY(str == LITERAL("Hello, 0x2a"));
+			VERIFY(str.validate());
+		}
+
+		{
+			constexpr eastl_size_t unsignedValue = 42u;
+			StringType str(typename StringType::CtorSprintf(), LITERAL("Hello, 0x%" EASTL_PRIXSIZE), unsignedValue);
+			VERIFY(str == LITERAL("Hello, 0x2A"));
+			VERIFY(str.validate());
+		}
 	#endif
 	}
 

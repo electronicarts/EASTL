@@ -993,7 +993,7 @@ int TestHash()
 			else
 				EATEST_VERIFY(it == hashSet.end());
 
-			it = hashSet.find_as(pString, hash<const char*>(), equal_to_2<string, const char*>());
+			it = hashSet.find_as(pString, hash<const char*>(), equal_to<>());
 			if(i < kCount)
 				EATEST_VERIFY(it != hashSet.end());
 			else
@@ -1383,11 +1383,8 @@ int TestHash()
 		{
 			Key() {}
 			Key(Key&&) {}
-			Key(const Key&&) {}
-			bool operator==(const Key&) const { return true; }
-
-		private:
 			Key(const Key&) {}
+			bool operator==(const Key&) const { return true; }
 		};
 		EA_RESTORE_VC_WARNING()
 

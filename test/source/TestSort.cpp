@@ -177,21 +177,7 @@ namespace eastl
 				return x;
 			}
 		};
-
-		struct TestNoLessOperator
-		{
-			int i {};
-		};
 	} // namespace Internal
-
-	template <>
-	struct less<Internal::TestNoLessOperator>
-	{
-		bool operator()(const Internal::TestNoLessOperator& lhs, const Internal::TestNoLessOperator& rhs) const noexcept
-		{
-			return lhs.i < rhs.i;
-		}
-	};
 
 } // namespace eastl
 
@@ -814,7 +800,7 @@ int TestSort()
 	}
 
 	{
-		// Test checking that deque sorting can compile.
+		// EATEST_VERIFY deque sorting can compile.
 		deque<int>  intDeque;
 		vector<int> intVector;
 
@@ -822,25 +808,6 @@ int TestSort()
 		stable_sort(intVector.begin(), intVector.end());
 	}
 
-	{
-		// Test checking that sorting containers having elements of a type without an operator< compiles correctly
-
-		vector<TestNoLessOperator> noLessVector;
-
-		stable_sort(noLessVector.begin(), noLessVector.end());
-		bubble_sort(noLessVector.begin(), noLessVector.end());
-		shaker_sort(noLessVector.begin(), noLessVector.end());
-		insertion_sort(noLessVector.begin(), noLessVector.end());
-		selection_sort(noLessVector.begin(), noLessVector.end());
-		shell_sort(noLessVector.begin(), noLessVector.end());
-		comb_sort(noLessVector.begin(), noLessVector.end());
-		heap_sort(noLessVector.begin(), noLessVector.end());
-		merge_sort(noLessVector.begin(), noLessVector.end(), *get_default_allocator(nullptr));
-		quick_sort(noLessVector.begin(), noLessVector.end());
-
-		vector<TestNoLessOperator> buffer;
-		tim_sort_buffer(noLessVector.begin(), noLessVector.end(), buffer.data());
-}
 
 	{
 		// Test sorting of a container of pointers to objects as opposed to a container of objects themselves.

@@ -75,12 +75,18 @@ namespace eastl
 		typedef Reference                                   reference;
 		typedef EASTL_ITC_NS::bidirectional_iterator_tag    iterator_category;
 
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+	private:
+		base_node_type* mpNode;
+#else
 	public:
 		node_type* mpNode;
+#endif
 
 	public:
 		list_map_iterator();
 		list_map_iterator(const base_node_type* pNode);
+		// Note: this isn't always a copy constructor, iterator is not always equal to this_type
 		list_map_iterator(const iterator& x);
 
 		reference operator*() const;
@@ -92,6 +98,32 @@ namespace eastl
 		this_type& operator--();
 		this_type  operator--(int);
 
+	private:
+		// This is a temp helper function for the deprecation.
+		// It should be removed when the deprecation window ends.
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+		base_node_type* toInternalNodeType(base_node_type* node) { return node; }
+#else
+		node_type* toInternalNodeType(base_node_type* node) { return static_cast<node_type*>(node); }
+#endif
+
+		template<class U, class PtrA, class RefA, class PtrB, class RefB>
+		friend bool operator==(const list_map_iterator<U, PtrA, RefA>&, const list_map_iterator<U, PtrB, RefB>&);
+
+		template<class U, class PtrA, class RefA, class PtrB, class RefB>
+		friend bool operator!=(const list_map_iterator<U, PtrA, RefA>&, const list_map_iterator<U, PtrB, RefB>&);
+
+		template<class U, class PtrA, class RefA>
+		friend bool operator!=(const list_map_iterator<U, PtrA, RefA>&, const list_map_iterator<U, PtrA, RefA>&);
+
+		// list_map uses mpNode
+		template <typename Key, typename U, typename Compare, typename Allocator>
+		friend class list_map;
+
+		// for the "copy" constructor, which uses non-const iterator even in the
+		// const_iterator case.
+		friend iterator;
+		friend const_iterator;
 	}; // list_map_iterator
 
 
@@ -396,7 +428,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline list_map_iterator<T, Pointer, Reference>::list_map_iterator(const base_node_type* pNode)
-		: mpNode(static_cast<node_type*>(const_cast<base_node_type*>(pNode)))
+		: mpNode(toInternalNodeType(const_cast<base_node_type*>(pNode)))
 	{
 		// Empty
 	}
@@ -404,7 +436,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline list_map_iterator<T, Pointer, Reference>::list_map_iterator(const iterator& x)
-		: mpNode(const_cast<node_type*>(x.mpNode))
+		: mpNode(x.mpNode)
 	{
 		// Empty
 	} 
@@ -414,7 +446,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::reference
 	list_map_iterator<T, Pointer, Reference>::operator*() const
 	{
-		return mpNode->mValue;
+		return static_cast<node_type*>(mpNode)->mValue;
 	}
 
 
@@ -422,7 +454,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::pointer
 	list_map_iterator<T, Pointer, Reference>::operator->() const
 	{
-		return &mpNode->mValue;
+		return &static_cast<node_type*>(mpNode)->mValue;
 	}
 
 
@@ -430,7 +462,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::this_type&
 	list_map_iterator<T, Pointer, Reference>::operator++()
 	{
-		mpNode = static_cast<node_type*>(mpNode->mpNext);
+		mpNode = toInternalNodeType(mpNode->mpNext);
 		return *this;
 	}
 
@@ -440,7 +472,7 @@ namespace eastl
 	list_map_iterator<T, Pointer, Reference>::operator++(int)
 	{
 		this_type temp(*this);
-		mpNode = static_cast<node_type*>(mpNode->mpNext);
+		mpNode = toInternalNodeType(mpNode->mpNext);
 		return temp;
 	}
 
@@ -449,7 +481,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::this_type&
 	list_map_iterator<T, Pointer, Reference>::operator--()
 	{
-		mpNode = static_cast<node_type*>(mpNode->mpPrev);
+		mpNode = toInternalNodeType(mpNode->mpPrev);
 		return *this;
 	}
 
@@ -459,7 +491,7 @@ namespace eastl
 	list_map_iterator<T, Pointer, Reference>::operator--(int)
 	{
 		this_type temp(*this);
-		mpNode = static_cast<node_type*>(mpNode->mpPrev);
+		mpNode = toInternalNodeType(mpNode->mpPrev);
 		return temp;
 	}
 

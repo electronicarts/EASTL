@@ -33,6 +33,36 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
+#define EASTL_EMPTY_FUNCTION_QUALIFIER
+
+// https://en.cppreference.com/w/cpp/language/noexcept_spec
+// The noexcept-specification is a part of the function type in C++17 and above, but not before.
+#if defined(EA_COMPILER_CPP17_ENABLED)
+#define EASTL_GENERATE_MEMBER_FUNCTION_NOEXCEPT_VARIANTS(PATTERN, OTHER_QUALIFIER) \
+	PATTERN(OTHER_QUALIFIER EASTL_EMPTY_FUNCTION_QUALIFIER) \
+	PATTERN(OTHER_QUALIFIER noexcept)
+#else
+#define EASTL_GENERATE_MEMBER_FUNCTION_NOEXCEPT_VARIANTS(PATTERN, OTHER_QUALIFIER) \
+	PATTERN(OTHER_QUALIFIER EASTL_EMPTY_FUNCTION_QUALIFIER)
+#endif
+				
+#define EASTL_GENERATE_MEMBER_FUNCTION_REF_VARIANTS(PATTERN, OTHER_QUALIFIER) \
+	EASTL_GENERATE_MEMBER_FUNCTION_NOEXCEPT_VARIANTS(PATTERN, OTHER_QUALIFIER EASTL_EMPTY_FUNCTION_QUALIFIER) \
+	EASTL_GENERATE_MEMBER_FUNCTION_NOEXCEPT_VARIANTS(PATTERN, OTHER_QUALIFIER &) \
+	EASTL_GENERATE_MEMBER_FUNCTION_NOEXCEPT_VARIANTS(PATTERN, OTHER_QUALIFIER &&)
+					
+#define EASTL_GENERATE_MEMBER_FUNCTION_VOLATILE_VARIANTS(PATTERN, OTHER_QUALIFIER) \
+	EASTL_GENERATE_MEMBER_FUNCTION_REF_VARIANTS(PATTERN, OTHER_QUALIFIER EASTL_EMPTY_FUNCTION_QUALIFIER) \
+	EASTL_GENERATE_MEMBER_FUNCTION_REF_VARIANTS(PATTERN, OTHER_QUALIFIER volatile)
+				
+#define EASTL_GENERATE_MEMBER_FUNCTION_CONST_VARIANTS(PATTERN) \
+	EASTL_GENERATE_MEMBER_FUNCTION_VOLATILE_VARIANTS(PATTERN, EASTL_EMPTY_FUNCTION_QUALIFIER) \
+	EASTL_GENERATE_MEMBER_FUNCTION_VOLATILE_VARIANTS(PATTERN, const)
+
+// Helper to generate all combination of qualifiers you can apply to member functions.
+// PATTERN must be a macro that will receive as an argument a possible combination of qualifiers and generate a pattern from it.
+#define EASTL_GENERATE_MEMBER_FUNCTION_VARIANTS(PATTERN) EASTL_GENERATE_MEMBER_FUNCTION_CONST_VARIANTS(PATTERN)
+
 namespace eastl
 {
 	#if EASTL_EXCEPTIONS_ENABLED
@@ -666,8 +696,24 @@ namespace eastl
 			InvokeFuncPtr mInvokeFuncPtr = &DefaultInvoker;
 		};
 
-	} // namespace internal
+		template <class Callable>
+		struct extract_signature_from_callable;
 
+		#define EASTL_EXTRACT_SIGNATURE_PATTERN(QUALIFIERS) \
+			template <typename ReturnType, typename MemberOfType, typename... Args> \
+			struct extract_signature_from_callable<ReturnType (MemberOfType::*)(Args...) QUALIFIERS> \
+			{ \
+				using type = ReturnType(Args...); \
+			};
+
+		EASTL_GENERATE_MEMBER_FUNCTION_VARIANTS(EASTL_EXTRACT_SIGNATURE_PATTERN)
+
+		// Helper
+		template <typename Callable>
+		using extract_signature_from_callable_t = typename extract_signature_from_callable<Callable>::type;
+
+	} // namespace internal
+		
 } // namespace eastl
 
 #endif // EASTL_FUNCTION_DETAIL_H

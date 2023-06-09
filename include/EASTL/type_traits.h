@@ -28,14 +28,6 @@
 //     * Allowing for different logic pathways based on data types.
 //     * Allowing for compile-type assertions about data type expectations.
 //
-// Most of the type traits are automatically detected and implemented by the compiler.
-// However, EASTL allows for the user to explicitly give the compiler hints about
-// type traits that the compiler cannot know, via the EASTL_DECLARE declarations.
-// If the user has a class that is relocatable (i.e. can safely use memcpy to copy values),
-// the user can use the EASTL_DECLARE_TRIVIAL_RELOCATE declaration to tell the compiler
-// that the class can be copied via memcpy. This will automatically significantly speed
-// up some containers and algorithms that use that class.
-//
 // Here is an example of using type traits to tell if a value is a floating point
 // value or not:
 //
@@ -44,11 +36,12 @@
 //        assert(is_floating_point<T>::value);
 //    }
 //
-// Here is an example of declaring a class as relocatable and using it in a vector.
-//
-//    EASTL_DECLARE_TRIVIAL_RELOCATE(Widget); // Usually you put this at the Widget class declaration.
+// In this example, if Widget is trivally copyable.
 //    vector<Widget> wVector;
-//    wVector.erase(wVector.begin());         // This operation will be optimized via using memcpy.
+//    .. add elements ...
+//    wVector.erase(wVector.begin());
+// The vector::erase() operation will optimize the moving of [begin() + 1, end()) to [begin(), end())
+// by using memcpy instead of explicitly calling the copy constructor of each element.
 //
 // The following is a full list of the currently recognized type traits. Most of these
 // are implemented as of this writing, but if there is one that is missing, feel free
@@ -87,7 +80,6 @@
 //    is_trivially_copyable
 //    is_standard_layout
 //    is_pod                                T is a POD type.
-//    is_literal_type
 //    is_empty                              T is an empty class.
 //    is_polymorphic                        T is a polymorphic class.
 //    is_abstract                           T is an abstract class.
@@ -158,7 +150,6 @@
 //    conditional
 //    common_type
 //    underlying_type
-//    result_of
 //
 //    integral_constant
 //    bool_constant
@@ -166,14 +157,8 @@
 //    false_type
 //
 // EASTL extension type traits
-//    identity                              Simply sets T as type.
 //    is_aligned                            Defined as true if the type has alignment requirements greater than default alignment, which is taken to be 8. is_aligned is not found in Boost nor C++11, though alignment_of is.
 //    union_cast                            Allows for easy-to-read casting between types that are unrelated but have binary equivalence. The classic use case is converting between float and int32_t bit representations.
-//    is_array_of_known_bounds
-//    is_array_of_unknown_bounds
-//    add_signed                            Deprecated in favor of make_signed.
-//    add_unsigned                          Deprecated in favor of make_unsigned.
-//    add_reference
 //    yes_type
 //    no_type
 //    is_swappable                          Found in <EASTL/utility.h>
@@ -188,6 +173,12 @@
 //    is_detected_convertible               Check that the type we obtain after expanding some arguments (Args) over a constraint (Op) is convertible to Expected.
 //
 // Deprecated pre-C++11 type traits
+//    add_reference							Deprecated in favor of add_lvalue_reference(_t).
+//    add_signed                            Deprecated in favor of make_signed.
+//    add_unsigned                          Deprecated in favor of make_unsigned.
+//    identity                              Simply sets T as type. Use type_identity(_t) instead.
+//    is_array_of_known_bounds				Deprecated in favor of is_bounded_array.
+//    is_array_of_unknown_bounds			Deprecated in favor of is_unbounded_array.
 //    has_trivial_constructor               The default constructor for T is trivial.
 //    has_trivial_copy                      The copy constructor for T is trivial.
 //    has_trivial_assign                    The assignment operator for T is trivial.
@@ -197,14 +188,9 @@
 //    has_nothrow_assign                    The assignment operator for T has an empty exception specification or can otherwise be deduced never to throw an exception.
 //   *has_trivial_relocate                  T can be moved to a new location via bitwise copy. Note that C++11 rvalue/move functionality supercedes this.
 //
-// * has_trivial_relocate is not found in Boost nor the pre-C++ standard update proposal.
-//   However, it is somewhat useful in pre-C++11 environments (prior to move semantics)
-//   for allowing the generation of optimized object moving operations. It is similar to
-//   the is_pod type trait, but goes further and allows non-pod classes to be categorized
-//   as relocatable. Such categorization is something that no compiler can do, as only
-//   the user can know if it is such. Thus EASTL_DECLARE_TRIVIAL_RELOCATE is provided to
-//   allow the user to give the compiler a hint. However, C++11 rvalue/move functionality
-//   supercedes this and will eventually fully displace it.
+// Deprecated in C++17
+//    is_literal_type						Deprecated: use constexpr if to determine whether an expression is constant evaluated.
+//    result_of								Deprecated: use invoke_result instead.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -344,6 +330,8 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// type_select
 	//
+	// Deprecated in C++17. Use conditional<B, T, F>::type instead.
+	//
 	// This is used to declare a type from one of two type options.
 	// The result is based on the condition type. This has certain uses
 	// in template metaprogramming.
@@ -354,14 +342,14 @@ namespace eastl
 	//    using ChosenType = type_select_t<is_integral_v<SomeType>, ChoiceAType, ChoiceBType>;
 	//
 	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-	struct type_select { typedef ConditionIsTrueType type; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_select { typedef ConditionIsTrueType type; };
 
 	template <typename ConditionIsTrueType, class ConditionIsFalseType>
-	struct type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-		using type_select_t = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
+		using type_select_t EASTL_REMOVE_AT_2024_APRIL = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
 	#endif
 
 
@@ -379,32 +367,40 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 	// type_or
 	//
+	// Deprecated in C++17. Use disjunction<B ...> instead.
+	// Note type_or<bool ...> has boolean non-type template parameters
+	// whereas disjunction<B ...> has type template parameters (most commonly bool_constant<bool>).
+	//
 	// This is a utility class for creating composite type traits.
 	//
 	template <bool b1, bool b2, bool b3 = false, bool b4 = false, bool b5 = false>
-	struct type_or;
+	struct EASTL_REMOVE_AT_2024_APRIL type_or;
 
 	template <bool b1, bool b2, bool b3, bool b4, bool b5>
-	struct type_or { static const bool value = true; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_or { static const bool value = true; };
 
 	template <>
-	struct type_or<false, false, false, false, false> { static const bool value = false; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_or<false, false, false, false, false> { static const bool value = false; };
 
 
 
 	///////////////////////////////////////////////////////////////////////
 	// type_and
 	//
+	// Deprecated in C++17. Use conjunction<B ...> instead.
+	// Note type_and<bool ...> has boolean non-type template parameters
+	// whereas conjunction<B ...> has type template parameters (most commonly bool_constant<bool>).
+	//
 	// This is a utility class for creating composite type traits.
 	//
 	template <bool b1, bool b2, bool b3 = true, bool b4 = true, bool b5 = true>
-	struct type_and;
+	struct EASTL_REMOVE_AT_2024_APRIL type_and;
 
 	template <bool b1, bool b2, bool b3, bool b4, bool b5>
-	struct type_and{ static const bool value = false; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_and{ static const bool value = false; };
 
 	template <>
-	struct type_and<true, true, true, true, true>{ static const bool value = true; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_and<true, true, true, true, true>{ static const bool value = true; };
 
 
 
@@ -414,7 +410,7 @@ namespace eastl
 	// This is a utility class for creating composite type traits.
 	//
 	template <int b1, int b2>
-	struct type_equal{ static const bool value = (b1 == b2); };
+	struct EASTL_REMOVE_AT_2024_APRIL type_equal{ static const bool value = (b1 == b2); };
 
 
 
@@ -424,20 +420,24 @@ namespace eastl
 	// This is a utility class for creating composite type traits.
 	//
 	template <int b1, int b2>
-	struct type_not_equal{ static const bool value = (b1 != b2); };
+	struct EASTL_REMOVE_AT_2024_APRIL type_not_equal{ static const bool value = (b1 != b2); };
 
 
 
 	///////////////////////////////////////////////////////////////////////
 	// type_not
 	//
+	// Deprecated in C++17. Use negation<B> instead.
+	// Note type_not<bool> has a boolean non-type template parameter
+	// whereas negation<B> has a type template parameter (most commonly bool_constant<bool>).
+	//
 	// This is a utility class for creating composite type traits.
 	//
 	template <bool b>
-	struct type_not{ static const bool value = true; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_not{ static const bool value = true; };
 
 	template <>
-	struct type_not<true>{ static const bool value = false; };
+	struct EASTL_REMOVE_AT_2024_APRIL type_not<true>{ static const bool value = false; };
 
 
 
@@ -572,11 +572,11 @@ namespace eastl
 	// backwards compatibility. 
 	//
 	template <typename T>
-	struct identity { using type = T; };
+	struct EASTL_REMOVE_AT_2024_APRIL identity { using type = T; };
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <typename T>
-		using identity_t = typename identity<T>::type;
+		using identity_t EASTL_REMOVE_AT_2024_APRIL = typename identity<T>::type;
 	#endif
 
 
@@ -795,6 +795,8 @@ namespace eastl
 
 	///////////////////////////////////////////////////////////////////////
 	// add_reference
+	// 
+	// Deprecated. Use add_lvalue_reference_t<T> instead.
 	//
 	// Add reference to a type.
 	//
@@ -816,7 +818,7 @@ namespace eastl
 	template <typename T> struct add_reference_impl<T[0]>{ typedef T    type; };
 	#endif
 
-	template <typename T> struct add_reference { typedef typename add_reference_impl<T>::type type; };
+	template <typename T> struct EASTL_REMOVE_AT_2024_APRIL add_reference { typedef typename add_reference_impl<T>::type type; };
 
 
 

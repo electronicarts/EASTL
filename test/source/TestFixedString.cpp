@@ -217,6 +217,50 @@ int TestFixedString()
 		EATEST_VERIFY(sW.capacity() == 63); // 63 because the 64 includes the terminating 0, but capacity() subtracts the terminating 0 usage.
 	}
 
+	{
+		string s("frost");
+		size_t sHash = eastl::hash<string>{}(s);
+
+		// char
+		fixed_string<char, 64> fsc1("frost");
+		fixed_string<char, 64> fsc2("bite");
+		fixed_string<char, 64> fsc3("bite");
+
+		size_t fsc1Hash = eastl::hash<fixed_string<char, 64>>{}(fsc1);
+		size_t fsc2Hash = eastl::hash<fixed_string<char, 64>>{}(fsc2);
+		size_t fsc3Hash = eastl::hash<fixed_string<char, 64>>{}(fsc3);
+
+		EATEST_VERIFY(fsc1Hash == sHash);
+		EATEST_VERIFY(fsc1Hash != fsc2Hash);
+		EATEST_VERIFY(fsc2Hash == fsc3Hash);
+
+		// wchar_t
+		fixed_string<wchar_t, 64> fswc1(L"frost");
+		fixed_string<wchar_t, 64> fswc2(L"bite");
+		fixed_string<wchar_t, 64> fswc3(L"bite");
+
+		size_t fswc1Hash = eastl::hash<fixed_string<wchar_t, 64>>{}(fswc1);
+		size_t fswc2Hash = eastl::hash<fixed_string<wchar_t, 64>>{}(fswc2);
+		size_t fswc3Hash = eastl::hash<fixed_string<wchar_t, 64>>{}(fswc3);
+
+		EATEST_VERIFY(fswc1Hash == sHash);
+		EATEST_VERIFY(fswc1Hash != fswc2Hash);
+		EATEST_VERIFY(fswc2Hash == fswc3Hash);
+
+		// char8_t
+		fixed_string<char8_t, 64> fsc81("frost");
+		fixed_string<char8_t, 64> fsc82("bite");
+		fixed_string<char8_t, 64> fsc83("bite");
+
+		size_t fsc81Hash = eastl::hash<fixed_string<char8_t, 64>>{}(fsc81);
+		size_t fsc82Hash = eastl::hash<fixed_string<char8_t, 64>>{}(fsc82);
+		size_t fsc83Hash = eastl::hash<fixed_string<char8_t, 64>>{}(fsc83);
+
+		EATEST_VERIFY(fsc81Hash == sHash);
+		EATEST_VERIFY(fsc81Hash != fsc82Hash);
+		EATEST_VERIFY(fsc82Hash == fsc83Hash);
+	}
+
 
 	{
 		typedef fixed_string<char8_t, 64, true>  FixedString64;

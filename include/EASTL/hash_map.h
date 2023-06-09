@@ -94,7 +94,7 @@ namespace eastl
 	///
 	/// Example find_as usage (namespaces omitted for brevity):
 	///     hash_map<string, int> hashMap;
-	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
+	///     i = hashMap.find_as("hello", hash<char*>(), equal_to<>());
 	///
 	template <typename Key, typename T, typename Hash = eastl::hash<Key>, typename Predicate = eastl::equal_to<Key>,
 			  typename Allocator = EASTLAllocatorType, bool bCacheHashCode = false>

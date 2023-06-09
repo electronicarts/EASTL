@@ -57,7 +57,7 @@ namespace eastl
 
 	public:
 		// Deprecated, as its name is misleading:
-		bool has_references() const;                  /// Returns true if there is at most one reference (by a smart_ptr) to us.
+		EASTL_REMOVE_AT_2024_APRIL bool has_references() const;	/// Returns true if there is at most one reference (by a smart_ptr) to us.
 	};
 
 

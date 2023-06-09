@@ -17,6 +17,9 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <functional>
 EA_RESTORE_ALL_VC_WARNINGS()
 
+// contains tests for library features that are deprecated
+EASTL_INTERNAL_DISABLE_DEPRECATED() // *: was declared deprecated
+
 namespace
 {
 
@@ -134,6 +137,10 @@ int TestHashHelper(T val)
 
 	return nErrorCount;
 }
+
+// Required to test library functions that require the binary_function interface despite our removal of them from function objects such as eastl::less<T>
+template<typename BinaryFunction, typename Arg1, typename Arg2, typename Result>
+struct binary_function_adaptor : public eastl::binary_function<Arg1, Arg2, Result>, BinaryFunction {};
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestFunctional
@@ -408,10 +415,10 @@ int TestFunctional()
 		TestClass  tc0, tc1, tc2;
 		TestClass* tcArray[3] = { &tc0, &tc1, &tc2 };
 
-		for_each(tcArray, tcArray + 3, mem_fun(&TestClass::Increment));
+		for_each(tcArray, tcArray + 3, mem_fn(&TestClass::Increment));
 		EATEST_VERIFY((tc0.mX == 38) && (tc1.mX == 38) && (tc2.mX == 38));
 
-		for_each(tcArray, tcArray + 3, mem_fun(&TestClass::IncrementConst));
+		for_each(tcArray, tcArray + 3, mem_fn(&TestClass::IncrementConst));
 		EATEST_VERIFY((tc0.mX == 39) && (tc1.mX == 39) && (tc2.mX == 39));
 	}
 
@@ -423,11 +430,11 @@ int TestFunctional()
 		int        intArray1[3] = { -1,  0,  2 };
 		int        intArray2[3] = { -9, -9, -9 };
 
-		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fun(&TestClass::MultiplyBy));
+		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fn(&TestClass::MultiplyBy));
 		EATEST_VERIFY((intArray2[0] == -37) && (intArray2[1] == 0) && (intArray2[2] == 74));
 
 		intArray2[0] = intArray2[1] = intArray2[2] = -9;
-		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fun(&TestClass::MultiplyByConst));
+		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fn(&TestClass::MultiplyByConst));
 		EATEST_VERIFY((intArray2[0] == -37) && (intArray2[1] == 0) && (intArray2[2] == 74));
 	}
 
@@ -436,10 +443,10 @@ int TestFunctional()
 		// mem_fun_ref (no argument version)
 		TestClass tcArray[3];
 
-		for_each(tcArray, tcArray + 3, mem_fun_ref(&TestClass::Increment));
+		for_each(tcArray, tcArray + 3, mem_fn(&TestClass::Increment));
 		EATEST_VERIFY((tcArray[0].mX == 38) && (tcArray[1].mX == 38) && (tcArray[2].mX == 38));
 
-		for_each(tcArray, tcArray + 3, mem_fun_ref(&TestClass::IncrementConst));
+		for_each(tcArray, tcArray + 3, mem_fn(&TestClass::IncrementConst));
 		EATEST_VERIFY((tcArray[0].mX == 39) && (tcArray[1].mX == 39) && (tcArray[2].mX == 39));
 	}
 
@@ -450,11 +457,11 @@ int TestFunctional()
 		int       intArray1[3] = { -1,  0,  2 };
 		int       intArray2[3] = { -9, -9, -9 };
 
-		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fun_ref(&TestClass::MultiplyBy));
+		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fn(&TestClass::MultiplyBy));
 		EATEST_VERIFY((intArray2[0] == -37) && (intArray2[1] == 0) && (intArray2[2] == 74));
 
 		intArray2[0] = intArray2[1] = intArray2[2] = -9;
-		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fun_ref(&TestClass::MultiplyByConst));
+		transform(tcArray, tcArray + 3, intArray1, intArray2, mem_fn(&TestClass::MultiplyByConst));
 		EATEST_VERIFY((intArray2[0] == -37) && (intArray2[1] == 0) && (intArray2[2] == 74));
 	}
 
@@ -485,10 +492,10 @@ int TestFunctional()
 		list<int> L;
 
 		eastl::list<int>::iterator in_range =
-			 eastl::find_if(L.begin(), L.end(),
-					 eastl::compose2(eastl::logical_and<bool>(),
-							  eastl::bind2nd(eastl::greater_equal<int>(), 1),
-							  eastl::bind2nd(eastl::less_equal<int>(), 10)));
+			eastl::find_if(L.begin(), L.end(),
+					 eastl::compose2(binary_function_adaptor<eastl::logical_and<bool>, bool, bool, bool>(),
+							  eastl::bind2nd(binary_function_adaptor<eastl::greater_equal<int>, int, int, bool>(), 1),
+							  eastl::bind2nd(binary_function_adaptor<eastl::less_equal<int>, int, int, bool>(), 10)));
 		EATEST_VERIFY(in_range == L.end());
 	}
 
@@ -1095,6 +1102,78 @@ int TestFunctional()
 
 				EATEST_VERIFY(sCtorCount == sDtorCount);
 		}
+
+		#ifdef __cpp_deduction_guides
+		// eastl::function deduction guides
+		{
+			// Function pointer
+			{
+				eastl::function f{TestIntRet};
+				static_assert(eastl::is_same_v<decltype(f), eastl::function<int(int*)>>, "unexpected deduced function type.");
+			}
+
+			// Member function pointer
+			{
+				// No ref-qualifiers
+				{
+					struct CallableType
+					{
+						bool operator()(int*)
+						{
+							return false;
+						}
+					} callable;
+					
+					eastl::function f{callable};
+					static_assert(eastl::is_same_v<decltype(f), eastl::function<bool(int*)>>, "unexpected deduced function type.");
+				}
+				
+				
+				#define CHECK_DEDUCED_TYPE(QUALIFIERS) \
+				{ \
+					struct CallableType \
+					{ \
+						bool operator()(int*) QUALIFIERS \
+						{ \
+							return false; \
+						} \
+					} callable; \
+					eastl::function f{callable}; \
+					static_assert(eastl::is_same_v<decltype(f), eastl::function<bool(int*)>>, "unexpected deduced function type."); \
+				}
+
+				// Some of the following tests are disabled because you cannot create an eastl::function out of a callable with those qualifiers.
+				// The problem isn't due to the deduction guides themselves but the implementation of eastl::function and eastl::invoke_impl.
+				// TODO: as soon as all of this permutations are working, we should be able to use EASTL_GENERATE_MEMBER_FUNCTION_VARIANTS in
+				// function_detail.h to generate all of those.
+				CHECK_DEDUCED_TYPE(const)
+				CHECK_DEDUCED_TYPE(volatile)
+				CHECK_DEDUCED_TYPE(const volatile)
+				// CHECK_RETURN_TYPE(&)
+				CHECK_DEDUCED_TYPE(const&)
+				// CHECK_RETURN_TYPE(volatile&)
+				// CHECK_RETURN_TYPE(const volatile&)
+				// CHECK_RETURN_TYPE(&&)
+				// CHECK_RETURN_TYPE(const&&)
+				// CHECK_RETURN_TYPE(volatile&&)
+				// CHECK_RETURN_TYPE(const volatile&&)
+				CHECK_DEDUCED_TYPE(noexcept)
+				CHECK_DEDUCED_TYPE(const noexcept)
+				CHECK_DEDUCED_TYPE(volatile noexcept)
+				CHECK_DEDUCED_TYPE(const volatile noexcept)
+				// CHECK_RETURN_TYPE(& noexcept)
+				CHECK_DEDUCED_TYPE(const& noexcept)
+				// CHECK_RETURN_TYPE(volatile& noexcept)
+				// CHECK_RETURN_TYPE(const volatile& noexcept)
+				// CHECK_RETURN_TYPE(&& noexcept)
+				// CHECK_RETURN_TYPE(const&& noexcept)
+				// CHECK_RETURN_TYPE(volatile&& noexcept)
+				// CHECK_RETURN_TYPE(const volatile&& noexcept)
+			
+				#undef CHECK_DEDUCED_TYPE
+			}
+		}
+		#endif // __cpp_deduction_guides
 	}
 
 	// Checking _MSC_EXTENSIONS is required because the Microsoft calling convention classifiers are only available when
@@ -1527,3 +1606,5 @@ static_assert(!eastl::is_invocable_r<int, TestCallableRefInvokeResult, void>::va
 static_assert(!eastl::is_invocable_r<void, TestCallableRefInvokeResult, int, int>::value, "incorrect value for is_invocable_r");
 static_assert(eastl::is_invocable_r<void, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
 static_assert(eastl::is_invocable_r<int, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
+
+EASTL_INTERNAL_RESTORE_DEPRECATED()

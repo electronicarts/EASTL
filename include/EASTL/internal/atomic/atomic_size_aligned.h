@@ -11,15 +11,23 @@
 #endif
 
 
-#include "atomic_push_compiler_options.h"
-
-
 namespace eastl
 {
 
 
 namespace internal
 {
+
+
+// 'class' : multiple assignment operators specified
+EA_DISABLE_VC_WARNING(4522);
+
+// misaligned atomic operation may incur significant performance penalty
+// The above warning is emitted in earlier versions of clang incorrectly.
+// All eastl::atomic<T> objects are size aligned.
+// This is static and runtime asserted.
+// Thus we disable this warning.
+EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 
 
 #define EASTL_ATOMIC_SIZE_ALIGNED_STATIC_ASSERT_CMPXCHG_IMPL(funcName)	\
@@ -184,14 +192,14 @@ namespace internal
 		EA_ALIGN(sizeof(T)) mutable T mAtomic;
 	};
 
+EA_RESTORE_VC_WARNING();
+
+EA_RESTORE_CLANG_WARNING();
+
 
 } // namespace internal
 
 
 } // namespace eastl
-
-
-#include "atomic_pop_compiler_options.h"
-
 
 #endif /* EASTL_ATOMIC_INTERNAL_SIZE_ALIGNED_H */

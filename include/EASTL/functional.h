@@ -27,7 +27,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T = void>
-	struct plus : public binary_function<T, T, T>
+	struct plus
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a + b; }
@@ -45,7 +45,7 @@ namespace eastl
 	};
 
 	template <typename T = void>
-	struct minus : public binary_function<T, T, T>
+	struct minus
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a - b; }
@@ -63,7 +63,7 @@ namespace eastl
 	};
 
 	template <typename T = void>
-	struct multiplies : public binary_function<T, T, T>
+	struct multiplies
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a * b; }
@@ -81,7 +81,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct divides : public binary_function<T, T, T>
+    struct divides
     {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a / b; }
@@ -99,7 +99,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct modulus : public binary_function<T, T, T>
+    struct modulus
     {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a % b; }
@@ -117,7 +117,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct negate : public unary_function<T, T>
+    struct negate
     {
 		EA_CPP14_CONSTEXPR T operator()(const T& a) const
 			{ return -a; }
@@ -135,7 +135,7 @@ namespace eastl
 	};
 
 	template <typename T = void>
-	struct equal_to : public binary_function<T, T, bool>
+	struct equal_to
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a == b; }
@@ -159,7 +159,7 @@ namespace eastl
 	}
 
     template <typename T = void>
-    struct not_equal_to : public binary_function<T, T, bool>
+    struct not_equal_to
     {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a != b; }
@@ -201,7 +201,7 @@ namespace eastl
 	/// such as that used in the EAStdC Strcmp function.
 	///
 	template <typename T>
-	struct str_equal_to : public binary_function<T, T, bool>
+	struct str_equal_to
 	{
 		EA_CPP14_CONSTEXPR bool operator()(T a, T b) const
 		{
@@ -215,7 +215,7 @@ namespace eastl
 	};
 
 	template <typename T = void>
-	struct greater : public binary_function<T, T, bool>
+	struct greater
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a > b; }
@@ -260,7 +260,7 @@ namespace eastl
 	/// such as that used in the EAStdC Strcmp function.
 	///
 	template <typename T>
-	struct str_less : public binary_function<T, T, bool>
+	struct str_less
 	{
 		bool operator()(T a, T b) const
 		{
@@ -287,7 +287,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct greater_equal : public binary_function<T, T, bool>
+    struct greater_equal
     {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a >= b; }
@@ -310,7 +310,7 @@ namespace eastl
 	}
 
 	template <typename T = void>
-	struct less_equal : public binary_function<T, T, bool>
+	struct less_equal
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a <= b; }
@@ -333,7 +333,7 @@ namespace eastl
 	}
 
 	template <typename T = void>
-	struct logical_and : public binary_function<T, T, bool>
+	struct logical_and
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a && b; }
@@ -350,7 +350,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct logical_or : public binary_function<T, T, bool>
+    struct logical_or
     {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a || b; }
@@ -367,7 +367,7 @@ namespace eastl
 	};
 
     template <typename T = void>
-    struct logical_not : public unary_function<T, bool>
+    struct logical_not
     {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a) const
 			{ return !a; }
@@ -390,8 +390,9 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 
+	// deprecated. consider using the specialization equal_to<> instead.
 	template <typename T, typename U>
-	struct equal_to_2 : public binary_function<T, U, bool>
+	struct EASTL_REMOVE_AT_2024_APRIL equal_to_2
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a == b; }
@@ -402,7 +403,7 @@ namespace eastl
 	};
 
 	template <typename T, typename U>
-	struct not_equal_to_2 : public binary_function<T, U, bool>
+	struct EASTL_REMOVE_AT_2024_APRIL not_equal_to_2
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a != b; }
@@ -414,7 +415,7 @@ namespace eastl
 
 
 	template <typename T, typename U>
-	struct less_2 : public binary_function<T, U, bool>
+	struct EASTL_REMOVE_AT_2024_APRIL less_2
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a < b; }
@@ -424,11 +425,12 @@ namespace eastl
 			{ return b < a; }
 	};
 
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
 
 	/// unary_negate
 	///
 	template <typename Predicate>
-	class unary_negate : public unary_function<typename Predicate::argument_type, bool>
+	class EASTL_REMOVE_AT_2024_APRIL unary_negate
 	{
 		protected:
 			Predicate mPredicate;
@@ -440,7 +442,7 @@ namespace eastl
 	};
 
 	template <typename Predicate>
-	inline EA_CPP14_CONSTEXPR unary_negate<Predicate> not1(const Predicate& predicate)
+	EASTL_REMOVE_AT_2024_APRIL inline EA_CPP14_CONSTEXPR unary_negate<Predicate> not1(const Predicate& predicate)
 		{ return unary_negate<Predicate>(predicate); }
 
 
@@ -448,7 +450,7 @@ namespace eastl
 	/// binary_negate
 	///
 	template <typename Predicate>
-	class binary_negate : public binary_function<typename Predicate::first_argument_type, typename Predicate::second_argument_type, bool>
+	class EASTL_REMOVE_AT_2024_APRIL binary_negate
 	{
 		protected:
 			Predicate mPredicate;
@@ -460,7 +462,7 @@ namespace eastl
 	};
 
 	template <typename Predicate>
-	inline EA_CPP14_CONSTEXPR binary_negate<Predicate> not2(const Predicate& predicate)
+	EASTL_REMOVE_AT_2024_APRIL inline EA_CPP14_CONSTEXPR binary_negate<Predicate> not2(const Predicate& predicate)
 		{ return binary_negate<Predicate>(predicate); }
 
 
@@ -468,7 +470,7 @@ namespace eastl
 	/// unary_compose
 	///
 	template<typename Operation1, typename Operation2>
-	struct unary_compose : public unary_function<typename Operation2::argument_type, typename Operation1::result_type>
+	struct EASTL_REMOVE_AT_2024_APRIL unary_compose
 	{
 	protected:
 		Operation1 op1;
@@ -486,17 +488,16 @@ namespace eastl
 	};
 
 	template<typename Operation1,typename Operation2>
-	inline unary_compose<Operation1,Operation2>
+	EASTL_REMOVE_AT_2024_APRIL inline unary_compose<Operation1,Operation2>
 	compose1(const Operation1& op1, const Operation2& op2)
 	{
 		return unary_compose<Operation1, Operation2>(op1,op2);
 	}
 
-
 	/// binary_compose
 	///
 	template <class Operation1, class Operation2, class Operation3>
-	class binary_compose : public unary_function<typename Operation2::argument_type, typename Operation1::result_type> 
+	class EASTL_REMOVE_AT_2024_APRIL binary_compose
 	{
 	protected:
 		Operation1 op1;
@@ -526,7 +527,7 @@ namespace eastl
 
 
 	template <class Operation1, class Operation2, class Operation3>
-	inline binary_compose<Operation1, Operation2, Operation3>
+	EASTL_REMOVE_AT_2024_APRIL inline binary_compose<Operation1, Operation2, Operation3>
 	compose2(const Operation1& op1, const Operation2& op2, const Operation3& op3)
 	{
 		return binary_compose<Operation1, Operation2, Operation3>(op1, op2, op3);
@@ -550,7 +551,8 @@ namespace eastl
 	///     random_shuffle(pArrayBegin, pArrayEnd, randInstance);
 	///
 	template <typename Arg, typename Result>
-	class pointer_to_unary_function : public unary_function<Arg, Result>
+	class EASTL_REMOVE_AT_2024_APRIL pointer_to_unary_function
+		: public unary_function<Arg, Result>
 	{
 	protected:
 		Result (*mpFunction)(Arg);
@@ -576,8 +578,8 @@ namespace eastl
 	///    transform(pIntArrayBegin, pIntArrayEnd, pIntArrayBegin, ptr_fun(factorial));
 	///
 	template <typename Arg, typename Result>
-	inline pointer_to_unary_function<Arg, Result>
-	ptr_fun(Result (*pFunction)(Arg))
+	EASTL_REMOVE_AT_2024_APRIL inline pointer_to_unary_function<Arg, Result>
+		ptr_fun(Result (*pFunction)(Arg))
 		{ return pointer_to_unary_function<Arg, Result>(pFunction); }
 
 
@@ -595,7 +597,8 @@ namespace eastl
 	/// work in many cases where the system requires a function object.
 	///
 	template <typename Arg1, typename Arg2, typename Result>
-	class pointer_to_binary_function : public binary_function<Arg1, Arg2, Result>
+	class EASTL_REMOVE_AT_2024_APRIL pointer_to_binary_function
+		: public binary_function<Arg1, Arg2, Result>
 	{
 	protected:
 		Result (*mpFunction)(Arg1, Arg2);
@@ -619,7 +622,7 @@ namespace eastl
 	///    transform(pIntArray1Begin, pIntArray1End, pIntArray2Begin, pIntArray1Begin, ptr_fun(multiply));
 	///
 	template <typename Arg1, typename Arg2, typename Result>
-	inline pointer_to_binary_function<Arg1, Arg2, Result>
+	EASTL_REMOVE_AT_2024_APRIL inline pointer_to_binary_function<Arg1, Arg2, Result>
 	ptr_fun(Result (*pFunction)(Arg1, Arg2))
 		{ return pointer_to_binary_function<Arg1, Arg2, Result>(pFunction); }
 
@@ -647,7 +650,8 @@ namespace eastl
 	/// Member function with no arguments.
 	///
 	template <typename Result, typename T> 
-	class mem_fun_t : public unary_function<T*, Result>
+	class EASTL_REMOVE_AT_2024_APRIL mem_fun_t
+		: public unary_function<T*, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)();
@@ -673,7 +677,8 @@ namespace eastl
 	/// Member function with one argument.
 	///
 	template <typename Result, typename T, typename Argument>
-	class mem_fun1_t : public binary_function<T*, Argument, Result>
+	class EASTL_REMOVE_AT_2024_APRIL mem_fun1_t
+		: public binary_function<T*, Argument, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)(Argument);
@@ -702,7 +707,8 @@ namespace eastl
 	/// The C++ standard is in error and this has been recognized by the defect group.
 	///
 	template <typename Result, typename T>
-	class const_mem_fun_t : public unary_function<const T*, Result>
+	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun_t
+		: public unary_function<const T*, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)() const;
@@ -731,7 +737,8 @@ namespace eastl
 	/// The C++ standard is in error and this has been recognized by the defect group.
 	///
 	template <typename Result, typename T, typename Argument>
-	class const_mem_fun1_t : public binary_function<const T*, Argument, Result>
+	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun1_t
+		: public binary_function<const T*, Argument, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)(Argument) const;
@@ -764,28 +771,28 @@ namespace eastl
 	/// Note: using conventional inlining here to avoid issues on GCC/Linux
 	///
 	template <typename Result, typename T>
-	inline mem_fun_t<Result, T>
+	EASTL_REMOVE_AT_2024_APRIL inline mem_fun_t<Result, T>
 	mem_fun(Result (T::*MemberFunction)())
 	{
 		return eastl::mem_fun_t<Result, T>(MemberFunction);
 	}
 
 	template <typename Result, typename T, typename Argument>
-	inline mem_fun1_t<Result, T, Argument>
+	EASTL_REMOVE_AT_2024_APRIL inline mem_fun1_t<Result, T, Argument>
 	mem_fun(Result (T::*MemberFunction)(Argument))
 	{
 		return eastl::mem_fun1_t<Result, T, Argument>(MemberFunction);
 	}
 
 	template <typename Result, typename T>
-	inline const_mem_fun_t<Result, T>
+	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun_t<Result, T>
 	mem_fun(Result (T::*MemberFunction)() const)
 	{
 		return eastl::const_mem_fun_t<Result, T>(MemberFunction);
 	}
 
 	template <typename Result, typename T, typename Argument>
-	inline const_mem_fun1_t<Result, T, Argument>
+	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun1_t<Result, T, Argument>
 	mem_fun(Result (T::*MemberFunction)(Argument) const)
 	{
 		return eastl::const_mem_fun1_t<Result, T, Argument>(MemberFunction);
@@ -804,7 +811,8 @@ namespace eastl
 	/// mem_fun_ref_t
 	///
 	template <typename Result, typename T>
-	class mem_fun_ref_t : public unary_function<T, Result>
+	class EASTL_REMOVE_AT_2024_APRIL mem_fun_ref_t
+		: public unary_function<T, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)();
@@ -828,7 +836,8 @@ namespace eastl
 	/// mem_fun1_ref_t
 	///
 	template <typename Result, typename T, typename Argument>
-	class mem_fun1_ref_t : public binary_function<T, Argument, Result>
+	class EASTL_REMOVE_AT_2024_APRIL mem_fun1_ref_t
+		: public binary_function<T, Argument, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)(Argument);
@@ -852,7 +861,8 @@ namespace eastl
 	/// const_mem_fun_ref_t
 	///
 	template <typename Result, typename T>
-	class const_mem_fun_ref_t : public unary_function<T, Result>
+	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun_ref_t
+		: public unary_function<T, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)() const;
@@ -876,7 +886,8 @@ namespace eastl
 	/// const_mem_fun1_ref_t
 	///
 	template <typename Result, typename T, typename Argument>
-	class const_mem_fun1_ref_t : public binary_function<T, Argument, Result>
+	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun1_ref_t
+		: public binary_function<T, Argument, Result>
 	{
 	public:
 		typedef Result (T::*MemberFunction)(Argument) const;
@@ -906,33 +917,34 @@ namespace eastl
 	/// Note: using conventional inlining here to avoid issues on GCC/Linux
 	///
 	template <typename Result, typename T>
-	inline mem_fun_ref_t<Result, T>
+	EASTL_REMOVE_AT_2024_APRIL inline mem_fun_ref_t<Result, T>
 	mem_fun_ref(Result (T::*MemberFunction)())
 	{
 		return eastl::mem_fun_ref_t<Result, T>(MemberFunction);
 	}
 
 	template <typename Result, typename T, typename Argument>
-	inline mem_fun1_ref_t<Result, T, Argument>
+	EASTL_REMOVE_AT_2024_APRIL inline mem_fun1_ref_t<Result, T, Argument>
 	mem_fun_ref(Result (T::*MemberFunction)(Argument))
 	{
 		return eastl::mem_fun1_ref_t<Result, T, Argument>(MemberFunction);
 	}
 
 	template <typename Result, typename T>
-	inline const_mem_fun_ref_t<Result, T>
+	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun_ref_t<Result, T>
 	mem_fun_ref(Result (T::*MemberFunction)() const)
 	{
 		return eastl::const_mem_fun_ref_t<Result, T>(MemberFunction);
 	}
 
 	template <typename Result, typename T, typename Argument>
-	inline const_mem_fun1_ref_t<Result, T, Argument>
+	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun1_ref_t<Result, T, Argument>
 	mem_fun_ref(Result (T::*MemberFunction)(Argument) const)
 	{
 		return eastl::const_mem_fun1_ref_t<Result, T, Argument>(MemberFunction);
 	}
 
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 	// not_fn_ret
 	// not_fn_ret is a implementation specified return type of eastl::not_fn.
@@ -1228,7 +1240,7 @@ namespace eastl
 	{
 		typedef String                                         string_type;
 		typedef typename String::value_type                    value_type;
-		typedef typename eastl::add_unsigned<value_type>::type unsigned_value_type;
+		typedef typename eastl::make_unsigned<value_type>::type unsigned_value_type;
 
 		size_t operator()(const string_type& s) const
 		{

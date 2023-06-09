@@ -39,17 +39,61 @@ struct destructor_test
 bool destructor_test::destructor_ran = false;
 
 /////////////////////////////////////////////////////////////////////////////
+struct copy_test
+{
+	copy_test() = default;
+
+	copy_test(const copy_test& ct)
+	{
+		was_copied = true;
+		value = ct.value;
+	}
+
+	copy_test& operator=(const copy_test& ct)
+	{
+		was_copied = true;
+		value = ct.value;
+
+		return *this;
+	}
+
+	// issue a compiler error if container tries to move
+	copy_test(copy_test const&&) = delete;
+	copy_test& operator=(const copy_test&&) = delete;
+
+	static bool was_copied;
+
+	int value;
+};
+
+bool copy_test::was_copied = false;
+
+/////////////////////////////////////////////////////////////////////////////
 struct move_test
 {
     move_test() = default;
-	move_test(move_test&&)            { was_moved = true; }
-	move_test& operator=(move_test&&) { was_moved = true; return *this;}
 
-	// issue a compiler error is container tries to copy
+	move_test(move_test&& mt)
+	{
+		was_moved = true;
+		value = mt.value;
+	}
+
+	move_test& operator=(move_test&& mt)
+	{
+		was_moved = true;
+		value = mt.value;
+
+		return *this;
+	}
+
+	// issue a compiler error if container tries to copy
 	move_test(move_test const&) = delete;
 	move_test& operator=(const move_test&) = delete;
 
 	static bool was_moved;
+
+	int value;
 };
 
 bool move_test::was_moved = false;
@@ -107,7 +151,9 @@ int TestOptional()
 
 			VERIFY(is_empty<nullopt_t>::value);
 			#if EASTL_TYPE_TRAIT_is_literal_type_CONFORMANCE
+			EASTL_INTERNAL_DISABLE_DEPRECATED() // 'is_literal_type<nullopt_t>': was declared deprecated
 				VERIFY(is_literal_type<nullopt_t>::value);
+			EASTL_INTERNAL_RESTORE_DEPRECATED()
 			#endif
 
 			#if EASTL_TYPE_TRAIT_is_trivially_destructible_CONFORMANCE
@@ -279,11 +325,33 @@ int TestOptional()
 		}
 	}
 
-    {
-        move_test t;
-        optional<move_test> o(eastl::move(t));
-        VERIFY(move_test::was_moved);
-    }
+	{
+		copy_test c;
+		c.value = 42;
+
+		optional<copy_test> o1(c);
+		VERIFY(copy_test::was_copied);
+
+		copy_test::was_copied = false;
+
+		optional<copy_test> o2(o1);
+		VERIFY(copy_test::was_copied);
+		VERIFY(o2->value == 42);
+	}
+
+	{
+		move_test t;
+		t.value = 42;
+
+		optional<move_test> o1(eastl::move(t));
+		VERIFY(move_test::was_moved);
+
+		move_test::was_moved = false;
+
+		optional<move_test> o2(eastl::move(o1));
+		VERIFY(move_test::was_moved);
+		VERIFY(o2->value == 42);
+	}
 
 	{
         forwarding_test<float>ft(1.f);

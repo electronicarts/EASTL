@@ -597,17 +597,17 @@ int TestMapSearch()
 		for(i = 0; i < 1000; i++)
 		{
 			TC k = typename T1::key_type(i);
-			it = t1A.find_as(k, eastl::less_2<typename T1::key_type, TC>());
+			it = t1A.find_as(k, eastl::less<>());
 
 			EATEST_VERIFY(it != t1A.end());
 			EATEST_VERIFY(it->first  == k);
 			EATEST_VERIFY(it->second == k);
 		}
 
-		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less<>());
 		EATEST_VERIFY(it == t1A.end());
 
-		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less<>());
 		EATEST_VERIFY(it == t1A.end());
 
 
@@ -1384,6 +1384,52 @@ int TestMapCpp17()
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
+
+	return nErrorCount;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// TestMapAccess
+//
+// This function is designed to work with map, fixed_map, hash_map, fixed_hash_map, unordered_map.
+//
+// Tests for element access: operator[] and at()
+template <typename T1>
+int TestMapAccess()
+{
+	int nErrorCount = 0;
+
+	typedef T1 TOMap;
+	typedef typename TOMap::key_type key_type;
+	typedef typename TOMap::mapped_type mapped_type;
+
+	TOMap map1;
+	map1[key_type(1)] = mapped_type(1);
+	map1[key_type(3)] = mapped_type(3);
+
+#if EASTL_EXCEPTIONS_ENABLED
+	EATEST_VERIFY_THROW(map1.at(key_type(0)));
+	EATEST_VERIFY_THROW(map1.at(key_type(2)));
+	EATEST_VERIFY_THROW(map1.at(key_type(4)));
+#endif
+	map1[key_type(0)] = mapped_type(1);
+#if EASTL_EXCEPTIONS_ENABLED
+	EATEST_VERIFY_NOTHROW(map1.at(key_type(0)));
+	EATEST_VERIFY_NOTHROW(map1.at(key_type(1)));
+	EATEST_VERIFY_NOTHROW(map1.at(key_type(3)));
+#endif
+	EATEST_VERIFY(map1.at(key_type(0)) == mapped_type(1));
+	EATEST_VERIFY(map1.at(key_type(1)) == mapped_type(1));
+	EATEST_VERIFY(map1.at(key_type(3)) == mapped_type(3));
+
+	const TOMap map2;
+	const TOMap map3(map1);
+
+#if EASTL_EXCEPTIONS_ENABLED
+	EATEST_VERIFY_THROW(map2.at(key_type(0)));
+	EATEST_VERIFY_NOTHROW(map3.at(key_type(0)));
+#endif
+	EATEST_VERIFY(map3.at(key_type(0)) == mapped_type(1));
 
 	return nErrorCount;
 }
