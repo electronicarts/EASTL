@@ -131,10 +131,10 @@ namespace eastl
 		// is_same<> directly.
 	#if !EASTL_STD_ITERATOR_CATEGORY_ENABLED || defined(EA_COMPILER_CPP20_ENABLED)
 		template <typename IC>
-		using is_contiguous_iterator_helper = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
+		using is_contiguous_iterator = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
 	#else
 		template <typename IC>
-		using is_contiguous_iterator_helper = eastl::false_type;
+		using is_contiguous_iterator = eastl::false_type;
 	#endif
 
 		template <typename InputIterator, typename OutputIterator>
@@ -146,8 +146,8 @@ namespace eastl
 
 			static constexpr bool value = eastl::is_trivially_copyable<value_type_output>::value &&
 				                          eastl::is_same<value_type_input, value_type_output>::value &&
-				                         (eastl::is_pointer<InputIterator>::value  || is_contiguous_iterator_helper<IIC>::value) &&
-				                         (eastl::is_pointer<OutputIterator>::value || is_contiguous_iterator_helper<OIC>::value);
+				                         (eastl::is_pointer<InputIterator>::value  || is_contiguous_iterator<IIC>::value) &&
+				                         (eastl::is_pointer<OutputIterator>::value || is_contiguous_iterator<OIC>::value);
 
 		};
 	}

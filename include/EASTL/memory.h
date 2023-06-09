@@ -660,8 +660,8 @@ namespace eastl
 		// ie. is eastl::addressof(*first) valid? ie. invalid for iterators that return value_type&&.
 		const bool isInputIteratorReferenceAddressable = eastl::is_convertible<typename eastl::add_lvalue_reference<value_type_input>::type, typename eastl::iterator_traits<InputIterator>::reference>::value;
 		// can memcpy/memmove a contiguous block, not just the individual elements?
-		const bool areIteratorsContiguous = (eastl::is_pointer<InputIterator>::value || eastl::is_same<IIC, EASTL_ITC_NS::contiguous_iterator_tag>::value) &&
-											(eastl::is_pointer<ForwardIterator>::value || eastl::is_same<OIC, EASTL_ITC_NS::contiguous_iterator_tag>::value);
+		const bool areIteratorsContiguous = (eastl::is_pointer<InputIterator>::value || internal::is_contiguous_iterator<IIC>::value) &&
+											(eastl::is_pointer<ForwardIterator>::value || internal::is_contiguous_iterator<OIC>::value);
 
 		return Internal::uninitialized_copy_impl<isTriviallyCopyable, isInputIteratorReferenceAddressable, areIteratorsContiguous>::impl(first, last, result);
 	}
