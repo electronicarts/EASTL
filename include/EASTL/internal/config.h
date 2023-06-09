@@ -1940,13 +1940,15 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 #endif
 
 // For internal (to EASTL) use only (ie. tests).
-#define EASTL_INTERNAL_DISABLE_DEPRECATED() \
-	EA_DISABLE_VC_WARNING(4996);			\
-	EA_DISABLE_CLANG_WARNING(-Wdeprecated-declarations);
+#define EASTL_INTERNAL_DISABLE_DEPRECATED()					\
+	EA_DISABLE_VC_WARNING(4996);							\
+	EA_DISABLE_CLANG_WARNING(-Wdeprecated-declarations);	\
+	EA_DISABLE_GCC_WARNING(-Wdeprecated-declarations);
 
 // For internal (to EASTL) use only (ie. tests).
 #define EASTL_INTERNAL_RESTORE_DEPRECATED()	\
 	EA_RESTORE_CLANG_WARNING();				\
-	EA_RESTORE_VC_WARNING();
+	EA_RESTORE_VC_WARNING();				\
+	EA_RESTORE_GCC_WARNING();
 
 #endif // Header include guard
