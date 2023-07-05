@@ -497,7 +497,7 @@ namespace eastl
 	namespace internal
 	{
 		template <typename T>
-		auto try_add_pointer(int) -> type_identity<typename std::remove_reference<T>::type*>;
+		auto try_add_pointer(int) -> type_identity<typename eastl::remove_reference<T>::type*>;
 		template <typename T>
 		auto try_add_pointer(...) -> type_identity<T>;
 	}

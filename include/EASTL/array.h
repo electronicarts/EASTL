@@ -617,7 +617,7 @@ namespace eastl
 	struct tuple_element {};
 
 	template<size_t I, typename T, size_t N>
-	struct tuple_element<I, T, N, std::enable_if_t<(I < N)>> {
+	struct tuple_element<I, T, N, eastl::enable_if_t<(I < N)>> {
 		using type = T;
 	};
 	}
