@@ -63,7 +63,7 @@ namespace eastl
 		struct is_eastl_array : public eastl::false_type {};
 
 		template<typename T, size_t N>
-		struct is_eastl_array<std::array<T, N>, T> : public eastl::true_type {};
+		struct is_eastl_array<eastl::array<T, N>, T> : public eastl::true_type {};
 	}
 
 	template <typename T, size_t Extent = eastl::dynamic_extent>
