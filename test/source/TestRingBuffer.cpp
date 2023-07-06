@@ -549,6 +549,56 @@ int TestRingBuffer()
 		EATEST_VERIFY(rbVectorInt[5] == 4);
 	}
 
+	{
+		// Comparation operator ==, operator <
+		// Fix bug mentioned in https://github.com/electronicarts/EASTL/issues/511
+		typedef ring_buffer<int, vector<int>> RBVectorInt;
+
+		RBVectorInt rbVectorInt(3);
+
+		rbVectorInt.push_back(0);
+		rbVectorInt.push_back(1);
+		rbVectorInt.push_back(2);
+		rbVectorInt.push_back(3);
+		rbVectorInt.push_back(4);
+
+		EATEST_VERIFY(rbVectorInt[0] == 2);
+		EATEST_VERIFY(rbVectorInt[1] == 3);
+		EATEST_VERIFY(rbVectorInt[2] == 4);
+
+		RBVectorInt rbVectorInt2({3, 4, 2});
+		RBVectorInt rbVectorInt3({2, 3, 4});
+		RBVectorInt rbVectorInt4({3, 4, 5});
+
+		EATEST_VERIFY(rbVectorInt != rbVectorInt2);
+		EATEST_VERIFY(rbVectorInt == rbVectorInt3);
+		EATEST_VERIFY(rbVectorInt < rbVectorInt4);
+
+		// Different size
+		RBVectorInt rbVectorInt5({1, 2});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt5);
+		EATEST_VERIFY(rbVectorInt > rbVectorInt5);
+
+		RBVectorInt rbVectorInt6({2, 3});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt6);
+		EATEST_VERIFY(rbVectorInt > rbVectorInt6);
+
+		RBVectorInt rbVectorInt7({3, 4});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt7);
+		EATEST_VERIFY(rbVectorInt < rbVectorInt7);
+
+		RBVectorInt rbVectorInt8({1, 2, 3, 4});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt8);
+		EATEST_VERIFY(rbVectorInt > rbVectorInt8);
+
+		RBVectorInt rbVectorInt9({2, 3, 4, 5});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt9);
+		EATEST_VERIFY(rbVectorInt < rbVectorInt9);
+
+		RBVectorInt rbVectorInt10({3, 4, 5, 6});
+		EATEST_VERIFY(rbVectorInt != rbVectorInt10);
+		EATEST_VERIFY(rbVectorInt < rbVectorInt10);
+	}
 
 	{
 		EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
