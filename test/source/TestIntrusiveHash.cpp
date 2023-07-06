@@ -348,10 +348,10 @@ int TestIntrusiveHash()
 		// iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
 		// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
 
-		itf = ihmSW1.find_as(SetWidgetComparable(7), SWCHash(), eastl::equal_to_2<SetWidget, SetWidgetComparable>());
+		itf = ihmSW1.find_as(SetWidgetComparable(7), SWCHash(), eastl::equal_to<>());
 		VERIFY(itf->mX == 7);
 
-		itfc = ihmSW1Const.find_as(SetWidgetComparable(7), SWCHash(), eastl::equal_to_2<SetWidget, SetWidgetComparable>());
+		itfc = ihmSW1Const.find_as(SetWidgetComparable(7), SWCHash(), eastl::equal_to<>());
 		VERIFY(itfc->mX == 7);
 
 
@@ -628,10 +628,10 @@ int TestIntrusiveHash()
 		// iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
 		// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
 
-		itf = ihmMW1.find_as(7.f, eastl::hash<float>(), eastl::equal_to_2<int, float>());
+		itf = ihmMW1.find_as(7.f, eastl::hash<float>(), eastl::equal_to<>());
 		VERIFY(itf->mKey == 7);
 
-		itfc = ihmMW1Const.find_as(7.f, eastl::hash<float>(), eastl::equal_to_2<int, float>());
+		itfc = ihmMW1Const.find_as(7.f, eastl::hash<float>(), eastl::equal_to<>());
 		VERIFY(itfc->mKey == 7);
 
 

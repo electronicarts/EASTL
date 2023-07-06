@@ -47,8 +47,13 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp" "../test/source/EASTLTestAllocator.cpp" "../test/source/EASTLTest.cpp")
-set(SOURCES ${EASTLBENCHMARK_SOURCES})
+file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp")
+file(GLOB EASTLTEST_SOURCES "../test/source/EASTLTestAllocator.cpp" "../test/source/EASTLTest.cpp")
+file(GLOB EASTLBENCHMARK_HEADERS "source/*.h")
+set(SOURCES ${EASTLBENCHMARK_SOURCES} ${EASTLTEST_SOURCES} ${EASTLBENCHMARK_HEADERS})
+
+# include both source and headers in the files view in Visual Studio
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Header Files" FILES ${EASTLBENCHMARK_HEADERS})
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -73,7 +78,7 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
-add_executable(EASTLBenchmarks ${EASTLBENCHMARK_SOURCES})
+add_executable(EASTLBenchmarks ${SOURCES})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

@@ -138,6 +138,8 @@ namespace eastl
 			static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
 		#endif
 
+		size_type GetNewCapacity(size_type currentCapacity);
+
 	protected:
 		T*                                          mpBegin;
 		T*                                          mpEnd;
@@ -162,7 +164,6 @@ namespace eastl
 	protected:
 		T*        DoAllocate(size_type n);
 		void      DoFree(T* p, size_type n);
-		size_type GetNewCapacity(size_type currentCapacity);
 
 	}; // VectorBase
 
@@ -179,6 +180,15 @@ namespace eastl
 		typedef VectorBase<T, Allocator>                      base_type;
 		typedef vector<T, Allocator>                          this_type;
 
+	protected:
+		using base_type::mpBegin;
+		using base_type::mpEnd;
+		using base_type::mCapacityAllocator;
+		using base_type::DoAllocate;
+		using base_type::DoFree;
+		using base_type::internalCapacityPtr;
+		using base_type::internalAllocator;
+
 	public:
 		typedef T                                             value_type;
 		typedef T*                                            pointer;
@@ -193,15 +203,13 @@ namespace eastl
 		typedef typename base_type::difference_type           difference_type;
 		typedef typename base_type::allocator_type            allocator_type;
 
-		using base_type::mpBegin;
-		using base_type::mpEnd;
-		using base_type::mCapacityAllocator;
 		using base_type::npos;
 		using base_type::GetNewCapacity;
-		using base_type::DoAllocate;
-		using base_type::DoFree;
-		using base_type::internalCapacityPtr;
-		using base_type::internalAllocator;
+
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+		static_assert(!is_const<value_type>::value, "vector<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "vector<T> value_type must be non-volatile.");
+#endif
 
 	public:
 		vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR));
@@ -214,6 +222,8 @@ namespace eastl
 		vector(this_type&& x, const allocator_type& allocator);
 		vector(std::initializer_list<value_type> ilist, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 
+		// note: this has pre-C++11 semantics:
+		// this constructor is equivalent to the constructor vector(static_cast<size_type>(first), static_cast<value_type>(last), allocator) if InputIterator is an integral type.
 		template <typename InputIterator>
 		vector(InputIterator first, InputIterator last, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 
@@ -290,6 +300,9 @@ namespace eastl
 		iterator insert(const_iterator position, value_type&& value);
 		iterator insert(const_iterator position, std::initializer_list<value_type> ilist);
 
+		// note: this has pre-C++11 semantics:
+		// this function is equivalent to insert(const_iterator position, static_cast<size_type>(first), static_cast<value_type>(last)) if InputIterator is an integral type.
+		// ie. same as insert(const_iterator position, size_type n, const value_type& value)
 		template <typename InputIterator>
 		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
@@ -519,7 +532,7 @@ namespace eastl
 	inline vector<T, Allocator>::vector(size_type n, const allocator_type& allocator)
 		: base_type(n, allocator)
 	{
-		eastl::uninitialized_default_fill_n(mpBegin, n);
+		eastl::uninitialized_value_construct_n(mpBegin, n);
 		mpEnd = mpBegin + n;
 	}
 
@@ -1414,8 +1427,7 @@ namespace eastl
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
-		typedef typename eastl::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
-		eastl::uninitialized_fill_n_ptr<value_type, Integer>((non_const_value_type*)mpBegin, n, value);
+		eastl::uninitialized_fill_n_ptr<value_type, Integer>(mpBegin, n, value);
 	}
 
 
@@ -1447,8 +1459,7 @@ namespace eastl
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
-		typedef typename eastl::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
-		eastl::uninitialized_copy_ptr(first, last, (non_const_value_type*)mpBegin);
+		eastl::uninitialized_copy_ptr(first, last, mpBegin);
 	}
 
 
@@ -1815,7 +1826,7 @@ namespace eastl
 				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 			#endif
 
-			eastl::uninitialized_default_fill_n(pNewEnd, n);
+			eastl::uninitialized_value_construct_n(pNewEnd, n);
 			pNewEnd += n;
 
 			eastl::destruct(mpBegin, mpEnd);
@@ -1827,7 +1838,7 @@ namespace eastl
 		}
 		else
 		{
-			eastl::uninitialized_default_fill_n(mpEnd, n);
+			eastl::uninitialized_value_construct_n(mpEnd, n);
 			mpEnd += n;
 		}
 	}

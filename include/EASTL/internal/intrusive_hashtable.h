@@ -87,8 +87,8 @@ namespace eastl
 		typedef Value                                                    value_type;
 		typedef Value                                                    node_type;
 		typedef ptrdiff_t                                                difference_type;
-		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
-		typedef typename type_select<bConst, const Value&, Value&>::type reference;
+		typedef typename conditional<bConst, const Value*, Value*>::type pointer;
+		typedef typename conditional<bConst, const Value&, Value&>::type reference;
 		typedef EASTL_ITC_NS::forward_iterator_tag                       iterator_category;
 
 	public:
@@ -196,8 +196,8 @@ namespace eastl
 		typedef intrusive_hashtable_iterator<Value, bConst>                 this_type;
 		typedef intrusive_hashtable_iterator<Value, false>                  this_type_non_const;
 		typedef typename base_type::value_type                              value_type;
-		typedef typename type_select<bConst, const Value*, Value*>::type    pointer;
-		typedef typename type_select<bConst, const Value&, Value&>::type    reference;
+		typedef typename conditional<bConst, const Value*, Value*>::type    pointer;
+		typedef typename conditional<bConst, const Value&, Value&>::type    reference;
 		typedef ptrdiff_t                                                   difference_type;
 		typedef EASTL_ITC_NS::forward_iterator_tag                          iterator_category;
 
@@ -237,7 +237,7 @@ namespace eastl
 	/// the use_self template implementation, which is used for sets.
 	///
 	template <typename Node, typename Key>
-	struct use_intrusive_key // : public unary_function<T, T> // Perhaps we want to make it a subclass of unary_function.
+	struct use_intrusive_key
 	{
 		typedef Key result_type;
 
@@ -271,8 +271,8 @@ namespace eastl
 		typedef intrusive_node_iterator<value_type, true>                                 const_local_iterator;
 		typedef intrusive_hashtable_iterator<value_type, bConstIterators>                 iterator;
 		typedef intrusive_hashtable_iterator<value_type, true>                            const_iterator;
-		typedef typename type_select<bUniqueKeys, pair<iterator, bool>, iterator>::type   insert_return_type;
-		typedef typename type_select<bConstIterators, eastl::use_self<Value>, 
+		typedef typename conditional<bUniqueKeys, pair<iterator, bool>, iterator>::type   insert_return_type;
+		typedef typename conditional<bConstIterators, eastl::use_self<Value>,
 												 eastl::use_intrusive_key<Value, key_type> >::type  extract_key;
 
 		enum
@@ -393,7 +393,7 @@ namespace eastl
 		///
 		/// Example usage (namespaces omitted for brevity):
 		///     hash_set<string> hashSet;
-		///     hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
+		///     hashSet.find_as("hello", hash<char*>(), equal_to<>());
 		///
 		template <typename U, typename UHash, typename BinaryPredicate>
 		iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
@@ -422,8 +422,8 @@ namespace eastl
 		Hash hash_function() const
 			{ return mHash; }
 
-		Equal equal_function() const    // Deprecated. Use key_eq() instead, as key_eq is what the new C++ standard 
-			{ return mEqual; }          // has specified in its hashtable (unordered_*) proposal.
+		EASTL_REMOVE_AT_2024_APRIL Equal equal_function() const    // Deprecated. Use key_eq() instead, as key_eq is what the new C++ standard 
+			{ return mEqual; }									  // has specified in its hashtable (unordered_*).
 
 		const key_equal& key_eq() const 
 			{ return mEqual; }
@@ -552,13 +552,13 @@ namespace eastl
 
 	/// intrusive_hashtable_find
 	///
-	/// Helper function that defaults to using hash<U> and equal_to_2<T, U>.
+	/// Helper function that defaults to using hash<U> and equal_to<>.
 	/// This makes it so that by default you don't need to provide these.
 	/// Note that the default hash functions may not be what you want, though.
 	///
 	/// Example usage. Instead of this:
 	///     hash_set<string> hashSet;
-	///     hashSet.find("hello", hash<char*>(), equal_to_2<string, char*>());
+	///     hashSet.find("hello", hash<char*>(), equal_to<>());
 	///
 	/// You can use this:
 	///     hash_set<string> hashSet;
@@ -566,11 +566,11 @@ namespace eastl
 	///
 	template <typename H, typename U>
 	inline typename H::iterator intrusive_hashtable_find(H& hashTable, const U& u)
-		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to<>()); }
 
 	template <typename H, typename U>
 	inline typename H::const_iterator intrusive_hashtable_find(const H& hashTable, const U& u)
-		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to<>()); }
 
 
 
@@ -581,7 +581,7 @@ namespace eastl
 		{ return eastl::intrusive_hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
-		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
+		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to<>()); }
 
 
 	template <typename K, typename V, typename H, typename Eq, size_t bC, bool bM, bool bU>
@@ -591,7 +591,7 @@ namespace eastl
 		{ return eastl::intrusive_hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
-		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
+		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to<>()); }
 
 
 	template <typename K, typename V, typename H, typename Eq, size_t bC, bool bM, bool bU>

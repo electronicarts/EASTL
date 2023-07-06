@@ -4381,7 +4381,7 @@ EA_NO_INLINE static void TestCompilerBarrierDataDependency()
 	}
 
 	{
-		void* p = (void*)0xdeadbeef;
+		void* p = (void*)(uintptr_t)0xdeadbeef;
 
 		eastl::compiler_barrier_data_dependency(p);
 	}

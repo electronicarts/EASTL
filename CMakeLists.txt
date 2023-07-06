@@ -21,8 +21,12 @@ include(CommonCppFlags)
 # Library definition
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTL_SOURCES "source/*.cpp")
-add_library(EASTL ${EASTL_SOURCES})
+file(GLOB_RECURSE EASTL_HEADERS "include/EASTL/**.h")
+add_library(EASTL ${EASTL_SOURCES} ${EASTL_HEADERS})
 target_compile_features(EASTL PUBLIC cxx_std_14)
+
+# include both source and headers in the files tab in Visual Studio
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Header Files" FILES ${EASTL_HEADERS})
 
 if (MSVC)
     set(EASTL_NATVIS_DIR "doc")

@@ -40,11 +40,17 @@ typedef eastl::vector_map<int, int, eastl::less<int>, EASTLAllocatorType, eastl:
 typedef eastl::vector_map<TestObject, TestObject> VM4;
 typedef eastl::vector_map<TestObject, TestObject, eastl::less<TestObject>, EASTLAllocatorType, eastl::deque<eastl::pair<TestObject, TestObject> > > VM5;
 
+static_assert(sizeof(eastl::vector_map<int, int>) == sizeof(eastl::vector<int>), "if is_empty_v<Compare>, sizeof(vector_map) == sizeof(RandomAccessContainer)");
+static_assert(sizeof(eastl::vector_map<double, double>) == sizeof(eastl::vector<double>), "if is_empty_v<Compare>, sizeof(vector_map) == sizeof(RandomAccessContainer)");
+
 typedef eastl::vector_multimap<int, int> VMM1;
 typedef eastl::vector_multimap<int, int, eastl::less<int>, EASTLAllocatorType, eastl::deque<eastl::pair<int, int> > > VMM2;
 
 typedef eastl::vector_multimap<TestObject, TestObject> VMM4;
 typedef eastl::vector_multimap<TestObject, TestObject, eastl::less<TestObject>, EASTLAllocatorType, eastl::deque<eastl::pair<TestObject, TestObject> > > VMM5;
+
+static_assert(sizeof(eastl::vector_multimap<int, int>) == sizeof(eastl::vector<eastl::pair<int, int>>), "if is_empty_v<Compare>, sizeof(vector_multimap) == sizeof(RandomAccessContainer)");
+static_assert(sizeof(eastl::vector_multimap<TestObject, TestObject>) == sizeof(eastl::vector<eastl::pair<TestObject, TestObject>>), "if is_empty_v<Compare>, sizeof(vector_multimap) == sizeof(RandomAccessContainer)");
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	typedef std::map<int, int> VM3;
@@ -54,7 +60,25 @@ typedef eastl::vector_multimap<TestObject, TestObject, eastl::less<TestObject>, 
 #endif
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename T1>
+int TestVectorMapAtKey()
+{
+	int nErrorCount = 0;
 
+	typedef T1 TOMap;
+	typedef typename TOMap::key_type key_type;
+	typedef typename TOMap::mapped_type mapped_type;
+
+	TOMap map1;
+	map1[key_type(1)] = mapped_type(1);
+	map1[key_type(3)] = mapped_type(3);
+	map1[key_type(0)] = mapped_type(1);
+	EATEST_VERIFY(map1.at_key(key_type(0)) == mapped_type(1));
+	EATEST_VERIFY(map1.at_key(key_type(1)) == mapped_type(1));
+	EATEST_VERIFY(map1.at_key(key_type(3)) == mapped_type(3));
+
+	return nErrorCount;
+}
 
 int TestVectorMap()
 {
@@ -110,6 +134,21 @@ int TestVectorMap()
 		nErrorCount += TestMultimapCpp11<eastl::vector_multimap<int, TestObject, eastl::less<int>, EASTLAllocatorType, eastl::deque<eastl::pair<int, TestObject> > > >();
 	}
 
+	{
+		// Tests for element access: operator[] and at()
+		
+		// todo: can't enable these tests until the current at() function is removed (which gets by index rather than by key) and we can replace with a semanticly correct one.
+		
+		//nErrorCount += TestMapAccess<VM1>();
+		//nErrorCount += TestMapAccess<VM2>();
+		//nErrorCount += TestMapAccess<VM4>();
+		//nErrorCount += TestMapAccess<VM5>();
+		 
+		nErrorCount += TestVectorMapAtKey<VM1>();
+		nErrorCount += TestVectorMapAtKey<VM2>();
+		nErrorCount += TestVectorMapAtKey<VM4>();
+		nErrorCount += TestVectorMapAtKey<VM5>();
+	}
 
     {
         // insert at the upper bound of a range
@@ -191,17 +230,23 @@ int TestVectorMap()
 		tvm["AllowedDomain"]   = NULL;
 	}
 
-	{     // find_as predicate
+	{     // find / find_as / lower_bound / upper_bound
 		{ // vector_map
 			eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
 												  {"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find("ghi") != vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 
 		{ // const vector_map
 			const eastl::vector_map<string, int> vss = {{"abc", 11},   {"def", 22}, {"ghi", 33}, {"jklmnop", 44},
 														{"qrstu", 55}, {"vw", 66},  {"x", 77},   {"yz", 88}};
+			VERIFY(vss.find("ghi") != vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 
 		// vector_multimap

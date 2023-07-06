@@ -89,8 +89,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.20.02"
-	#define EASTL_VERSION_N  32002
+	#define EASTL_VERSION   "3.21.12"
+	#define EASTL_VERSION_N  32112
 #endif
 
 
@@ -1052,24 +1052,6 @@ namespace eastl
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// EASTL_LIST_PROXY_ENABLED
-//
-#if !defined(EASTL_LIST_PROXY_ENABLED)
-	// GCC with -fstrict-aliasing has bugs (or undocumented functionality in their
-	// __may_alias__ implementation. The compiler gets confused about function signatures.
-	// VC8 (1400) doesn't need the proxy because it has built-in smart debugging capabilities.
-	#if defined(EASTL_DEBUG) && !defined(__GNUC__) && (!defined(_MSC_VER) || (_MSC_VER < 1400))
-		#define EASTL_LIST_PROXY_ENABLED 1
-		#define EASTL_LIST_PROXY_MAY_ALIAS EASTL_MAY_ALIAS
-	#else
-		#define EASTL_LIST_PROXY_ENABLED 0
-		#define EASTL_LIST_PROXY_MAY_ALIAS
-	#endif
-#endif
-
-
-
-///////////////////////////////////////////////////////////////////////////////
 // EASTL_STD_ITERATOR_CATEGORY_ENABLED
 //
 // Defined as 0 or 1. Default is 0.
@@ -1595,9 +1577,25 @@ namespace eastl
 		#include <stddef.h>
 		#define EASTL_SIZE_T  size_t
 		#define EASTL_SSIZE_T intptr_t
+
+		// printf format specifiers for use with eastl_size_t
+		#define EASTL_PRIdSIZE "zd"
+		#define EASTL_PRIiSIZE "zi"
+		#define EASTL_PRIoSIZE "zo"
+		#define EASTL_PRIuSIZE "zu"
+		#define EASTL_PRIxSIZE "zx"
+		#define EASTL_PRIXSIZE "zX"
 	#else
 		#define EASTL_SIZE_T  uint32_t
 		#define EASTL_SSIZE_T int32_t
+
+		// printf format specifiers for use with eastl_size_t
+		#define EASTL_PRIdSIZE PRId32
+		#define EASTL_PRIiSIZE PRIi32
+		#define EASTL_PRIoSIZE PRIo32
+		#define EASTL_PRIuSIZE PRIu32
+		#define EASTL_PRIxSIZE PRIx32
+		#define EASTL_PRIXSIZE PRIX32
 	#endif
 #endif
 
@@ -1852,46 +1850,38 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	#define EASTL_OPTIONAL_ENABLED 0
 #endif
 
+/// EASTL_HAS_INTRINSIC(x)
+///   does the compiler intrinsic (MSVC terminology) or builtin (Clang / GCC terminology) exist?
+///   where `x` does not include the leading "__"
+#if defined(EA_COMPILER_CLANG)
+	// see https://clang.llvm.org/docs/LanguageExtensions.html#type-trait-primitives
+	#if EA_COMPILER_VERSION >= 1000
+		#define EASTL_HAS_INTRINSIC(x) EA_COMPILER_HAS_BUILTIN(__ ## x)
+	#elif EA_COMPILER_VERSION >= 600
+		// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
+		#define EASTL_HAS_INTRINSIC(x) !__is_identifier(__ ## x)
+	#else
+		// note: only works for a subset of builtins
+		#define EASTL_HAS_INTRINSIC(x) EA_COMPILER_HAS_FEATURE(x)
+	#endif
+#else
+#define EASTL_HAS_INTRINSIC(x) EA_COMPILER_HAS_BUILTIN(__ ## x)
+#endif
 
 /// EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE
-#if defined(__clang__)
-	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
-	#if !__is_identifier(__has_unique_object_representations)
-		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
-	#else
-		#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
-	#endif
-#elif defined(_MSC_VER) && (_MSC_VER >= 1913)  // VS2017 15.6+
+#if EASTL_HAS_INTRINSIC(has_unique_object_representations) || (defined(_MSC_VER) && (_MSC_VER >= 1913))  // VS2017 15.6+
 	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 1
 #else
 	#define EASTL_HAS_UNIQUE_OBJECT_REPRESENTATIONS_AVAILABLE 0
 #endif
 
-#if defined(__clang__)
-	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
-	#if !__is_identifier(__is_final)
-		#define EASTL_IS_FINAL_AVAILABLE 1
-	#else
-		#define EASTL_IS_FINAL_AVAILABLE 0
-	#endif
-#elif defined(_MSC_VER) && (_MSC_VER >= 1914)	// VS2017 15.7+
-	#define EASTL_IS_FINAL_AVAILABLE 1
-#elif defined(EA_COMPILER_GNUC)
+#if EASTL_HAS_INTRINSIC(is_final) || defined(EA_COMPILER_GNUC) || (defined(_MSC_VER) && (_MSC_VER >= 1914))	// VS2017 15.7+
 	#define EASTL_IS_FINAL_AVAILABLE 1
 #else
 	#define EASTL_IS_FINAL_AVAILABLE 0
 #endif
 
-#if defined(__clang__)
-	// NB: !__is_identifier() is correct: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66970#c11
-	#if !__is_identifier(__is_aggregate)
-		#define EASTL_IS_AGGREGATE_AVAILABLE 1
-	#else
-		#define EASTL_IS_AGGREGATE_AVAILABLE 0
-	#endif
-#elif defined(_MSC_VER) && (_MSC_VER >= 1915)  // VS2017 15.8+
-	#define EASTL_IS_AGGREGATE_AVAILABLE 1
-#elif defined(EA_COMPILER_GNUC)
+#if EASTL_HAS_INTRINSIC(is_aggregate) || defined(EA_COMPILER_GNUC) || (defined(_MSC_VER) && (_MSC_VER >= 1915))  // VS2017 15.8+
 	#define EASTL_IS_AGGREGATE_AVAILABLE 1
 #else
 	#define EASTL_IS_AGGREGATE_AVAILABLE 0
@@ -1933,6 +1923,32 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	#define EASTL_CONSTEXPR_BIT_CAST_SUPPORTED 0
 #endif
 
+// EASTL deprecation macros:
+// 
+// EASTL_DEPRECATIONS_FOR_2024_APRIL
+// This macro is provided as a means to disable warnings temporarily (in particular if a user is compiling with warnings as errors).
+// All deprecations raised by this macro (when it is EA_ENABLED) are scheduled for removal approximately April 2024.
 
+#ifndef EASTL_DEPRECATIONS_FOR_2024_APRIL
+	#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
+#endif
+
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+	#define EASTL_REMOVE_AT_2024_APRIL EA_DEPRECATED
+#else
+	#define EASTL_REMOVE_AT_2024_APRIL
+#endif
+
+// For internal (to EASTL) use only (ie. tests).
+#define EASTL_INTERNAL_DISABLE_DEPRECATED()					\
+	EA_DISABLE_VC_WARNING(4996);							\
+	EA_DISABLE_CLANG_WARNING(-Wdeprecated-declarations);	\
+	EA_DISABLE_GCC_WARNING(-Wdeprecated-declarations);
+
+// For internal (to EASTL) use only (ie. tests).
+#define EASTL_INTERNAL_RESTORE_DEPRECATED()	\
+	EA_RESTORE_CLANG_WARNING();				\
+	EA_RESTORE_VC_WARNING();				\
+	EA_RESTORE_GCC_WARNING();
 
 #endif // Header include guard

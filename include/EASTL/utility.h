@@ -243,7 +243,7 @@ namespace eastl
 		typedef typename eastl::iterator_traits<ForwardIterator1>::reference  reference_a;
 		typedef typename eastl::iterator_traits<ForwardIterator2>::reference  reference_b;
 
-		eastl::iter_swap_impl<eastl::type_and<eastl::is_same<value_type_a, value_type_b>::value, eastl::is_same<value_type_a&, reference_a>::value, eastl::is_same<value_type_b&, reference_b>::value >::value >::iter_swap(a, b);
+		eastl::iter_swap_impl<eastl::conjunction<eastl::is_same<value_type_a, value_type_b>, eastl::is_same<value_type_a&, reference_a>, eastl::is_same<value_type_b&, reference_b>>::value >::iter_swap(a, b);
 	}
 
 
@@ -537,6 +537,8 @@ namespace eastl
 
 		EA_CPP14_CONSTEXPR pair(pair&& p) = default;
 		EA_CPP14_CONSTEXPR pair(const pair&) = default;
+		EA_CPP14_CONSTEXPR pair& operator=(const pair&) = default;
+		EA_CPP14_CONSTEXPR pair& operator=(pair&&) = default;
 
 		template <
 		    typename U,
@@ -604,14 +606,6 @@ namespace eastl
 		}
 
 	public:
-		pair& operator=(const pair& p)
-		    EA_NOEXCEPT_IF(eastl::is_nothrow_copy_assignable_v<T1>&& eastl::is_nothrow_copy_assignable_v<T2>)
-		{
-			first = p.first;
-			second = p.second;
-			return *this;
-		}
-
 		template <typename U,
 		          typename V,
 		          typename = eastl::enable_if_t<eastl::is_convertible_v<U, T1> && eastl::is_convertible_v<V, T2>>>
@@ -619,14 +613,6 @@ namespace eastl
 		{
 			first = p.first;
 			second = p.second;
-			return *this;
-		}
-
-		pair& operator=(pair&& p)
-		    EA_NOEXCEPT_IF(eastl::is_nothrow_move_assignable_v<T1>&& eastl::is_nothrow_move_assignable_v<T2>)
-		{
-			first = eastl::forward<T1>(p.first);
-			second = eastl::forward<T2>(p.second);
 			return *this;
 		}
 
@@ -662,7 +648,7 @@ namespace eastl
 	/// generic programming.
 	///
 	template <typename T>
-	struct use_self             // : public unary_function<T, T> // Perhaps we want to make it a subclass of unary_function.
+	struct use_self
 	{
 		typedef T result_type;
 
@@ -693,7 +679,7 @@ namespace eastl
 	/// This is the same thing as the SGI SGL select2nd utility
 	///
 	template <typename Pair>
-	struct use_second           // : public unary_function<Pair, typename Pair::second_type> // Perhaps we want to make it a subclass of unary_function.
+	struct use_second
 	{
 		typedef Pair argument_type;
 		typedef typename Pair::second_type result_type;
@@ -827,38 +813,38 @@ namespace eastl
 #if EASTL_TUPLE_ENABLED
 
 		template <typename T1, typename T2>
-		class tuple_size<pair<T1, T2>> : public integral_constant<size_t, 2>
+		struct tuple_size<pair<T1, T2>> : public integral_constant<size_t, 2>
 		{
 		};
 
 		template <typename T1, typename T2>
-		class tuple_size<const pair<T1, T2>> : public integral_constant<size_t, 2>
+		struct tuple_size<const pair<T1, T2>> : public integral_constant<size_t, 2>
 		{
 		};
 
 		template <typename T1, typename T2>
-		class tuple_element<0, pair<T1, T2>>
+		struct tuple_element<0, pair<T1, T2>>
 		{
 		public:
 			typedef T1 type;
 		};
 
 		template <typename T1, typename T2>
-		class tuple_element<1, pair<T1, T2>>
+		struct tuple_element<1, pair<T1, T2>>
 		{
 		public:
 			typedef T2 type;
 		};
 
 		template <typename T1, typename T2>
-		class tuple_element<0, const pair<T1, T2>>
+		struct tuple_element<0, const pair<T1, T2>>
 		{
 		public:
 			typedef const T1 type;
 		};
 
 		template <typename T1, typename T2>
-		class tuple_element<1, const pair<T1, T2>>
+		struct tuple_element<1, const pair<T1, T2>>
 		{
 		public:
 			typedef const T2 type;
@@ -938,26 +924,21 @@ namespace eastl
 // C++17 structured bindings support for eastl::pair
 //
 #ifndef EA_COMPILER_NO_STRUCTURED_BINDING
-	#include <tuple>
+// we can't forward declare tuple_size and tuple_element because some std implementations
+// don't declare it in the std namespace, but instead alias it.
+#include <utility>
+
 	namespace std
 	{
-		// NOTE(rparolin): Some platform implementations didn't check the standard specification and implemented the
-		// "tuple_size" and "tuple_element" primary template with as a struct.  The standard specifies they are
-		// implemented with the class keyword so we provide the template specializations as a class and disable the
-		// generated warning.
-		EA_DISABLE_CLANG_WARNING(-Wmismatched-tags)
-
 		template <class... Ts>
-		class tuple_size<::eastl::pair<Ts...>> : public ::eastl::integral_constant<size_t, sizeof...(Ts)>
+		struct tuple_size<::eastl::pair<Ts...>> : public ::eastl::integral_constant<size_t, sizeof...(Ts)>
 		{
 		};
 
 		template <size_t I, class... Ts>
-		class tuple_element<I, ::eastl::pair<Ts...>> : public ::eastl::tuple_element<I, ::eastl::pair<Ts...>>
+		struct tuple_element<I, ::eastl::pair<Ts...>> : public ::eastl::tuple_element<I, ::eastl::pair<Ts...>>
 		{
 		};
-
-		EA_RESTORE_CLANG_WARNING()
 	}
 #endif
 

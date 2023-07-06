@@ -28,6 +28,11 @@ template class eastl::vector_multiset<float>;
 template class eastl::vector_set<TestObject>;
 template class eastl::vector_multiset<TestObject>;
 
+static_assert(sizeof(eastl::vector_set<int>) == sizeof(eastl::vector<int>), "if is_empty_v<Compare>, sizeof(vector_set) == sizeof(RandomAccessContainer)");
+static_assert(sizeof(eastl::vector_set<TestObject>) == sizeof(eastl::vector<TestObject>), "if is_empty_v<Compare>, sizeof(vector_set) == sizeof(RandomAccessContainer)");
+static_assert(sizeof(eastl::vector_multiset<int>) == sizeof(eastl::vector<int>), "if is_empty_v<Compare>, sizeof(vector_multiset) == sizeof(RandomAccessContainer)");
+static_assert(sizeof(eastl::vector_multiset<TestObject>) == sizeof(eastl::vector<TestObject>), "if is_empty_v<Compare>, sizeof(vector_multiset) == sizeof(RandomAccessContainer)");
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // typedefs
@@ -132,25 +137,41 @@ int TestVectorSet()
 		}
 	}
 
-	{ // find_as predicate
+	{ // find / find_as / lower_bound / upper_bound
 		{ // vector_set
 			eastl::vector_set<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find("ghi") != vss.end());
+			VERIFY(vss.find("GHI") == vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 
 		{ // const vector_set
 			const eastl::vector_set<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find("ghi") != vss.end());
+			VERIFY(vss.find("GHI") == vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 
 		{ // vector_multiset
 			eastl::vector_multiset<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find("ghi") != vss.end());
+			VERIFY(vss.find("GHI") == vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 
 		{ // const vector_multiset
 			const eastl::vector_multiset<string> vss = {"abc", "def", "ghi", "jklmnop", "qrstu", "vw", "x", "yz"};
+			VERIFY(vss.find("ghi") != vss.end());
+			VERIFY(vss.find("GHI") == vss.end());
 			VERIFY(vss.find_as("GHI", TestStrCmpI_2()) != vss.end());
+			VERIFY(vss.lower_bound("ghi") != vss.end());
+			VERIFY(vss.upper_bound("ghi") != vss.end());
 		}
 	}
 

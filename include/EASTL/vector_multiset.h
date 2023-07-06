@@ -19,6 +19,10 @@
 // that the modification of the container potentially invalidates all 
 // existing iterators into the container, unlike what happens with conventional
 // sets and maps.
+// 
+// This type could conceptually use a eastl::array as its underlying container,
+// however the current design requires an allocator aware container.
+// Consider using a fixed_vector instead.
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -72,6 +76,10 @@ namespace eastl
 	/// that the modification of the container potentially invalidates all 
 	/// existing iterators into the container, unlike what happens with conventional
 	/// sets and maps.
+	/// 
+	/// This type could conceptually use a eastl::array as its underlying container,
+	/// however the current design requires an allocator aware container.
+	/// Consider using a fixed_vector instead.
 	///
 	/// To consider: std::multiset has the limitation that values in the set cannot
 	/// be modified, with the idea that modifying them would change their sort
@@ -82,13 +90,9 @@ namespace eastl
 	/// classes use 'mutable' as needed. See the C++ standard defect report
 	/// #103 (DR 103) for a discussion of this.
 	///
-	/// Note that the erase functions return iterator and not void. This allows for 
-	/// more efficient use of the container and is consistent with the C++ language 
-	/// defect report #130 (DR 130)
-	///
 	template <typename Key, typename Compare = eastl::less<Key>, typename Allocator = EASTLAllocatorType, 
 			  typename RandomAccessContainer = eastl::vector<Key, Allocator> >
-	class vector_multiset : public RandomAccessContainer
+	class vector_multiset : protected Compare, public RandomAccessContainer
 	{
 	public:
 		typedef RandomAccessContainer                                           base_type;
@@ -112,9 +116,6 @@ namespace eastl
 		using base_type::begin;
 		using base_type::end;
 		using base_type::get_allocator;
-
-	protected:
-		value_compare mCompare; // To consider: Declare this instead as: 'key_compare mKeyCompare'
 
 	public:
 		// We have an empty ctor and a ctor that takes an allocator instead of one for both
@@ -223,7 +224,7 @@ namespace eastl
 			const iterator itLower(lower_bound(k));
 			iterator       itUpper(itLower);
 
-			while((itUpper != end()) && !mCompare(k, *itUpper))
+			while((itUpper != end()) && !value_compare::operator()(k, *itUpper))
 				++itUpper;
 
 			return eastl::pair<iterator, iterator>(itLower, itUpper);
@@ -264,7 +265,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset()
-		: base_type(), mCompare(C())
+		: value_compare(), base_type()
 	{
 		get_allocator().set_name(EASTL_VECTOR_MULTISET_DEFAULT_NAME);
 	}
@@ -272,7 +273,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(const allocator_type& allocator)
-		: base_type(allocator), mCompare(C())
+		: value_compare(), base_type(allocator)
 	{
 		// Empty
 	}
@@ -280,7 +281,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(const key_compare& comp, const allocator_type& allocator)
-		: base_type(allocator), mCompare(comp)
+		: value_compare(comp), base_type(allocator)
 	{
 		// Empty
 	}
@@ -289,7 +290,7 @@ namespace eastl
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename InputIterator>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(InputIterator first, InputIterator last)
-		: base_type(EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR), mCompare(key_compare())
+		: value_compare(), base_type(EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR)
 	{
 		insert(first, last);
 	}
@@ -298,7 +299,7 @@ namespace eastl
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename InputIterator>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(InputIterator first, InputIterator last, const key_compare& compare)
-		: base_type(EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR), mCompare(compare)
+		: value_compare(compare), base_type(EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR)
 	{
 		insert(first, last);
 	}
@@ -306,7 +307,7 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(const this_type& x)
-		: base_type(x), mCompare(x.mCompare)
+		: value_compare(x), base_type(x)
 	{
 		// Empty
 	}
@@ -314,22 +315,24 @@ namespace eastl
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x)
-		: base_type(eastl::move(x)), mCompare(x.mCompare)
+		// careful to only copy / move the distinct base sub-objects of x:
+		: value_compare(static_cast<value_compare&>(x)), base_type(eastl::move(static_cast<base_type&&>(x)))
 	{
-		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+		// Empty. Note: x is left with empty contents but its original value_compare instead of the default one. 
 	}
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x, const allocator_type& allocator)
-		: base_type(eastl::move(x), allocator), mCompare(x.mCompare)
+		// careful to only copy / move the distinct base sub-objects of x:
+		: value_compare(static_cast<value_compare&>(x)), base_type(eastl::move(static_cast<base_type&&>(x)), allocator)
 	{
-		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+		// Empty. Note: x is left with empty contents but its original value_compare instead of the default one. 
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline vector_multiset<K, C, A, RAC>::vector_multiset(std::initializer_list<value_type> ilist, const key_compare& compare, const allocator_type& allocator)
-		: base_type(allocator), mCompare(compare)
+		: value_compare(compare), base_type(allocator)
 	{
 		insert(ilist.begin(), ilist.end());
 	}
@@ -340,7 +343,7 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::operator=(const this_type& x)
 	{
 		base_type::operator=(x);
-		mCompare = value_compare(x.mCompare);
+		value_compare::operator=(x);
 		return *this;
 	}
 
@@ -350,7 +353,8 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::operator=(this_type&& x)
 	{
 		base_type::operator=(eastl::move(x));
-		eastl::swap(mCompare, x.mCompare);
+		using eastl::swap;
+		swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
 		return *this;
 	}
 
@@ -369,7 +373,8 @@ namespace eastl
 	inline void vector_multiset<K, C, A, RAC>::swap(this_type& x)
 	{
 		base_type::swap(x);
-		eastl::swap(mCompare, x.mCompare);
+		using eastl::swap;
+		swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
 	}
 
 
@@ -377,7 +382,7 @@ namespace eastl
 	inline const typename vector_multiset<K, C, A, RAC>::key_compare&
 	vector_multiset<K, C, A, RAC>::key_comp() const
 	{
-		return mCompare;
+		return static_cast<const key_compare&>(*this);
 	}
 
 
@@ -385,7 +390,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::key_compare&
 	vector_multiset<K, C, A, RAC>::key_comp()
 	{
-		return mCompare;
+		return static_cast<key_compare&>(*this);
 	}
 
 
@@ -393,7 +398,7 @@ namespace eastl
 	inline const typename vector_multiset<K, C, A, RAC>::value_compare&
 	vector_multiset<K, C, A, RAC>::value_comp() const
 	{
-		return mCompare;
+		return static_cast<const value_compare&>(*this);
 	}
 
 
@@ -401,7 +406,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::value_compare&
 	vector_multiset<K, C, A, RAC>::value_comp()
 	{
-		return mCompare;
+		return static_cast<value_compare&>(*this);
 	}
 
 
@@ -468,9 +473,9 @@ namespace eastl
 		// We do a test to see if the position is correct. If so then we insert, 
 		// if not then we ignore the input position. However, 
 
-		if((position == end()) || !mCompare(*position, value))  // If value is <= the element at position...
+		if((position == end()) || !value_compare::operator()(*position, value))  // If value is <= the element at position...
 		{
-			if((position == begin()) || !mCompare(value, *(position - 1))) // If value is >= the element before position...
+			if((position == begin()) || !value_compare::operator()(value, *(position - 1))) // If value is >= the element before position...
 				return base_type::insert(position, value);
 		}
 
@@ -483,9 +488,9 @@ namespace eastl
 	typename vector_multiset<K, C, A, RAC>::iterator
 	vector_multiset<K, C, A, RAC>::insert(const_iterator position, value_type&& value)
 	{
-		if((position == end()) || !mCompare(*position, value))  // If value is <= the element at position...
+		if((position == end()) || !value_compare::operator()(*position, value))  // If value is <= the element at position...
 		{
-			if((position == begin()) || !mCompare(value, *(position - 1))) // If value is >= the element before position...
+			if((position == begin()) || !value_compare::operator()(value, *(position - 1))) // If value is >= the element before position...
 				return base_type::insert(position, eastl::move(value));
 		}
 
@@ -609,7 +614,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::iterator
 	vector_multiset<K, C, A, RAC>::lower_bound(const key_type& k)
 	{
-		return eastl::lower_bound(begin(), end(), k, mCompare);
+		return eastl::lower_bound(begin(), end(), k, static_cast<value_compare&>(*this));
 	}
 
 
@@ -617,7 +622,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::const_iterator
 	vector_multiset<K, C, A, RAC>::lower_bound(const key_type& k) const
 	{
-		return eastl::lower_bound(begin(), end(), k, mCompare);
+		return eastl::lower_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
 	}
 
 
@@ -625,7 +630,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::iterator
 	vector_multiset<K, C, A, RAC>::upper_bound(const key_type& k)
 	{
-		return eastl::upper_bound(begin(), end(), k, mCompare);
+		return eastl::upper_bound(begin(), end(), k, static_cast<value_compare&>(*this));
 	}
 
 
@@ -633,7 +638,7 @@ namespace eastl
 	inline typename vector_multiset<K, C, A, RAC>::const_iterator
 	vector_multiset<K, C, A, RAC>::upper_bound(const key_type& k) const
 	{
-		return eastl::upper_bound(begin(), end(), k, mCompare);
+		return eastl::upper_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
 	}
 
 
@@ -641,7 +646,7 @@ namespace eastl
 	inline eastl::pair<typename vector_multiset<K, C, A, RAC>::iterator, typename vector_multiset<K, C, A, RAC>::iterator>
 	vector_multiset<K, C, A, RAC>::equal_range(const key_type& k)
 	{
-		return eastl::equal_range(begin(), end(), k, mCompare);
+		return eastl::equal_range(begin(), end(), k, static_cast<value_compare&>(*this));
 	}
 
 
@@ -649,7 +654,7 @@ namespace eastl
 	inline eastl::pair<typename vector_multiset<K, C, A, RAC>::const_iterator, typename vector_multiset<K, C, A, RAC>::const_iterator>
 	vector_multiset<K, C, A, RAC>::equal_range(const key_type& k) const
 	{
-		return eastl::equal_range(begin(), end(), k, mCompare);
+		return eastl::equal_range(begin(), end(), k, static_cast<const value_compare&>(*this));
 	}
 
 
@@ -662,7 +667,7 @@ namespace eastl
 		const iterator itLower(lower_bound(k));
 		iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, *itUpper))
+		while((itUpper != end()) && !value_compare::operator()(k, *itUpper))
 			++itUpper;
 
 		return eastl::pair<iterator, iterator>(itLower, itUpper);
@@ -677,7 +682,7 @@ namespace eastl
 		const const_iterator itLower(lower_bound(k));
 		const_iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, *itUpper))
+		while((itUpper != end()) && !value_compare::operator()(k, *itUpper))
 			++itUpper;
 
 		return eastl::pair<const_iterator, const_iterator>(itLower, itUpper);

@@ -135,14 +135,12 @@
 
 		void* InternalMalloc(size_t size)
 		{
-		    void* mem = nullptr;
-
 			auto& allocator = EA::Allocator::EASTLTest_GetGeneralAllocator();
 
 		#ifdef EA_DEBUG
-			mem = allocator.MallocDebug(size, 0, 0, gUnattributedNewTag, UNATTRIBUTED_NEW_FILE, UNATTRIBUTED_NEW_LINE);
+			void* mem = allocator.MallocAlignedDebug(size, alignof(std::max_align_t), 0, 0, 0, gUnattributedNewTag, UNATTRIBUTED_NEW_FILE, UNATTRIBUTED_NEW_LINE);
 		#else
-			mem = allocator.Malloc(size);
+			void* mem = allocator.MallocAligned(size, alignof(std::max_align_t));;
 		#endif
 
 			if(mem == nullptr)
@@ -153,14 +151,12 @@
 
 		void* InternalMalloc(size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 		{
-		    void* mem = nullptr;
-
 			auto& allocator = EA::Allocator::EASTLTest_GetGeneralAllocator();
 
 		#ifdef EA_DEBUG
-			mem = allocator.MallocDebug(size, flags, debugFlags, name, file, line);
+			void* mem = allocator.MallocAlignedDebug(size, alignof(std::max_align_t), 0, flags, debugFlags, name, file, line);
 		#else
-			mem = allocator.Malloc(size, flags);
+			void* mem = allocator.MallocAligned(size, alignof(std::max_align_t), 0, flags);;
 			EA_UNUSED(debugFlags);
 			EA_UNUSED(file);
 			EA_UNUSED(line);

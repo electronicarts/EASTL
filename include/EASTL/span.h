@@ -54,6 +54,16 @@ namespace eastl
 		//
 		template<size_t Extent, size_t Offset, size_t Count>
 		struct SubspanExtent : eastl::integral_constant<size_t, (Count != dynamic_extent ? Count : (Extent != dynamic_extent ? (Extent - Offset) : dynamic_extent))> {};
+
+		// is_eastl_array<PossiblyArray, T>
+		// 
+		// is an eastl::array<T, N> with elements T?
+		// NOT the same as is_array, which is a type trait for the C-style array type.
+		template<typename PossiblyArray, typename T>
+		struct is_eastl_array : public eastl::false_type {};
+
+		template<typename T, size_t N>
+		struct is_eastl_array<eastl::array<T, N>, T> : public eastl::true_type {};
 	}
 
 	template <typename T, size_t Extent = eastl::dynamic_extent>
@@ -99,7 +109,7 @@ namespace eastl
 		//
 		template <typename Container>
 		using SfinaeForGenericContainers =
-		    enable_if_t<!is_same_v<Container, span> && !is_same_v<Container, array<value_type>> &&
+		    enable_if_t<!is_same_v<Container, span> && !Internal::is_eastl_array<Container, value_type>::value &&
 		                !is_array_v<Container> &&
 		                Internal::HasSizeAndData<Container>::value &&
 		                is_convertible_v<remove_pointer_t<decltype(eastl::data(eastl::declval<Container&>()))> (*)[], element_type (*)[]>>;

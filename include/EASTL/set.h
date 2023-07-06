@@ -591,7 +591,7 @@ namespace eastl
 		const iterator itLower(lower_bound(k));
 		iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !compare(k, itUpper.mpNode->mValue))
+		while((itUpper != end()) && !compare(k, *itUpper))
 			++itUpper;
 
 		return eastl::pair<iterator, iterator>(itLower, itUpper);

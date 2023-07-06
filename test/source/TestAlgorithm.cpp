@@ -90,7 +90,7 @@ enum TestMinMaxEnum
 // A version of greater that uses operator < instead of operator >.
 //
 template <typename T>
-struct Greater : public eastl::binary_function<T, T, bool>
+struct Greater
 {
 	bool operator()(const T& a, const T& b) const
 		{ return (b < a); }
@@ -111,7 +111,7 @@ struct DivisibleBy
 ///////////////////////////////////////////////////////////////////////////////
 // TestObjectNegate
 //
-struct TestObjectNegate : public eastl::unary_function<TestObject, TestObject>
+struct TestObjectNegate
 {
 	TestObject operator()(const TestObject& a) const
 		{ return TestObject(-a.mX); }
@@ -867,13 +867,14 @@ int TestAlgorithm()
 		int intArray1[] = { 9, 1, 9, 9, 9, 9, 1, 1, 9, 9 };
 		int intArray2[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-		copy_if(intArray1, intArray1 + 0, intArray2, bind2nd(equal_to<int>(), (int)1));
+		auto equal_to_1 = [](int i) { return i == 1; };
+		copy_if(intArray1, intArray1 + 0, intArray2, equal_to_1);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 10, int(), "copy_if", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1));
 
-		copy_if(intArray1, intArray1 + 9, intArray2, bind2nd(equal_to<int>(), (int)1));
+		copy_if(intArray1, intArray1 + 9, intArray2, equal_to_1);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 10, int(), "copy_if", 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, -1));
 
-		copy_if(intArray1 + 1, intArray1 + 9, intArray1 + 0, bind2nd(equal_to<int>(), (int)1)); // Copy over self.
+		copy_if(intArray1 + 1, intArray1 + 9, intArray1 + 0, equal_to_1); // Copy over self.
 		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 10, int(), "copy_if", 1, 1, 1, 9, 9, 9, 1, 1, 9, 9, -1));
 	}
 
@@ -894,6 +895,9 @@ int TestAlgorithm()
 
 		int intArray1[] = { 3, 2, 6, 5, 4, 1 };
 		int intArray2[] = { 0, 0, 0, 0, 0, 0 };
+
+		copy_backward(intArray1, intArray1 + 0, (int*) nullptr);
+		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 6, int(), "copy_backward", 0, 0, 0, 0, 0, 0, -1));
 
 		copy_backward(intArray1, intArray1 + 0, intArray2 + 0);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 6, int(), "copy_backward", 0, 0, 0, 0, 0, 0, -1));
@@ -952,18 +956,20 @@ int TestAlgorithm()
 		int intArray[] = { 3, 2, 6, 5, 4, 1, 2, 4, 5, 4, 1, 2 };
 
 		// Count all items whose value is less than three.
-		ptrdiff_t n = count_if(intArray, intArray, bind2nd(less<int>(), (int)3)); // No-op
+		auto less_than_3 = [](int i) { return i < 3; };
+		ptrdiff_t n = count_if(intArray, intArray, less_than_3); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(intArray, intArray + 12, bind2nd(less<int>(), (int)3));
+		n = count_if(intArray, intArray + 12, less_than_3);
 		EATEST_VERIFY(n == 5);
 
 
 		// Count all items whose value is less than three.
 		TestObject toArray[] = { TestObject(1), TestObject(3), TestObject(1), TestObject(4), TestObject(2), TestObject(5) };
 
-		n = count_if(toArray, toArray, bind2nd(less<TestObject>(), TestObject(3))); // No-op
+		auto less_than_testobject_3 = [](const TestObject& lhs) { return lhs < TestObject(3); };
+		n = count_if(toArray, toArray, less_than_testobject_3); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(toArray, toArray + 6, bind2nd(less<TestObject>(), TestObject(3)));
+		n = count_if(toArray, toArray + 6, less_than_testobject_3);
 		EATEST_VERIFY(n == 3);
 
 
@@ -976,9 +982,9 @@ int TestAlgorithm()
 		intList.push_front(2);
 		intList.push_front(5);
 
-		n = count_if(intList.begin(), intList.begin(), bind2nd(less<int>(), (int)3)); // No-op
+		n = count_if(intList.begin(), intList.begin(), less_than_3); // No-op
 		EATEST_VERIFY(n == 0);
-		n = count_if(intList.begin(), intList.end(), bind2nd(less<int>(), (int)3));
+		n = count_if(intList.begin(), intList.end(), less_than_3);
 		EATEST_VERIFY(n == 3);
 	}
 
@@ -1146,27 +1152,27 @@ int TestAlgorithm()
 		int intArray[] = { 3, 2, 6, 5, 4, 1, 2, 4, 5, 4, 1, 2 };
 
 		// Find an item which is equal to 1.
-		int* pInt = find_if(intArray, intArray, bind2nd(equal_to<int>(), (int)1)); // No-op
+		int* pInt = find_if(intArray, intArray, [](int i) { return i == 1; }); // No-op
 		EATEST_VERIFY(pInt == (intArray));
-		pInt = find_if(intArray, intArray + 12, bind2nd(equal_to<int>(), (int)1));
+		pInt = find_if(intArray, intArray + 12, [](int i) { return i == 1; });
 		EATEST_VERIFY(pInt == (intArray + 5));
-		pInt = find_if(intArray, intArray + 12, bind2nd(equal_to<int>(), (int)99));
+		pInt = find_if(intArray, intArray + 12, [](int i) { return i == 99; });
 		EATEST_VERIFY(pInt == (intArray + 12));
 
-		pInt = find_if_not(intArray, intArray + 12, bind2nd(equal_to<int>(), (int)3));
+		pInt = find_if_not(intArray, intArray + 12, [](int i) { return i == 3; });
 		EATEST_VERIFY(pInt == (intArray + 1));
 
 		// Find an item which is equal to 1.
 		TestObject toArray[] = { TestObject(4), TestObject(3), TestObject(2), TestObject(1), TestObject(2), TestObject(5) };
 
-		TestObject* pTO = find_if(toArray, toArray, bind2nd(equal_to<TestObject>(), TestObject(1))); // No-op
+		TestObject* pTO = find_if(toArray, toArray, [](const TestObject& lhs) { return lhs == TestObject(1); }); // No-op
 		EATEST_VERIFY(pTO == (toArray));
-		pTO = find_if(toArray, toArray + 6, bind2nd(equal_to<TestObject>(), TestObject(1)));
+		pTO = find_if(toArray, toArray + 6, [](const TestObject& lhs) { return lhs == TestObject(1); });
 		EATEST_VERIFY(pTO == (toArray + 3));
-		pTO = find_if(toArray, toArray + 6, bind2nd(equal_to<TestObject>(), TestObject(99)));
+		pTO = find_if(toArray, toArray + 6, [](const TestObject& lhs) { return lhs == TestObject(99); });
 		EATEST_VERIFY(pTO == (toArray + 6));
 
-		pTO = find_if_not(toArray, toArray + 6, bind2nd(equal_to<TestObject>(), TestObject(4)));
+		pTO = find_if_not(toArray, toArray + 6, [](const TestObject& lhs) { return lhs == TestObject(4); });
 		EATEST_VERIFY(pTO == (toArray + 1));
 
 		// Find an item which is equal to 1.
@@ -1179,14 +1185,14 @@ int TestAlgorithm()
 		intList.push_front(5);
 
 		// The list is now: { 5, 2, 1, 2, 3, 4 }
-		slist<int>::iterator it = find_if(intList.begin(), intList.begin(), bind2nd(equal_to<int>(), (int)1)); // No-op
+		slist<int>::iterator it = find_if(intList.begin(), intList.begin(), [](int i) { return i == 1; }); // No-op
 		EATEST_VERIFY(it == intList.begin());
-		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)1));
+		it = find_if(intList.begin(), intList.end(), [](int i) { return i == 1; });
 		EATEST_VERIFY(*it == 1);
-		it = find_if(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)99));
+		it = find_if(intList.begin(), intList.end(), [](int i) { return i == 99; });
 		EATEST_VERIFY(it == intList.end());
 
-		it = find_if_not(intList.begin(), intList.end(), bind2nd(equal_to<int>(), (int)5));
+		it = find_if_not(intList.begin(), intList.end(), [](int i) { return i == 5; });
 		EATEST_VERIFY(*it == 2);
 	}
 
@@ -1509,6 +1515,16 @@ int TestAlgorithm()
 		EATEST_VERIFY( b);
 	}
 
+	{
+		// bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2)
+		// bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, Compare compare)
+
+		char* cstr = nullptr;
+
+		bool b = lexicographical_compare(cstr, cstr, cstr, cstr);
+		EATEST_VERIFY(!b);
+	}
+
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	{
 		// <compairison_category> lexicographical_compare_three_way(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, Compare compare)
@@ -1791,9 +1807,9 @@ int TestAlgorithm()
 		EATEST_VERIFY((intArray[1] == 99) && (intArray[7] == 99));
 
 		// Convert 99s to 88s.
-		replace_if(intArray, intArray,     bind2nd(equal_to<int>(), (int)99), 88); // No-op
+		replace_if(intArray, intArray, [](int i) { return i == 99; }, 88); // No-op
 		EATEST_VERIFY((intArray[1] == 99) && (intArray[7] == 99));
-		replace_if(intArray, intArray + 8, bind2nd(equal_to<int>(), (int)99), 88);
+		replace_if(intArray, intArray + 8, [](int i) { return i == 99; }, 88);
 		EATEST_VERIFY((intArray[1] == 88) && (intArray[7] == 88));
 
 
@@ -1823,13 +1839,13 @@ int TestAlgorithm()
 		EATEST_VERIFY(*it == TestObject(99));
 
 		// Convert 99s to 88s.
-		replace_if(toList.begin(), toList.begin(), bind2nd(equal_to<TestObject>(), TestObject(99)), TestObject(88)); // No-op
+		replace_if(toList.begin(), toList.begin(), [](const TestObject& lhs) { return lhs == TestObject(99); }, TestObject(88)); // No-op
 		it = toList.begin();
 		advance(it, 1);
 		EATEST_VERIFY(*it == TestObject(99));
 		advance(it, 6);
 		EATEST_VERIFY(*it == TestObject(99));
-		replace_if(toList.begin(), toList.end(),   bind2nd(equal_to<TestObject>(), TestObject(99)), TestObject(88));
+		replace_if(toList.begin(), toList.end(), [](const TestObject& lhs) { return lhs == TestObject(99); }, TestObject(88));
 		it = toList.begin();
 		advance(it, 1);
 		EATEST_VERIFY(*it == TestObject(88));
@@ -1856,12 +1872,12 @@ int TestAlgorithm()
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove_copy", 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, -1));
 
 
-		pInt = remove_copy_if(intArray1, intArray1, intArray2, bind2nd(equal_to<int>(), (int)0)); // No-op
+		pInt = remove_copy_if(intArray1, intArray1, intArray2, [](int i) { return i == 0; }); // No-op
 		EATEST_VERIFY(pInt == intArray2);
 		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 12, int(), "remove_copy_if", 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, -1));
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove_copy_if", 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, -1));
 
-		pInt = remove_copy_if(intArray1, intArray1 + 12, intArray2, bind2nd(equal_to<int>(), (int)0));
+		pInt = remove_copy_if(intArray1, intArray1 + 12, intArray2, [](int i) { return i == 0; });
 		EATEST_VERIFY(pInt == intArray2 + 6);
 		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 12, int(), "remove_copy_if", 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, -1));
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove_copy_if", 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, -1));
@@ -1935,12 +1951,12 @@ int TestAlgorithm()
 		    int intArray[12] = {0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1};
 		    vector<int> output;
 		    auto func = [&output](int a) { output.push_back(a); };
-		    int* pInt = apply_and_remove_if(intArray, intArray, func, bind2nd(equal_to<int>(), (int)1));
+		    int* pInt = apply_and_remove_if(intArray, intArray, func, [](int i) { return i == 1; });
 		    EATEST_VERIFY(pInt == intArray);
 		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 0, 0, 1, 1, 0, 0, 1, 1,
 		                                 0, 0, 1, 1, -1));
 		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
-		    pInt = apply_and_remove_if(intArray, intArray + 12, func, bind2nd(equal_to<int>(), (int)1));
+		    pInt = apply_and_remove_if(intArray, intArray + 12, func, [](int i) { return i == 1; });
 		    EATEST_VERIFY(pInt == intArray + 6);
 		    EATEST_VERIFY(VerifySequence(intArray, intArray + 6, int(), "apply_and_remove_if", 0, 0, 0, 0, 0, 0, -1));
 		    EATEST_VERIFY(
@@ -1952,12 +1968,12 @@ int TestAlgorithm()
 		    int intArray[12] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
 		    vector<int> output;
 		    auto func = [&output](int a) { output.push_back(a); };
-		    int* pInt = apply_and_remove_if(intArray, intArray, func, bind2nd(equal_to<int>(), (int)1));
+		    int* pInt = apply_and_remove_if(intArray, intArray, func, [](int i) { return i == 1; });
 		    EATEST_VERIFY(pInt == intArray);
 		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 3, 3, 3, 3, 3, 3, 3, 3,
 		                                 3, 3, 3, 3, -1));
 		    EATEST_VERIFY(VerifySequence(output.begin(), output.end(), int(), "apply_and_remove_if", -1));
-		    pInt = apply_and_remove_if(intArray, intArray + 12, func, bind2nd(equal_to<int>(), (int)1));
+		    pInt = apply_and_remove_if(intArray, intArray + 12, func, [](int i) { return i == 1; });
 		    EATEST_VERIFY(pInt == intArray + 12);
 		    EATEST_VERIFY(VerifySequence(intArray, intArray + 12, int(), "apply_and_remove_if", 3, 3, 3, 3, 3, 3, 3, 3,
 		                                 3, 3, 3, 3, -1));
@@ -2557,7 +2573,42 @@ int TestAlgorithm()
 		}
 	}
 
-	{
+    {
+	    // template <class InputIterator, class UnaryPredicate>
+	    // bool is_partitioned(InputIterator first, InputIterator last, UnaryPredicate predicate)
+
+	    // template <class ForwardIterator, class UnaryPredicate>
+	    // ForwardIterator partition_point(ForwardIterator first, ForwardIterator last, UnaryPredicate predicate)
+
+	    const auto isEven = [](int i) { return i % 2 == 0; };
+
+	    // These are all partitioned, even first and then odd.
+	    vector<int> v1 = {0, 2, 4, 5, 7, 9, 11};
+	    vector<int> v2 = {1, 3, 5, 7, 9};
+	    vector<int> v3 = {2, 4, 8, 100, 102};
+	    vector<int> v4 = {2, 4, 8, 100, 103};
+	    EATEST_VERIFY(is_partitioned(v1.begin(), v1.end(), isEven));
+	    EATEST_VERIFY(is_partitioned(v2.begin(), v2.end(), isEven));
+	    EATEST_VERIFY(is_partitioned(v3.begin(), v3.end(), isEven));
+	    EATEST_VERIFY(is_partitioned(v4.begin(), v4.end(), isEven));
+
+	    EATEST_VERIFY(distance(v1.begin(), partition_point(v1.begin(), v1.end(), isEven)) == 3);
+	    EATEST_VERIFY(distance(v2.begin(), partition_point(v2.begin(), v2.end(), isEven)) == 0);
+	    EATEST_VERIFY(distance(v3.begin(), partition_point(v3.begin(), v3.end(), isEven)) == 5);
+	    EATEST_VERIFY(distance(v4.begin(), partition_point(v4.begin(), v4.end(), isEven)) == 4);
+
+	    // These are all not partitioned:
+	    vector<int> v5 = {0, 2, 3, 4, 5, 7, 9, 11};
+	    vector<int> v6 = {1, 3, 5, 7, 9, 2};
+	    vector<int> v7 = {2, 4, 3, 8, 100, 102};
+	    vector<int> v8 = {2, 4, 8, 5, 100, 103};
+	    EATEST_VERIFY(!is_partitioned(v5.begin(), v5.end(), isEven));
+	    EATEST_VERIFY(!is_partitioned(v6.begin(), v6.end(), isEven));
+	    EATEST_VERIFY(!is_partitioned(v7.begin(), v7.end(), isEven));
+	    EATEST_VERIFY(!is_partitioned(v8.begin(), v8.end(), isEven));
+    }
+
+    {
 		//template<typename BidirectionalIterator>
 		//bool next_permutation(BidirectionalIterator first, BidirectionalIterator last);
 

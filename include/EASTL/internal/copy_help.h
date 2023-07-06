@@ -33,9 +33,12 @@ namespace eastl
 	/// doesn't target overlapping memory and so memcpy would be usable.
 	///
 	/// We can use memmove/memcpy if the following hold true:
-	///     InputIterator and OutputIterator are of the same type.
+	///     InputIterator and OutputIterator have the same value type.
 	///     InputIterator and OutputIterator are of type contiguous_iterator_tag or simply are pointers (the two are virtually synonymous).
-	///     is_trivially_copyable<T>::value is true. i.e. the constructor T(const T& t) (or T(T&& t) if present) can be replaced by memmove(this, &t, sizeof(T))
+	///     is_trivially_copyable<T>::value is true. i.e. from the standard (http://www.eel.is/c++draft/basic.types.general#2):
+	///			For any object (other than a potentially-overlapping subobject) of trivially copyable type T, whether or not the object
+	///			holds a valid value of type T, the underlying bytes making up the object can be copied into an array of char, unsigned char,
+	///			or std::byte [footnote: By using, for example, the library functions std::memcpy or std::memmove].
 	///
 	/// copy normally differs from move, but there is a case where copy is the same as move: when copy is
 	/// used with a move_iterator. We handle that case here by detecting that copy is being done with a
@@ -128,10 +131,10 @@ namespace eastl
 		// is_same<> directly.
 	#if !EASTL_STD_ITERATOR_CATEGORY_ENABLED || defined(EA_COMPILER_CPP20_ENABLED)
 		template <typename IC>
-		using is_contiguous_iterator_helper = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
+		using is_contiguous_iterator = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
 	#else
 		template <typename IC>
-		using is_contiguous_iterator_helper = eastl::false_type;
+		using is_contiguous_iterator = eastl::false_type;
 	#endif
 
 		template <typename InputIterator, typename OutputIterator>
@@ -143,8 +146,8 @@ namespace eastl
 
 			static constexpr bool value = eastl::is_trivially_copyable<value_type_output>::value &&
 				                          eastl::is_same<value_type_input, value_type_output>::value &&
-				                         (eastl::is_pointer<InputIterator>::value  || is_contiguous_iterator_helper<IIC>::value) &&
-				                         (eastl::is_pointer<OutputIterator>::value || is_contiguous_iterator_helper<OIC>::value);
+				                         (eastl::is_pointer<InputIterator>::value  || is_contiguous_iterator<IIC>::value) &&
+				                         (eastl::is_pointer<OutputIterator>::value || is_contiguous_iterator<OIC>::value);
 
 		};
 	}
