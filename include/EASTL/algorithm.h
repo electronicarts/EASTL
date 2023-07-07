@@ -1960,6 +1960,10 @@ namespace eastl
 	bool identical(InputIterator1 first1, InputIterator1 last1,
 				   InputIterator2 first2, InputIterator2 last2)
 	{
+		auto d1 = eastl::distance(first1, last1);
+		auto d2 = eastl::distance(first2, last2);
+		if(d1 != d2)
+			return false;
 		while((first1 != last1) && (first2 != last2) && (*first1 == *first2))
 		{
 			++first1;
@@ -1975,6 +1979,10 @@ namespace eastl
 	bool identical(InputIterator1 first1, InputIterator1 last1,
 				   InputIterator2 first2, InputIterator2 last2, BinaryPredicate predicate)
 	{
+		auto d1 = eastl::distance(first1, last1);
+		auto d2 = eastl::distance(first2, last2);
+		if(d1 != d2)
+			return false;
 		while((first1 != last1) && (first2 != last2) && predicate(*first1, *first2))
 		{
 			++first1;
