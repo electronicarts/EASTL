@@ -109,6 +109,23 @@ int TestStringView()
 		VERIFY(sw.size() == wcslen(pStr));
 	}
 
+	#if EASTL_STRING_VIEW_STD_CONVERSION_ENABLED
+		// automatic conversion between std::string_view and eastl::string_view
+		{
+			eastl::string_view originalString = "Hello World";
+
+			std::string_view stdView{originalString};
+			stdView = originalString;
+			eastl::string_view eastlView{stdView};
+			eastlView = stdView;
+
+			const auto fnTakingStdView = [](std::string_view) {};
+			fnTakingStdView(eastlView);
+
+			const auto fnTakingEastlView = [](eastl::string_view) {};
+			fnTakingEastlView(stdView);
+		}
+	#endif
 
 	return nErrorCount;
 }
