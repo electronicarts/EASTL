@@ -460,9 +460,11 @@ namespace eastl
 			return b < a ? b : a;
 		}
 
+#if !defined(EA_COMPILER_NO_FLOATS)
 		inline EA_CONSTEXPR float       min(float  a, float   b)           { return b < a ? b : a; }
 		inline EA_CONSTEXPR double      min(double a, double  b)           { return b < a ? b : a; }
 		inline EA_CONSTEXPR long double min(long double a, long double  b) { return b < a ? b : a; }
+#endif
 
 	#endif // EASTL_MINMAX_ENABLED
 
@@ -488,9 +490,11 @@ namespace eastl
 		return b < a ? b : a;
 	}
 
+#if !defined(EA_COMPILER_NO_FLOATS)
 	inline EA_CONSTEXPR float       min_alt(float  a, float   b)           { return b < a ? b : a; }
 	inline EA_CONSTEXPR double      min_alt(double a, double  b)           { return b < a ? b : a; }
 	inline EA_CONSTEXPR long double min_alt(long double a, long double  b) { return b < a ? b : a; }
+#endif
 
 
 	#if EASTL_MINMAX_ENABLED
@@ -574,9 +578,11 @@ namespace eastl
 			return a < b ? b : a;
 		}
 
+#if !defined(EA_COMPILER_NO_FLOATS)
 		inline EA_CONSTEXPR float       max(float       a, float       b) { return a < b ? b : a; }
 		inline EA_CONSTEXPR double      max(double      a, double      b) { return a < b ? b : a; }
 		inline EA_CONSTEXPR long double max(long double a, long double b) { return a < b ? b : a; }
+#endif
 
 	#endif // EASTL_MINMAX_ENABLED
 
@@ -600,9 +606,11 @@ namespace eastl
 		return a < b ? b : a;
 	}
 
+#if !defined(EA_COMPILER_NO_FLOATS)
 	inline EA_CONSTEXPR float       max_alt(float       a, float       b) { return a < b ? b : a; }
 	inline EA_CONSTEXPR double      max_alt(double      a, double      b) { return a < b ? b : a; }
 	inline EA_CONSTEXPR long double max_alt(long double a, long double b) { return a < b ? b : a; }
+#endif
 
 
 	#if EASTL_MINMAX_ENABLED
