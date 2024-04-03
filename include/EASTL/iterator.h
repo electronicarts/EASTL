@@ -282,6 +282,8 @@ namespace eastl
 		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator& ri)
 			: mIterator(ri.mIterator) { }
 
+		reverse_iterator& operator=(const reverse_iterator& ri) = default;
+
 		template <typename U>
 		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator<U>& ri)
 			: mIterator(ri.base()) { }
@@ -683,8 +685,7 @@ namespace eastl
 	public:
 		//back_insert_iterator(); // Not valid. Must construct with a Container.
 
-		//back_insert_iterator(const this_type& x) // Compiler-implemented
-		//    : container(x.container) { }
+		back_insert_iterator(const back_insert_iterator& x) = default;
 
 		explicit back_insert_iterator(Container& x)
 			: container(x) { }
@@ -826,6 +827,8 @@ namespace eastl
 
 		insert_iterator(Container& x, iterator_type itNew)
 			: container(x), it(itNew) {}
+
+		insert_iterator(const insert_iterator& x) = default;
 
 		insert_iterator& operator=(const_reference value)
 		{

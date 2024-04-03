@@ -330,6 +330,9 @@ namespace eastl
 		hashtable_iterator(const this_type_non_const& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
+		hashtable_iterator& operator=(const this_type_non_const& x)
+			{ base_type::mpNode = x.mpNode; base_type::mpBucket = x.mpBucket; return *this; }
+
 		reference operator*() const
 			{ return base_type::mpNode->mValue; }
 

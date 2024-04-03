@@ -64,6 +64,7 @@ namespace eastl
 	public:
 		typedef eastl_size_t size_type;
 		bitvector_reference(Element* ptr, eastl_size_t i);
+		bitvector_reference(const bitvector_reference& rhs) = default;
 
 		bitvector_reference& operator=(bool value);
 		bitvector_reference& operator=(const bitvector_reference& rhs);
@@ -112,6 +113,7 @@ namespace eastl
 		bitvector_const_iterator();
 		bitvector_const_iterator(const element_type* p, eastl_size_t i);
 		bitvector_const_iterator(const reference_type& referenceType);
+		bitvector_const_iterator(const bitvector_const_iterator& rhs) = default;
 
 		bitvector_const_iterator& operator++();
 		bitvector_const_iterator  operator++(int);

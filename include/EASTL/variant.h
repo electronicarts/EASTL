@@ -767,10 +767,12 @@ namespace eastl
 		}
 
 
+		/* avoid defining explicit destructor to allow generating default copy-ctor/assign-op (fixes C5267 in VC2022)
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.2, destructor
 		//
 		~variant() = default;
+		*/
 
 
 		///////////////////////////////////////////////////////////////////////////
