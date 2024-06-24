@@ -181,8 +181,18 @@ namespace eastl
 		EA_CPP14_CONSTEXPR T* data() EA_NOEXCEPT { return nullptr; }
 		EA_CPP14_CONSTEXPR const T* data() const EA_NOEXCEPT { return nullptr; }
 
-		EA_CPP14_CONSTEXPR reference       operator[](size_type i) { return *data(); }
-		EA_CPP14_CONSTEXPR const_reference operator[](size_type i) const { return *data(); }
+		EA_CPP14_CONSTEXPR reference       operator[](size_type i) {
+#if EASTL_ASSERT_ENABLED
+			EASTL_FAIL_MSG("array::operator[] -- out of range");
+#endif
+			return *data();
+		}
+		EA_CPP14_CONSTEXPR const_reference operator[](size_type i) const {
+#if EASTL_ASSERT_ENABLED
+			EASTL_FAIL_MSG("array::operator[] -- out of range");
+#endif
+			return *data();
+		}
 		EA_CPP14_CONSTEXPR const_reference at(size_type i) const
 		{
 #if EASTL_EXCEPTIONS_ENABLED
@@ -365,6 +375,11 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::reference
 	array<T, N>::operator[](size_type i)
 	{
+		#if EASTL_ASSERT_ENABLED
+			if(EASTL_UNLIKELY(i >= N))
+				EASTL_FAIL_MSG("array::operator[] -- out of range");
+		#endif
+
 		return mValue[i];
 	}
 
@@ -373,6 +388,11 @@ namespace eastl
 	EA_CPP14_CONSTEXPR inline typename array<T, N>::const_reference
 	array<T, N>::operator[](size_type i) const
 	{
+		#if EASTL_ASSERT_ENABLED
+			if(EASTL_UNLIKELY(i >= N))
+				EASTL_FAIL_MSG("array::operator[] -- out of range");
+		#endif
+
 		return mValue[i];
 	}
 
