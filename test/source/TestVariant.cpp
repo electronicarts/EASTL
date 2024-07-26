@@ -9,6 +9,9 @@
 #include <EASTL/sort.h>
 #include <EASTL/bonus/overloaded.h>
 
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4512 4626);
+
 #ifdef EA_COMPILER_CPP14_ENABLED
 #include "ConceptImpls.h"
 #include <EASTL/variant.h>
@@ -280,8 +283,9 @@ int TestVariantHoldsAlternative()
 			using v_t = variant<int, short>;  // default construct first type
 			v_t v;
 
-			VERIFY(!holds_alternative<long>(v));   // Verify that a query for a T not in the variant typelist returns false.
-			VERIFY(!holds_alternative<string>(v)); // Verify that a query for a T not in the variant typelist returns false.
+			// no matching overload, type is not an alternative.
+			// holds_alternative<long>(v);
+			// holds_alternative<string>(v);
 			VERIFY( holds_alternative<int>(v));    // variant does hold an int, because its a default constructible first parameter
 			VERIFY(!holds_alternative<short>(v));  // variant does not hold a short
 		}
@@ -290,9 +294,10 @@ int TestVariantHoldsAlternative()
 			using v_t = variant<monostate, int, short>;  // default construct monostate
 			v_t v;
 
-			VERIFY(!holds_alternative<long>(v));   // Verify that a query for a T not in the variant typelist returns false.
-			VERIFY(!holds_alternative<string>(v)); // Verify that a query for a T not in the variant typelist returns false.
-			VERIFY(!holds_alternative<int>(v));    // variant does not hold an int
+			// no matching overload, type is not an alternative.
+			// holds_alternative<long>(v);
+			// holds_alternative<string>(v);
+			VERIFY(!holds_alternative<int>(v));    // variant does not hold an int 
 			VERIFY(!holds_alternative<short>(v));  // variant does not hold a short
 		}
 
@@ -378,7 +383,7 @@ int TestVariantValuelessByException()
 			VERIFY(!v.valueless_by_exception());
 		}
 
-		// TODO(rparolin):  review exception safety for variant types
+		// TODO(rparolin):  review exception safety for variant types 
 		//
 		// {
 		// #if EASTL_EXCEPTIONS_ENABLED
@@ -564,12 +569,12 @@ int TestVariantSwap()
 
 		v1.swap(v2);
 
-		VERIFY(get<int>(v1) == 24);
+		VERIFY(get<int>(v1) == 24); 
 		VERIFY(get<int>(v2) == 42);
 
 		v1.swap(v2);
 
-		VERIFY(get<int>(v1) == 42);
+		VERIFY(get<int>(v1) == 42); 
 		VERIFY(get<int>(v2) == 24);
 	}
 
@@ -577,13 +582,13 @@ int TestVariantSwap()
 		 variant<string> v1 = "Hello";
 		 variant<string> v2 = "World";
 
-		 VERIFY(get<string>(v1) == "Hello");
+		 VERIFY(get<string>(v1) == "Hello"); 
 		 VERIFY(get<string>(v2) == "World");
 
 		 v1.swap(v2);
 
 		 VERIFY(get<string>(v1) == "World");
-		 VERIFY(get<string>(v2) == "Hello");
+		 VERIFY(get<string>(v2) == "Hello"); 
 	}
 
 	return nErrorCount;
@@ -787,7 +792,7 @@ int TestVariantVisitorOverloaded()
 					[&](int)    { count++; },
 					[&](string) { count++; },
 					[&](double) { count++; },
-					[&](long)   { count++; }),
+					[&](long)   { count++; }), 
 				e
 			);
 		}
@@ -1137,7 +1142,7 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
-		eastl::visit<volatile void>(MyVisitor{}, v);
+		eastl::visit<void>(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 	}
 
@@ -1152,7 +1157,7 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
-		eastl::visit<const volatile void>(MyVisitor{}, v);
+		eastl::visit<const void>(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 	}
 
@@ -1821,3 +1826,5 @@ int TestVariant()
 #else
 	int TestVariant() { return 0; }
 #endif
+
+EA_RESTORE_VC_WARNING();

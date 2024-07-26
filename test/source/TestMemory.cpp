@@ -439,9 +439,10 @@ int TestMemory()
 
 	// template <typename First, typename Last, typename Result>
 	// Result uninitialized_copy_ptr(First first, Last last, Result result)
-
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
 	pEnd = eastl::uninitialized_copy_ptr<int*, int*, int*>((int*)NULL, (int*)NULL, (int*)NULL);
 	EATEST_VERIFY(pEnd == NULL);
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	{
@@ -458,8 +459,9 @@ int TestMemory()
 
 	// template <typename T>
 	// void uninitialized_fill_ptr(T* first, T* last, const T& value)
-
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
 	eastl::uninitialized_fill_ptr<int>((int*)NULL, (int*)NULL, (int)0);
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	{
@@ -477,7 +479,9 @@ int TestMemory()
 	// template <typename T, typename Count>
 	// void uninitialized_fill_n_ptr(T* first, Count n, const T& value)
 
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
 	eastl::uninitialized_fill_n_ptr<int, int>((int*)NULL, (int)0, (int)0);
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 

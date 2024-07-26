@@ -59,6 +59,7 @@
 
 #ifndef EASTL_EABASE_DISABLED
 	#include <EABase/eabase.h>
+	#include <EABase/eadeprecated.h>
 #endif
 #include <EABase/eahave.h>
 
@@ -89,8 +90,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.21.12"
-	#define EASTL_VERSION_N  32112
+	#define EASTL_VERSION   "3.21.23"
+	#define EASTL_VERSION_N  32123
 #endif
 
 
@@ -436,20 +437,36 @@ namespace eastl
 // EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 //
 // Defined as 0 or non-zero. Default is same as EASTL_ASSERT_ENABLED.
-// This is like EASTL_ASSERT_ENABLED, except it is for empty container
-// references. Sometime people like to be able to take a reference to
-// the front of the container, but not use it if the container is empty.
-// In practice it's often easier and more efficient to do this than to write
-// extra code to check if the container is empty.
+// This is like EASTL_ASSERT_ENABLED, except it fires asserts specifically for
+// a container operation that returns a reference while the container is empty.
+// Sometimes people like to be able to take a reference to the front of the
+// container, but won't use it if the container is empty. This may or may not
+// be undefined behaviour depending on the container.
+// 
+// In practice, for expressions such as &vector[0] this is not an issue -
+// at least if the subscript operator is inlined because the expression will
+// be equivalent to &*(nullptr) and optimized ti nullptr. MSVC, Clang and GCC
+// all have this behaviour and UBSan & ASan report no issues with that code.
+// 
+// Code that relies on this macro being disabled should instead use the
+// container's data() member function. The range [data(), data() + size())
+// is always valid, even when the container is empty (in which case data()
+// is not dereferencable).
+// 
+// Enabling this macro adds asserts if the container is empty and the function
+// invocation is well defined. If the implementation may invoke UB, or the
+// container is non-empty, then the assert fires if EASTL_ASSERT_ENABLED is
+// enabled, regardless of this macro.
 //
-// NOTE: If this is enabled, EASTL_ASSERT_ENABLED must also be enabled
+// NOTE: If this is enabled, EASTL_ASSERT_ENABLED must also be enabled to
+// have any effect.
 //
 // Example usage:
 //     template <typename T, typename Allocator>
 //     inline typename vector<T, Allocator>::reference
 //     vector<T, Allocator>::front()
 //     {
-//         #if EASTL_ASSERT_ENABLED
+//         #if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 //             EASTL_ASSERT(mpEnd > mpBegin);
 //         #endif
 //
@@ -630,6 +647,8 @@ namespace eastl
     #ifndef EASTL_DEBUG_BREAK
         #if defined(_MSC_VER) && (_MSC_VER >= 1300)
             #define EASTL_DEBUG_BREAK() __debugbreak()    // This is a compiler intrinsic which will map to appropriate inlined asm for the platform.
+		#elif defined(EA_PLATFORM_NINTENDO)
+			#define EASTL_DEBUG_BREAK() __builtin_debugtrap()  // Consider using the CLANG define
         #elif (defined(EA_PROCESSOR_ARM) && !defined(EA_PROCESSOR_ARM64)) && defined(__APPLE__)
             #define EASTL_DEBUG_BREAK() asm("trap")
         #elif defined(EA_PROCESSOR_ARM64) && defined(__APPLE__)
@@ -859,27 +878,6 @@ namespace eastl
 #endif
 
 
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_DEFAULT_ALLOCATOR_ALIGNED_ALLOCATIONS_SUPPORTED
-//
-// Defined as 0 or 1.
-// Tells if you can use the default EASTL allocator to do aligned allocations,
-// which for most uses tells if you can store aligned objects in containers
-// that use default allocators. It turns out that when built as a DLL for
-// some platforms, EASTL doesn't have a way to do aligned allocations, as it
-// doesn't have a heap that supports it. There is a way to work around this
-// with dynamically defined allocators, but that's currently a to-do.
-//
-#ifndef EASTL_DEFAULT_ALLOCATOR_ALIGNED_ALLOCATIONS_SUPPORTED
-	#if EASTL_DLL
-		#define EASTL_DEFAULT_ALLOCATOR_ALIGNED_ALLOCATIONS_SUPPORTED 0
-	#else
-		#define EASTL_DEFAULT_ALLOCATOR_ALIGNED_ALLOCATIONS_SUPPORTED 1
-	#endif
-#endif
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_INT128_DEFINED
 //
@@ -1087,6 +1085,10 @@ namespace eastl
 // of the validity of containers and their iterators. Validation checking is
 // something that often involves significantly more than basic assertion
 // checking, and it may sometimes be desirable to disable it.
+// 
+// Validation sub-features are supported and can be enabled / disabled
+// individually.
+// 
 // This macro would generally be used internally by EASTL.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -1210,69 +1212,6 @@ namespace eastl
 #endif
 
 
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_STD_TYPE_TRAITS_AVAILABLE
-//
-// Defined as 0 or 1; default is based on auto-detection.
-// Specifies whether Standard C++11 <type_traits> support exists.
-// Sometimes the auto-detection below fails to work properly and the
-// user needs to override it. Does not define whether the compiler provides
-// built-in compiler type trait support (e.g. __is_abstract()), as some
-// compilers will EASTL_STD_TYPE_TRAITS_AVAILABLE = 0, but have built
-// in type trait support.
-//
-#ifndef EASTL_STD_TYPE_TRAITS_AVAILABLE
-	/* Disabled because we don't currently need it.
-	#if defined(_MSC_VER) && (_MSC_VER >= 1500)  // VS2008 or later
-		#pragma warning(push, 0)
-			#include <yvals.h>
-		#pragma warning(pop)
-		#if ((defined(_HAS_TR1) && _HAS_TR1) || _MSC_VER >= 1700)  // VS2012 (1700) and later has built-in type traits support.
-			#define EASTL_STD_TYPE_TRAITS_AVAILABLE 1
-			#include <type_traits>
-		#else
-			#define EASTL_STD_TYPE_TRAITS_AVAILABLE 0
-		#endif
-
-	#elif defined(EA_COMPILER_CLANG) || (defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4003) && !defined(__GCCXML__)) && !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
-		#include <cstddef> // This will define __GLIBCXX__ if using GNU's libstdc++ and _LIBCPP_VERSION if using clang's libc++.
-
-		#if defined(EA_COMPILER_CLANG) && !defined(EA_PLATFORM_APPLE) // As of v3.0.0, Apple's clang doesn't support type traits.
-			// http://clang.llvm.org/docs/LanguageExtensions.html#checking_type_traits
-			// Clang has some built-in compiler trait support. This support doesn't currently
-			// directly cover all our type_traits, though the C++ Standard Library that's used
-			// with clang could fill that in.
-			#define EASTL_STD_TYPE_TRAITS_AVAILABLE 1
-		#endif
-
-		#if !defined(EASTL_STD_TYPE_TRAITS_AVAILABLE)
-			#if defined(_LIBCPP_VERSION) // This is defined by clang's libc++.
-				#include <type_traits>
-
-			#elif defined(__GLIBCXX__) && (__GLIBCXX__ >= 20090124) // It's not clear if this is the oldest version that has type traits; probably it isn't.
-				#define EASTL_STD_TYPE_TRAITS_AVAILABLE 1
-
-				#if defined(__GXX_EXPERIMENTAL_CXX0X__) // To do: Update this test to include conforming C++11 implementations.
-					#include <type_traits>
-				#else
-					#include <tr1/type_traits>
-				#endif
-			#else
-				#define EASTL_STD_TYPE_TRAITS_AVAILABLE 0
-			#endif
-		#endif
-
-	#elif defined(__MSL_CPP__) && (__MSL_CPP__ >= 0x8000) // CodeWarrior compiler.
-		#define EASTL_STD_TYPE_TRAITS_AVAILABLE 0
-		// To do: Implement support for this (via modifying the EASTL type
-		//        traits headers, as CodeWarrior provides this.
-	#else
-		#define EASTL_STD_TYPE_TRAITS_AVAILABLE 0
-	#endif
-	*/
-#endif
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE
@@ -1304,28 +1243,6 @@ namespace eastl
 	#else
 		#define EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE 0
 	#endif
-#endif
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_RESET_ENABLED
-//
-// Defined as 0 or 1; default is 1 for the time being.
-// The reset_lose_memory function works the same as reset, as described below.
-//
-// Specifies whether the container reset functionality is enabled. If enabled
-// then <container>::reset forgets its memory, otherwise it acts as the clear
-// function. The reset function is potentially dangerous, as it (by design)
-// causes containers to not free their memory.
-// This option has no applicability to the bitset::reset function, as bitset
-// isn't really a container. Also it has no applicability to the smart pointer
-// wrappers (e.g. intrusive_ptr).
-//
-///////////////////////////////////////////////////////////////////////////////
-
-#ifndef EASTL_RESET_ENABLED
-	#define EASTL_RESET_ENABLED 0
 #endif
 
 
@@ -1484,29 +1401,6 @@ namespace eastl
 	#endif
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_HAVE_CPP11_TYPE_TRAITS
-//
-// Defined as 0 or 1.
-// This is the same as EABase EA_HAVE_CPP11_TYPE_TRAITS except that it
-// follows the convention of being always defined, as 0 or 1. Note that this
-// identifies if the Standard Library has C++11 type traits and not if EASTL
-// has its equivalents to C++11 type traits.
-///////////////////////////////////////////////////////////////////////////////
-#if !defined(EASTL_HAVE_CPP11_TYPE_TRAITS)
-	// To do: Change this to use the EABase implementation once we have a few months of testing
-	// of this and we are sure it works right. Do this at some point after ~January 2014.
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 540) // Dinkumware. VS2012+
-		#define EASTL_HAVE_CPP11_TYPE_TRAITS 1
-	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4007) // Prior versions of libstdc++ have incomplete support for C++11 type traits.
-		#define EASTL_HAVE_CPP11_TYPE_TRAITS 1
-	#elif defined(EA_HAVE_LIBCPP_LIBRARY) && (_LIBCPP_VERSION >= 1)
-		#define EASTL_HAVE_CPP11_TYPE_TRAITS 1
-	#else
-		#define EASTL_HAVE_CPP11_TYPE_TRAITS 0
-	#endif
-#endif
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1601,31 +1495,6 @@ namespace eastl
 
 typedef EASTL_SIZE_T  eastl_size_t;  // Same concept as std::size_t.
 typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept is similar to Posix's ssize_t.
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// AddRef / Release
-//
-// AddRef and Release are used for "intrusive" reference counting. By the term
-// "intrusive", we mean that the reference count is maintained by the object
-// and not by the user of the object. Given that an object implements referencing
-// counting, the user of the object needs to be able to increment and decrement
-// that reference count. We do that via the venerable AddRef and Release functions
-// which the object must supply. These defines here allow us to specify the name
-// of the functions. They could just as well be defined to addref and delref or
-// IncRef and DecRef.
-//
-///////////////////////////////////////////////////////////////////////////////
-
-#ifndef EASTLAddRef
-	#define EASTLAddRef AddRef
-#endif
-
-#ifndef EASTLRelease
-	#define EASTLRelease Release
-#endif
 
 
 
@@ -1794,13 +1663,6 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 #endif
 
 
-/// EASTL_FUNCTION_ENABLED
-///
-#ifndef EASTL_FUNCTION_ENABLED
-	#define EASTL_FUNCTION_ENABLED 1
-#endif
-
-
 /// EASTL_USER_LITERALS_ENABLED
 #ifndef EASTL_USER_LITERALS_ENABLED
 	#if defined(EA_COMPILER_CPP14_ENABLED)
@@ -1930,13 +1792,36 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 // All deprecations raised by this macro (when it is EA_ENABLED) are scheduled for removal approximately April 2024.
 
 #ifndef EASTL_DEPRECATIONS_FOR_2024_APRIL
-	#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
+	#if defined(EA_DEPRECATIONS_FOR_2024_APRIL)
+		#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_DEPRECATIONS_FOR_2024_APRIL
+	#else
+		#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
+	#endif
 #endif
 
 #if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
 	#define EASTL_REMOVE_AT_2024_APRIL EA_DEPRECATED
 #else
 	#define EASTL_REMOVE_AT_2024_APRIL
+#endif
+
+// EASTL_DEPRECATIONS_FOR_2024_SEPT
+// This macro is provided as a means to disable warnings temporarily (in particular if a user is compiling with warnings
+// as errors). All deprecations raised by this macro (when it is EA_ENABLED) are scheduled for removal approximately
+// September 2024.
+
+#ifndef EASTL_DEPRECATIONS_FOR_2024_SEPT
+	#if defined(EA_DEPRECATIONS_FOR_2024_SEPT)
+		#define EASTL_DEPRECATIONS_FOR_2024_SEPT EA_DEPRECATIONS_FOR_2024_SEPT
+	#else
+		#define EASTL_DEPRECATIONS_FOR_2024_SEPT EA_ENABLED
+	#endif
+#endif
+
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_SEPT)
+	#define EASTL_REMOVE_AT_2024_SEPT EA_DEPRECATED
+#else
+	#define EASTL_REMOVE_AT_2024_SEPT
 #endif
 
 // For internal (to EASTL) use only (ie. tests).

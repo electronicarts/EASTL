@@ -2188,6 +2188,67 @@ static int Test_safe_ptr()
 	return nErrorCount;
 }
 
+template<typename T, typename U>
+bool equivalent_owner_before(const T& lhs, const U& rhs) { return !lhs.owner_before(rhs) && !rhs.owner_before(lhs); }
+
+template<typename T, typename U, typename Compare>
+bool equivalent(const T& lhs, const U& rhs, const Compare& cmp) { return !cmp(lhs, rhs) && !cmp(rhs, lhs); }
+
+static int Test_owner_before()
+{
+	using namespace SmartPtrTest;
+	using namespace eastl;
+
+	int nErrorCount = 0;
+
+	struct Foo
+	{
+		int n1;
+		int n2;
+		Foo(int a, int b) : n1(a), n2(b) {}
+	};
+
+	auto p1 = make_shared<Foo>(1, 2);
+	shared_ptr<int> p2(p1, &p1->n1);
+	shared_ptr<int> p3(p1, &p1->n2);
+
+	auto unrelated = make_shared<Foo>(1, 2);
+
+	// owner_before
+	{
+		EATEST_VERIFY(equivalent_owner_before(p1, p2));
+		EATEST_VERIFY(equivalent_owner_before(p1, p3));
+		EATEST_VERIFY(equivalent_owner_before(p2, p3));
+
+		EATEST_VERIFY(!equivalent_owner_before(p1, unrelated));
+		EATEST_VERIFY(!equivalent_owner_before(p2, unrelated));
+		EATEST_VERIFY(!equivalent_owner_before(p3, unrelated));
+	}
+
+	// owner_less<shared_ptr<T>>
+	{
+		EATEST_VERIFY(equivalent(p1, p1, owner_less<shared_ptr<Foo>>{}));
+		EATEST_VERIFY(equivalent(p2, p3, owner_less<shared_ptr<int>>{}));
+
+		EATEST_VERIFY(!equivalent(p1, unrelated, owner_less<shared_ptr<Foo>>{}));
+	}
+
+	// owner_less<void>
+	{
+		owner_less<void> cmp;
+
+		EATEST_VERIFY(equivalent(p1, p2, cmp));
+		EATEST_VERIFY(equivalent(p1, p3, cmp));
+		EATEST_VERIFY(equivalent(p2, p3, cmp));
+
+		EATEST_VERIFY(!equivalent(p1, unrelated, cmp));
+		EATEST_VERIFY(!equivalent(p2, unrelated, cmp));
+		EATEST_VERIFY(!equivalent(p3, unrelated, cmp));
+	}
+
+	return nErrorCount;
+}
+
 
 int TestSmartPtr()
 {
@@ -2207,6 +2268,7 @@ int TestSmartPtr()
 	nErrorCount += Test_linked_array();
 	nErrorCount += Test_intrusive_ptr();
 	nErrorCount += Test_safe_ptr();
+	nErrorCount += Test_owner_before();
 
 	EATEST_VERIFY(A::mCount == 0);
 	EATEST_VERIFY(RefCountTest::mCount == 0);

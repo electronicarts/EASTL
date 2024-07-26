@@ -15,6 +15,9 @@
 #ifndef EASTL_TEST_ITERATORS_H
 #define EASTL_TEST_ITERATORS_H
 
+#include <EASTL/internal/config.h>
+#include <EASTL/iterator.h>
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 #pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif

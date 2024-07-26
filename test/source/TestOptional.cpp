@@ -71,7 +71,7 @@ bool copy_test::was_copied = false;
 /////////////////////////////////////////////////////////////////////////////
 struct move_test
 {
-    move_test() = default;
+	move_test() = default;
 
 	move_test(move_test&& mt)
 	{
@@ -130,6 +130,387 @@ struct assignment_test
 };
 
 int assignment_test::num_objects_inited = 0;
+
+static int TestOptional_MonadicOperations()
+{
+	using namespace eastl;
+
+	int nErrorCount(0);
+#if defined(EASTL_OPTIONAL_ENABLED) && EASTL_OPTIONAL_ENABLED
+	// and_then l-value ref
+	{
+		{
+			optional<int> o{42};
+			auto result = o.and_then(
+				[](int& x)
+				{
+					const int old_x = eastl::exchange(x, 1337);
+					return make_optional(to_string(old_x));
+				});
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(*o == 1337);
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			optional<int> o;
+			auto result = o.and_then(
+				[&called](int& x)
+				{
+					called = true;
+					return make_optional(to_string(x));
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			optional<int> o{42};
+			auto result = o.and_then(
+				[](int& x) -> optional<string>
+				{
+					x = 1337;
+					return nullopt;
+				});
+			VERIFY(!result.has_value());
+			VERIFY(o.has_value());
+			VERIFY(*o == 1337);
+		}
+	}
+
+	// and_then const l-value ref
+	{
+		{
+			const optional<int> o{42};
+			auto result = o.and_then([](const int& x) { return make_optional(to_string(x)); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(*o == 42);
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			const optional<int> o;
+			auto result = o.and_then(
+				[&called](const int& x)
+				{
+					called = true;
+					return make_optional(to_string(x));
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			const optional<int> o{42};
+			auto result = o.and_then([](const int& x) -> optional<string> { return nullopt; });
+			VERIFY(!result.has_value());
+			VERIFY(o.has_value());
+			VERIFY(*o == 42);
+		}
+	}
+
+	// and_then r-value ref
+	{
+		{
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).and_then([](auto ptr) { return make_optional(to_string(*ptr)); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(o.value() == nullptr); // o should be moved-from.
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).and_then(
+				[&called](auto ptr)
+				{
+					called = true;
+					return make_optional(to_string(*ptr));
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).and_then([](auto ptr) -> optional<string> { return nullopt; });
+			VERIFY(!result.has_value());
+			VERIFY(o.has_value());
+			VERIFY(o.value() == nullptr); // o should be moved-from.
+		}
+	}
+
+	// and_then const r-value ref
+	{
+		{
+			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result =
+				eastl::move(o).and_then([](const unique_ptr<int>&& ptr) { return make_optional(to_string(*ptr)); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(o.value() != nullptr);
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			const optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).and_then(
+				[&called](const unique_ptr<int>&& ptr)
+				{
+					called = true;
+					return make_optional(to_string(*ptr));
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result =
+				eastl::move(o).and_then([](const unique_ptr<int>&& ptr) -> optional<string> { return nullopt; });
+			VERIFY(!result.has_value());
+			VERIFY(o.has_value());
+			VERIFY(o.value() != nullptr);
+		}
+	}
+
+	// transform l-value ref
+	{
+		{
+			optional<int> o{42};
+			auto result = o.transform(
+				[](int& x)
+				{
+					const int old_x = eastl::exchange(x, 1337);
+					return to_string(old_x);
+				});
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(*o == 1337);
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			optional<int> o;
+			auto result = o.transform(
+				[&called](int& x)
+				{
+					called = true;
+					return to_string(x);
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			// Check that the return type of the callable gets remove_cvref_t.
+			eastl::string externalString = "Jean Guegant was here";
+
+			optional<int> o{42};
+			auto result = o.transform([&externalString](int& x) -> const eastl::string& { return externalString; });
+
+			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
+						  "Wrong return type for transform.");
+			VERIFY(result.has_value());
+			VERIFY(*result == externalString);
+		}
+	}
+
+	// transform const l-value ref
+	{
+		{
+			const optional<int> o{42};
+			auto result = o.transform([](const int& x) { return to_string(x); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			const optional<int> o;
+			auto result = o.transform(
+				[&called](const int& x)
+				{
+					called = true;
+					return to_string(x);
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			// Check that the return type of the callable gets remove_cvref_t.
+			eastl::string externalString = "Jean Guegant was here";
+
+			const optional<int> o{42};
+			auto result =
+				o.transform([&externalString](const int& x) -> const eastl::string& { return externalString; });
+
+			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
+						  "Wrong return type for transform.");
+			VERIFY(result.has_value());
+			VERIFY(*result == externalString);
+		}
+	}
+
+	// transform r-value ref
+	{
+		{
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).transform([](auto ptr) { return to_string(*ptr); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(*o == nullptr); // o should be moved-from.
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).transform(
+				[&called](auto ptr)
+				{
+					called = true;
+					return to_string(*ptr);
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			// Check that the return type of the callable gets remove_cvref_t.
+			eastl::string externalString = "Jean Guegant was here";
+
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).transform([&externalString](auto ptr) -> const eastl::string&
+												   { return externalString; });
+
+			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
+						  "Wrong return type for transform.");
+			VERIFY(result.has_value());
+			VERIFY(*result == externalString);
+		}
+	}
+
+	// transform const r-value ref
+	{
+		{
+			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).transform([](const unique_ptr<int>&& ptr) { return to_string(*ptr); });
+			VERIFY(result.has_value());
+			VERIFY(*result == string_view("42"));
+			VERIFY(o.has_value());
+			VERIFY(*o != nullptr);
+		}
+
+		{
+			// Ensuring that the callable is not called when optional is empty.
+			bool called = false;
+			const optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).transform(
+				[&called](const unique_ptr<int>&& ptr)
+				{
+					called = true;
+					return to_string(*ptr);
+				});
+			VERIFY(!result.has_value());
+			VERIFY(!o.has_value());
+			VERIFY(!called);
+		}
+
+		{
+			// Check that the return type of the callable gets remove_cvref_t.
+			eastl::string externalString = "Jean Guegant was here";
+
+			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).transform(
+				[&externalString](const unique_ptr<int>&& ptr) -> const eastl::string& { return externalString; });
+
+			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
+						  "Wrong return type for transform.");
+			VERIFY(result.has_value());
+			VERIFY(*result == externalString);
+		}
+	}
+
+	// or_else const l-value ref
+	{
+		{
+			const optional<int> o{42};
+			auto result = o.or_else([]() { return eastl::make_optional(1337); });
+
+			VERIFY(result.has_value());
+			VERIFY(result.value() == 42);
+		}
+
+		{
+			const optional<int> o;
+			auto result = o.or_else([]() { return eastl::make_optional(1337); });
+
+			VERIFY(result.has_value());
+			VERIFY(result.value() == 1337);
+		}
+
+		{
+			// Ensure that we can return refs from the callable that get copied.
+			eastl::optional<int> externalOptional{1337};
+
+			const optional<int> o;
+			auto result = o.or_else([&externalOptional]() -> const eastl::optional<int>& { return externalOptional; });
+
+			VERIFY(result.has_value());
+			VERIFY(result.value() == 1337);
+		}
+	}
+
+	// or_else const l-value ref
+	{
+		{
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).or_else([]() { return eastl::make_optional(eastl::make_unique<int>(1337)); });
+
+			VERIFY(o.has_value());
+			VERIFY(o.value() == nullptr); // o should be moved-from.
+			VERIFY(result.has_value());
+			VERIFY(*result.value() == 42);
+		}
+
+		{
+			optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).or_else([]() { return eastl::make_optional(eastl::make_unique<int>(1337)); });
+
+			VERIFY(result.has_value());
+			VERIFY(*result.value() == 1337);
+		}
+	}
+#endif
+	
+	return nErrorCount;
+}
+		
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -223,6 +604,25 @@ int TestOptional()
 			VERIFY(o.value() == 42);
 		}
 
+		{
+			// value_or with this a r-value ref and engaged.
+			optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
+			auto result = eastl::move(o).value_or(eastl::make_unique<int>(1337));
+			VERIFY(result != nullptr);
+			VERIFY(*result == 42);
+			VERIFY(o.has_value());
+			VERIFY(o.value() == nullptr); // o has been moved-from.
+		}
+
+		{
+			// value_or with this a r-value ref and not engaged.
+			optional<unique_ptr<int>> o;
+			auto result = eastl::move(o).value_or(eastl::make_unique<int>(1337));
+			VERIFY(result != nullptr);
+			VERIFY(*result == 1337);
+			VERIFY(!o.has_value());
+		}
+		
 		{
 			int a = 42;
 			auto o = make_optional(a);
@@ -354,9 +754,9 @@ int TestOptional()
 	}
 
 	{
-        forwarding_test<float>ft(1.f);
-        float val = ft.GetValueOrDefault(0.f);
-        VERIFY(val == 1.f);
+		forwarding_test<float>ft(1.f);
+		float val = ft.GetValueOrDefault(0.f);
+		VERIFY(val == 1.f);
 	}
 
 	{
@@ -425,20 +825,29 @@ int TestOptional()
 		// http://en.cppreference.com/w/cpp/utility/optional/emplace
 		{
 			optional<vec3> o;
-			o.emplace(42.f, 42.f, 42.f);
+			vec3& v = o.emplace(42.f, 42.f, 42.f);
 			VERIFY(o->x == 42.f && o->y == 42.f && o->z == 42.f);
+			VERIFY(v.x == 42.f && v.y == 42.f && v.z == 42.f);
+			v.x = 10.f;
+			VERIFY(o->x == 10.f && o->y == 42.f && o->z == 42.f);
 		}
 
 		{
 			optional<vec3> o;
-			o.emplace({42.f, 42.f, 42.f});
+			vec3& v = o.emplace({42.f, 42.f, 42.f});
 			VERIFY(o->x == 42.f && o->y == 42.f && o->z == 42.f);
+			VERIFY(v.x == 42.f && v.y == 42.f && v.z == 42.f);
+			v.x = 10.f;
+			VERIFY(o->x == 10.f && o->y == 42.f && o->z == 42.f);
 		}
 
 		{
 			optional<int> o;
-			o.emplace(42);
+			int& i = o.emplace(42);
 			VERIFY(*o == 42);
+			VERIFY(i == 42);
+			i = 10;
+			VERIFY(*o == 10);
 		}
 
 		struct nonCopyableNonMovable
@@ -647,11 +1056,11 @@ int TestOptional()
 	// optional rvalue tests
 	{
 		VERIFY(*optional<uint32_t>(1u)						== 1u);
-	    VERIFY(optional<uint32_t>(1u).value()				== 1u);
-	    VERIFY(optional<uint32_t>(1u).value_or(0xdeadf00d)	== 1u);
-	    VERIFY(optional<uint32_t>().value_or(0xdeadf00d)	== 0xdeadf00d);
-	    VERIFY(optional<uint32_t>(1u).has_value() == true);
-	    VERIFY(optional<uint32_t>().has_value() == false);
+		VERIFY(optional<uint32_t>(1u).value()				== 1u);
+		VERIFY(optional<uint32_t>(1u).value_or(0xdeadf00d)	== 1u);
+		VERIFY(optional<uint32_t>().value_or(0xdeadf00d)	== 0xdeadf00d);
+		VERIFY(optional<uint32_t>(1u).has_value() == true);
+		VERIFY(optional<uint32_t>().has_value() == false);
 		VERIFY( optional<IntStruct>(in_place, 10)->data		== 10);
 
 	}
@@ -757,7 +1166,10 @@ int TestOptional()
 		VERIFY(!!o == false);
 	}
 
-    #endif // EASTL_OPTIONAL_ENABLED
+	#endif // EASTL_OPTIONAL_ENABLED
+
+	nErrorCount += TestOptional_MonadicOperations();
+	
 	return nErrorCount;
 }
 

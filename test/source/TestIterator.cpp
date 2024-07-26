@@ -16,6 +16,8 @@
 #include <EASTL/intrusive_list.h>
 #include <EASTL/memory.h>
 #include <EASTL/unique_ptr.h>
+#include <EASTL/algorithm.h>
+#include <EASTL/internal/generic_iterator.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
@@ -212,6 +214,17 @@ int TestIterator_moveIterator()
 
 		auto pCopiedX = *moveIter;
 		EATEST_VERIFY(pCopiedX == 42);
+	}
+
+	{
+		// test move_iterator usable in algorithms
+
+		MoveOnlyType moveableArray[] = {MoveOnlyType{1}, MoveOnlyType{2}, MoveOnlyType{3}};
+		MoveOnlyType destArray[] = {MoveOnlyType{0}, MoveOnlyType{0}, MoveOnlyType{0}};
+
+		eastl::copy(eastl::make_move_iterator(moveableArray), eastl::make_move_iterator(moveableArray + 3), destArray);
+		EATEST_VERIFY(VerifySequence(destArray, destArray + 3, {MoveOnlyType{1}, MoveOnlyType{2}, MoveOnlyType{3}},
+		                             "copy(move_iterator(...))"));
 	}
 
 	return nErrorCount;
@@ -449,7 +462,7 @@ int TestIterator()
 		}
 	}
 
-
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
 	{
 		// is_iterator_wrapper
 		static_assert((eastl::is_iterator_wrapper<void>::value													== false),  "is_iterator_wrapper failure");
@@ -545,7 +558,8 @@ int TestIterator()
 		eastl::vector<int>::iterator it = unwrap_move_iterator(miVectorInt);
 		EATEST_VERIFY(*it == 1);
 		static_assert((eastl::is_same<decltype(eastl::unwrap_move_iterator(miVectorInt)), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
-	}
+    }
+    EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 	{
 		// array cbegin - cend

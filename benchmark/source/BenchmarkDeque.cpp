@@ -106,7 +106,7 @@ namespace
 		for(typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += c[j].key;
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
 
@@ -119,7 +119,7 @@ namespace
 			++it;
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 
 		/* Alternative way to measure:
 		const eastl_size_t n = c.size();
@@ -128,7 +128,7 @@ namespace
 			++it;
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 		*/
 	}
 
@@ -143,7 +143,7 @@ namespace
 		typename Container::iterator it = eastl::find(c.begin(), c.end(), vp);
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 	}
 
 
@@ -156,7 +156,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(c.begin(), c.end(), vpCompare);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c[0].key);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c[0].key);
 	}
 
 

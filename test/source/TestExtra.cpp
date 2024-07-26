@@ -47,6 +47,7 @@ namespace eastl
 
 
 #include "EASTLTest.h"
+#include <EAStdC/EASprintf.h>
 #include <EASTL/functional.h>
 #include <EASTL/utility.h>
 #include <EASTL/memory.h>
@@ -881,6 +882,7 @@ static int TestStack()
 		stack<TestObject, vector<TestObject> > toS_C(eastl::move(toVectorM));
 		EATEST_VERIFY((toS_C.size() == toVector.size()) && toVectorM.empty());
 
+		EASTL_INTERNAL_DISABLE_DEPRECATED() // emplace_back: was declared deprecated
 		{
 			// template <class... Args>
 			// void emplace_back(Args&&... args);
@@ -888,6 +890,7 @@ static int TestStack()
 			toS_D.emplace_back(0, 1, 2);
 			EATEST_VERIFY(toS_D.size() == 1) && (toS_D.top() == TestObject(0, 1, 2));
 		}
+		EASTL_INTERNAL_RESTORE_DEPRECATED() // emplace_back: was declared deprecated
 
 		{
 			// template <class... Args>
@@ -986,8 +989,9 @@ static int TestCallTraits()
 	CallTraitsContainer<int&>   ctcVoid(nErrorCount);
 	CallTraitsContainer<int[3]> ctcIntArray;
 
-	char buffer[128];
-	sprintf(buffer, "%p %p %p %p", &ctcInt, &ctcIntPtr, &ctcVoid, &ctcIntArray);
+	const int kBufferSize = 128;
+	char buffer[kBufferSize];
+	EA::StdC::Snprintf(buffer, kBufferSize, "%p %p %p %p", &ctcInt, &ctcIntPtr, &ctcVoid, &ctcIntArray);
 
 	return nErrorCount;
 }
@@ -1054,6 +1058,9 @@ static int TestNumeric()
 }
 
 #if defined(EA_COMPILER_CPP20_ENABLED)
+
+EA_DISABLE_VC_WARNING(4756) // warning C4756: overflow in constant arithmetic
+
 template <typename T>
 static constexpr int SignedIntMidpoint()
 {
@@ -1327,6 +1334,9 @@ static int TestLerp()
 
 	return nErrorCount;
 }
+
+EA_RESTORE_VC_WARNING(); // warning C4756: overflow in constant arithmetic
+
 #endif
 
 
@@ -1380,143 +1390,6 @@ static int TestAdaptors()
 	return nErrorCount;
 }
 
-#if defined(EA_COMPILER_CPP20_ENABLED)
-template <typename T>
-int TestHasSingleBit()
-{
-	int nErrorCount = 0;
-
-	VERIFY(eastl::has_single_bit(T(0)) == false);
-	VERIFY(eastl::has_single_bit(T(1)) == true);
-	VERIFY(eastl::has_single_bit(T(2)) == true);
-	VERIFY(eastl::has_single_bit(T(3)) == false);
-
-	VERIFY(eastl::has_single_bit(eastl::numeric_limits<T>::min()) == false);
-	VERIFY(eastl::has_single_bit(eastl::numeric_limits<T>::max()) == false);
-
-	for (int i = 4; i < eastl::numeric_limits<T>::digits; i++)
-	{
-		T power_of_two = static_cast<T>(T(1U) << i);
-		VERIFY(eastl::has_single_bit(power_of_two));
-		VERIFY(eastl::has_single_bit(static_cast<T>(power_of_two - 1)) == false);
-	}
-
-	return nErrorCount;
-}
-
-template <typename T>
-static int TestBitCeil()
-{
-	int nErrorCount = 0;
-
-	VERIFY(eastl::bit_ceil(T(0)) == T(1));
-	VERIFY(eastl::bit_ceil(T(1)) == T(1));
-	VERIFY(eastl::bit_ceil(T(2)) == T(2));
-	VERIFY(eastl::bit_ceil(T(3)) == T(4));
-
-	EA_CONSTEXPR auto DIGITS = eastl::numeric_limits<T>::digits;
-	EA_CONSTEXPR auto MIN = eastl::numeric_limits<T>::min();
-	EA_CONSTEXPR auto MAX = static_cast<T>(T(1) << (DIGITS - 1));
-
-	VERIFY(eastl::bit_ceil(MAX) == MAX);
-	VERIFY(eastl::bit_ceil(static_cast<T>(MAX - 1)) == MAX);
-	VERIFY(eastl::bit_ceil(MIN) == T(1));
-
-	for (int i = 4; i < eastl::numeric_limits<T>::digits; i++)
-	{
-		T power_of_two = static_cast<T>(T(1U) << i);
-		VERIFY(eastl::bit_ceil(power_of_two) == power_of_two);
-		VERIFY(eastl::bit_ceil(static_cast<T>(power_of_two - 1)) == power_of_two);
-	}
-
-	return nErrorCount;
-}
-
-template <typename T>
-static int TestBitFloor()
-{
-	int nErrorCount = 0;
-	VERIFY(eastl::bit_floor(T(0)) == T(0));
-	VERIFY(eastl::bit_floor(T(1)) == T(1));
-	VERIFY(eastl::bit_floor(T(2)) == T(2));
-	VERIFY(eastl::bit_floor(T(3)) == T(2));
-
-	EA_CONSTEXPR auto DIGITS = eastl::numeric_limits<T>::digits;
-	EA_CONSTEXPR auto MIN = eastl::numeric_limits<T>::min();
-	EA_CONSTEXPR auto MAX = eastl::numeric_limits<T>::max();
-
-	VERIFY(eastl::bit_floor(MAX) == T(1) << (DIGITS - 1));
-	VERIFY(eastl::bit_floor(MIN) == T(0));
-
-	for (int i = 4; i < eastl::numeric_limits<T>::digits; i++)
-	{
-		T power_of_two = static_cast<T>(T(1U) << i);
-		VERIFY(eastl::bit_floor(power_of_two) == power_of_two);
-		VERIFY(eastl::bit_floor(static_cast<T>(power_of_two + 1)) == power_of_two);
-	}
-	return nErrorCount;
-}
-
-template <typename T>
-static int TestBitWidth()
-{
-	int nErrorCount = 0;
-
-	VERIFY(eastl::bit_width(T(0)) == T(0));
-	VERIFY(eastl::bit_width(T(1)) == T(1));
-	VERIFY(eastl::bit_width(T(2)) == T(2));
-	VERIFY(eastl::bit_width(T(3)) == T(2));
-
-	EA_CONSTEXPR auto DIGITS = eastl::numeric_limits<T>::digits;
-	EA_CONSTEXPR auto MIN = eastl::numeric_limits<T>::min();
-	EA_CONSTEXPR auto MAX = eastl::numeric_limits<T>::max();
-
-	VERIFY(eastl::bit_width(MIN) == 0);
-	VERIFY(eastl::bit_width(MAX) == DIGITS);
-
-	for (int i = 4; i < eastl::numeric_limits<T>::digits; i++)
-	{
-		T power_of_two = static_cast<T>(T(1U) << i);
-		VERIFY(eastl::bit_width(power_of_two) == static_cast<T>(i + 1));
-	}
-
-	return nErrorCount;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// TestPowerofTwo
-//
-static int TestPowerOfTwo()
-{
-	int nErrorCount = 0;
-	nErrorCount += TestHasSingleBit<unsigned int>();
-	nErrorCount += TestHasSingleBit<unsigned char>();
-	nErrorCount += TestHasSingleBit<unsigned short>();
-	nErrorCount += TestHasSingleBit<unsigned long>();
-	nErrorCount += TestHasSingleBit<unsigned long long>();
-
-	nErrorCount += TestBitCeil<unsigned int>();
-	nErrorCount += TestBitCeil<unsigned char>();
-	nErrorCount += TestBitCeil<unsigned short>();
-	nErrorCount += TestBitCeil<unsigned long>();
-	nErrorCount += TestBitCeil<unsigned long long>();
-
-	nErrorCount += TestBitFloor<unsigned int>();
-	nErrorCount += TestBitFloor<unsigned char>();
-	nErrorCount += TestBitFloor<unsigned short>();
-	nErrorCount += TestBitFloor<unsigned long>();
-	nErrorCount += TestBitFloor<unsigned long long>();
-
-	nErrorCount += TestBitWidth<unsigned int>();
-	nErrorCount += TestBitWidth<unsigned char>();
-	nErrorCount += TestBitWidth<unsigned short>();
-	nErrorCount += TestBitWidth<unsigned long>();
-	nErrorCount += TestBitWidth<unsigned long long>();
-
-	return nErrorCount;
-}
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // TestExtra
 //
@@ -1535,7 +1408,6 @@ int TestExtra()
 #if defined(EA_COMPILER_CPP20_ENABLED)
 	nErrorCount += TestMidpoint();
 	nErrorCount += TestLerp();
-	nErrorCount += TestPowerOfTwo();
 #endif
 
 	return nErrorCount;

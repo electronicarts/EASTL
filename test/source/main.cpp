@@ -6,6 +6,7 @@
 #include "EASTLTest.h"
 #include <EAStdC/EASprintf.h>
 #include <EASTL/internal/config.h>
+#include <EASTL/internal/thread_support.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
@@ -87,12 +88,17 @@ int EAMain(int argc, char* argv[])
 
 	testSuite.AddTest("Algorithm",				TestAlgorithm);
 	testSuite.AddTest("Allocator",				TestAllocator);
+	testSuite.AddTest("AllocatorPropagate",		TestAllocatorPropagate);
 	testSuite.AddTest("Any",				    TestAny);
 	testSuite.AddTest("Array",					TestArray);
+#if defined(EA_COMPILER_CPP20_ENABLED)
+	testSuite.AddTest("Bit",					TestBit);
+#endif
 	testSuite.AddTest("BitVector",				TestBitVector);
 	testSuite.AddTest("Bitset",					TestBitset);
 	testSuite.AddTest("CharTraits",			    TestCharTraits);
 	testSuite.AddTest("Chrono",					TestChrono);
+	testSuite.AddTest("Concepts", 				TestConcepts);
 	testSuite.AddTest("Deque",					TestDeque);
 	testSuite.AddTest("Extra",					TestExtra);
 	testSuite.AddTest("Finally",				TestFinally);
@@ -144,7 +150,10 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);
 	testSuite.AddTest("AtomicBasic",			TestAtomicBasic);
-	testSuite.AddTest("AtomicAsm",			    TestAtomicAsm);
+#if EASTL_THREAD_SUPPORT_AVAILABLE
+	testSuite.AddTest("AtomicMT",				TestAtomicMultiThreaded);
+#endif
+	testSuite.AddTest("AtomicAsm",				TestAtomicAsm);
 	testSuite.AddTest("Bitcast",				TestBitcast);
 
 

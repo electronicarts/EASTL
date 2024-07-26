@@ -11,6 +11,7 @@
 #include <EASTL/internal/move_help.h>
 #include <EASTL/internal/type_detected.h>
 #include <EASTL/internal/type_void_t.h>
+#include <EASTL/internal/memory_base.h>
 #include <EASTL/initializer_list.h>
 
 EA_DISABLE_ALL_VC_WARNINGS();
@@ -176,7 +177,7 @@ namespace eastl
 	///     is_iterator_wrapper(eastl::reverse_iterator<eastl::move_iterator<int*>>)::value	=> true
 	///
 	template<typename Iterator>
-	class is_iterator_wrapper
+	class EASTL_REMOVE_AT_2024_SEPT is_iterator_wrapper
 	{
 #if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 		// Using a default template type parameter trick here because
@@ -213,7 +214,7 @@ namespace eastl
 	///     MyVector::iterator it = unwrap_iterator(move_iterator(myVector.begin()));
 	///
 	template <typename Iterator, bool isWrapper>
-	struct is_iterator_wrapper_helper
+	struct EASTL_REMOVE_AT_2024_SEPT is_iterator_wrapper_helper
 	{
 		using iterator_type = Iterator;
 
@@ -222,7 +223,7 @@ namespace eastl
 
 
 	template <typename Iterator>
-	struct is_iterator_wrapper_helper<Iterator, true>
+	struct EASTL_REMOVE_AT_2024_SEPT is_iterator_wrapper_helper<Iterator, true>
 	{
 		// get_unwrapped must return by value since we're returning
 		// it.unwrap(), and `it` will be out of scope as soon as
@@ -235,7 +236,7 @@ namespace eastl
 
 
 	template <typename Iterator>
-	inline typename is_iterator_wrapper_helper<Iterator, eastl::is_iterator_wrapper<Iterator>::value>::iterator_type unwrap_iterator(Iterator it)
+	EASTL_REMOVE_AT_2024_SEPT inline typename is_iterator_wrapper_helper<Iterator, eastl::is_iterator_wrapper<Iterator>::value>::iterator_type unwrap_iterator(Iterator it)
 		{ return eastl::is_iterator_wrapper_helper<Iterator, eastl::is_iterator_wrapper<Iterator>::value>::get_unwrapped(it); }
 
 
@@ -256,11 +257,6 @@ namespace eastl
 	template <typename Iterator>
 	class reverse_iterator
 	{
-	private:
-		using base_wrapped_iterator_type =
-		    typename eastl::is_iterator_wrapper_helper<Iterator,
-		                                               eastl::is_iterator_wrapper<Iterator>::value>::iterator_type;
-
 	public:
 		typedef Iterator														iterator_type;
 		typedef typename eastl::iterator_traits<Iterator>::iterator_category	iterator_category;
@@ -274,21 +270,15 @@ namespace eastl
 
 	public:
 		EA_CPP14_CONSTEXPR reverse_iterator()      // It's important that we construct mIterator, because if Iterator
-			: mIterator() { }   // is a pointer, there's a difference between doing it and not.
+			: mIterator() { }					   // is a pointer, there's a difference between doing it and not.
 
 		EA_CPP14_CONSTEXPR explicit reverse_iterator(iterator_type i)
 			: mIterator(i) { }
-
-		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator& ri)
-			: mIterator(ri.mIterator) { }
 
 		template <typename U>
 		EA_CPP14_CONSTEXPR reverse_iterator(const reverse_iterator<U>& ri)
 			: mIterator(ri.base()) { }
 
-		// This operator= isn't in the standard, but the the C++
-		// library working group has tentatively approved it, as it
-		// allows const and non-const reverse_iterators to interoperate.
 		template <typename U>
 		EA_CPP14_CONSTEXPR reverse_iterator<Iterator>& operator=(const reverse_iterator<U>& ri)
 			{ mIterator = ri.base(); return *this; }
@@ -345,17 +335,23 @@ namespace eastl
 		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
 			{ return mIterator[-n - 1]; }
 
-
+		
+    EASTL_INTERNAL_DISABLE_DEPRECATED() // 'is_iterator_wrapper': was declared deprecated
 	private:
+		using base_wrapped_iterator_type =
+		    typename eastl::is_iterator_wrapper_helper<Iterator,
+		                                               eastl::is_iterator_wrapper<Iterator>::value>::iterator_type;
+
 		// Unwrapping interface, not part of the public API.
 		template <typename U = iterator_type>
-		EA_CPP14_CONSTEXPR typename eastl::enable_if<eastl::is_iterator_wrapper<U>::value, reverse_iterator<base_wrapped_iterator_type>>::type unwrap() const
+		EASTL_REMOVE_AT_2024_SEPT EA_CPP14_CONSTEXPR typename eastl::enable_if<eastl::is_iterator_wrapper<U>::value, reverse_iterator<base_wrapped_iterator_type>>::type unwrap() const
 		{ return reverse_iterator<base_wrapped_iterator_type>(unwrap_iterator(mIterator)); }
 
 		// The unwrapper helpers need access to unwrap() (when it exists).
 		using this_type = reverse_iterator<Iterator>;
 		friend is_iterator_wrapper_helper<this_type, is_iterator_wrapper<iterator_type>::value>;
 		friend is_iterator_wrapper<this_type>;
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 	};
 
 
@@ -425,11 +421,11 @@ namespace eastl
 	/// move_iterator so we can detect that underneath it's reverse_iterator.
 	///
 	template <typename T>
-	struct is_reverse_iterator
+	struct EASTL_REMOVE_AT_2024_SEPT is_reverse_iterator
 		: public eastl::false_type {};
 
 	template<typename Iterator>
-	struct is_reverse_iterator< eastl::reverse_iterator<Iterator> >
+	struct EASTL_REMOVE_AT_2024_SEPT is_reverse_iterator<eastl::reverse_iterator<Iterator>>
 		: public eastl::true_type {};
 
 	/// unwrap_reverse_iterator is not implemented since there's no
@@ -461,7 +457,7 @@ namespace eastl
 	public:
 		typedef Iterator                                iterator_type;
 		typedef iterator_traits<Iterator>               traits_type;
-		typedef typename traits_type::iterator_category iterator_category;
+		typedef typename traits_type::iterator_category iterator_category; // todo: use is_contiguous_iterator<Iterator> to correctly identify pointers as contiguous?
 		typedef typename traits_type::value_type        value_type;
 		typedef typename traits_type::difference_type   difference_type;
 		typedef Iterator                                pointer;
@@ -485,6 +481,13 @@ namespace eastl
 		move_iterator(const move_iterator<U>& mi)
 		  : mIterator(mi.base())
 		{
+		}
+
+		template <typename U>
+		move_iterator& operator=(const move_iterator<U>& mi)
+		{
+			mIterator = mi.mIterator;
+			return *this;
 		}
 
 		iterator_type base() const
@@ -542,15 +545,17 @@ namespace eastl
 		reference operator[](difference_type n) const
 			{ return eastl::move(mIterator[n]); }
 
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'is_iterator_wrapper': was declared deprecated
 	private:
 		// Unwrapping interface, not part of the public API.
-		iterator_type unwrap() const
+		EASTL_REMOVE_AT_2024_SEPT iterator_type unwrap() const
 			{ return mIterator; }
 
 		// The unwrapper helpers need access to unwrap().
 		using this_type = move_iterator<Iterator>;
 		friend is_iterator_wrapper_helper<this_type, true>;
 		friend is_iterator_wrapper<this_type>;
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 	};
 
 	template<typename Iterator1, typename Iterator2>
@@ -634,11 +639,11 @@ namespace eastl
 	///     bool IsMoveIterator() { return typename eastl::is_move_iterator<T>::value; }
 	///
 	template <typename T>
-	struct is_move_iterator
+	struct EASTL_REMOVE_AT_2024_SEPT is_move_iterator
 		: public eastl::false_type {};
 
 	template<typename Iterator>
-	struct is_move_iterator< eastl::move_iterator<Iterator> >
+	struct EASTL_REMOVE_AT_2024_SEPT is_move_iterator<eastl::move_iterator<Iterator>>
 		: public eastl::true_type {};
 
 
@@ -652,7 +657,7 @@ namespace eastl
 	///      vector<int>::iterator it = unwrap_move_iterator(moveIterator);
 	///
 	template <typename Iterator>
-	inline typename eastl::is_iterator_wrapper_helper<Iterator, eastl::is_move_iterator<Iterator>::value>::iterator_type unwrap_move_iterator(Iterator it)
+	EASTL_REMOVE_AT_2024_SEPT inline typename eastl::is_iterator_wrapper_helper<Iterator, eastl::is_move_iterator<Iterator>::value>::iterator_type unwrap_move_iterator(Iterator it)
 	{
 		// get_unwrapped(it) -> it.unwrap() which is equivalent to `it.base()` for move_iterator and to `it` otherwise.
 		return eastl::is_iterator_wrapper_helper<Iterator, eastl::is_move_iterator<Iterator>::value>::get_unwrapped(it);
@@ -678,22 +683,20 @@ namespace eastl
 		typedef void								reference;
 
 	protected:
-		Container& container;
+		Container* container;
 
 	public:
-		//back_insert_iterator(); // Not valid. Must construct with a Container.
-
-		//back_insert_iterator(const this_type& x) // Compiler-implemented
-		//    : container(x.container) { }
-
 		explicit back_insert_iterator(Container& x)
-			: container(x) { }
+			: container(eastl::addressof(x)) { }
 
-		back_insert_iterator& operator=(const_reference value)
-			{ container.push_back(value); return *this; }
+		back_insert_iterator(const back_insert_iterator&) = default;
+		back_insert_iterator& operator=(const back_insert_iterator&) = default;
+
+		back_insert_iterator& operator=(const typename Container::value_type& value)
+			{ container->push_back(value); return *this; }
 
 		back_insert_iterator& operator=(typename Container::value_type&& value)
-			{ container.push_back(eastl::move(value)); return *this; }
+			{ container->push_back(eastl::move(value)); return *this; }
 
 		back_insert_iterator& operator*()
 			{ return *this; }
@@ -703,9 +706,6 @@ namespace eastl
 
 		back_insert_iterator operator++(int)
 			{ return *this; } // This is by design.
-
-	protected:
-		void operator=(const this_type&){} // Declared to avoid compiler warnings about inability to generate this function.
 	};
 
 
@@ -740,19 +740,16 @@ namespace eastl
 		typedef void								reference;
 
 	protected:
-		Container& container;
+		Container* container;
 
 	public:
-		//front_insert_iterator(); // Not valid. Must construct with a Container.
+		explicit front_insert_iterator(Container& x) : container(eastl::addressof(x)) {}
 
-		//front_insert_iterator(const this_type& x) // Compiler-implemented
-		//    : container(x.container) { }
+		front_insert_iterator(const front_insert_iterator&) = default;
+		front_insert_iterator& operator=(const front_insert_iterator&) = default;
 
-		explicit front_insert_iterator(Container& x)
-			: container(x) { }
-
-		front_insert_iterator& operator=(const_reference value)
-			{ container.push_front(value); return *this; }
+		front_insert_iterator& operator=(const typename Container::value_type& value)
+			{ container->push_front(value); return *this; }
 
 		front_insert_iterator& operator*()
 			{ return *this; }
@@ -762,9 +759,6 @@ namespace eastl
 
 		front_insert_iterator operator++(int)
 			{ return *this; } // This is by design.
-
-	protected:
-		void operator=(const this_type&){} // Declared to avoid compiler warnings about inability to generate this function.
 	};
 
 
@@ -810,26 +804,19 @@ namespace eastl
 		typedef void								reference;
 
 	protected:
-		Container&     container;
+		Container*     container;
 		iterator_type  it;
 
 	public:
-		// This assignment operator is defined more to stop compiler warnings (e.g. VC++ C4512)
-		// than to be useful. However, it does allow an insert_iterator to be assigned to another
-		// insert iterator provided that they point to the same container.
-		insert_iterator& operator=(const insert_iterator& x)
-		{
-			EASTL_ASSERT(&x.container == &container);
-			it = x.it;
-			return *this;
-		}
-
 		insert_iterator(Container& x, iterator_type itNew)
-			: container(x), it(itNew) {}
+			: container(eastl::addressof(x)), it(itNew) {}
 
-		insert_iterator& operator=(const_reference value)
+		insert_iterator(const insert_iterator&) = default;
+		insert_iterator& operator=(const insert_iterator&) = default;
+
+		insert_iterator& operator=(const typename Container::value_type& value)
 		{
-			it = container.insert(it, value);
+			it = container->insert(it, value);
 			++it;
 			return *this;
 		}
@@ -866,11 +853,11 @@ namespace eastl
 	/// If it's a insert_iterator wrapped by another iterator then value is false.
 	///
 	template <typename T>
-	struct is_insert_iterator
+	struct EASTL_REMOVE_AT_2024_SEPT is_insert_iterator
 		: public eastl::false_type {};
 
 	template<typename Iterator>
-	struct is_insert_iterator< eastl::insert_iterator<Iterator> >
+	struct EASTL_REMOVE_AT_2024_SEPT is_insert_iterator<eastl::insert_iterator<Iterator>>
 		: public eastl::true_type {};
 
 

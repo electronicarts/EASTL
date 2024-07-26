@@ -89,6 +89,128 @@ int TestStringHashMap()
 		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
 	}
 
+	// emplace/try_emplace
+	{
+		string_hash_map<TestObject> stringHashMap;
+
+		// Clear a newly constructed, already empty container.
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+
+		for (int i = 0; i < (int)kStringCount; i++)
+		{
+			{
+				// This should construct the object from i.
+				auto x = stringHashMap.emplace(strings[i], i);
+				// insertion did happen.
+				EATEST_VERIFY(x.second);
+				// We got the correct value
+				EATEST_VERIFY(x.first->second.mX == i);
+			}
+			{
+				// This should not insert anything.
+				auto x = stringHashMap.emplace(strings[i], i+1);
+				// insertion did not happen.
+				EATEST_VERIFY(!x.second);
+				// We got the correct (existing) value
+				EATEST_VERIFY(x.first->second.mX == i);
+			}
+		}
+
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == kStringCount);
+
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+
+		for (int i = 0; i < (int)kStringCount; i++)
+		{
+			{
+				// This should construct the object from i.
+				auto x = stringHashMap.try_emplace(strings[i], i);
+				// insertion did happen.
+				EATEST_VERIFY(x.second);
+				// We got the correct value
+				EATEST_VERIFY(x.first->second.mX == i);
+			}
+			{
+				// This should not insert anything.
+				auto x = stringHashMap.try_emplace(strings[i], i+1);
+				// insertion did not happen.
+				EATEST_VERIFY(!x.second);
+				// We got the correct (existing) value
+				EATEST_VERIFY(x.first->second.mX == i);
+			}
+		}
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == kStringCount);
+
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+	}
+
+	// emplace_hint/try_emplace(hint,...)
+	{
+		string_hash_map<TestObject> stringHashMap;
+
+		// Clear a newly constructed, already empty container.
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+
+		auto hint = stringHashMap.begin();
+		for (int i = 0; i < (int)kStringCount; i++)
+		{
+			// This should construct the object from i.
+			auto ret = stringHashMap.emplace_hint(hint, strings[i], i);
+			EATEST_VERIFY(ret->second.mX == i);
+			// Try again, this should return the already existing value.
+			auto ret2 = stringHashMap.emplace_hint(hint, strings[i], i+1);
+			// Should get the same iterator.
+			EATEST_VERIFY(ret2 == ret);
+			// Should get old existing value.
+			EATEST_VERIFY(ret2->second.mX == i);
+			hint = ret;
+		}
+
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == kStringCount);
+
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+
+		hint = stringHashMap.begin();
+		for (int i = 0; i < (int)kStringCount; i++)
+		{
+			// This should construct the object from i.
+			auto ret = stringHashMap.try_emplace(hint, strings[i], i);
+			EATEST_VERIFY(ret->second.mX == i);
+			// Try again, this should return the already existing value.
+			auto ret2 = stringHashMap.try_emplace(hint, strings[i], i+1);
+			// Should get the same iterator.
+			EATEST_VERIFY(ret2 == ret);
+			// Should get old existing value.
+			EATEST_VERIFY(ret2->second.mX == i);
+			hint = ret;
+		}
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == kStringCount);
+
+		stringHashMap.clear(true);
+		EATEST_VERIFY(stringHashMap.validate());
+		EATEST_VERIFY(stringHashMap.size() == 0);
+		EATEST_VERIFY(stringHashMap.bucket_count() == 1);
+	}
+
 
 	{   // Test string_hash_map
 

@@ -5,6 +5,8 @@
 #include "EASTLTest.h"
 #include <EASTL/bonus/lru_cache.h>
 #include <EASTL/unique_ptr.h>
+#include <EASTL/map.h>
+// #include <EASTL/deque.h>
 
 namespace TestLruCacheInternal
 {
@@ -52,7 +54,8 @@ namespace TestLruCacheInternal
 }
 
 
-int TestLruCache()
+template<template<typename, typename> typename LruCache>
+int TestLruCacheOfType()
 {
 	int nErrorCount = 0;
 
@@ -60,7 +63,9 @@ int TestLruCache()
 	{
 		using namespace TestLruCacheInternal;
 
-		eastl::lru_cache<int, Foo> lruCache(3);
+		Foo::count = 0;
+
+		LruCache<int, Foo> lruCache(3);
 
 		// Empty state
 		EATEST_VERIFY(lruCache.contains(1) == false);
@@ -212,7 +217,7 @@ int TestLruCache()
 		auto createCallback = [&fooCreator](int) { return fooCreator.Create(); };
 		auto deleteCallback = [&fooCreator](Foo *f) { fooCreator.Destroy(f); };
 
-		eastl::lru_cache<int, Foo*> lruCache(3, EASTLAllocatorType("eastl lru_cache"), createCallback, deleteCallback);
+		LruCache<int, Foo*> lruCache(3, EASTLAllocatorType("eastl lru_cache"), createCallback, deleteCallback);
 
 		lruCache[1];
 		EATEST_VERIFY(fooCreator.mFooCreatedCount == 1);
@@ -284,7 +289,7 @@ int TestLruCache()
 
 	// Test iteration
 	{
-		eastl::lru_cache<int, int> lc(5);
+		LruCache<int, int> lc(5);
 		lc.insert_or_assign(0,10);
 		lc.insert_or_assign(1,11);
 		lc.insert_or_assign(2,12);
@@ -325,7 +330,7 @@ int TestLruCache()
 
 	// test initializer_list
 	{
-		eastl::lru_cache<int, int> lc = {{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}, {5, 15}};
+		LruCache<int, int> lc = {{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}, {5, 15}};
 
 		int i = 0;
 		for(auto& p : lc)
@@ -335,6 +340,43 @@ int TestLruCache()
 			i++;
 		}
 	}
+
+	// emplace
+	{
+		eastl::lru_cache<int, TestObject> lc = { {0, TestObject{ 1, 2, 3 }}, {1, TestObject{ 4, 5, 6 }} };
+
+		VERIFY((lc.at(0) == TestObject{1, 2, 3}));
+		VERIFY((lc.at(1) == TestObject{ 4, 5, 6 }));
+
+		VERIFY((lc.emplace(0, 3, 2, 1).first->second.first == TestObject{ 3, 2, 1 }));
+		VERIFY((lc.emplace(1, 6, 5, 4).first->second.first == TestObject{ 6, 5, 4 }));
+
+		// fail to emplace: key 0 already exists.
+		auto [ it, did_emplace ] = lc.emplace(0, 9, 9, 9);
+		VERIFY(!did_emplace);
+		VERIFY((it->second.first == TestObject{ 3, 2, 1 }));
+	}
+
+	return nErrorCount;
+}
+
+template<typename K, typename V>
+using LruCache = eastl::lru_cache<K, V, EASTLAllocatorType, eastl::list<K>, eastl::unordered_map<K, eastl::pair<V, typename eastl::list<K>::iterator>>>;
+
+template<typename K, typename V>
+using LruCacheMap = eastl::lru_cache<K, V, EASTLAllocatorType, eastl::list<K>, eastl::map<K, eastl::pair<V, typename eastl::list<K>::iterator>>>;
+
+// template<typename K, typename V>
+// using LruCacheDequeMap = eastl::lru_cache<K, V, EASTLAllocatorType, eastl::deque<K>, eastl::map<K, eastl::pair<V, typename eastl::deque<K>::iterator>>>;
+
+int TestLruCache()
+{
+	int nErrorCount = 0;
+
+	nErrorCount += TestLruCacheOfType<LruCache>();
+	nErrorCount += TestLruCacheOfType<LruCacheMap>();
+	// could use a deque instead of a list, except that lru_cache requires the container have a reset_lose_memory() function.
+	// nErrorCount += TestLruCacheOfType<LruCacheDequeMap>();
 
 	return nErrorCount;
 }

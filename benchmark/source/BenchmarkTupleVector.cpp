@@ -212,7 +212,7 @@ namespace
 		for(typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += c[j];
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
 	void TestBracket(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
@@ -222,7 +222,7 @@ namespace
 		for (typename EaTupleVectorUint64::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += eastl::get<0>(c[j]);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
 	template <typename Container>
@@ -233,7 +233,7 @@ namespace
 		iterator_t it = eastl::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)*it);
 	}
 
 	void TestFind(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
@@ -243,7 +243,7 @@ namespace
 		EaTupleVectorUint64::iterator it = eastl::find(c.begin(), c.end(), val);
 		stopwatch.Stop();
 		if (it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eastl::get<0>(*it));
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)eastl::get<0>(*it));
 	}
 
 	template <typename Container>
@@ -254,7 +254,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(c.begin(), c.end()); 
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(c[0] & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(c[0] & 0xffffffff));
 	}
 
 	void TestSort(EA::StdC::Stopwatch& stopwatch, EaTupleVectorUint64& c)
@@ -264,7 +264,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(c.begin(), c.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(eastl::get<0>(c[0]) & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(eastl::get<0>(c[0]) & 0xffffffff));
 	}
 
 
@@ -354,7 +354,7 @@ namespace
 		for (typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += eastl::get<0>(c[j]);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
 
@@ -366,7 +366,7 @@ namespace
 		iterator_t it = eastl::find_if(c.begin(), c.end(), [](auto tup) { return eastl::get<0>(tup) == 0xFFFFFFFF; });
 		stopwatch.Stop();
 		if (it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eastl::get<0>(*it));
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)eastl::get<0>(*it));
 	}
 
 	template <typename Container>
@@ -377,7 +377,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(c.begin(), c.end(), [](auto a, auto b) { return eastl::get<0>(a) < eastl::get<0>(b); });
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(eastl::get<0>(c[0]) & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(eastl::get<0>(c[0]) & 0xffffffff));
 	}
 
 	template <typename Container>

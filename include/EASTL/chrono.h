@@ -16,7 +16,7 @@
 #define EASTL_CHRONO_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
+	#pragma once 
 #endif
 
 #include <EASTL/internal/config.h>
@@ -50,9 +50,12 @@
 
 #if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 	// Nothing to do
+#elif defined(EA_PLATFORM_SONY)
+	#include <Dinkum/threads/xtimec.h>
+	#include <kernel.h>
 #elif defined(EA_PLATFORM_APPLE)
 	#include <mach/mach_time.h>
-#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) || defined(EA_PLATFORM_ANDROID)
+#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) || defined(EA_PLATFORM_ANDROID) 
 	// Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
 	#if defined(EA_PLATFORM_MINGW)
 		#include <pthread_time.h>
@@ -101,7 +104,7 @@ namespace chrono
 	namespace Internal
 	{
 		///////////////////////////////////////////////////////////////////////////////
-		// IsRatio
+		// IsRatio 
 		///////////////////////////////////////////////////////////////////////////////
 		template <typename> struct IsRatio                                           : eastl::false_type {};
 		template <intmax_t N, intmax_t D> struct IsRatio<ratio<N, D>>                : eastl::true_type {};
@@ -111,7 +114,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// IsDuration
+		// IsDuration 
 		///////////////////////////////////////////////////////////////////////////////
 		template<typename> struct IsDuration                                                            : eastl::false_type{};
 		template<typename Rep, typename Period> struct IsDuration<duration<Rep, Period>>                : eastl::true_type{};
@@ -121,7 +124,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// RatioGCD
+		// RatioGCD 
 		///////////////////////////////////////////////////////////////////////////////
 		template <class Period1, class Period2>
 		struct RatioGCD
@@ -194,10 +197,10 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration_cast
+	// duration_cast 
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename ToDuration, typename Rep, typename Period>
-	inline typename eastl::enable_if<Internal::IsDuration<ToDuration>::value, ToDuration>::type
+	inline typename eastl::enable_if<Internal::IsDuration<ToDuration>::value, ToDuration>::type 
 	duration_cast(const duration<Rep, Period>& d)
 	{
 		typedef typename duration<Rep, Period>::this_type FromDuration;
@@ -206,12 +209,12 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration
+	// duration 
 	///////////////////////////////////////////////////////////////////////////////
 	template <class Rep, class Period>
 	class duration
 	{
-		Rep mRep;
+		Rep mRep;	
 
 	public:
 		typedef Rep rep;
@@ -219,7 +222,7 @@ namespace chrono
 		typedef duration<Rep, Period> this_type;
 
     #if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
-		EA_CONSTEXPR duration()
+		EA_CONSTEXPR duration() 
 			: mRep() {}
 
 		duration(const duration& other)
@@ -235,7 +238,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// conversion constructors
+		// conversion constructors 
 		///////////////////////////////////////////////////////////////////////////////
 		template <class Rep2>
 		inline EA_CONSTEXPR explicit duration(
@@ -255,12 +258,12 @@ namespace chrono
 		    : mRep(duration_cast<duration>(d2).count()) {}
 
 		///////////////////////////////////////////////////////////////////////////////
-		// returns the count of ticks
+		// returns the count of ticks 
 		///////////////////////////////////////////////////////////////////////////////
 		EA_CONSTEXPR Rep count() const { return mRep; }
 
 		///////////////////////////////////////////////////////////////////////////////
-		// static accessors of special duration values
+		// static accessors of special duration values 
 		///////////////////////////////////////////////////////////////////////////////
 		EA_CONSTEXPR inline static duration zero() { return duration(duration_values<Rep>::zero()); }
 		EA_CONSTEXPR inline static duration min()  { return duration(duration_values<Rep>::min()); }
@@ -418,7 +421,7 @@ namespace chrono
 	///////////////////////////////////////////////////////////////////////////////
 	// 20.12.6, time_point
 	///////////////////////////////////////////////////////////////////////////////
-	template <typename Clock, typename Duration = typename Clock::duration>
+	template <typename Clock, typename Duration = typename Clock::duration> 
 	class time_point
 	{
 		Duration mDuration;
@@ -440,7 +443,7 @@ namespace chrono
 
 		EA_CONSTEXPR Duration time_since_epoch() const { return mDuration; }
 
-		time_point& operator+=(const Duration& d) { mDuration += d; return *this; }
+		time_point& operator+=(const Duration& d) { mDuration += d; return *this; } 
 		time_point& operator-=(const Duration& d) { mDuration -= d; return *this; }
 
 		static EA_CONSTEXPR time_point min() { return time_point(Duration::min()); }
@@ -543,7 +546,7 @@ namespace chrono
 	namespace Internal
 	{
 		#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
-			#define EASTL_NS_PER_TICK 1
+			#define EASTL_NS_PER_TICK 1 
 		#elif defined EA_PLATFORM_SONY
 			#define EASTL_NS_PER_TICK 1
 		#elif defined EA_PLATFORM_POSIX
@@ -552,17 +555,17 @@ namespace chrono
 			#define EASTL_NS_PER_TICK 100
 		#endif
 
-		#if defined(EA_PLATFORM_POSIX)
+		#if defined(EA_PLATFORM_POSIX) 
 			typedef chrono::nanoseconds::period SystemClock_Period;
 			typedef chrono::nanoseconds::period SteadyClock_Period;
 		#else
-			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SystemClock_Period;
-			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SteadyClock_Period;
+			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SystemClock_Period; 
+			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SteadyClock_Period; 
 		#endif
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// Internal::GetTicks
+		// Internal::GetTicks 
 		///////////////////////////////////////////////////////////////////////////////
 		inline uint64_t GetTicks()
 		{
@@ -586,8 +589,21 @@ namespace chrono
 			EA_RESTORE_VC_WARNING()
 			return uint64_t(frequency * (double)queryCounter());
 		#elif defined EA_PLATFORM_SONY
-			static_assert(false, "Implementing GetTicks() requires first party support");
-			return 0;
+			auto queryFrequency = []
+			{
+				// nanoseconds/seconds / ticks/seconds
+				return double(1000000000.0L / (long double)sceKernelGetProcessTimeCounterFrequency());  // nanoseconds per tick
+			};
+
+			auto queryCounter = []
+			{
+				return sceKernelGetProcessTimeCounter();
+			};
+
+			EA_DISABLE_VC_WARNING(4640)  // warning C4640: construction of local static object is not thread-safe (VS2013)
+			static auto frequency = queryFrequency(); // cache cpu frequency on first call
+			EA_RESTORE_VC_WARNING()
+			return uint64_t(frequency * (double)queryCounter());
 		#elif defined(EA_PLATFORM_APPLE)
 			auto queryTimeInfo = []
 			{
@@ -595,7 +611,7 @@ namespace chrono
 				mach_timebase_info(&info);
 				return info;
 			};
-
+			
 			static auto timeInfo = queryTimeInfo();
 			uint64_t t = mach_absolute_time();
 			t *= timeInfo.numer;
@@ -625,7 +641,7 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// system_clock
+	// system_clock 
 	///////////////////////////////////////////////////////////////////////////////
 	class system_clock
 	{
@@ -639,15 +655,15 @@ namespace chrono
 		EA_CONSTEXPR_OR_CONST static bool is_steady = false;
 
 		// returns a time point representing the current point in time.
-		static time_point now() EA_NOEXCEPT
-		{
-			return time_point(duration(Internal::GetTicks()));
+		static time_point now() EA_NOEXCEPT 
+		{ 
+			return time_point(duration(Internal::GetTicks())); 
 		}
 	};
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// steady_clock
+	// steady_clock 
 	///////////////////////////////////////////////////////////////////////////////
 	class steady_clock
 	{
@@ -661,24 +677,24 @@ namespace chrono
 		EA_CONSTEXPR_OR_CONST static bool is_steady = true;
 
 		// returns a time point representing the current point in time.
-		static time_point now() EA_NOEXCEPT
-		{
-			return time_point(duration(Internal::GetTicks()));
+		static time_point now() EA_NOEXCEPT 
+		{ 
+			return time_point(duration(Internal::GetTicks())); 
 		}
 	};
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// high_resolution_clock
+	// high_resolution_clock 
 	///////////////////////////////////////////////////////////////////////////////
 	typedef system_clock high_resolution_clock;
 
 
-} // namespace chrono
+} // namespace chrono 
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration common_type specialization
+	// duration common_type specialization 
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename Rep1, typename Period1, typename Rep2, typename Period2>
 	struct common_type<chrono::duration<Rep1, Period1>, chrono::duration<Rep2, Period2>>
@@ -689,7 +705,7 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// time_point common_type specialization
+	// time_point common_type specialization 
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename Clock, typename Duration1, typename Duration2>
 	struct common_type<chrono::time_point<Clock, Duration1>, chrono::time_point<Clock, Duration2>>
@@ -699,7 +715,7 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// chrono_literals
+	// chrono_literals  
 	///////////////////////////////////////////////////////////////////////////////
 	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
 		// Disabling the Clang/GCC/MSVC warning about using user
@@ -756,4 +772,4 @@ namespace chrono
 #endif
 
 
-#endif
+#endif 

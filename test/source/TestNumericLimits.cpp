@@ -7,14 +7,6 @@
 #include <EASTL/numeric_limits.h>
 
 
-struct NonNumericType
-{
-	NonNumericType(int value) : mValue(value){}
-	bool operator==(int value) const { return mValue == value; }
-	int mValue; // This exists for the purpose of allowing the type to act like a number and allow the test logic below to work.
-};
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // TestNumericLimits
 //
@@ -24,19 +16,6 @@ int TestNumericLimits()
 
 	// To consider: Some day when we get more time, make a big table-driven set of 
 	// expected results to all member variables and function calls.
-
-	// Test a type that is not numeric,.
-	EATEST_VERIFY(!eastl::numeric_limits<NonNumericType>::is_bounded);
-	EATEST_VERIFY( eastl::numeric_limits<NonNumericType>::max() == 0);
-
-	EATEST_VERIFY(!eastl::numeric_limits<const NonNumericType>::is_bounded);
-	EATEST_VERIFY( eastl::numeric_limits<const NonNumericType>::max() == 0);
-
-	EATEST_VERIFY(!eastl::numeric_limits<volatile NonNumericType>::is_bounded);
-	EATEST_VERIFY( eastl::numeric_limits<volatile NonNumericType>::max() == 0);
-
-	EATEST_VERIFY(!eastl::numeric_limits<const volatile NonNumericType>::is_bounded);
-	EATEST_VERIFY( eastl::numeric_limits<const volatile NonNumericType>::max() == 0);
 
 	// Test bool in all const-volatile variants.
 	EATEST_VERIFY(eastl::numeric_limits<bool>::is_bounded);

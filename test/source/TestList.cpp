@@ -413,30 +413,27 @@ int TestList()
 		}
 	}
 
-	// void emplace_front(Args&&... args);
-	// void emplace_front(value_type&& value);
-	// void emplace_front(const value_type& value);
+	// template <typename... Args>
+	// reference emplace_front(Args&&... args);
 	{
 		eastl::list<int> ref = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 		eastl::list<int> a;
 
 		for(int i = 0; i < 10; i++)
-			a.emplace_front(i);
+			VERIFY(a.emplace_front(i) == i);
 
 		VERIFY(a == ref);
 	}
 
 	// template <typename... Args>
-	// void emplace_back(Args&&... args);
-	// void emplace_back(value_type&& value);
-	// void emplace_back(const value_type& value);
+	// reference emplace_back(Args&&... args);
 	{
 		{
 			eastl::list<int> ref = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 			eastl::list<int> a;
 
 			for(int i = 0; i < 10; i++)
-				a.emplace_back(i);
+				VERIFY(a.emplace_back(i) == i);
 
 			VERIFY(a == ref);
 		}
@@ -454,9 +451,9 @@ int TestList()
 				eastl::list<A> ref = {{1}, {2}, {3}};
 				eastl::list<A> a;
 
-				a.emplace_back(1);
-				a.emplace_back(2);
-				a.emplace_back(3);
+				VERIFY(a.emplace_back(1) == A{1});
+				VERIFY(a.emplace_back(2) == A{2});
+				VERIFY(a.emplace_back(3) == A{3});
 
 				VERIFY(a == ref);
 			}
@@ -465,9 +462,9 @@ int TestList()
 				eastl::list<A> ref = {{1}, {2}, {3}};
 				eastl::list<A> a;
 
-				a.emplace_back(A(1));
-				a.emplace_back(A(2));
-				a.emplace_back(A(3));
+				VERIFY(a.emplace_back(A(1)) == A{1});
+				VERIFY(a.emplace_back(A(2)) == A{2});
+				VERIFY(a.emplace_back(A(3)) == A{3});
 
 				VERIFY(a == ref);
 			}
@@ -481,9 +478,9 @@ int TestList()
 				A a2(2);
 				A a3(3);
 
-				a.emplace_back(a1);
-				a.emplace_back(a2);
-				a.emplace_back(a3);
+				VERIFY(a.emplace_back(a1) == A{1});
+				VERIFY(a.emplace_back(a2) == A{2});
+				VERIFY(a.emplace_back(a3) == A{3});
 
 				VERIFY(a == ref);
 			}
@@ -903,16 +900,16 @@ int TestList()
 		VERIFY(a1 == ref);
 	}
 
-	// void unique();
+	// size_type unique();
 	{
 		eastl::list<int> ref = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 		eastl::list<int> a = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3,
 		                      4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9};
-		a.unique();
+		VERIFY(a.unique() == 34);
 		VERIFY(a == ref);
 	}
 
-	// void unique(BinaryPredicate);
+	// size_type unique(BinaryPredicate);
 	{
 		static bool bBreakComparison;
 		struct A
@@ -926,10 +923,10 @@ int TestList()
 		                    {5}, {5}, {5}, {5}, {6}, {7}, {7}, {7}, {7}, {8}, {9}, {9}, {9}};
 
 		bBreakComparison = true;
-		a.unique(); // noop because broken comparison operator
+		VERIFY(a.unique() == 0); // noop because broken comparison operator
 		VERIFY(a != ref);  
 
-		a.unique([](const A& lhs, const A& rhs) { return lhs.mValue == rhs.mValue; });
+		VERIFY(a.unique([](const A& lhs, const A& rhs) { return lhs.mValue == rhs.mValue; }) == 17);
 
 		bBreakComparison = false;
 		VERIFY(a == ref);

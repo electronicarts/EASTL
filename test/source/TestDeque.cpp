@@ -559,12 +559,23 @@ int TestDeque()
 	{
 		{
 			eastl::deque<MoveAssignable> d;
-			d.emplace_back(MoveAssignable::Create());
-			d.emplace_front(MoveAssignable::Create());
+			EATEST_VERIFY(d.emplace_back(MoveAssignable::Create()).value == 42);
+			EATEST_VERIFY(d.emplace_front(MoveAssignable::Create()).value == 42);
 
 			auto cd = eastl::move(d);
 			EATEST_VERIFY( d.size() == 0);
 			EATEST_VERIFY(cd.size() == 2);
+		}
+
+		{
+			eastl::deque<MoveAssignable> from;
+			from.emplace_back(MoveAssignable::Create());
+			
+			eastl::deque<MoveAssignable> to;
+			to = eastl::move(from);
+
+			EATEST_VERIFY(from.empty());
+			EATEST_VERIFY(!to.empty());
 		}
 
 		{
@@ -581,9 +592,9 @@ int TestDeque()
 			eastl::deque<MoveAssignable> d;
 
 			// emplace_back
-			d.emplace_back(MoveAssignable::Create());
-			d.emplace_back(MoveAssignable::Create());
-			d.emplace_back(MoveAssignable::Create());
+			EATEST_VERIFY(d.emplace_back(MoveAssignable::Create()).value == 42);
+			EATEST_VERIFY(d.emplace_back(MoveAssignable::Create()).value == 42);
+			EATEST_VERIFY(d.emplace_back(MoveAssignable::Create()).value == 42);
 
 			// erase
 			d.erase(d.begin());
@@ -614,9 +625,9 @@ int TestDeque()
 				eastl::deque<MoveAssignable> swapped_d;
 
 				// emplace_front
-				swapped_d.emplace_front(MoveAssignable::Create());
-				swapped_d.emplace_front(MoveAssignable::Create());
-				swapped_d.emplace_front(MoveAssignable::Create());
+				EATEST_VERIFY(swapped_d.emplace_front(MoveAssignable::Create()).value == 42);
+				EATEST_VERIFY(swapped_d.emplace_front(MoveAssignable::Create()).value == 42);
+				EATEST_VERIFY(swapped_d.emplace_front(MoveAssignable::Create()).value == 42);
 
 				// swap
 				swapped_d.swap(d);
@@ -694,13 +705,13 @@ int TestDeque()
 
 		deque<TestObject, eastl::allocator, 16> toDequeA;
 
-		toDequeA.emplace_back(2, 3, 4);
+		EATEST_VERIFY(toDequeA.emplace_back(2, 3, 4).mX == (2 + 3 + 4));
 		EATEST_VERIFY_F((toDequeA.size() == 1) && (toDequeA.back().mX == (2+3+4)) && (TestObject::sTOCtorCount == 1), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.back().mX, (int)TestObject::sTOCtorCount);
 
 		toDequeA.emplace(toDequeA.begin(), 3, 4, 5);                                                              // This is 3 because of how subarray allocation works.
 		EATEST_VERIFY_F((toDequeA.size() == 2) && (toDequeA.front().mX == (3+4+5)) && (TestObject::sTOCtorCount == 3), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
 
-		toDequeA.emplace_front(6, 7, 8);
+		EATEST_VERIFY(toDequeA.emplace_front(6, 7, 8).mX == (6 + 7 + 8));
 		EATEST_VERIFY_F((toDequeA.size() == 3) && (toDequeA.front().mX == (6+7+8)) && (TestObject::sTOCtorCount == 4), "size: %u, mX: %u, count: %d", (unsigned)toDequeA.size(), (unsigned)toDequeA.front().mX, (int)TestObject::sTOCtorCount);
 
 
@@ -733,26 +744,27 @@ int TestDeque()
 		// because the existing elements of this were allocated by a different allocator and 
 		// will be freed in the future with the allocator copied from x. 
 		// The test below should work for the case of EASTL_ALLOCATOR_COPY_ENABLED == 0 or 1.
-		InstanceAllocator::reset_all();
+		{
+			InstanceAllocator ia0((uint8_t)0);
+			InstanceAllocator ia1((uint8_t)1);
 
-		InstanceAllocator ia0((uint8_t)0);
-		InstanceAllocator ia1((uint8_t)1);
+			eastl::deque<int, InstanceAllocator> v0((eastl_size_t)1, (int)0, ia0);
+			eastl::deque<int, InstanceAllocator> v1((eastl_size_t)1, (int)1, ia1);
 
-		eastl::deque<int, InstanceAllocator> v0((eastl_size_t)1, (int)0, ia0);
-		eastl::deque<int, InstanceAllocator> v1((eastl_size_t)1, (int)1, ia1);
-
-		EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
-		#if EASTL_ALLOCATOR_COPY_ENABLED
+			EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
 			EATEST_VERIFY(v0.get_allocator() != v1.get_allocator());
-		#endif
-		v0 = v1;
-		EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
-		EATEST_VERIFY(InstanceAllocator::mMismatchCount == 0);
-		EATEST_VERIFY(v0.validate());
-		EATEST_VERIFY(v1.validate());
-		#if EASTL_ALLOCATOR_COPY_ENABLED
-			EATEST_VERIFY(v0.get_allocator() == v1.get_allocator());
-		#endif
+			v0 = v1;
+			EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
+			EATEST_VERIFY(v0.validate());
+			EATEST_VERIFY(v1.validate());
+			bool allocatorsEqual = v0.get_allocator() == v1.get_allocator();
+			EATEST_VERIFY(allocatorsEqual == (bool)EASTL_ALLOCATOR_COPY_ENABLED);
+
+			// destroying containers to invoke InstanceAllocator::deallocate() checks
+		}
+
+		EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
+		InstanceAllocator::reset_all();
 	}
 
 
@@ -881,9 +893,9 @@ int TestDeque()
 
 			eastl::deque<a> d;
 
-			d.emplace_back(new int(1));
-			d.emplace_back(new int(2));
-			d.emplace_back(new int(3));
+			EATEST_VERIFY(*d.emplace_back(new int(1)).ptr == 1);
+			EATEST_VERIFY(*d.emplace_back(new int(2)).ptr == 2);
+			EATEST_VERIFY(*d.emplace_back(new int(3)).ptr == 3);
 
 			d.erase(d.begin() + 1);
 		}
@@ -923,6 +935,56 @@ int TestDeque()
 			auto numErased = eastl::erase_if(d, [](auto i) { return i % 2 == 0; });
 			EATEST_VERIFY((d == eastl::deque<int>{1, 3, 5, 7, 9}));
 		    EATEST_VERIFY(numErased == 4);
+		}
+	}
+
+	// Tests for erase_unordered
+	{
+		{
+			eastl::deque<int> vec = {0, 1, 2, 3};
+			auto numErased = eastl::erase_unsorted(vec, 1);
+			EATEST_VERIFY(numErased == 1);
+			EATEST_VERIFY(VerifySequence(vec, {0, 3, 2}, "erase_unordered") );
+		}
+		{
+			eastl::deque<int> vec = {};
+			auto numErased = eastl::erase_unsorted(vec, 42);
+			EATEST_VERIFY(numErased == 0);
+			EATEST_VERIFY(vec.size() == 0);
+		}
+		// The following test checks that the correct implementation is called for deque by checking the order
+		// of the remaining values. It is not a strict requirement that they have this order but it
+		// is expected to be the result based on that it minimizes the amount of work.
+		{
+			eastl::deque<int> vec = {0, 1, 2, 3, 1, 5, 6, 1, 8, 9};
+			auto numErased = eastl::erase_unsorted(vec, 1);
+			EATEST_VERIFY(numErased == 3);
+			EATEST_VERIFY(VerifySequence(vec, {0, 9, 2, 3, 8, 5, 6}, "erase_unordered") );
+		}
+	}
+
+	// Tests for erase_unordered_if
+	{
+		{
+			eastl::deque<int> vec = {0, 1, 2, 3};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 2);
+			EATEST_VERIFY(VerifySequence(vec, {0, 2}, "erase_unordered_if") );
+		}
+		{
+			eastl::deque<int> vec = {};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 0);
+			EATEST_VERIFY(vec.size() == 0);
+		}
+		// The following test checks that the correct implementation is called for deque by checking the order
+		// of the remaining values. It is not a strict requirement that they have this order but it
+		// is expected to be the result based on that it minimizes the amount of work.
+		{
+			eastl::deque<int> vec = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 5);
+			EATEST_VERIFY(VerifySequence(vec, {0, 8, 2, 6, 4}, "erase_unordered_if") );
 		}
 	}
 

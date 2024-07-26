@@ -51,18 +51,6 @@
 //   4296 - expression is always false
 EA_DISABLE_VC_WARNING(4310 4296)
 
-// EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
-//
-// Defined as 0 or 1.
-// Indicates whether we need to define our own implementations of inf, nan, snan, denorm floating point constants. 
-//
-#if !defined(EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED)
-	#if (defined(EA_COMPILER_GNUC) || defined(__clang__) && defined(__FLT_MIN__)) || defined(_CPPLIB_VER) // __FLT_MIN__ detects if it's really GCC/clang and not a mimic. _CPPLIB_VER (Dinkumware) covers VC++, and Microsoft platforms.
-		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 0
-	#else
-		#define EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED 1
-	#endif
-#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,19 +68,6 @@ EA_DISABLE_VC_WARNING(4310 4296)
 	#ifdef max
 		#undef max
 	#endif
-#endif
-
-
-// EA_CONSTEXPR
-// EA_CONSTEXPR is defined in EABase 2.00.38 and later.
-#if !defined(EA_CONSTEXPR)
-	#define EA_CONSTEXPR
-#endif
-
-// EA_CONSTEXPR_OR_CONST
-// EA_CONSTEXPR_OR_CONST is defined in EABase 2.00.39 and later.
-#if !defined(EA_CONSTEXPR_OR_CONST)
-	#define EA_CONSTEXPR_OR_CONST const
 #endif
 
 
@@ -150,403 +125,266 @@ namespace eastl
 	};
 
 
-	namespace Internal
-	{
-		// Defines default values for numeric_limits, which can be overridden by class specializations.
-		// See C++11 18.3.2.3
-		struct numeric_limits_base
-		{
-			// true if the type has an explicit specialization defined in the template class; false if not. 
-			static EA_CONSTEXPR_OR_CONST bool is_specialized = false;
-
-			// Integer types: the number of *bits* in the representation of T.
-			// Floating types: the number of digits in the mantissa of T (same as FLT_MANT_DIG, DBL_MANT_DIG or LDBL_MANT_DIG).
-			static EA_CONSTEXPR_OR_CONST int digits = 0;
-
-			// The number of decimal digits that can be represented by T.
-			// Equivalent to FLT_DIG, DBL_DIG or LDBL_DIG for floating types.
-			static EA_CONSTEXPR_OR_CONST int digits10 = 0;
-
-			// The number of decimal digits required to make sure that two distinct values of the type have distinct decimal representations.
-			static EA_CONSTEXPR_OR_CONST int max_digits10 = 0;
-
-			// True if the type is signed.
-			static EA_CONSTEXPR_OR_CONST bool is_signed = false;
-
-			// True if the type is integral.
-			static EA_CONSTEXPR_OR_CONST bool is_integer = false;
-
-			// True if the type uses an exact representation. All integral types are
-			// exact, but other types can be exact as well.
-			static EA_CONSTEXPR_OR_CONST bool is_exact = false;
-
-			// Integer types: the base of the representation. Always 2 for integers.
-			// Floating types: the base of the exponent representation. Always FLT_RADIX (typically 2) for float.
-			static EA_CONSTEXPR_OR_CONST int radix = 0;
-
-			// The minimum integral radix-based exponent representable by the type.
-			static EA_CONSTEXPR_OR_CONST int min_exponent = 0;
-
-			// The minimum integral base 10 exponent representable by the type.
-			static EA_CONSTEXPR_OR_CONST int min_exponent10 = 0;
-
-			// The maximum integral radix-based exponent representable by the type.
-			static EA_CONSTEXPR_OR_CONST int max_exponent = 0;
-
-			// The maximum integral base 10 exponent representable by the type.
-			static EA_CONSTEXPR_OR_CONST int max_exponent10 = 0;
-
-			// True if the type has a representation for positive infinity.
-			static EA_CONSTEXPR_OR_CONST bool has_infinity = false;
-
-			//  True if the type has a representation for a quiet (non-signaling) NaN.
-			static EA_CONSTEXPR_OR_CONST bool has_quiet_NaN = false;
-
-			// True if the type has a representation for a signaling NaN.
-			static EA_CONSTEXPR_OR_CONST bool has_signaling_NaN = false;
-
-			// An enumeration which identifies denormalization behavior.
-			// In practice the application can change this at runtime via hardware-specific commands.
-			static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm = denorm_absent;
-
-			// True if the loss of accuracy is detected as a denormalization loss.
-			// Typically false for integer types and true for floating point types.
-			static EA_CONSTEXPR_OR_CONST bool has_denorm_loss = false;
-
-			// True if the type has a bounded set of representable values. Typically true for 
-			// all built-in numerial types (integer and floating point).
-			static EA_CONSTEXPR_OR_CONST bool is_bounded = false;
-
-			// True if the type has a modulo representation (if it's possible to add two
-			// positive numbers and have a result that wraps around to a third number
-			// that is less. Typically true for integers and false for floating types.
-			static EA_CONSTEXPR_OR_CONST bool is_modulo = false;
-
-			// True if trapping (arithmetic exception generation) is implemented for this type.
-			// Typically true for integer types (div by zero) and false for floating point types,
-			// though in practice the application may be able to change floating point to trap at runtime.
-			static EA_CONSTEXPR_OR_CONST bool traps = false;
-
-			// True if tiny-ness is detected before rounding.
-			static EA_CONSTEXPR_OR_CONST bool tinyness_before = false;
-
-			// An enumeration which identifies default rounding behavior.
-			// In practice the application can change this at runtime via hardware-specific commands.
-			static EA_CONSTEXPR_OR_CONST float_round_style round_style = round_toward_zero;
-
-			// True if the type is floating point and follows the IEC 559 standard (IEEE 754).
-			// In practice the application or OS can change this at runtime via hardware-specific commands or via compiler optimizations.
-			static EA_CONSTEXPR_OR_CONST bool is_iec559 = false;
-		};
-
-
-		#if EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
-			extern EASTL_API float gFloatInfinity;
-			extern EASTL_API float gFloatNaN;
-			extern EASTL_API float gFloatSNaN;
-			extern EASTL_API float gFloatDenorm;
-
-			extern EASTL_API double gDoubleInfinity;
-			extern EASTL_API double gDoubleNaN;
-			extern EASTL_API double gDoubleSNaN;
-			extern EASTL_API double gDoubleDenorm;
-
-			extern EASTL_API long double gLongDoubleInfinity;
-			extern EASTL_API long double gLongDoubleNaN;
-			extern EASTL_API long double gLongDoubleSNaN;
-			extern EASTL_API long double gLongDoubleDenorm;
-		#endif
-
-	} // namespace Internal
-
-
 	// Default numeric_limits.
 	// See C++11 18.3.2.3
 	template<typename T>
-	class numeric_limits : public Internal::numeric_limits_base
-	{
-	public:
-		typedef T value_type;
-
-		static value_type min()
-			{ return value_type(0); }
-
-		static value_type max()
-			{ return value_type(0); }
-
-		static value_type lowest()
-			{ return min(); }
-
-		static value_type epsilon()
-			{ return value_type(0); }
-
-		static value_type round_error()
-			{ return value_type(0); }
-
-		static value_type denorm_min()
-			{ return value_type(0); }
-
-		static value_type infinity()
-			{ return value_type(0); }
-
-		static value_type quiet_NaN()
-			{ return value_type(0); }
-
-		static value_type signaling_NaN()
-			{ return value_type(0); }
-	};
+	class numeric_limits;
 
 
 	// Const/volatile variations of numeric_limits.
 	template<typename T>
-	class numeric_limits<const T> : public numeric_limits<T>
-	{
-	};
+	class numeric_limits<const T>
+		: public numeric_limits<T>
+	{};
 
 	template<typename T>
-	class numeric_limits<volatile T> : public numeric_limits<T>
-	{
-	};
+	class numeric_limits<volatile T>
+		: public numeric_limits<T>
+	{};
 
 	template<typename T>
-	class numeric_limits<const volatile T> : public numeric_limits<T>
-	{
-	};
+	class numeric_limits<const volatile T>
+		: public numeric_limits<T>
+	{};
 
 
 
 	// numeric_limits<bool>
 	template<>
-	struct numeric_limits<bool>
+	class numeric_limits<bool>
 	{
+	public:
 		typedef bool value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = 1;      // In practice bool is stores as a byte, or sometimes an int.
-		static EA_CONSTEXPR_OR_CONST int                digits10          = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;  // In practice bool may be implemented as signed char.
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = false;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;   // Should this be true or false? Given that it's implemented in hardware as an integer type, we use true.
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = 1;      // In practice bool is stores as a byte, or sometimes an int.
+		static constexpr int                digits10          = 0;
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;  // In practice bool may be implemented as signed char.
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = false;
+		static constexpr bool               traps             = true;   // Should this be true or false? Given that it's implemented in hardware as an integer type, we use true.
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return false; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return true; }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return false; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return false; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return false; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return value_type(); }
 	};
 
 
 	// numeric_limits<char>
 	template<>
-	struct numeric_limits<char>
+	class numeric_limits<char>
 	{
+	public:
 		typedef char value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }    // Question: Should we return 0 here or value_type()?
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return (value_type)0; }
 	};
 
 
 	// numeric_limits<unsigned char>
 	template<>
-	struct numeric_limits<unsigned char>
+	class numeric_limits<unsigned char>
 	{
+	public:
 		typedef unsigned char value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_U(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return (value_type)0; }
 	};
 
 
 	// numeric_limits<signed char>
 	template<>
-	struct numeric_limits<signed char>
+	class numeric_limits<signed char>
 	{
+	public:
 		typedef signed char value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_S(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return (value_type)0; }
 	};
 
@@ -557,118 +395,120 @@ namespace eastl
 	// may be to use __wchar_t here for VC++ instead of wchar_t, as __wchar_t is always a true 
 	// unique type under VC++. http://social.msdn.microsoft.com/Forums/en-US/vclanguage/thread/9059330a-7cce-4d0d-a8e0-e1dcb63322bd/
 	template<>
-	struct numeric_limits<wchar_t>
+	class numeric_limits<wchar_t>
 	{
+	public:
 		typedef wchar_t value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return (value_type)0; }
 	};
 
 
 	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
 	template<>
-	struct numeric_limits<char8_t>
+	class numeric_limits<char8_t>
 	{
+	public:
 		typedef char8_t value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
- 		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+ 		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min()
+		static constexpr value_type min()
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX(value_type); }
 
-		static EA_CONSTEXPR value_type lowest()
+		static constexpr value_type lowest()
 			{ return EASTL_LIMITS_MIN(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon()
+		static constexpr value_type epsilon()
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error()
+		static constexpr value_type round_error()
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity()
+		static constexpr value_type infinity()
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type quiet_NaN()
+		static constexpr value_type quiet_NaN()
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type denorm_min()
+		static constexpr value_type denorm_min()
 			{ return (value_type)0; }
 	};
 	#endif
@@ -677,59 +517,60 @@ namespace eastl
 
 		// numeric_limits<char16_t>
 		template<>
-		struct numeric_limits<char16_t>
+		class numeric_limits<char16_t>
 		{
+		public:
 			typedef char16_t value_type;
 
-			static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-			static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
-			static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
-			static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
-			static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-			static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-			static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-			static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-			static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-			static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-			static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-			static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-			static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+			static constexpr bool               is_specialized    = true;
+			static constexpr int                digits            = EASTL_LIMITS_DIGITS(value_type);
+			static constexpr int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+			static constexpr int                max_digits10      = 0;
+			static constexpr bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+			static constexpr bool               is_integer        = true;
+			static constexpr bool               is_exact          = true;
+			static constexpr int                radix             = 2;
+			static constexpr int                min_exponent      = 0;
+			static constexpr int                min_exponent10    = 0;
+			static constexpr int                max_exponent      = 0;
+			static constexpr int                max_exponent10    = 0;
+			static constexpr bool               is_bounded        = true;
+			static constexpr bool               is_modulo         = true;
+			static constexpr bool               traps             = true;
+			static constexpr bool               tinyness_before   = false;
+			static constexpr float_round_style  round_style       = round_toward_zero;
+			static constexpr bool               has_infinity      = false;
+			static constexpr bool               has_quiet_NaN     = false;
+			static constexpr bool               has_signaling_NaN = false;
+			static constexpr float_denorm_style has_denorm        = denorm_absent;
+			static constexpr bool               has_denorm_loss   = false;
+			static constexpr bool               is_iec559         = false;
 
-			static EA_CONSTEXPR value_type min() 
+			static constexpr value_type min() 
 				{ return EASTL_LIMITS_MIN(value_type); }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return EASTL_LIMITS_MAX(value_type); }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return EASTL_LIMITS_MIN(value_type); }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return (value_type)0; }
 		};
 
@@ -740,59 +581,60 @@ namespace eastl
 
 		// numeric_limits<char32_t>
 		template<>
-		struct numeric_limits<char32_t>
+		class numeric_limits<char32_t>
 		{
+		public:
 			typedef char32_t value_type;
 
-			static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-			static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS(value_type);
-			static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
-			static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
-			static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-			static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-			static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-			static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-			static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-			static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-			static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-			static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-			static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+			static constexpr bool               is_specialized    = true;
+			static constexpr int                digits            = EASTL_LIMITS_DIGITS(value_type);
+			static constexpr int                digits10          = EASTL_LIMITS_DIGITS10(value_type);
+			static constexpr int                max_digits10      = 0;
+			static constexpr bool               is_signed         = EASTL_LIMITS_IS_SIGNED(value_type);
+			static constexpr bool               is_integer        = true;
+			static constexpr bool               is_exact          = true;
+			static constexpr int                radix             = 2;
+			static constexpr int                min_exponent      = 0;
+			static constexpr int                min_exponent10    = 0;
+			static constexpr int                max_exponent      = 0;
+			static constexpr int                max_exponent10    = 0;
+			static constexpr bool               is_bounded        = true;
+			static constexpr bool               is_modulo         = true;
+			static constexpr bool               traps             = true;
+			static constexpr bool               tinyness_before   = false;
+			static constexpr float_round_style  round_style       = round_toward_zero;
+			static constexpr bool               has_infinity      = false;
+			static constexpr bool               has_quiet_NaN     = false;
+			static constexpr bool               has_signaling_NaN = false;
+			static constexpr float_denorm_style has_denorm        = denorm_absent;
+			static constexpr bool               has_denorm_loss   = false;
+			static constexpr bool               is_iec559         = false;
 
-			static EA_CONSTEXPR value_type min() 
+			static constexpr value_type min() 
 				{ return EASTL_LIMITS_MIN(value_type); }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return EASTL_LIMITS_MAX(value_type); }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return EASTL_LIMITS_MIN(value_type); }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return (value_type)0; }
 		};
 
@@ -801,118 +643,120 @@ namespace eastl
 
 	// numeric_limits<unsigned short>
 	template<>
-	struct numeric_limits<unsigned short>
+	class numeric_limits<unsigned short>
 	{
+	public:
 		typedef unsigned short value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_U(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<signed short>
 	template<>
-	struct numeric_limits<signed short>
+	class numeric_limits<signed short>
 	{
+	public:
 		typedef signed short value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_S(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
@@ -920,354 +764,360 @@ namespace eastl
 
 	// numeric_limits<unsigned int>
 	template<>
-	struct numeric_limits<unsigned int>
+	class numeric_limits<unsigned int>
 	{
+	public:
 		typedef unsigned int value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_U(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<signed int>
 	template<>
-	struct numeric_limits<signed int>
+	class numeric_limits<signed int>
 	{
+	public:
 		typedef signed int value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return INT_MIN; } // It's hard to get EASTL_LIMITS_MIN_S to work with all compilers here.
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_S(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return INT_MIN; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<unsigned long>
 	template<>
-	struct numeric_limits<unsigned long>
+	class numeric_limits<unsigned long>
 	{
+	public:
 		typedef unsigned long value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_U(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<signed long>
 	template<>
-	struct numeric_limits<signed long>
+	class numeric_limits<signed long>
 	{
+	public:
 		typedef signed long value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return LONG_MIN; }  // It's hard to get EASTL_LIMITS_MIN_S to work with all compilers here.
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_S(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return LONG_MIN; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<unsigned long long>
 	template<>
-	struct numeric_limits<unsigned long long>
+	class numeric_limits<unsigned long long>
 	{
+	public:
 		typedef unsigned long long value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = false;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_U(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
 
 	// numeric_limits<signed long long>
 	template<>
-	struct numeric_limits<signed long long>
+	class numeric_limits<signed long long>
 	{
+	public:
 		typedef signed long long value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-		static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+		static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+		static constexpr int                max_digits10      = 0;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = true;
+		static constexpr bool               is_exact          = true;
+		static constexpr int                radix             = 2;
+		static constexpr int                min_exponent      = 0;
+		static constexpr int                min_exponent10    = 0;
+		static constexpr int                max_exponent      = 0;
+		static constexpr int                max_exponent10    = 0;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = true;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_toward_zero;
+		static constexpr bool               has_infinity      = false;
+		static constexpr bool               has_quiet_NaN     = false;
+		static constexpr bool               has_signaling_NaN = false;
+		static constexpr float_denorm_style has_denorm        = denorm_absent;
+		static constexpr bool               has_denorm_loss   = false;
+		static constexpr bool               is_iec559         = false;
 
-		static EA_CONSTEXPR value_type min() 
+		static constexpr value_type min() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type max()
+		static constexpr value_type max()
 			{ return EASTL_LIMITS_MAX_S(value_type); }
 
-		static EA_CONSTEXPR value_type lowest() 
+		static constexpr value_type lowest() 
 			{ return EASTL_LIMITS_MIN_S(value_type); }
 
-		static EA_CONSTEXPR value_type epsilon() 
+		static constexpr value_type epsilon() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type round_error() 
+		static constexpr value_type round_error() 
 			{ return 0; }
 
-		static EA_CONSTEXPR value_type infinity() 
+		static constexpr value_type infinity() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type quiet_NaN() 
+		static constexpr value_type quiet_NaN() 
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type signaling_NaN()
+		static constexpr value_type signaling_NaN()
 			{ return value_type(); }
 
-		static EA_CONSTEXPR value_type denorm_min() 
+		static constexpr value_type denorm_min() 
 			{ return static_cast<value_type>(0); }
 	};
 
@@ -1275,118 +1125,120 @@ namespace eastl
 	#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 		// numeric_limits<__uint128_t>
 		template<>
-		struct numeric_limits<__uint128_t>
+		class numeric_limits<__uint128_t>
 		{
+		public:
 			typedef __uint128_t value_type;
 
-			static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-			static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
-			static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
-			static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_signed         = false;
-			static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-			static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-			static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-			static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-			static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-			static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-			static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-			static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-			static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+			static constexpr bool               is_specialized    = true;
+			static constexpr int                digits            = EASTL_LIMITS_DIGITS_U(value_type);
+			static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_U(value_type);
+			static constexpr int                max_digits10      = 0;
+			static constexpr bool               is_signed         = false;
+			static constexpr bool               is_integer        = true;
+			static constexpr bool               is_exact          = true;
+			static constexpr int                radix             = 2;
+			static constexpr int                min_exponent      = 0;
+			static constexpr int                min_exponent10    = 0;
+			static constexpr int                max_exponent      = 0;
+			static constexpr int                max_exponent10    = 0;
+			static constexpr bool               is_bounded        = true;
+			static constexpr bool               is_modulo         = true;
+			static constexpr bool               traps             = true;
+			static constexpr bool               tinyness_before   = false;
+			static constexpr float_round_style  round_style       = round_toward_zero;
+			static constexpr bool               has_infinity      = false;
+			static constexpr bool               has_quiet_NaN     = false;
+			static constexpr bool               has_signaling_NaN = false;
+			static constexpr float_denorm_style has_denorm        = denorm_absent;
+			static constexpr bool               has_denorm_loss   = false;
+			static constexpr bool               is_iec559         = false;
 
-			static EA_CONSTEXPR value_type min() 
+			static constexpr value_type min() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return EASTL_LIMITS_MAX_U(value_type); }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return static_cast<value_type>(0); }
 		};
 
 
 		// numeric_limits<__int128_t>
 		template<>
-		struct numeric_limits<__int128_t>
+		class numeric_limits<__int128_t>
 		{
+		public:
 			typedef __int128_t value_type;
 
-			static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-			static EA_CONSTEXPR_OR_CONST int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
-			static EA_CONSTEXPR_OR_CONST int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
-			static EA_CONSTEXPR_OR_CONST int                max_digits10      = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_integer        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_exact          = true;
-			static EA_CONSTEXPR_OR_CONST int                radix             = 2;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                min_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent      = 0;
-			static EA_CONSTEXPR_OR_CONST int                max_exponent10    = 0;
-			static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-			static EA_CONSTEXPR_OR_CONST bool               is_modulo         = true;
-			static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-			static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-			static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_toward_zero;
-			static EA_CONSTEXPR_OR_CONST bool               has_infinity      = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = false;
-			static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = false;
-			static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_absent;
-			static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;
-			static EA_CONSTEXPR_OR_CONST bool               is_iec559         = false;
+			static constexpr bool               is_specialized    = true;
+			static constexpr int                digits            = EASTL_LIMITS_DIGITS_S(value_type);
+			static constexpr int                digits10          = EASTL_LIMITS_DIGITS10_S(value_type);
+			static constexpr int                max_digits10      = 0;
+			static constexpr bool               is_signed         = true;
+			static constexpr bool               is_integer        = true;
+			static constexpr bool               is_exact          = true;
+			static constexpr int                radix             = 2;
+			static constexpr int                min_exponent      = 0;
+			static constexpr int                min_exponent10    = 0;
+			static constexpr int                max_exponent      = 0;
+			static constexpr int                max_exponent10    = 0;
+			static constexpr bool               is_bounded        = true;
+			static constexpr bool               is_modulo         = true;
+			static constexpr bool               traps             = true;
+			static constexpr bool               tinyness_before   = false;
+			static constexpr float_round_style  round_style       = round_toward_zero;
+			static constexpr bool               has_infinity      = false;
+			static constexpr bool               has_quiet_NaN     = false;
+			static constexpr bool               has_signaling_NaN = false;
+			static constexpr float_denorm_style has_denorm        = denorm_absent;
+			static constexpr bool               has_denorm_loss   = false;
+			static constexpr bool               is_iec559         = false;
 
-			static EA_CONSTEXPR value_type min() 
+			static constexpr value_type min() 
 				{ return EASTL_LIMITS_MIN_S(value_type); }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return EASTL_LIMITS_MAX_S(value_type); }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return EASTL_LIMITS_MIN_S(value_type); }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return value_type(); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return static_cast<value_type>(0); }
 		};
 	#endif
@@ -1394,396 +1246,312 @@ namespace eastl
 
 	// numeric_limits<float>
 	template<>
-	struct numeric_limits<float>
+	class numeric_limits<float>
 	{
+	public:
 		typedef float value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = FLT_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST int                digits10          = FLT_DIG;
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = FLT_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = false;
-		static EA_CONSTEXPR_OR_CONST int                radix             = FLT_RADIX;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = FLT_MIN_EXP;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = FLT_MIN_10_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = FLT_MAX_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = FLT_MAX_10_EXP;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = false;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_to_nearest;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = true;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = FLT_MANT_DIG;
+		static constexpr int                digits10          = FLT_DIG;
+		static constexpr int                max_digits10      = FLT_MANT_DIG;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = false;
+		static constexpr bool               is_exact          = false;
+		static constexpr int                radix             = FLT_RADIX;
+		static constexpr int                min_exponent      = FLT_MIN_EXP;
+		static constexpr int                min_exponent10    = FLT_MIN_10_EXP;
+		static constexpr int                max_exponent      = FLT_MAX_EXP;
+		static constexpr int                max_exponent10    = FLT_MAX_10_EXP;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = false;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_to_nearest;
+		static constexpr bool               has_infinity      = true;
+		static constexpr bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
+		static constexpr bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
+		static constexpr float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
+		static constexpr bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
+		static constexpr bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
 
-		#if EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
-			static value_type min()
-				{ return FLT_MIN; }
-
-			static value_type max()
-				{ return FLT_MAX; }
-
-			static value_type lowest() 
-				{ return -FLT_MAX; }
-
-			static value_type epsilon() 
-				{ return FLT_EPSILON; }
-
-			static value_type round_error() 
-				{ return 0.5f; }
-
-			static value_type infinity() 
-				{ return Internal::gFloatInfinity; }
-
-			static value_type quiet_NaN() 
-				{ return Internal::gFloatNaN; }
-
-			static value_type signaling_NaN()
-				{ return Internal::gFloatSNaN; }
-
-			static value_type denorm_min() 
-				{ return Internal::gFloatDenorm; }
-
-		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__FLT_MIN__)
-			static EA_CONSTEXPR value_type min()
+		#if (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__FLT_MIN__)
+			static constexpr value_type min()
 				{ return __FLT_MIN__; }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return __FLT_MAX__; }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -__FLT_MAX__; }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return __FLT_EPSILON__; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return __builtin_huge_valf(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return __builtin_nanf(""); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return __builtin_nansf(""); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return __FLT_DENORM_MIN__; }
 
 		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
-			static value_type min()
+			static constexpr value_type min()
 				{ return FLT_MIN; }
 
-			static value_type max()
+			static constexpr value_type max()
 				{ return FLT_MAX; }
 
-			static value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -FLT_MAX; }
 
-			static value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return FLT_EPSILON; }
 
-			static value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
 			#if defined(_MSVC_STL_UPDATE) && _MSVC_STL_UPDATE >= 202206L // If using a recent version of MSVC's STL...
-			static value_type infinity()
-				{ return __builtin_huge_valf(); }
+				static constexpr value_type infinity()
+					{ return __builtin_huge_valf(); }
 
-			static value_type quiet_NaN()
-				{ return __builtin_nanf("0"); }
+				static constexpr value_type quiet_NaN()
+					{ return __builtin_nanf("0"); }
 
-			static value_type signaling_NaN()
-				{ return __builtin_nansf("1"); }
+				static constexpr value_type signaling_NaN()
+					{ return __builtin_nansf("1"); }
 
-			static value_type denorm_min()
-				{ return FLT_TRUE_MIN; }
+				static constexpr value_type denorm_min()
+					{ return FLT_TRUE_MIN; }
 			#else
-			static value_type infinity() 
-				{ return _CSTD _FInf._Float; }
+				static constexpr value_type infinity() 
+					{ return _CSTD _FInf._Float; }
 
-			static value_type quiet_NaN() 
-				{ return _CSTD _FNan._Float; }
+				static constexpr value_type quiet_NaN() 
+					{ return _CSTD _FNan._Float; }
 
-			static value_type signaling_NaN()
-				{ return _CSTD _FSnan._Float; } 
+				static constexpr value_type signaling_NaN()
+					{ return _CSTD _FSnan._Float; } 
 
-			static value_type denorm_min() 
-				{ return _CSTD _FDenorm._Float; }
+				static constexpr value_type denorm_min() 
+					{ return _CSTD _FDenorm._Float; }
 			#endif
-
 		#endif
 	};
 
 
 	// numeric_limits<double>
 	template<>
-	struct numeric_limits<double>
+	class numeric_limits<double>
 	{
+	public:
 		typedef double value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = DBL_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST int                digits10          = DBL_DIG;
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = DBL_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = false;
-		static EA_CONSTEXPR_OR_CONST int                radix             = FLT_RADIX;              // FLT_RADIX applies to all floating point types.
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = DBL_MIN_EXP;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = DBL_MIN_10_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = DBL_MAX_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = DBL_MAX_10_EXP;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = false;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_to_nearest;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = true;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = DBL_MANT_DIG;
+		static constexpr int                digits10          = DBL_DIG;
+		static constexpr int                max_digits10      = DBL_MANT_DIG;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = false;
+		static constexpr bool               is_exact          = false;
+		static constexpr int                radix             = FLT_RADIX;              // FLT_RADIX applies to all floating point types.
+		static constexpr int                min_exponent      = DBL_MIN_EXP;
+		static constexpr int                min_exponent10    = DBL_MIN_10_EXP;
+		static constexpr int                max_exponent      = DBL_MAX_EXP;
+		static constexpr int                max_exponent10    = DBL_MAX_10_EXP;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = false;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_to_nearest;
+		static constexpr bool               has_infinity      = true;
+		static constexpr bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
+		static constexpr bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
+		static constexpr float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
+		static constexpr bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
+		static constexpr bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
 
-		#if EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
-			static value_type min()
-				{ return DBL_MIN; }
-
-			static value_type max()
-				{ return DBL_MAX; }
-
-			static value_type lowest() 
-				{ return -DBL_MAX; }
-
-			static value_type epsilon() 
-				{ return DBL_EPSILON; }
-
-			static value_type round_error() 
-				{ return 0.5f; }
-
-			static value_type infinity() 
-				{ return Internal::gDoubleInfinity; }
-
-			static value_type quiet_NaN() 
-				{ return Internal::gDoubleNaN; }
-
-			static value_type signaling_NaN()
-				{ return Internal::gDoubleSNaN; }
-
-			static value_type denorm_min() 
-				{ return Internal::gDoubleDenorm; }
-
-		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__DBL_MIN__)
-			static EA_CONSTEXPR value_type min()
+		#if (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__DBL_MIN__)
+			static constexpr value_type min()
 				{ return __DBL_MIN__; }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return __DBL_MAX__; }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -__DBL_MAX__; }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return __DBL_EPSILON__; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return __builtin_huge_val(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return __builtin_nan(""); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return __builtin_nans(""); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return __DBL_DENORM_MIN__; }
 
 		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
-			static value_type min()
+			static constexpr value_type min()
 				{ return DBL_MIN; }
 
-			static value_type max()
+			static constexpr value_type max()
 				{ return DBL_MAX; }
 
-			static value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -DBL_MAX; }
 
-			static value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return DBL_EPSILON; }
 
-			static value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
 			#if defined(_MSVC_STL_UPDATE) && _MSVC_STL_UPDATE >= 202206L // If using a recent version of MSVC's STL...
-			static value_type infinity()
-				{ return __builtin_huge_val(); }
+				static constexpr value_type infinity()
+					{ return __builtin_huge_val(); }
 
-			static value_type quiet_NaN()
-				{ return __builtin_nan("0"); }
+				static constexpr value_type quiet_NaN()
+					{ return __builtin_nan("0"); }
 
-			static value_type signaling_NaN()
-				{ return __builtin_nans("1"); }
+				static constexpr value_type signaling_NaN()
+					{ return __builtin_nans("1"); }
 
-			static value_type denorm_min()
-				{ return DBL_TRUE_MIN; }
+				static constexpr value_type denorm_min()
+					{ return DBL_TRUE_MIN; }
 			#else
-			static value_type infinity() 
-				{ return _CSTD _Inf._Double; }
+				static constexpr value_type infinity() 
+					{ return _CSTD _Inf._Double; }
 
-			static value_type quiet_NaN() 
-				{ return _CSTD _Nan._Double; }
+				static constexpr value_type quiet_NaN() 
+					{ return _CSTD _Nan._Double; }
 
-			static value_type signaling_NaN()
-				{ return _CSTD _Snan._Double; } 
+				static constexpr value_type signaling_NaN()
+					{ return _CSTD _Snan._Double; } 
 
-			static value_type denorm_min() 
-				{ return _CSTD _Denorm._Double; }
+				static constexpr value_type denorm_min() 
+					{ return _CSTD _Denorm._Double; }
 			#endif
-
 		#endif
 	};
 
 
 	// numeric_limits<long double>
 	template<>
-	struct numeric_limits<long double>
+	class numeric_limits<long double>
 	{
+	public:
 		typedef long double value_type;
 
-		static EA_CONSTEXPR_OR_CONST bool               is_specialized    = true;
-		static EA_CONSTEXPR_OR_CONST int                digits            = LDBL_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST int                digits10          = LDBL_DIG;
-		static EA_CONSTEXPR_OR_CONST int                max_digits10      = LDBL_MANT_DIG;
-		static EA_CONSTEXPR_OR_CONST bool               is_signed         = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_integer        = false;
-		static EA_CONSTEXPR_OR_CONST bool               is_exact          = false;
-		static EA_CONSTEXPR_OR_CONST int                radix             = FLT_RADIX;              // FLT_RADIX applies to all floating point types.
-		static EA_CONSTEXPR_OR_CONST int                min_exponent      = LDBL_MIN_EXP;
-		static EA_CONSTEXPR_OR_CONST int                min_exponent10    = LDBL_MIN_10_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent      = LDBL_MAX_EXP;
-		static EA_CONSTEXPR_OR_CONST int                max_exponent10    = LDBL_MAX_10_EXP;
-		static EA_CONSTEXPR_OR_CONST bool               is_bounded        = true;
-		static EA_CONSTEXPR_OR_CONST bool               is_modulo         = false;
-		static EA_CONSTEXPR_OR_CONST bool               traps             = true;
-		static EA_CONSTEXPR_OR_CONST bool               tinyness_before   = false;
-		static EA_CONSTEXPR_OR_CONST float_round_style  round_style       = round_to_nearest;
-		static EA_CONSTEXPR_OR_CONST bool               has_infinity      = true;
-		static EA_CONSTEXPR_OR_CONST bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
-		static EA_CONSTEXPR_OR_CONST bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
+		static constexpr bool               is_specialized    = true;
+		static constexpr int                digits            = LDBL_MANT_DIG;
+		static constexpr int                digits10          = LDBL_DIG;
+		static constexpr int                max_digits10      = LDBL_MANT_DIG;
+		static constexpr bool               is_signed         = true;
+		static constexpr bool               is_integer        = false;
+		static constexpr bool               is_exact          = false;
+		static constexpr int                radix             = FLT_RADIX;              // FLT_RADIX applies to all floating point types.
+		static constexpr int                min_exponent      = LDBL_MIN_EXP;
+		static constexpr int                min_exponent10    = LDBL_MIN_10_EXP;
+		static constexpr int                max_exponent      = LDBL_MAX_EXP;
+		static constexpr int                max_exponent10    = LDBL_MAX_10_EXP;
+		static constexpr bool               is_bounded        = true;
+		static constexpr bool               is_modulo         = false;
+		static constexpr bool               traps             = true;
+		static constexpr bool               tinyness_before   = false;
+		static constexpr float_round_style  round_style       = round_to_nearest;
+		static constexpr bool               has_infinity      = true;
+		static constexpr bool               has_quiet_NaN     = true;                   // This may be wrong for some platforms.
+		static constexpr bool               has_signaling_NaN = true;                   // This may be wrong for some platforms.
+		static constexpr float_denorm_style has_denorm        = denorm_present;         // This may be wrong for some platforms.
+		static constexpr bool               has_denorm_loss   = false;                  // This may be wrong for some platforms.
+		static constexpr bool               is_iec559         = has_infinity && has_quiet_NaN && (has_denorm == denorm_present);
 
-		#if EASTL_CUSTOM_FLOAT_CONSTANTS_REQUIRED
-			static value_type min()
-				{ return LDBL_MIN; }
-
-			static value_type max()
-				{ return LDBL_MAX; }
-
-			static value_type lowest() 
-				{ return -LDBL_MAX; }
-
-			static value_type epsilon() 
-				{ return LDBL_EPSILON; }
-
-			static value_type round_error() 
-				{ return 0.5f; }
-
-			static value_type infinity() 
-				{ return Internal::gLongDoubleInfinity; }
-
-			static value_type quiet_NaN() 
-				{ return Internal::gLongDoubleNaN; }
-
-			static value_type signaling_NaN()
-				{ return Internal::gLongDoubleSNaN; }
-
-			static value_type denorm_min() 
-				{ return Internal::gLongDoubleDenorm; }
-
-		#elif (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__LDBL_MIN__)
-			static EA_CONSTEXPR value_type min()
+		#if (defined(EA_COMPILER_GNUC) || defined(__clang__)) && defined(__LDBL_MIN__)
+			static constexpr value_type min()
 				{ return __LDBL_MIN__; }
 
-			static EA_CONSTEXPR value_type max()
+			static constexpr value_type max()
 				{ return __LDBL_MAX__; }
 
-			static EA_CONSTEXPR value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -__LDBL_MAX__; }
 
-			static EA_CONSTEXPR value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return __LDBL_EPSILON__; }
 
-			static EA_CONSTEXPR value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
-			static EA_CONSTEXPR value_type infinity() 
+			static constexpr value_type infinity() 
 				{ return __builtin_huge_val(); }
 
-			static EA_CONSTEXPR value_type quiet_NaN() 
+			static constexpr value_type quiet_NaN() 
 				{ return __builtin_nan(""); }
 
-			static EA_CONSTEXPR value_type signaling_NaN()
+			static constexpr value_type signaling_NaN()
 				{ return __builtin_nans(""); }
 
-			static EA_CONSTEXPR value_type denorm_min() 
+			static constexpr value_type denorm_min() 
 				{ return __LDBL_DENORM_MIN__; }
 
 		#elif defined(_CPPLIB_VER) // If using the Dinkumware Standard library...
-			static value_type min()
+			static constexpr value_type min()
 				{ return LDBL_MIN; }
 
-			static value_type max()
+			static constexpr value_type max()
 				{ return LDBL_MAX; }
 
-			static value_type lowest() 
+			static constexpr value_type lowest() 
 				{ return -LDBL_MAX; }
 
-			static value_type epsilon() 
+			static constexpr value_type epsilon() 
 				{ return LDBL_EPSILON; }
 
-			static value_type round_error() 
+			static constexpr value_type round_error() 
 				{ return 0.5f; }
 
 			#if defined(_MSVC_STL_UPDATE) && _MSVC_STL_UPDATE >= 202206L // If using a recent version of MSVC's STL...
-			static value_type infinity()
-				{ return __builtin_huge_val(); }
+				static constexpr value_type infinity()
+					{ return __builtin_huge_val(); }
 
-			static value_type quiet_NaN()
-				{ return __builtin_nan("0"); }
+				static constexpr value_type quiet_NaN()
+					{ return __builtin_nan("0"); }
 
-			static value_type signaling_NaN()
-				{ return __builtin_nans("1"); }
+				static constexpr value_type signaling_NaN()
+					{ return __builtin_nans("1"); }
 
-			static value_type denorm_min()
-				{ return LDBL_TRUE_MIN; }
+				static constexpr value_type denorm_min()
+					{ return LDBL_TRUE_MIN; }
 			#else
-			static value_type infinity() 
-				{ return _CSTD _LInf._Long_double; }
+				static constexpr value_type infinity() 
+					{ return _CSTD _LInf._Long_double; }
 
-			static value_type quiet_NaN() 
-				{ return _CSTD _LNan._Long_double; }
+				static constexpr value_type quiet_NaN() 
+					{ return _CSTD _LNan._Long_double; }
 
-			static value_type signaling_NaN()
-				{ return _CSTD _LSnan._Long_double; } 
+				static constexpr value_type signaling_NaN()
+					{ return _CSTD _LSnan._Long_double; } 
 
-			static value_type denorm_min() 
-				{ return _CSTD _LDenorm._Long_double; }
+				static constexpr value_type denorm_min() 
+					{ return _CSTD _LDenorm._Long_double; }
 			#endif
-
 		#endif
 	};
 

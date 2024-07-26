@@ -116,7 +116,13 @@ namespace eastl
 	public:
 		SListIterator();
 		SListIterator(const SListNodeBase* pNode);
-		SListIterator(const iterator& x);
+		
+		template <typename This = this_type, enable_if_t<!is_same_v<This, iterator>, bool> = true>
+		inline SListIterator(const iterator& x)
+			: mpNode(x.mpNode)
+		{
+			// Empty
+		}
 
 		reference operator*() const;
 		pointer   operator->() const;
@@ -275,7 +281,7 @@ namespace eastl
 		const_reference front() const;
 
 		template <class... Args>
-		void emplace_front(Args&&... args);
+		reference emplace_front(Args&&... args);
 
 		void      push_front(const value_type& value);
 		reference push_front();
@@ -347,6 +353,11 @@ namespace eastl
 		// of std::forward_list (which is the equivalent of this class).
 		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator before_first, const_iterator before_last);  // before_first and before_last come from a source container.
 		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator previous);                                  // previous comes from a source container.
+
+		size_type unique();
+
+		template <typename BinaryPredicate>
+		size_type unique(BinaryPredicate);
 
 		// Sorting functionality
 		// This is independent of the global sort algorithms, as lists are 
@@ -504,14 +515,6 @@ namespace eastl
 	template <typename T, typename Pointer, typename Reference>
 	inline SListIterator<T, Pointer, Reference>::SListIterator(const SListNodeBase* pNode)
 		: mpNode(const_cast<base_node_type*>(pNode))
-	{
-		// Empty
-	}
-
-
-	template <typename T, typename Pointer, typename Reference>
-	inline SListIterator<T, Pointer, Reference>::SListIterator(const iterator& x)
-		: mpNode(const_cast<base_node_type*>(x.mpNode))
 	{
 		// Empty
 	}
@@ -889,9 +892,10 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <class... Args>
-	void slist<T, Allocator>::emplace_front(Args&&... args)
+	typename slist<T, Allocator>::reference slist<T, Allocator>::emplace_front(Args&&... args)
 	{
 		DoInsertValueAfter(&internalNode(), eastl::forward<Args>(args)...);
+		return static_cast<node_type*>(internalNode().mpNext)->mValue; // Same as return front();
 	}
 
 
@@ -1502,6 +1506,67 @@ namespace eastl
 
 		// Insert the element at previous + 1 after position.
 		SListNodeSpliceAfter(position.mpNode, previous.mpNode, previous.mpNode->mpNext);
+	}
+
+
+	template <typename T, typename Allocator>
+	typename slist<T, Allocator>::size_type slist<T, Allocator>::unique()
+	{
+		size_type      numRemoved = 0;
+		iterator       first(begin());
+		const iterator last(end());
+
+		if (first != last)
+		{
+			iterator next(first);
+
+			while (++next != last)
+			{
+				if (*first == *next)
+				{
+					DoEraseAfter(first.mpNode);
+					++numRemoved;
+					next = first;
+				}
+				else
+				{
+					first = next;
+				}
+			}
+		}
+
+		return numRemoved;
+	}
+
+
+	template <typename T, typename Allocator>
+	template <typename BinaryPredicate>
+	typename slist<T, Allocator>::size_type slist<T, Allocator>::unique(BinaryPredicate predicate)
+	{
+		size_type      numRemoved = 0;
+		iterator       first(begin());
+		const iterator last(end());
+
+		if (first != last)
+		{
+			iterator next(first);
+
+			while (++next != last)
+			{
+				if (predicate(*first, *next))
+				{
+					DoEraseAfter(first.mpNode);
+					++numRemoved;
+					next = first;
+				}
+				else
+				{
+					first = next;
+				}
+			}
+		}
+
+		return numRemoved;
 	}
 
 

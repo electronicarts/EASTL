@@ -28,11 +28,11 @@ The descriptions here are intentionally terse; this is to make them easier to vi
 20. [Consider bitvector or bitset instead of vector\<bool>.](#consider-bitvector-or-bitset-instead-of-vector)
 21. [Vectors can be treated as contiguous memory.](#vectors-can-be-treated-as-contiguous-memory)
 22. [Search hash_map\<string> via find_as() instead of find().](#search-hash_map-via-find_as-instead-of-find)
-23. [Take advantage of type_traits (e.g. EASTL_DECLARE_TRIVIAL_RELOCATE).](#take-advantage-of-type_traits-eg-eastl_declare_trivial_relocate)
+23. [Take advantage of type_traits.](#take-advantage-of-type_traits)
 24. [Name containers to track memory usage.](#name-containers-to-track-memory-usage)
 25. [Learn the algorithms.](#learn-the-algorithms)
 26. [Pass and return containers by reference instead of value.](#pass-and-return-containers-by-reference-instead-of-value)
-27. [Consider using reset() for fast container teardown.](#consider-using-reset-for-fast-container-teardown)
+27. [Consider using reset_lose_memory() for fast container teardown.](#consider-using-reset_lose_memory-for-fast-container-teardown)
 28. [Consider using fixed_substring instead of copying strings.](#consider-using-fixed_substring-instead-of-copying-strings)
 29. [Consider using vector::push_back(void).](#consider-using-vectorpush_backvoid)
 
@@ -464,7 +464,7 @@ hash_map<string, int> hashMap;
   hash_map<string, int>::iterator it = hashMap.find_as("hello"); // Using default hash and compare.
 ```
 
-### Take advantage of type_traits (e.g. EASTL_DECLARE_TRIVIAL_RELOCATE).
+### Take advantage of type_traits.
 
 EASTL includes a fairly serious type traits library that is on par with the one found in Boost but offers some additional performance-enhancing help as well. The type_traits library provides information about class *types*, as opposed to class instances. For example, the is_integral type trait tells if a type is one of int, short, long, char, uint64_t, etc.
 
@@ -473,8 +473,6 @@ There are three primary uses of type traits:
 * Allowing for optimized operations on some data types.
 * Allowing for different logic pathways based on data types.
 * Allowing for compile-type assertions about data type expectations.
-
-Most of the type traits are automatically detected and implemented by the compiler. However, EASTL allows for the user to explicitly give the compiler hints about type traits that the compiler cannot know, via the EASTL_DECLARE declarations. If the user has a class that is relocatable (i.e. can safely use memcpy to copy values), the user can use the EASTL_DECLARE_TRIVIAL_RELOCATE declaration to tell the compiler that the class can be copied via memcpy. This will automatically significantly speed up some containers and algorithms that use that class.
 
 Here is an example of using type traits to tell if a value is a floating point value or not:
 
@@ -488,62 +486,15 @@ template <typename T>
   }
 ```
 
-Here is an example of declaring a class as relocatable and using it in a vector.
+Here is an example of declaring a class that is trivially copyable and using it in a vector.
 
 ```cpp
-EASTL_DECLARE_TRIVIAL_RELOCATE(Widget); // Usually you put this at the Widget class declaration.
+  class Widget { ... };                   // Anything conforming to the trivially copyable rules: https://en.cppreference.com/w/cpp/language/classes#Trivially_copyable_class
 
-  vector<Widget> wVector;
+  vector<Widget> wVector{ ... some elements ... };
 
-  wVector.erase(wVector.begin());         // This operation will be optimized via using memcpy.
+  wVector.erase(wVector.begin());         // This operation will be optimized to memcpy the elements into place.
 ```
-
-The following is a full list of the currently recognized type traits. Most of these are implemented as of this writing, but if there is one that is missing, feel free to contact the maintainer of this library and request that it be completed.
-
-* is_void
-* is_integral
-* is_floating_point
-* is_arithmetic
-* is_fundamental
-* is_const
-* is_volatile
-* is_abstract
-* is_signed
-* is_unsigned
-* is_array
-* is_pointer
-* is_reference
-* is_member_object_pointer
-* is_member_function_pointer
-* is_member_pointer
-* is_enum
-* is_union
-* is_class
-* is_polymorphic
-* is_function
-* is_object
-* is_scalar
-* is_compound
-* is_same
-* is_convertible
-* is_base_of
-* is_empty
-* is_pod
-* is_aligned
-* has_trivial_constructor
-* has_trivial_copy
-* has_trivial_assign
-* has_trivial_destructor
-* has_trivial_relocate1
-* has_nothrow_constructor
-* has_nothrow_copy
-* has_nothrow_assign
-* has_virtual_destructor
-* alignment_of
-* rank
-* extent
-*
-<sup>1</sup> has_trivial_relocate is not found in Boost nor the C++ standard update proposal. However, it is very useful in allowing for the generation of optimized object moving operations. It is similar to the is_pod type trait, but goes further and allows non-pod classes to be categorized as relocatable. Such categorization is something that no compiler can do, as only the user can know if it is such. Thus EASTL_DECLARE_TRIVIAL_RELOCATE  is provided to allow the user to give the compiler a hint.
 
 ### Name containers to track memory usage.
 
@@ -667,20 +618,20 @@ void DoSomething(list<Widget> widgetList) {
 
 The problem with the above is that widgetList is passed by value and not by reference. Thus the a copy of the container is made and passed instead of a reference of the container being passed. This may seem obvious to some but this happens periodically and the compiler gives no warning and the code will often execute properly, but inefficiently. Of course there are some occasions where you really do want to pass values instead of references.
 
-### Consider using reset() for fast container teardown.
+### Consider using reset_lose_memory() for fast container teardown.
 
-EASTL containers have a reset function which unilaterally resets the container to a newly constructed state. The contents of the container are forgotten; no destructors are called and no memory is freed. This is a risky but power function for the purpose of implementing very fast temporary containers. There are numerous cases in high performance programming when you want to create a temporary container out of a scratch buffer area, use the container, and then just "vaporize" it, as it would be waste of time to go through the trouble of clearing the container and destroying and freeing the objects. Such functionality is often used with hash tables or maps and with a stack allocator (a.k.a. linear allocator).
+EASTL containers have a reset_lose_memory function which unilaterally resets the container to a newly constructed state. The contents of the container are forgotten; no destructors are called and no memory is freed. This is a risky but powerful function for the purpose of implementing very fast temporary containers. There are numerous cases in high performance programming when you want to create a temporary container out of a scratch buffer area, use the container, and then just "vaporize" it, as it would be waste of time to go through the trouble of clearing the container and destroying and freeing the objects. Such functionality is often used with hash tables or maps and with a stack allocator (a.k.a. linear allocator).
 
 Here's an example of usage of the reset function and a PPMalloc-like StackAllocator:
 
 ```cpp
-pStackAllocator->push_bookmark();
+  pStackAllocator->push_bookmark();
 
   hash_set<Widget, less<Widget>, StackAllocator> wSet(pStackAllocator);
 
-<use wSet>
+  <use wSet>
 
-  wSet.reset();
+  wSet.reset_lose_memory();
 
   pStackAllocator->pop_bookmark();
 ```

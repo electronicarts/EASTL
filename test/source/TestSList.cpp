@@ -286,18 +286,16 @@ int TestSList()
 
 
 	//     void emplace_front(Args&&... args);
-	//     void emplace_front(value_type&& value);
-	//     void emplace_front(const value_type& value);
 	{
 		slist<TestObj> list1;
-		list1.emplace_front(42);
+		VERIFY(list1.emplace_front(42).mI == 42);
 		VERIFY(list1.front().mI == 42);
 		VERIFY(list1.front().mCopyCtor == 0);
 		VERIFY(list1.front().mMoveCtor == 0);
 		VERIFY(list1.size() == 1);
 		VERIFY(list1.validate());
 
-		list1.emplace_front(1,2,3,4);
+		VERIFY(list1.emplace_front(1,2,3,4).mI == (1 + 2 + 3 + 4));
 		VERIFY(list1.front().mCopyCtor == 0);
 		VERIFY(list1.front().mMoveCtor == 0);
 		VERIFY(list1.front().mI == (1+2+3+4));
@@ -754,6 +752,38 @@ int TestSList()
 			list1.splice_after(list1.begin(), eastl::move(list2), b, e);
 			VERIFY(list1 == slist<int>({0,5,6,1,2,3}));
 		}
+	}
+
+	// size_type unique();
+	{
+		slist<int> ref = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		slist<int> a = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3,
+							  4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
+		VERIFY(a.unique() == 34);
+		VERIFY(a == ref);
+	}
+
+	// size_type unique(BinaryPredicate);
+	{
+		static bool bBreakComparison;
+		struct A
+		{
+			int mValue;
+			bool operator==(const A& other) const { return bBreakComparison ? false : mValue == other.mValue; }
+		};
+
+		slist<A> ref = { {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9} };
+		slist<A> a = { {0}, {0}, {0}, {0}, {0}, {0}, {1}, {2}, {2}, {2}, {2}, {3}, {4}, {5},
+							{5}, {5}, {5}, {5}, {6}, {7}, {7}, {7}, {7}, {8}, {9}, {9}, {9} };
+
+		bBreakComparison = true;
+		VERIFY(a.unique() == 0); // noop because broken comparison operator
+		VERIFY(a != ref);
+
+		VERIFY(a.unique([](const A& lhs, const A& rhs) { return lhs.mValue == rhs.mValue; }) == 17);
+
+		bBreakComparison = false;
+		VERIFY(a == ref);
 	}
 
 	// void sort();

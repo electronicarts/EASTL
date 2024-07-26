@@ -571,6 +571,8 @@ namespace eastl
 	// standard. This is a legacy EASTL type we continue to support for
 	// backwards compatibility. 
 	//
+	// todo: add identity function object on removal.
+	// https://en.cppreference.com/w/cpp/utility/functional/identity
 	template <typename T>
 	struct EASTL_REMOVE_AT_2024_APRIL identity { using type = T; };
 

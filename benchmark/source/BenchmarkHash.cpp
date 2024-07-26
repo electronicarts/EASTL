@@ -81,7 +81,7 @@ namespace
 		typename Container::const_iterator it = eastl::find(c.begin(), c.end(), findValue); // It shouldn't matter what find implementation we use here, as it merely iterates values.
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%p", &*it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*it);
 	}
 
 
@@ -151,7 +151,7 @@ namespace
 			++pArrayBegin;
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -165,7 +165,7 @@ namespace
 			++pArrayBegin;
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 	}
 
 
@@ -196,7 +196,7 @@ namespace
 		}
 
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p %p", &c, &it);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p %p", &c, &it);
 	}
 
 
@@ -213,7 +213,7 @@ namespace
 		stopwatch.Restart();
 		c.erase(it1, it2);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p %p %p", &c, &it1, &it2);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p %p %p", &c, &it1, &it2);
 	}
 
 
@@ -223,7 +223,7 @@ namespace
 		stopwatch.Restart();
 		c.clear();
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 	}
 
 

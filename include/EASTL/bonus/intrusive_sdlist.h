@@ -173,8 +173,8 @@ namespace eastl
 		const_iterator   end() const;             ///< Returns a const_iterator pointing one-after the last element in the list.
 		const_iterator   cend() const;            ///< Returns a const_iterator pointing one-after the last element in the list.
 
-		reference        front();                 ///< Returns a reference to the first element. The list must be empty.
-		const_reference  front() const;           ///< Returns a const reference to the first element. The list must be empty.
+		reference        front();                 ///< Returns a reference to the first element. The list must not be empty.
+		const_reference  front() const;           ///< Returns a const reference to the first element. The list must not be empty.
 
 		void             push_front(value_type& value);                  ///< Adds an element to the front of the list; O(1). The element is not copied. The element must not be in any other list.
 		void             push_back(value_type& value);                   ///< Adds an element to the back of the list; O(N). The element is not copied. The element must not be in any other list.

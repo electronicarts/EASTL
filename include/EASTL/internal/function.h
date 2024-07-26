@@ -117,13 +117,13 @@ namespace eastl
 		template <typename Functor>
 		Functor* target() EA_NOEXCEPT
 		{
-			return Base::target();
+			return Base::template target<Functor>();
 		}
 
 		template <typename Functor>
 		const Functor* target() const EA_NOEXCEPT
 		{
-			return Base::target();
+			return Base::template target<Functor>();
 		}
 	#endif // EASTL_RTTI_ENABLED
 	};
