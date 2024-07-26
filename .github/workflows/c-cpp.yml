@@ -8,13 +8,13 @@ on:
 
 jobs:
   checkout:
-    name: Checkout EASTL and submodules
+    name: Checkout EASTL
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           path: EASTL/
-      - run: cd EASTL/ && git submodule update --init
+      - run: cd EASTL/
       - name: Upload checked out code
         uses: actions/upload-artifact@v2.3.1
         with:
