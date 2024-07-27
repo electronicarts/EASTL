@@ -519,6 +519,8 @@
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<__int128_t>::is_iec559;
 		#endif
 
+
+#if !defined(EA_COMPILER_NO_FLOATS)
 		// float
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<float>::is_specialized;
 		EA_CONSTEXPR_OR_CONST int                   numeric_limits<float>::digits;
@@ -590,6 +592,7 @@
 		EA_CONSTEXPR_OR_CONST float_denorm_style    numeric_limits<long double>::has_denorm;
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<long double>::has_denorm_loss;
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<long double>::is_iec559;
+#endif
 
 	} // namespace eastl
 
