@@ -80,8 +80,8 @@ FetchContent_Declare(
   GIT_TAG        521cb053d9320636f53226ffc616216cf532f0ef
   GIT_SUBMODULES "" # This should be temporary until we update the cyclic submodule dependencies in EABase.
 )
-
 FetchContent_MakeAvailable(EABase)
+target_link_libraries(EASTLTest EABase)
 
 FetchContent_Declare(
   EAAssert
@@ -127,6 +127,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(EAThread)
 target_link_libraries(EASTLTest EAThread)
+
+target_link_libraries(EASTLTest EASTL)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
