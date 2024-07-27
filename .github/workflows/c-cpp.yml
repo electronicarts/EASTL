@@ -14,7 +14,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           path: EASTL/
-      - run: cd EASTL/
       - name: Upload checked out code
         uses: actions/upload-artifact@v2.3.1
         with:
