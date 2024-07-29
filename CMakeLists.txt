@@ -1,7 +1,8 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.11)
+include(FetchContent)
 project(EASTL CXX)
 
 #-------------------------------------------------------------------------------------------
@@ -64,9 +65,14 @@ target_include_directories(EASTL PUBLIC include)
 #-------------------------------------------------------------------------------------------
 # Dependencies
 #-------------------------------------------------------------------------------------------
-if (NOT TARGET EABase)
-    add_subdirectory(test/packages/EABase)
-endif()
+FetchContent_Declare(
+  EABase
+  GIT_REPOSITORY https://github.com/electronicarts/EABase.git
+  GIT_TAG        521cb053d9320636f53226ffc616216cf532f0ef
+  GIT_SUBMODULES "" # This should be temporary until we update the cyclic submodule dependencies in EABase.
+)
+
+FetchContent_MakeAvailable(EABase)
 
 target_link_libraries(EASTL EABase)
 

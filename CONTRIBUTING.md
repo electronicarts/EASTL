@@ -27,18 +27,13 @@ Your pull request should:
 
 ### Getting the Repository
 
-EASTL uses git submodules for its dependencies as they are seperate git repositories.  Recursive clones will continue until HD space is exhausted unless they are manually limited.
-It is recommended to use the following to get the source:
-
 ```bash
 git clone https://github.com/electronicarts/EASTL
-cd EASTL
-git submodule update --init
 ```
 
 ### Running the Unit Tests
 
-EASTL uses CMake as its build system.
+EASTL uses CMake as its build system. 
 
 * Create and navigate to "your_build_folder":
 	* mkdir your_build_folder && cd your_build_folder
