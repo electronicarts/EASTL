@@ -336,6 +336,8 @@ namespace Internal
 		{
 		}
 
+		TupleImpl(const TupleImpl&) = default;
+
 		template <typename OtherTuple>
 		TupleImpl(OtherTuple&& t)
 			: TupleLeaf<Indices, Ts>(eastl::forward<tuple_element_t<Indices, MakeTupleTypes_t<OtherTuple>>>(get<Indices>(t)))...

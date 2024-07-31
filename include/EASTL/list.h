@@ -139,6 +139,7 @@ namespace eastl
 		ListIterator() EA_NOEXCEPT;
 		ListIterator(const ListNodeBase* pNode) EA_NOEXCEPT;
 		ListIterator(const iterator& x) EA_NOEXCEPT;
+		ListIterator& operator=(const ListIterator&) = default;
 
 		this_type next() const EA_NOEXCEPT;
 		this_type prev() const EA_NOEXCEPT;
