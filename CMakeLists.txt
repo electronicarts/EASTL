@@ -12,6 +12,11 @@ option(EASTL_BUILD_BENCHMARK "Enable generation of build files for benchmark" OF
 option(EASTL_BUILD_TESTS "Enable generation of build files for tests" OFF)
 option(EASTL_STD_ITERATOR_CATEGORY_ENABLED "Enable compatibility with std:: iterator categories" OFF)
 
+
+option(EASTL_DISABLE_APRIL_2024_DEPRECATIONS "Enable use of API marked for removal in April 2024." OFF)
+option(EASTL_DISABLE_SEPT_2024_DEPRECATIONS "Enable use of API marked for removal in September 2024." OFF)
+option(EASTL_DISABLE_APRIL_2025_DEPRECATIONS "Enable use of API marked for removal in April 2025." OFF)
+
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
 #-------------------------------------------------------------------------------------------
@@ -75,6 +80,20 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(EABase)
 
 target_link_libraries(EASTL EABase)
+
+#-------------------------------------------------------------------------------------------
+# Deprecations
+#-------------------------------------------------------------------------------------------
+if(EASTL_DISABLE_APRIL_2024_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2024_APRIL=EA_DISABLED)
+endif()
+if(EASTL_DISABLE_SEPT_2024_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2024_SEPT=EA_DISABLED)
+endif()
+if(EASTL_DISABLE_APRIL_2025_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2025_APRIL=EA_DISABLED)
+endif()
+
 
 #-------------------------------------------------------------------------------------------
 # Installation
