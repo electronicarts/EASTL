@@ -16,7 +16,13 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-
+#if !EASTL_DLL
+	// The default allocator expects us to provide custom operator new's (with support for over-alignment), but only uses the default operator delete.
+	// This is silly, and basically impossible to do correctly, so just use the existing alignment logic for DLLs.
+	#undef EASTL_DLL
+	#define EASTL_DLL 1
+	#define EASTL_DLL_FORCED
+#endif
 
 namespace eastl
 {
@@ -377,6 +383,11 @@ namespace eastl
 
 }
 
+#ifdef EASTL_DLL_FORCED
+	#undef EASTL_DLL
+	#define EASTL_DLL 0
+	#undef EASTL_DLL_FORCED
+#endif
 
 #endif // Header include guard
 
