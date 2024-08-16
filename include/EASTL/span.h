@@ -84,6 +84,7 @@ namespace eastl
 			EA_CONSTEXPR SpanStorage(T* ptr, eastl_size_t size)
 				: mpData(ptr)
 			{
+				EA_UNUSED(size);
 				EASTL_ASSERT_MSG(Extent == size, "impossible to create a span with a fixed Extent different than the size of the supplied buffer");
 			}
 		};

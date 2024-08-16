@@ -265,6 +265,7 @@ template <class... Args>
 typename string_hash_map<T, Hash, Predicate, Allocator>::iterator
 string_hash_map<T, Hash, Predicate, Allocator>::try_emplace(typename string_hash_map<T, Hash, Predicate, Allocator>::const_iterator hint, const char* key, Args&&...valArgs)
 {
+	EA_UNUSED(hint);
 	// The hint is currently ignored in all our implementations :(
 	auto ret = try_emplace(key, eastl::forward<Args>(valArgs)...);
 	return base::base_type::DoGetResultIterator(true_type(), ret);

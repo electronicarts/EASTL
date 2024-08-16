@@ -155,11 +155,11 @@ namespace eastl
 
 		// We intentionally provide no constructor, destructor, or assignment operator.
 
-		void fill(const value_type& value) {}
+		void fill(const value_type&) {}
 
 		// Unlike the swap function for other containers, array::swap takes linear time,
 		// may exit via an exception, and does not cause iterators to become associated with the other container.
-		void swap(this_type& x) EA_NOEXCEPT {}
+		void swap(this_type&) EA_NOEXCEPT {}
 
 		EA_CPP14_CONSTEXPR iterator       begin() EA_NOEXCEPT { return nullptr; }
 		EA_CPP14_CONSTEXPR const_iterator begin() const EA_NOEXCEPT { return nullptr; }
@@ -184,11 +184,11 @@ namespace eastl
 		EA_CPP14_CONSTEXPR T* data() EA_NOEXCEPT { return nullptr; }
 		EA_CPP14_CONSTEXPR const T* data() const EA_NOEXCEPT { return nullptr; }
 
-		EA_CPP14_CONSTEXPR reference       operator[](size_type i) { return *data(); }
-		EA_CPP14_CONSTEXPR const_reference operator[](size_type i) const { return *data(); }
+		EA_CPP14_CONSTEXPR reference       operator[](size_type) { return *data(); }
+		EA_CPP14_CONSTEXPR const_reference operator[](size_type) const { return *data(); }
 
 		EA_DISABLE_VC_WARNING(4702); // unreachable code
-		EA_CPP14_CONSTEXPR const_reference at(size_type i) const
+		EA_CPP14_CONSTEXPR const_reference at(size_type) const
 		{
 #if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("array::at -- out of range");
@@ -200,7 +200,7 @@ namespace eastl
 		EA_RESTORE_VC_WARNING();
 
 		EA_DISABLE_VC_WARNING(4702); // unreachable code
-		EA_CPP14_CONSTEXPR reference       at(size_type i)
+		EA_CPP14_CONSTEXPR reference       at(size_type)
 		{
 #if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("array::at -- out of range");
@@ -218,7 +218,7 @@ namespace eastl
 		EA_CPP14_CONSTEXPR const_reference back() const { return *data(); }
 
 		bool validate() const { return true; }
-		int  validate_iterator(const_iterator i) const { return isf_none; }
+		int  validate_iterator(const_iterator) const { return isf_none; }
 
 	}; // class array
 

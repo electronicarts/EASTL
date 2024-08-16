@@ -17,7 +17,7 @@ struct From;
 
 struct To
 {
-	To(const From& f)
+	To(const From&)
 	{}
 
 	To(const int&) // To can be implicitly constructed from int, but int cannot be explicitly converted to To.

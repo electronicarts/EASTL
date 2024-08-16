@@ -197,8 +197,8 @@ int TestIterator_moveIterator()
 			FakeProxyIterator& operator++() { return *this; }  
 			FakeProxyIterator operator++(int) { return {}; }
 
-			bool operator==(const FakeProxyIterator& rhs) { return true; };
-			bool operator!=(const FakeProxyIterator& rhs) { return false; };  
+			bool operator==(const FakeProxyIterator&) { return true; };
+			bool operator!=(const FakeProxyIterator&) { return false; };  
 		};
 
 		FakeProxyIterator it = {};

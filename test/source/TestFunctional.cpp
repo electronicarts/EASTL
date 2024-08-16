@@ -550,7 +550,7 @@ int TestFunctional()
 			void Add(int addAmount) { value += addAmount; }
 			int GetValue() { return value; }
 			int& GetValueReference() { return value; }
-			void NoThrow(int inValue) EA_NOEXCEPT {}
+			void NoThrow(int) EA_NOEXCEPT {}
 			int value;
 		};
 
@@ -685,8 +685,8 @@ int TestFunctional()
 		{
 			struct TestInvokeConstAccess
 			{
-				void ConstMemberFunc(int i) const {}
-				void ConstVolatileMemberFunc(int i) const volatile {}
+				void ConstMemberFunc(int) const {}
+				void ConstVolatileMemberFunc(int) const volatile {}
 
 				int mI;
 			};

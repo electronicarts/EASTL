@@ -144,7 +144,7 @@ int TestBitsetWithWord()
 	};
 
 	auto verifyToUlongThrowsIf32bit = [&nErrorCount](const auto& bs, unsigned long truncatedValue) {
-		if (sizeof(unsigned long) < 8)
+		if constexpr (sizeof(unsigned long) < 8)
 		{
 			unsigned long(*convert)(const decltype(bs)&) = [](const auto& bs) { return bs.to_ulong_no_assert_convertible(); };
 			nErrorCount += VerifyBitsetConversionThrows(bs, convert, truncatedValue);

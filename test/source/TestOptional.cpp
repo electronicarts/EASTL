@@ -210,7 +210,7 @@ static int TestOptional_MonadicOperations()
 
 		{
 			const optional<int> o{42};
-			auto result = o.and_then([](const int& x) -> optional<string> { return nullopt; });
+			auto result = o.and_then([](const int&) -> optional<string> { return nullopt; });
 			VERIFY(!result.has_value());
 			VERIFY(o.has_value());
 			VERIFY(*o == 42);
@@ -282,7 +282,7 @@ static int TestOptional_MonadicOperations()
 		{
 			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
 			auto result =
-				eastl::move(o).and_then([](const unique_ptr<int>&& ptr) -> optional<string> { return nullopt; });
+				eastl::move(o).and_then([](const unique_ptr<int>&&) -> optional<string> { return nullopt; });
 			VERIFY(!result.has_value());
 			VERIFY(o.has_value());
 			VERIFY(o.value() != nullptr);
@@ -325,7 +325,7 @@ static int TestOptional_MonadicOperations()
 			eastl::string externalString = "Jean Guegant was here";
 
 			optional<int> o{42};
-			auto result = o.transform([&externalString](int& x) -> const eastl::string& { return externalString; });
+			auto result = o.transform([&externalString](int&) -> const eastl::string& { return externalString; });
 
 			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
 						  "Wrong return type for transform.");
@@ -365,7 +365,7 @@ static int TestOptional_MonadicOperations()
 
 			const optional<int> o{42};
 			auto result =
-				o.transform([&externalString](const int& x) -> const eastl::string& { return externalString; });
+				o.transform([&externalString](const int&) -> const eastl::string& { return externalString; });
 
 			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
 						  "Wrong return type for transform.");
@@ -447,7 +447,7 @@ static int TestOptional_MonadicOperations()
 
 			const optional<unique_ptr<int>> o = eastl::make_unique<int>(42);
 			auto result = eastl::move(o).transform(
-				[&externalString](const unique_ptr<int>&& ptr) -> const eastl::string& { return externalString; });
+				[&externalString](const unique_ptr<int>&&) -> const eastl::string& { return externalString; });
 
 			static_assert(eastl::is_same_v<decltype(result), optional<eastl::string>>,
 						  "Wrong return type for transform.");
