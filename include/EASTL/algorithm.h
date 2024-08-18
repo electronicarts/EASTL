@@ -250,7 +250,6 @@
 #include <EASTL/iterator.h>
 #include <EASTL/functional.h>
 #include <EASTL/utility.h>
-#include <EASTL/internal/generic_iterator.h>
 #include <EASTL/random.h>
 #include <EASTL/compare.h>
 
@@ -1282,11 +1281,12 @@ namespace eastl
 	}
 
 
-	// We have a second layer of unwrap_iterator calls because the original iterator might be something like move_iterator<generic_iterator<int*> > (i.e. doubly-wrapped).
 	template <bool isMove, typename BidirectionalIterator1, typename BidirectionalIterator2>
-	inline BidirectionalIterator2 move_and_copy_backward_unwrapper(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
+	EASTL_REMOVE_AT_2024_SEPT inline BidirectionalIterator2 move_and_copy_backward_unwrapper(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
 	{
+		EASTL_INTERNAL_DISABLE_DEPRECATED() // 'unwrap_iterator': was declared deprecated
 		return BidirectionalIterator2(eastl::move_and_copy_backward_chooser<isMove>(eastl::unwrap_iterator(first), eastl::unwrap_iterator(last), eastl::unwrap_iterator(resultEnd))); // Have to convert to BidirectionalIterator2 because result.base() could be a T*
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
 	}
 
 
@@ -1314,7 +1314,7 @@ namespace eastl
 	template <typename BidirectionalIterator1, typename BidirectionalIterator2>
 	inline BidirectionalIterator2 move_backward(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
 	{
-		return eastl::move_and_copy_backward_unwrapper<true>(eastl::unwrap_iterator(first), eastl::unwrap_iterator(last), resultEnd);
+		return eastl::move_and_copy_backward_chooser<true>(first, last, resultEnd);
 	}
 
 
@@ -1335,9 +1335,7 @@ namespace eastl
 	template <typename BidirectionalIterator1, typename BidirectionalIterator2>
 	inline BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
 	{
-		const bool isMove = eastl::is_move_iterator<BidirectionalIterator1>::value; EA_UNUSED(isMove);
-
-		return eastl::move_and_copy_backward_unwrapper<isMove>(eastl::unwrap_iterator(first), eastl::unwrap_iterator(last), resultEnd);
+		return eastl::move_and_copy_backward_chooser<false>(first, last, resultEnd);
 	}
 
 

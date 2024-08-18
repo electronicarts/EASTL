@@ -79,7 +79,7 @@ namespace
 		std::string::const_iterator it = std::find_end(sTest.begin(), sTest.end(), pSearchStringBegin, pSearchStringEnd);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 	void TestFindEndEa(EA::StdC::Stopwatch& stopwatch, const eastl::string& sTest, const char* pSearchStringBegin, const char* pSearchStringEnd)
@@ -88,7 +88,7 @@ namespace
 		eastl::string::const_iterator it = eastl::find_end(sTest.begin(), sTest.end(), pSearchStringBegin, pSearchStringEnd);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 
@@ -99,7 +99,7 @@ namespace
 		std::string::const_iterator it = std::search(sTest.begin(), sTest.end(), pSearchStringBegin, pSearchStringEnd);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 	void TestSearchEa(EA::StdC::Stopwatch& stopwatch, const eastl::string& sTest, const char* pSearchStringBegin, const char* pSearchStringEnd)
@@ -108,7 +108,7 @@ namespace
 		eastl::string::const_iterator it = eastl::search(sTest.begin(), sTest.end(), pSearchStringBegin, pSearchStringEnd);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 
@@ -119,7 +119,7 @@ namespace
 		std::string::const_iterator it = std::search_n(sTest.begin(), sTest.end(), n, c);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 	void TestSearchNEa(EA::StdC::Stopwatch& stopwatch, const eastl::string& sTest, int n, char c)
@@ -128,7 +128,7 @@ namespace
 		eastl::string::const_iterator it = eastl::search_n(sTest.begin(), sTest.end(), n, c);
 		stopwatch.Stop();
 		if(it != sTest.end())
-			sprintf(Benchmark::gScratchBuffer, "%c", *it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%c", *it);
 	}
 
 
@@ -159,7 +159,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::const_iterator it = std::min_element(c.begin(), c.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &it);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &it);
 	}
 
 	template <typename Container>
@@ -168,7 +168,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::const_iterator it = eastl::min_element(c.begin(), c.end());
 		stopwatch.Stop();        
-		sprintf(Benchmark::gScratchBuffer, "%p", &it);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &it);
 	}
 
 
@@ -179,7 +179,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::difference_type n = std::count(c.begin(), c.end(), (typename Container::value_type)999999);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)n);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)n);
 	}
 
 	template <typename Container>
@@ -188,7 +188,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::difference_type n = eastl::count(c.begin(), c.end(), (typename Container::value_type)999999);
 		stopwatch.Stop();        
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)n);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)n);
 	}
 
 
@@ -199,7 +199,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::const_iterator it = std::adjacent_find(c.begin(), c.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &it);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &it);
 	}
 
 	template <typename Container>
@@ -208,7 +208,7 @@ namespace
 		stopwatch.Restart();
 		const typename Container::const_iterator it = eastl::adjacent_find(c.begin(), c.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &it);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &it);
 	}
 
 
@@ -301,7 +301,7 @@ namespace
 		stopwatch.Restart();
 		const bool bResult = std::lexicographical_compare(first1, last1, first2, last2);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", bResult ? (int)1 : (int)0);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", bResult ? (int)1 : (int)0);
 	}
 
 	template <typename Iterator1, typename Iterator2>
@@ -310,7 +310,7 @@ namespace
 		stopwatch.Restart();
 		const bool bResult = eastl::lexicographical_compare(first1, last1, first2, last2);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", bResult ? (int)1 : (int)0);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", bResult ? (int)1 : (int)0);
 	}
 
 
@@ -321,7 +321,7 @@ namespace
 		stopwatch.Restart();
 		std::copy(first, last, result);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)*first);
 	}
 
 	template <typename Iterator, typename OutputIterator>
@@ -330,7 +330,7 @@ namespace
 		stopwatch.Restart();
 		eastl::copy(first, last, result);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)*first);
 	}
 
 
@@ -341,7 +341,7 @@ namespace
 		stopwatch.Restart();
 		std::copy_backward(first, last, result);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)*first);
 	}
 
 	template <typename Iterator, typename OutputIterator>
@@ -350,7 +350,7 @@ namespace
 		stopwatch.Restart();
 		eastl::copy_backward(first, last, result);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%d", (int)*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (int)*first);
 	}
 
 
@@ -361,7 +361,7 @@ namespace
 		stopwatch.Restart();
 		std::fill(first, last, v);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 	template <typename Iterator, typename Value>
@@ -370,7 +370,7 @@ namespace
 		stopwatch.Restart();
 		eastl::fill(first, last, v);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 
@@ -381,7 +381,7 @@ namespace
 		stopwatch.Restart();
 		std::fill_n(first, n, v);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 	template <typename Iterator, typename Value>
@@ -390,7 +390,7 @@ namespace
 		stopwatch.Restart();
 		eastl::fill_n(first, n, v);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 
@@ -401,7 +401,7 @@ namespace
 		stopwatch.Restart();
 		std::reverse(first, last);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 	template <typename Iterator>
@@ -410,7 +410,7 @@ namespace
 		stopwatch.Restart();
 		eastl::reverse(first, last);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 
@@ -421,7 +421,7 @@ namespace
 		stopwatch.Restart();
 		std::rotate(first, middle, last); // C++11 specifies that rotate has a return value, but not all std implementations return it.
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 	template <typename Iterator>
@@ -430,7 +430,7 @@ namespace
 		stopwatch.Restart();
 		eastl::rotate(first, middle, last);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*first);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*first);
 	}
 
 	template <typename Iterator>
@@ -439,7 +439,7 @@ namespace
 		stopwatch.Restart();
 		std::merge(firstIn1, lastIn1, firstIn2, lastIn2, out);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*out);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*out);
 	}
 
 	template <typename Iterator>
@@ -448,7 +448,7 @@ namespace
 		stopwatch.Restart();
 		eastl::merge(firstIn1, lastIn1, firstIn2, lastIn2, out);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%p", &*out);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%p", &*out);
 	}
 } // namespace
 

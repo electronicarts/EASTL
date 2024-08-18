@@ -294,25 +294,41 @@ namespace eastl
 			while(nSpace < nSize)
 				nSpace = (nSpace * 3) + 1; // This is the Knuth 'h' sequence: 1, 4, 13, 40, 121, 364, 1093, 3280, 9841, 29524, 88573, 265720, 797161, 2391484, 7174453, 21523360, 64570081, 193710244, 
 
+			// nSpace will iterate from the largest Knuth 'h' element smaller than the size of the range down to 1 (inclusive).
 			for(nSpace = (nSpace - 1) / 3; nSpace >= 1; nSpace = (nSpace - 1) / 3)  // Integer division is less than ideal.
 			{
 				for(difference_type i = 0; i < nSpace; i++)
 				{
-					const RandomAccessIterator iInsertFirst = first + i;
+					const RandomAccessIterator iInsertFirst = first + i; // range: [first, first + nSpace)
+
+					// After completion of this next loop the elements
+					//   iInsertFirst + K * nSpace
+					// for K = [0, 1, 2, ...) form a sorted range.
+					// This loop is essentially an insertion sort.
 
 					// Note: we can only move the iterator forward if we know we won't overrun the
-					// end(), otherwise we can invoke undefined behaviour.  So we need to check we
+					// end(), otherwise we can invoke undefined behaviour. So we need to check we
 					// have enough space before moving the iterator.
 					RandomAccessIterator iSorted = iInsertFirst;
 					while(distance(iSorted, last) > nSpace)
 					{
+						RandomAccessIterator iLeft = iSorted;
 						iSorted += nSpace;
+						RandomAccessIterator iRight = iSorted;
 
-						RandomAccessIterator iCurrent = iSorted;
-						for(RandomAccessIterator iBack = iSorted - nSpace; (iCurrent != iInsertFirst) && compare(*iCurrent, *iBack); iCurrent = iBack, iBack -= nSpace)
+						// the elements (with distance nSpace) prior to iRight are sorted.
+						// move iRight into its sorted position.
+						while(compare(*iRight, *iLeft))
 						{
-							EASTL_VALIDATE_COMPARE(!compare(*iBack, *iCurrent)); // Validate that the compare function is sane.
-							eastl::iter_swap(iCurrent, iBack);
+							EASTL_VALIDATE_COMPARE(!compare(*iLeft, *iRight)); // Validate that the compare function is sane.
+
+							eastl::iter_swap(iRight, iLeft);
+
+							if (iLeft == iInsertFirst) // don't iterate iLeft past the valid range.
+								break;
+
+							iRight = iLeft;
+							iLeft -= nSpace;
 						}
 					}
 				}

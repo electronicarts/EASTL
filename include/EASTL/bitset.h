@@ -4,7 +4,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // This file implements a bitset much like the C++ std::bitset class. 
-// The primary distinctions between this list and std::bitset are:
+// The primary distinctions between this bitset and std::bitset are:
 //    - bitset is more efficient than some other std::bitset implementations,
 //      notably the bitset that comes with Microsoft and other 1st party platforms.
 //    - bitset is savvy to an environment that doesn't have exception handling,
@@ -62,6 +62,7 @@ namespace eastl
 	/// nBitCount refers to the number of bits in a bitset.
 	/// WordType refers to the type of integer word which stores bitet data. By default it is BitsetWordType.
 	///
+	/// Note: for nBitCount == 0, returns 1!
 	#if !defined(__GNUC__) || (__GNUC__ >= 3) // GCC 2.x can't handle the simpler declaration below.
 		#define BITSET_WORD_COUNT(nBitCount, WordType) (nBitCount == 0 ? 1 : ((nBitCount - 1) / (8 * sizeof(WordType)) + 1))
 	#else
@@ -80,7 +81,109 @@ namespace eastl
 		#define EASTL_DISABLE_BITSET_ARRAYBOUNDS_WARNING 0
 	#endif
 
+	template <size_t N, typename WordType = EASTL_BITSET_WORD_TYPE_DEFAULT>
+	class bitset;
 
+	namespace detail
+	{
+		template<typename T>
+		struct is_word_type : std::bool_constant<!is_const_v<T> && !is_volatile_v<T> && !is_same_v<T, bool> && is_integral_v<T> && is_unsigned_v<T>> {};
+
+		template<typename T>
+		constexpr bool is_word_type_v = is_word_type<T>::value;
+
+		// slices the min(N, UInt) lowest significant bits from value.
+		template<size_t N, typename WordType, typename UInt>
+		eastl::enable_if_t<is_word_type_v<UInt>> from_unsigned_integral(bitset<N, WordType>& bs, UInt value)
+		{
+			constexpr size_t numWords = (N > 0) ? ((N - 1) / (CHAR_BIT * sizeof(WordType)) + 1) : 0; // BITSET_WORD_COUNT(N, WordType) but 0 for N == 0
+
+			WordType* data = bs.data();
+
+			EA_CONSTEXPR_IF (numWords > 0)
+			{
+				// copy everything from value into our word array:
+				constexpr size_t bytes_to_copy = eastl::min_alt(numWords * sizeof(WordType), sizeof(UInt));
+				memcpy(data, &value, bytes_to_copy);
+
+				// zero any remaining elements in our array:
+				memset(reinterpret_cast<unsigned char*>(data) + bytes_to_copy, 0, numWords * sizeof(WordType) - bytes_to_copy);
+
+				// we may have copied bits into the final element that are unusable (ie. bit positions > N).
+				// zero these bits out, as this is an invariant for our implementation.
+				EA_CONSTEXPR_IF (N % (CHAR_BIT * sizeof(WordType)) != 0)
+				{
+					constexpr WordType lastElemUsedBitsMask = (WordType(1) << (N % (CHAR_BIT * sizeof(WordType)))) - 1;
+					data[numWords - 1] &= lastElemUsedBitsMask;
+				}
+			}
+			else
+			{
+				data[0] = 0; // our bitset implementation has a single element even when N == 0.
+			}
+		}
+
+		template<typename UInt, bool bAssertOnOverflow, size_t N, typename WordType>
+		eastl::enable_if_t<is_word_type_v<UInt>, UInt> to_unsigned_integral(const bitset<N, WordType>& bs)
+		{
+			constexpr size_t numWords = (N > 0) ? ((N - 1) / (CHAR_BIT * sizeof(WordType)) + 1) : 0; // BITSET_WORD_COUNT(N, WordType) but 0 for N == 0
+
+			EA_CONSTEXPR_IF (numWords > 0)
+			{
+				const WordType* data = bs.data();
+
+				UInt result = 0;
+
+				size_t numWordsCopied;
+				EA_CONSTEXPR_IF (sizeof(UInt) < sizeof(WordType))
+				{
+					constexpr size_t bytes_to_copy = sizeof(UInt);
+					memcpy(&result, data, bytes_to_copy);
+
+					// check remaining uncopied bits from the first word are zero:
+					constexpr WordType lastElemOverflowBitsMask = static_cast<WordType>(~((WordType(1) << (CHAR_BIT * sizeof(UInt))) - 1));
+					if ((data[0] & lastElemOverflowBitsMask) != 0)
+					{
+#if EASTL_EXCEPTIONS_ENABLED
+						throw std::overflow_error("target type cannot represent the full bitset.");
+#elif EASTL_ASSERT_ENABLED
+						EA_CONSTEXPR_IF(bAssertOnOverflow)
+							EASTL_FAIL_MSG("overflow_error");
+#endif
+					}
+
+					numWordsCopied = 1;
+				}
+				else
+				{
+					constexpr size_t bytes_to_copy = eastl::min_alt(numWords * sizeof(WordType), sizeof(UInt));
+					memcpy(&result, data, bytes_to_copy);
+
+					numWordsCopied = bytes_to_copy / sizeof(WordType);
+				}
+				
+				// check any remaining uncopied words are zero (don't contain any useful information).
+				for (size_t wordIndex = numWordsCopied; wordIndex < numWords; ++wordIndex)
+				{
+					if (data[wordIndex] != 0)
+					{
+#if EASTL_EXCEPTIONS_ENABLED
+						throw std::overflow_error("target type cannot represent the full bitset.");
+#elif EASTL_ASSERT_ENABLED
+						EA_CONSTEXPR_IF (bAssertOnOverflow)
+							EASTL_FAIL_MSG("overflow_error");
+#endif
+					}
+				}
+
+				return result;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+	} // namespace detail
 
 	/// BitsetBase
 	///
@@ -104,13 +207,11 @@ namespace eastl
 		};
 
 	public:
+		// invariant: we keep any high bits in the last word that are unneeded set to 0
+		// so that our to_ulong() conversion can simply copy the words into the target type.
 		word_type mWord[NW];
 
 	public:
-		BitsetBase();
-		BitsetBase(uint32_t value); // This exists only for compatibility with std::bitset, which has a 'long' constructor.
-	  //BitsetBase(uint64_t value); // Disabled because it causes conflicts with the 32 bit version with existing user code. Use from_uint64 to init from a uint64_t instead.
-
 		void operator&=(const this_type& x);
 		void operator|=(const this_type& x);
 		void operator^=(const this_type& x);
@@ -127,13 +228,6 @@ namespace eastl
 
 		bool      any() const;
 		size_type count() const;
-
-		void          from_uint32(uint32_t value);
-		void          from_uint64(uint64_t value);
-
-		unsigned long to_ulong() const;
-		uint32_t      to_uint32() const;
-		uint64_t      to_uint64() const;
 
 		word_type& DoGetWord(size_type i);
 		word_type  DoGetWord(size_type i) const;
@@ -173,10 +267,6 @@ namespace eastl
 		word_type mWord[1]; // Defined as an array of 1 so that bitset can treat this BitsetBase like others.
 
 	public:
-		BitsetBase();
-		BitsetBase(uint32_t value);
-	  //BitsetBase(uint64_t value); // Disabled because it causes conflicts with the 32 bit version with existing user code. Use from_uint64 instead.
-
 		void operator&=(const this_type& x);
 		void operator|=(const this_type& x);
 		void operator^=(const this_type& x);
@@ -193,13 +283,6 @@ namespace eastl
 
 		bool      any() const;
 		size_type count() const;
-
-		void          from_uint32(uint32_t value);
-		void          from_uint64(uint64_t value);
-
-		unsigned long to_ulong() const;
-		uint32_t      to_uint32() const;
-		uint64_t      to_uint64() const;
 
 		word_type& DoGetWord(size_type);
 		word_type  DoGetWord(size_type) const;
@@ -240,10 +323,6 @@ namespace eastl
 		word_type mWord[2];
 
 	public:
-		BitsetBase();
-		BitsetBase(uint32_t value);
-	  //BitsetBase(uint64_t value); // Disabled because it causes conflicts with the 32 bit version with existing user code. Use from_uint64 instead.
-
 		void operator&=(const this_type& x);
 		void operator|=(const this_type& x);
 		void operator^=(const this_type& x);
@@ -260,13 +339,6 @@ namespace eastl
 
 		bool      any() const;
 		size_type count() const;
-
-		void          from_uint32(uint32_t value);
-		void          from_uint64(uint64_t value);
-
-		unsigned long to_ulong() const;
-		uint32_t      to_uint32() const;
-		uint64_t      to_uint64() const;
 
 		word_type& DoGetWord(size_type);
 		word_type  DoGetWord(size_type) const;
@@ -295,14 +367,16 @@ namespace eastl
 	///
 	/// - N can be any unsigned (non-zero) value, though memory usage is 
 	///   linear with respect to N, so large values of N use large amounts of memory.
-	/// - WordType must be one of [uint16_t, uint32_t, uint64_t, uint128_t] 
-	///   and the compiler must support the type. By default the WordType is
-	///   the largest native register type that the target platform supports.
+	/// - WordType must be a non-cv qualified unsigned integral other than bool.
+	///   By default the WordType is the largest native register type that the
+	///   target platform supports.
 	///
-	template <size_t N, typename WordType = EASTL_BITSET_WORD_TYPE_DEFAULT>
+	template <size_t N, typename WordType>
 	class bitset : private BitsetBase<BITSET_WORD_COUNT(N, WordType), WordType>
 	{
 	public:
+		static_assert(detail::is_word_type_v<WordType>, "Word type must be a non-cv qualified, unsigned integral other than bool.");
+
 		typedef BitsetBase<BITSET_WORD_COUNT(N, WordType), WordType>  base_type;
 		typedef bitset<N, WordType>                                   this_type;
 		typedef WordType                                              word_type;
@@ -318,15 +392,14 @@ namespace eastl
 			kWordCount        = BITSET_WORD_COUNT(N, WordType)   // The number of words the bitset uses to hold the bits. sizeof(bitset<N, WordType>) == kWordSize * kWordCount.
 		};
 
+		// internal implementation details. do not use.
 		using base_type::mWord;
 		using base_type::DoGetWord;
 		using base_type::DoFindFirst;
 		using base_type::DoFindNext;
 		using base_type::DoFindLast;
 		using base_type::DoFindPrev;
-		using base_type::to_ulong;
-		using base_type::to_uint32;
-		using base_type::to_uint64;
+
 		using base_type::count;
 		using base_type::any;
 
@@ -365,8 +438,13 @@ namespace eastl
 		friend class reference;
 
 		bitset();
+
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_SEPT)
+		// note: this constructor will only copy the minimum of N or unsigned long long's size least significant bits.
+		bitset(unsigned long long value);
+#else
 		bitset(uint32_t value);
-	  //bitset(uint64_t value); // Disabled because it causes conflicts with the 32 bit version with existing user code. Use from_uint64 instead.
+#endif
 
 		// We don't define copy constructor and operator= because 
 		// the compiler-generated versions will suffice.
@@ -394,12 +472,62 @@ namespace eastl
 		const word_type* data() const;
 		word_type*       data();
 
-		void          from_uint32(uint32_t value);
-		void          from_uint64(uint64_t value);
+		// Deprecated: use the bitset(unsigned long long) constructor instead.
+		// this was a workaround for when our constructor was defined as bitset(uint32_t) and could cause a narrowing conversion.
+		EASTL_REMOVE_AT_2024_SEPT void          from_uint32(uint32_t value);
+		EASTL_REMOVE_AT_2024_SEPT void          from_uint64(uint64_t value);
 
-	  //unsigned long to_ulong()  const;    // We inherit this from the base class.
-	  //uint32_t      to_uint32() const;
-	  //uint64_t      to_uint64() const;
+		/// to_xxx()
+		/// 
+		/// Not recommended: Use one of
+		///   as_xxx() which is a compile time error if the target type cannot represent the entire bitset, or
+		///   to_xxx_assert_convertible() which is the standard conformant version of this function, or
+		///   to_xxx_no_assert_convertible() which has the same behaviour, explicit naming
+		/// 
+		/// Different from the standard:
+		/// Does *NOT* assert that the bitset can be represented as the target integer type (has bits set outside the target type).
+		/// However, if exceptions are enabled, it does throw an exception if the bitset cannot be represented as the target integer type.
+		unsigned long to_ulong()  const;
+		uint32_t      to_uint32() const;
+		uint64_t      to_uint64() const;
+
+		/// to_xxx_assert_convertible()
+		///
+		/// Equivalent to the standard library's to_ulong() / to_ullong().
+		/// Asserts / throws an exception if the bitset cannot be represented as the target integer type.
+		uint32_t			to_uint32_assert_convertible() const { return detail::to_unsigned_integral<uint32_t, true>(*this); }
+		uint64_t			to_uint64_assert_convertible() const { return detail::to_unsigned_integral<uint64_t, true>(*this); }
+		unsigned long		to_ulong_assert_convertible()  const { return detail::to_unsigned_integral<unsigned long, true>(*this); }
+		unsigned long long	to_ullong_assert_convertible() const { return detail::to_unsigned_integral<unsigned long long, true>(*this); }
+
+		/// to_xxx_no_assert_convertible()
+		///
+		/// Prefer to_xxx_assert_convertible() instead of these functions.
+		/// 
+		/// Different from the standard:
+		/// Does *NOT* assert that the bitset can be represented as the target integer type (has bits set outside the target type).
+		/// However, if exceptions are enabled, it does throw an exception if the bitset cannot be represented as the target integer type.
+		uint32_t			to_uint32_no_assert_convertible() const { return detail::to_unsigned_integral<uint32_t, false>(*this); }
+		uint64_t			to_uint64_no_assert_convertible() const { return detail::to_unsigned_integral<uint64_t, false>(*this); }
+		unsigned long		to_ulong_no_assert_convertible()  const { return detail::to_unsigned_integral<unsigned long, false>(*this); }
+		unsigned long long	to_ullong_no_assert_convertible() const { return detail::to_unsigned_integral<unsigned long long, false>(*this); }
+
+		/// as_uint<UInt>() / as_xxx()
+		/// 
+		/// Extension to the standard: Cast to a unsigned integral that can represent the entire bitset.
+		/// If the target type cannot represent the entire bitset, then issue a compile error (overload does not exist).
+		/// Never throws / asserts.
+		template<typename UInt>
+		eastl::enable_if_t<detail::is_word_type_v<UInt> && N <= (CHAR_BIT * sizeof(UInt)), UInt>	as_uint() const noexcept { return detail::to_unsigned_integral<UInt, true>(*this); }
+
+		template<size_t NumBits = N>
+		eastl::enable_if_t<NumBits <= (CHAR_BIT * sizeof(uint32_t)), uint32_t>						as_uint32() const noexcept { return to_uint32_assert_convertible(); }
+		template<size_t NumBits = N>
+		eastl::enable_if_t<NumBits <= (CHAR_BIT * sizeof(uint64_t)), uint64_t>						as_uint64() const noexcept { return to_uint64_assert_convertible(); }
+		template<size_t NumBits = N>
+		eastl::enable_if_t<NumBits <= (CHAR_BIT * sizeof(unsigned long)), unsigned long>			as_ulong() const noexcept { return to_ulong_assert_convertible(); }
+		template<size_t NumBits = N>
+		eastl::enable_if_t<NumBits <= (CHAR_BIT * sizeof(unsigned long long)), unsigned long long>	as_ullong() const noexcept { return to_ullong_assert_convertible(); }
 
 	  //size_type count() const;            // We inherit this from the base class.
 		size_type size() const;
@@ -441,7 +569,8 @@ namespace eastl
 	///
 	/// This is a fast trick way to count bits without branches nor memory accesses.
 	///
-	inline uint32_t BitsetCountBits(uint64_t x)
+	template<typename UInt64>
+	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> BitsetCountBits(UInt64 x)
 	{
 		// GCC 3.x's implementation of UINT64_C is broken and fails to deal with 
 		// the code below correctly. So we make a workaround for it. Earlier and 
@@ -460,7 +589,8 @@ namespace eastl
 		#endif
 	}
 
-	inline uint32_t BitsetCountBits(uint32_t x)
+	template<typename UInt32>
+	eastl::enable_if_t<detail::is_word_type_v<UInt32> && sizeof(UInt32) == 4, uint32_t> BitsetCountBits(UInt32 x)
 	{
 		x = x - ((x >> 1) & 0x55555555);
 		x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
@@ -468,12 +598,8 @@ namespace eastl
 		return (uint32_t)((x * 0x01010101) >> 24);
 	}
 
-	inline uint32_t BitsetCountBits(uint16_t x)
-	{
-		return BitsetCountBits((uint32_t)x);
-	}
-
-	inline uint32_t BitsetCountBits(uint8_t x)
+	template<typename SmallUInt>
+	eastl::enable_if_t< detail::is_word_type_v<SmallUInt> && sizeof(SmallUInt) < 4, uint32_t> BitsetCountBits(SmallUInt x)
 	{
 		return BitsetCountBits((uint32_t)x);
 	}
@@ -483,7 +609,8 @@ namespace eastl
 	#define EASTL_BITSET_COUNT_STRING "\0\1\1\2\1\2\2\3\1\2\2\3\2\3\3\4"
 
 
-	inline uint32_t GetFirstBit(uint8_t x)
+	template<typename UInt8>
+	eastl::enable_if_t<detail::is_word_type_v<UInt8> && sizeof(UInt8) == 1, uint32_t> GetFirstBit(UInt8 x)
 	{
 		if(x)
 		{
@@ -498,7 +625,12 @@ namespace eastl
 		return 8;
 	}
 
-	inline uint32_t GetFirstBit(uint16_t x) // To do: Update this to use VC++ _BitScanForward, _BitScanForward64; GCC __builtin_ctz, __builtin_ctzl. VC++ __lzcnt16, __lzcnt, __lzcnt64 requires recent CPUs (2013+) and probably can't be used. http://en.wikipedia.org/wiki/Haswell_%28microarchitecture%29#New_features
+	// To do: Update this to use VC++ _BitScanForward, _BitScanForward64;
+	// GCC __builtin_ctz, __builtin_ctzl.
+	// VC++ __lzcnt16, __lzcnt, __lzcnt64 requires recent CPUs (2013+) and probably can't be used.
+	// http://en.wikipedia.org/wiki/Haswell_%28microarchitecture%29#New_features
+	template<typename UInt16>
+	eastl::enable_if_t<detail::is_word_type_v<UInt16> && sizeof(UInt16) == 2, uint32_t> GetFirstBit(UInt16 x)
 	{
 		if(x)
 		{
@@ -514,8 +646,20 @@ namespace eastl
 		return 16;
 	}
 
-	inline uint32_t GetFirstBit(uint32_t x)
+	template<typename UInt32>
+	eastl::enable_if_t<detail::is_word_type_v<UInt32> && sizeof(UInt32) == 4, uint32_t> GetFirstBit(UInt32 x)
 	{
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+		// This has been benchmarked as significantly faster than the generic code below.
+		unsigned char isNonZero;
+		unsigned long index;
+		isNonZero = _BitScanForward(&index, x);
+		return isNonZero ? (int)index : 32;
+#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && !defined(EA_COMPILER_EDG)
+		if (x)
+			return __builtin_ctz(x);
+		return 32;
+#else
 		if(x)
 		{
 			uint32_t n = 1;
@@ -529,10 +673,23 @@ namespace eastl
 		}
 
 		return 32;
+#endif
 	}
 
-	inline uint32_t GetFirstBit(uint64_t x)
+	template<typename UInt64>
+	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> GetFirstBit(UInt64 x)
 	{
+#if defined(EA_COMPILER_MSVC) && defined(EA_PROCESSOR_X86_64)
+		// This has been benchmarked as significantly faster than the generic code below.
+		unsigned char isNonZero;
+		unsigned long index;
+		isNonZero = _BitScanForward64(&index, x);
+		return isNonZero ? (int)index : 64;
+#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && !defined(EA_COMPILER_EDG)
+		if (x)
+			return __builtin_ctzll(x);
+		return 64;
+#else
 		if(x)
 		{
 			uint32_t n = 1;
@@ -547,6 +704,7 @@ namespace eastl
 		}
 
 		return 64;
+#endif
 	}
 
 
@@ -571,7 +729,8 @@ namespace eastl
 		}
 	#endif
 
-	inline uint32_t GetLastBit(uint8_t x)
+	template<typename UInt8>
+	eastl::enable_if_t<detail::is_word_type_v<UInt8> && sizeof(UInt8) == 1, uint32_t> GetLastBit(UInt8 x)
 	{
 		if(x)
 		{
@@ -587,7 +746,8 @@ namespace eastl
 		return 8;
 	}
 
-	inline uint32_t GetLastBit(uint16_t x)
+	template<typename UInt16>
+	eastl::enable_if_t<detail::is_word_type_v<UInt16> && sizeof(UInt16) == 2, uint32_t> GetLastBit(UInt16 x)
 	{
 		if(x)
 		{
@@ -604,8 +764,20 @@ namespace eastl
 		return 16;
 	}
 
-	inline uint32_t GetLastBit(uint32_t x)
+	template<typename UInt32>
+	eastl::enable_if_t<detail::is_word_type_v<UInt32> && sizeof(UInt32) == 4, uint32_t> GetLastBit(UInt32 x)
 	{
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+		// This has been benchmarked as significantly faster than the generic code below.
+		unsigned char isNonZero;
+		unsigned long index;
+		isNonZero = _BitScanReverse(&index, x);
+		return isNonZero ? (int)index : 32;
+#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && !defined(EA_COMPILER_EDG)
+		if (x)
+			return 31 - __builtin_clz(x);
+		return 32;
+#else
 		if(x)
 		{
 			uint32_t n = 0;
@@ -620,10 +792,23 @@ namespace eastl
 		}
 
 		return 32;
+#endif
 	}
 
-	inline uint32_t GetLastBit(uint64_t x)
+	template<typename UInt64>
+	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> GetLastBit(UInt64 x)
 	{
+#if defined(EA_COMPILER_MSVC) && defined(EA_PROCESSOR_X86_64)
+		// This has been benchmarked as significantly faster than the generic code below.
+		unsigned char isNonZero;
+		unsigned long index;
+		isNonZero = _BitScanReverse64(&index, x);
+		return isNonZero ? (int)index : 64;
+#elif (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) && !defined(EA_COMPILER_EDG)
+		if (x)
+			return 63 - __builtin_clzll(x);
+		return 64;
+#else
 		if(x)
 		{
 			uint32_t n = 0;
@@ -639,6 +824,7 @@ namespace eastl
 		}
 
 		return 64;
+#endif
 	}
 
 	#if EASTL_INT128_SUPPORTED
@@ -648,7 +834,7 @@ namespace eastl
 			{
 				uint32_t n = 0;
 				
-				eastl_uint128_t mask(UINT64_C(0xFFFFFFFF00000000)); // There doesn't seem to exist compiler support for INT128_C() by any compiler. EAStdC's int128_t supports it though.
+				eastl_uint128_t mask(UINT64_C(0xFFFFFFFFFFFFFFFF)); // There doesn't seem to exist compiler support for INT128_C() by any compiler. EAStdC's int128_t supports it though.
 				mask <<= 64;
 
 				if(x & mask)                         { n += 64; x >>= 64; }
@@ -681,42 +867,6 @@ namespace eastl
 	//
 	// For our tests (~NW < 16), the latter (using []) access resulted in faster code. 
 	///////////////////////////////////////////////////////////////////////////
-
-	template <size_t NW, typename WordType>
-	inline BitsetBase<NW, WordType>::BitsetBase()
-	{
-		reset();
-	}
-
-
-	template <size_t NW, typename WordType>
-	inline BitsetBase<NW, WordType>::BitsetBase(uint32_t value)
-	{
-		// This implementation assumes that sizeof(value) <= sizeof(word_type).
-		//EASTL_CT_ASSERT(sizeof(value) <= sizeof(word_type)); Disabled because we now have support for uint8_t and uint16_t word types. It would be nice to have a runtime assert that tested this.
-
-		reset();
-		mWord[0] = static_cast<word_type>(value);
-	}
-
-
-	/*
-	template <size_t NW, typename WordType>
-	inline BitsetBase<NW, WordType>::BitsetBase(uint64_t value)
-	{
-		reset();
-
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			mWord[0] = static_cast<word_type>(value);
-
-			EASTL_CT_ASSERT(NW > 2); // We can assume this because we have specializations of BitsetBase for <1> and <2>.
-			//if(NW > 1) // NW is a template constant, but it would be a little messy to take advantage of it's const-ness.
-				mWord[1] = static_cast<word_type>(value >> 32);
-		#else
-			mWord[0] = static_cast<word_type>(value);
-		#endif
-	}
-	*/
 
 
 	template <size_t NW, typename WordType>
@@ -885,89 +1035,6 @@ namespace eastl
 
 
 	template <size_t NW, typename WordType>
-	inline void BitsetBase<NW, WordType>::from_uint32(uint32_t value)
-	{
-		reset();
-		mWord[0] = static_cast<word_type>(value);
-	}
-
-
-	template <size_t NW, typename WordType>
-	inline void BitsetBase<NW, WordType>::from_uint64(uint64_t value)
-	{
-		reset();
-
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			mWord[0] = static_cast<word_type>(value);
-
-			EASTL_CT_ASSERT(NW > 2); // We can assume this because we have specializations of BitsetBase for <1> and <2>.
-			//if(NW > 1) // NW is a template constant, but it would be a little messy to take advantage of it's const-ness.
-				mWord[1] = static_cast<word_type>(value >> 32);
-		#else
-			mWord[0] = static_cast<word_type>(value);
-		#endif
-	}
-
-
-	template <size_t NW, typename WordType>
-	inline unsigned long BitsetBase<NW, WordType>::to_ulong() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			for(size_t i = 1; i < NW; ++i)
-			{
-				if(mWord[i])
-					throw std::overflow_error("BitsetBase::to_ulong");
-			}
-		#endif
-		return (unsigned long)mWord[0]; // Todo: We need to deal with the case whereby sizeof(word_type) < sizeof(unsigned long)
-	}
-
-
-	template <size_t NW, typename WordType>
-	inline uint32_t BitsetBase<NW, WordType>::to_uint32() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			// Verify that high words or bits are not set and thus that to_uint32 doesn't lose information.
-			for(size_t i = 1; i < NW; ++i)
-			{
-				if(mWord[i])
-					throw std::overflow_error("BitsetBase::to_uint32");
-			}
-			
-			#if(EA_PLATFORM_WORD_SIZE > 4) // if we have 64 bit words...
-				if(mWord[0] >> 32)
-					throw std::overflow_error("BitsetBase::to_uint32");
-			#endif
-		#endif
-
-		return (uint32_t)mWord[0];
-	}
-
-
-	template <size_t NW, typename WordType>
-	inline uint64_t BitsetBase<NW, WordType>::to_uint64() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			// Verify that high words are not set and thus that to_uint64 doesn't lose information.
-			
-			EASTL_CT_ASSERT(NW > 2); // We can assume this because we have specializations of BitsetBase for <1> and <2>.
-			for(size_t i = 2; i < NW; ++i)
-			{
-				if(mWord[i])
-					throw std::overflow_error("BitsetBase::to_uint64");
-			}
-		#endif
-
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			EASTL_CT_ASSERT(NW > 2); // We can assume this because we have specializations of BitsetBase for <1> and <2>.
-			return (mWord[1] << 32) | mWord[0];
-		#else
-			return (uint64_t)mWord[0];
-		#endif
-	}
-
-
-	template <size_t NW, typename WordType>
 	inline typename BitsetBase<NW, WordType>::word_type&
 	BitsetBase<NW, WordType>::DoGetWord(size_type i)
 	{
@@ -1018,7 +1085,7 @@ EA_DISABLE_GCC_WARNING(-Warray-bounds)
 		if(word_index < NW)
 		{
 			// Mask off previous bits of the word so our search becomes a "find first".
-			word_type this_word = mWord[word_index] & (~static_cast<word_type>(0) << bit_index);
+			word_type this_word = mWord[word_index] & (static_cast<word_type>(~0) << bit_index);
 
 			for(;;)
 			{
@@ -1070,7 +1137,11 @@ EA_RESTORE_GCC_WARNING()
 			size_type bit_index  = static_cast<size_type>(last_find  & kBitsPerWordMask);
 
 			// Mask off subsequent bits of the word so our search becomes a "find last".
-			word_type mask      = (~static_cast<word_type>(0) >> (kBitsPerWord - 1 - bit_index)) >> 1; // We do two shifts here because many CPUs ignore requests to shift 32 bit integers by 32 bits, which could be the case above.
+			// We do two shifts here because it's undefined behaviour to right shift greater than or equal to the number of bits in the integer.
+			// 
+			// Note: operator~() is an arithmetic operator and performs integral promotions, ie. small integrals are promoted to an int.
+			// Because the promotion is before applying operator~() we need to cast back to our word type otherwise we end up with extraneous set bits.
+			word_type mask      = (static_cast<word_type>(~static_cast<word_type>(0)) >> (kBitsPerWord - 1 - bit_index)) >> 1;
 			word_type this_word = mWord[word_index] & mask;
 
 			for(;;)
@@ -1095,36 +1166,6 @@ EA_RESTORE_GCC_WARNING()
 	///////////////////////////////////////////////////////////////////////////
 	// BitsetBase<1, WordType>
 	///////////////////////////////////////////////////////////////////////////
-
-	template <typename WordType>
-	inline BitsetBase<1, WordType>::BitsetBase()
-	{
-		mWord[0] = 0;
-	}
-
-
-	template <typename WordType>
-	inline BitsetBase<1, WordType>::BitsetBase(uint32_t value)
-	{
-		// This implementation assumes that sizeof(value) <= sizeof(word_type).
-		//EASTL_CT_ASSERT(sizeof(value) <= sizeof(word_type)); Disabled because we now have support for uint8_t and uint16_t word types. It would be nice to have a runtime assert that tested this.
-
-		mWord[0] = static_cast<word_type>(value);
-	}
-
-
-	/*
-	template <typename WordType>
-	inline BitsetBase<1, WordType>::BitsetBase(uint64_t value)
-	{
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			EASTL_ASSERT(value <= 0xffffffff);
-			mWord[0] = static_cast<word_type>(value);   // This potentially loses data, but that's what the user is requesting.
-		#else
-			mWord[0] = static_cast<word_type>(value);
-		#endif
-	}
-	*/
 
 
 	template <typename WordType>
@@ -1232,63 +1273,6 @@ EA_RESTORE_GCC_WARNING()
 
 
 	template <typename WordType>
-	inline void BitsetBase<1, WordType>::from_uint32(uint32_t value)
-	{
-		mWord[0] = static_cast<word_type>(value);
-	}
-
-
-	template <typename WordType>
-	inline void BitsetBase<1, WordType>::from_uint64(uint64_t value)
-	{
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			EASTL_ASSERT(value <= 0xffffffff);
-			mWord[0] = static_cast<word_type>(value);   // This potentially loses data, but that's what the user is requesting.
-		#else
-			mWord[0] = static_cast<word_type>(value);
-		#endif
-	}
-
-
-	template <typename WordType>
-	inline unsigned long BitsetBase<1, WordType>::to_ulong() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			#if((EA_PLATFORM_WORD_SIZE > 4) && defined(EA_PLATFORM_MICROSOFT)) // If we are using 64 bit words but ulong is less than 64 bits... Microsoft platforms alone use a 32 bit long under 64 bit platforms.
-				// Verify that high bits are not set and thus that to_ulong doesn't lose information.
-				if(mWord[0] >> 32)
-					throw std::overflow_error("BitsetBase::to_ulong");
-			#endif
-		#endif
-
-		return static_cast<unsigned long>(mWord[0]);
-	}
-
-
-	template <typename WordType>
-	inline uint32_t BitsetBase<1, WordType>::to_uint32() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			#if(EA_PLATFORM_WORD_SIZE > 4) // If we are using 64 bit words...
-				// Verify that high bits are not set and thus that to_uint32 doesn't lose information.
-				if(mWord[0] >> 32)
-					throw std::overflow_error("BitsetBase::to_uint32");
-			#endif
-		#endif
-
-		return static_cast<uint32_t>(mWord[0]);
-	}
-
-
-	template <typename WordType>
-	inline uint64_t BitsetBase<1, WordType>::to_uint64() const
-	{
-		// This implementation is the same regardless of the word size, and there is no possibility of overflow_error.
-		return static_cast<uint64_t>(mWord[0]);
-	}
-
-
-	template <typename WordType>
 	inline typename BitsetBase<1, WordType>::word_type&
 	BitsetBase<1, WordType>::DoGetWord(size_type)
 	{
@@ -1319,7 +1303,7 @@ EA_RESTORE_GCC_WARNING()
 		if(++last_find < kBitsPerWord)
 		{
 			// Mask off previous bits of word so our search becomes a "find first".
-			const word_type this_word = mWord[0] & ((~static_cast<word_type>(0)) << last_find);
+			const word_type this_word = mWord[0] & (static_cast<word_type>(~0) << last_find);
 
 			return GetFirstBit(this_word);
 		}
@@ -1343,7 +1327,7 @@ EA_RESTORE_GCC_WARNING()
 		if(last_find > 0)
 		{
 			// Mask off previous bits of word so our search becomes a "find first".
-			const word_type this_word = mWord[0] & ((~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
+			const word_type this_word = mWord[0] & (static_cast<word_type>(~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
 
 			return GetLastBit(this_word);
 		}
@@ -1357,39 +1341,6 @@ EA_RESTORE_GCC_WARNING()
 	///////////////////////////////////////////////////////////////////////////
 	// BitsetBase<2, WordType>
 	///////////////////////////////////////////////////////////////////////////
-
-	template <typename WordType>
-	inline BitsetBase<2, WordType>::BitsetBase()
-	{
-		mWord[0] = 0;
-		mWord[1] = 0;
-	}
-
-
-	template <typename WordType>
-	inline BitsetBase<2, WordType>::BitsetBase(uint32_t value)
-	{
-		// This implementation assumes that sizeof(value) <= sizeof(word_type).
-		//EASTL_CT_ASSERT(sizeof(value) <= sizeof(word_type)); Disabled because we now have support for uint8_t and uint16_t word types. It would be nice to have a runtime assert that tested this.
-
-		mWord[0] = static_cast<word_type>(value);
-		mWord[1] = 0;
-	}
-
-
-	/*
-	template <typename WordType>
-	inline BitsetBase<2, WordType>::BitsetBase(uint64_t value)
-	{
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			mWord[0] = static_cast<word_type>(value);
-			mWord[1] = static_cast<word_type>(value >> 32);
-		#else
-			mWord[0] = static_cast<word_type>(value);
-			mWord[1] = 0;
-		#endif
-	}
-	*/
 
 
 	template <typename WordType>
@@ -1465,8 +1416,12 @@ EA_RESTORE_GCC_WARNING()
 	template <typename WordType>
 	inline void BitsetBase<2, WordType>::set()
 	{
+		EA_DISABLE_VC_WARNING(4245); // '=': conversion from 'int' to 'unsigned short', signed/unsigned mismatch 
+		// https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4245?view=msvc-170
+		// MSVC incorrectly believes 0 is a negative value.
 		mWord[0] = ~static_cast<word_type>(0);
 		mWord[1] = ~static_cast<word_type>(0);
+		EA_RESTORE_VC_WARNING();
 		// We let the parent class turn off any upper bits.
 	}
 
@@ -1521,75 +1476,6 @@ EA_RESTORE_GCC_WARNING()
 
 
 	template <typename WordType>
-	inline void BitsetBase<2, WordType>::from_uint32(uint32_t value)
-	{
-		mWord[0] = static_cast<word_type>(value);
-		mWord[1] = 0;
-	}
-
-
-	template <typename WordType>
-	inline void BitsetBase<2, WordType>::from_uint64(uint64_t value)
-	{
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			mWord[0] = static_cast<word_type>(value);
-			mWord[1] = static_cast<word_type>(value >> 32);
-		#else
-			mWord[0] = static_cast<word_type>(value);
-			mWord[1] = 0;
-		#endif
-	}
-
-
-	template <typename WordType>
-	inline unsigned long BitsetBase<2, WordType>::to_ulong() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			if(mWord[1])
-				throw std::overflow_error("BitsetBase::to_ulong");
-		#endif
-		return (unsigned long)mWord[0]; // Todo: We need to deal with the case whereby sizeof(word_type) < sizeof(unsigned long)
-	}
-
-
-	template <typename WordType>
-	inline uint32_t BitsetBase<2, WordType>::to_uint32() const
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			// Verify that high words or bits are not set and thus that to_uint32 doesn't lose information.
-
-			#if(EA_PLATFORM_WORD_SIZE == 4)
-				if(mWord[1])
-					throw std::overflow_error("BitsetBase::to_uint32");
-			#else
-				if(mWord[1] || (mWord[0] >> 32))
-					throw std::overflow_error("BitsetBase::to_uint32");
-			#endif
-		#endif
-
-		return (uint32_t)mWord[0];
-	}
-
-
-	template <typename WordType>
-	inline uint64_t BitsetBase<2, WordType>::to_uint64() const
-	{
-		#if(EA_PLATFORM_WORD_SIZE == 4)
-			// There can't possibly be an overflow_error here.
-
-			return ((uint64_t)mWord[1] << 32) | mWord[0];
-		#else
-			#if EASTL_EXCEPTIONS_ENABLED
-				if(mWord[1])
-					throw std::overflow_error("BitsetBase::to_uint64");
-			#endif
-
-			return (uint64_t)mWord[0];
-		#endif
-	}
-
-
-	template <typename WordType>
 	inline typename BitsetBase<2, WordType>::word_type&
 	BitsetBase<2, WordType>::DoGetWord(size_type i)
 	{
@@ -1631,7 +1517,7 @@ EA_RESTORE_GCC_WARNING()
 		if(++last_find < (size_type)kBitsPerWord)
 		{
 			// Mask off previous bits of word so our search becomes a "find first".
-			word_type this_word = mWord[0] & ((~static_cast<word_type>(0)) << last_find);
+			word_type this_word = mWord[0] & (static_cast<word_type>(~0) << last_find);
 
 			// Step through words.
 			size_type fbiw = GetFirstBit(this_word);
@@ -1650,7 +1536,7 @@ EA_RESTORE_GCC_WARNING()
 			last_find -= kBitsPerWord;
 
 			// Mask off previous bits of word so our search becomes a "find first".
-			word_type this_word = mWord[1] & ((~static_cast<word_type>(0)) << last_find);
+			word_type this_word = mWord[1] & (static_cast<word_type>(~0) << last_find);
 
 			const size_type fbiw = GetFirstBit(this_word);
 
@@ -1691,7 +1577,7 @@ EA_RESTORE_GCC_WARNING()
 			last_find -= kBitsPerWord;
 
 			// Mask off previous bits of word so our search becomes a "find first".
-			word_type this_word = mWord[1] & ((~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
+			word_type this_word = mWord[1] & (static_cast<word_type>(~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
 
 			// Step through words.
 			size_type lbiw = GetLastBit(this_word);
@@ -1707,7 +1593,7 @@ EA_RESTORE_GCC_WARNING()
 		else if(last_find != 0)
 		{
 			// Mask off previous bits of word so our search becomes a "find first".
-			word_type this_word = mWord[0] & ((~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
+			word_type this_word = mWord[0] & (static_cast<word_type>(~static_cast<word_type>(0)) >> (kBitsPerWord - last_find));
 
 			const size_type lbiw = GetLastBit(this_word);
 
@@ -1789,30 +1675,25 @@ EA_RESTORE_GCC_WARNING()
 
 	template <size_t N, typename WordType>
 	inline bitset<N, WordType>::bitset()
-		: base_type()
 	{
-		// Empty. The base class will set all bits to zero.
+		reset();
 	}
 
 	EA_DISABLE_VC_WARNING(6313)
+#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_SEPT)
+	template <size_t N, typename WordType>
+	inline bitset<N, WordType>::bitset(unsigned long long value)
+	{
+		detail::from_unsigned_integral(*this, value);
+	}
+#else
 	template <size_t N, typename WordType>
 	inline bitset<N, WordType>::bitset(uint32_t value)
-		: base_type(value)
 	{
-		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits.
+		detail::from_unsigned_integral(*this, value);
 	}
+#endif
 	EA_RESTORE_VC_WARNING()
-
-	/*
-	template <size_t N, typename WordType>
-	inline bitset<N, WordType>::bitset(uint64_t value)
-		: base_type(value)
-	{
-		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear...
-			mWord[kWordCount - 1] &= ~(~static_cast<word_type>(0) << (N & kBitsPerWordMask)); // This clears any high unused bits.
-	}
-	*/
 
 
 	template <size_t N, typename WordType>
@@ -2020,42 +1901,36 @@ EA_RESTORE_GCC_WARNING()
 	template <size_t N, typename WordType>
 	inline void bitset<N, WordType>::from_uint32(uint32_t value)
 	{
-		base_type::from_uint32(value);
-
-		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+		detail::from_unsigned_integral(*this, value);
 	}
 
 
 	template <size_t N, typename WordType>
 	inline void bitset<N, WordType>::from_uint64(uint64_t value)
 	{
-		base_type::from_uint64(value);
-
-		if((N & kBitsPerWordMask) || (N == 0)) // If there are any high bits to clear... (If we didn't have this check, then the code below would do the wrong thing when N == 32.
-			mWord[kWordCount - 1] &= ~(static_cast<word_type>(~static_cast<word_type>(0)) << (N & kBitsPerWordMask)); // This clears any high unused bits. We need to do this so that shift operations proceed correctly.
+		detail::from_unsigned_integral(*this, value);
 	}
 
 
-	// template <size_t N, typename WordType>
-	// inline unsigned long bitset<N, WordType>::to_ulong() const
-	// {
-	//     return base_type::to_ulong();
-	// }
+	template <size_t N, typename WordType>
+	inline unsigned long bitset<N, WordType>::to_ulong() const
+	{
+		return detail::to_unsigned_integral<unsigned long, false>(*this);
+	}
 
 
-	// template <size_t N, typename WordType>
-	// inline uint32_t bitset<N, WordType>::to_uint32() const
-	// {
-	//     return base_type::to_uint32();
-	// }
+	template <size_t N, typename WordType>
+	inline uint32_t bitset<N, WordType>::to_uint32() const
+	{
+		return detail::to_unsigned_integral<uint32_t, false>(*this);
+	}
 
 
-	// template <size_t N, typename WordType>
-	// inline uint64_t bitset<N, WordType>::to_uint64() const
-	// {
-	//     return base_type::to_uint64();
-	// }
+	template <size_t N, typename WordType>
+	inline uint64_t bitset<N, WordType>::to_uint64() const
+	{
+		return detail::to_unsigned_integral<uint64_t, false>(*this);
+	}
 
 
 	// template <size_t N, typename WordType>

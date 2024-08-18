@@ -64,8 +64,8 @@ namespace eastl
 			result_type a() const;
 			result_type b() const;
 
-			bool operator==(const param_type& x) { return (x.mA == mA) && (x.mB == mB); }
-			bool operator!=(const param_type& x) { return (x.mA != mA) || (x.mB != mB); }
+			bool operator==(const param_type& x) const { return (x.mA == mA) && (x.mB == mB); }
+			bool operator!=(const param_type& x) const { return (x.mA != mA) || (x.mB != mB); }
 
 		protected:
 			IntType mA;

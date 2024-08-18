@@ -27,10 +27,10 @@ EA_DISABLE_ALL_VC_WARNINGS()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 
-// 4512 - 'class' : assignment operator could not be generated
+// 4512/4626 - 'class' : assignment operator could not be generated
 // 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 // 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-EA_DISABLE_VC_WARNING(4512 4530 4571);
+EA_DISABLE_VC_WARNING(4512 4626 4530 4571);
 
 
 namespace eastl
@@ -572,6 +572,12 @@ namespace eastl
 		iterator       find(const key_type& key);
 		const_iterator find(const key_type& key) const;
 
+		// missing transparent key support:
+		// template<typename K>
+		// iterator       find(const K& key);
+		// template<typename K>
+		// const_iterator find(const K& key) const;
+
 		/// Implements a find whereby the user supplies a comparison of a different type
 		/// than the tree's value_type. A useful case of this is one whereby you have
 		/// a container of string objects but want to do searches via passing in char pointers.
@@ -589,8 +595,20 @@ namespace eastl
 		iterator       lower_bound(const key_type& key);
 		const_iterator lower_bound(const key_type& key) const;
 
+		// missing transparent key support:
+		// template<typename K>
+		// iterator       lower_bound(const K& key);
+		// template<typename K>
+		// const_iterator lower_bound(const K& key) const;
+
 		iterator       upper_bound(const key_type& key);
 		const_iterator upper_bound(const key_type& key) const;
+
+		// missing transparent key support:
+		// template<typename K>
+		// iterator       upper_bound(const K& key);
+		// template<typename K>
+		// const_iterator upper_bound(const K& key) const;
 
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;

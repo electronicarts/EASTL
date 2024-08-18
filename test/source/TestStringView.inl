@@ -390,6 +390,48 @@ int TEST_STRING_NAME()
 			VERIFY(str.rfind(LITERAL('1'), str.length() - 2) == StringViewT::npos);
 		}
 
+		{
+			StringViewT str(LITERAL("abcdabcdabcdabcd"));
+
+			VERIFY(str.rfind(StringViewT(LITERAL("d")))     == (str.size() - 1));
+			VERIFY(str.rfind(StringViewT(LITERAL("abcd")))  == (str.size() - 4));
+			VERIFY(str.rfind(StringViewT(LITERAL("abc")))   == (str.size() - 4));
+			VERIFY(str.rfind(StringViewT(LITERAL("dab")))   == (str.size() - 5));
+			VERIFY(str.rfind(StringViewT(LITERAL("e")))     == StringViewT::npos);
+			VERIFY(str.rfind(StringViewT(LITERAL("abcde"))) == StringViewT::npos);
+
+			VERIFY(str.rfind(StringViewT(LITERAL("d")), 8)     == 7);
+			VERIFY(str.rfind(StringViewT(LITERAL("abc")), 8)   == 8);
+			VERIFY(str.rfind(StringViewT(LITERAL("abc")), 7)   == 4);
+			VERIFY(str.rfind(StringViewT(LITERAL("dab")), 8)   == 7);
+			VERIFY(str.rfind(StringViewT(LITERAL("dab")), 7)   == 7);
+			VERIFY(str.rfind(StringViewT(LITERAL("e")), 8)     == StringViewT::npos);
+			VERIFY(str.rfind(StringViewT(LITERAL("abcde")), 8) == StringViewT::npos);
+
+			VERIFY(str.rfind(LITERAL("d"))     == (str.size() - 1));
+			VERIFY(str.rfind(LITERAL("abc"))   == (str.size() - 4));
+			VERIFY(str.rfind(LITERAL("e"))     == StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("abcde")) == StringViewT::npos);
+
+			VERIFY(str.rfind(LITERAL("d"), 8)     == 7);
+			VERIFY(str.rfind(LITERAL("abc"), 8)   == 8);
+			VERIFY(str.rfind(LITERAL("abc"), 7)   == 4);
+			VERIFY(str.rfind(LITERAL("dab"), 8)   == 7);
+			VERIFY(str.rfind(LITERAL("dab"), 7)   == 7);
+			VERIFY(str.rfind(LITERAL("e"), 8)     == StringViewT::npos);
+			VERIFY(str.rfind(LITERAL("abcde"), 8) == StringViewT::npos);
+		}
+
+		{
+			StringViewT str(LITERAL("abcdeaababcdabcdx"));
+
+			VERIFY(str.rfind(StringViewT(LITERAL("abcde")))    == 0);
+			VERIFY(str.rfind(StringViewT(LITERAL("abcde")), 8) == 0);
+
+			VERIFY(str.rfind(LITERAL("abcde"))    == 0);
+			VERIFY(str.rfind(LITERAL("abcde"), 8) == 0);
+		}
+
 		// EA_CONSTEXPR size_type find_first_of(basic_string_view s, size_type pos = 0) const EA_NOEXCEPT;
 		// EA_CONSTEXPR size_type find_first_of(T c, size_type pos = 0) const EA_NOEXCEPT;
 		// EA_CONSTEXPR size_type find_first_of(const T* s, size_type pos, size_type n) const;

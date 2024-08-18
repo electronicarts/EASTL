@@ -20,6 +20,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/type_traits.h>
+#include <EASTL/algorithm.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <ctype.h>              // toupper, etc.
@@ -28,6 +29,24 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 namespace eastl
 {
+	namespace details
+	{
+#if defined(EA_COMPILER_CPP17_ENABLED)
+		// Helper to detect if wchar_t is the native type for the current platform or if -fshort-wchar was used.
+		// When that flag is used all string builtins and C Standard Library functions are not usable.
+		constexpr bool UseNativeWideChar()
+		{
+#if defined(EA_COMPILER_MSVC)
+			return true; // Irrelevant flag for windows.
+#elif defined(EA_PLATFORM_SONY) && defined(EA_PLATFORM_POSIX) && defined(EA_PLATFORM_CONSOLE)
+			return true; // Sony consoles use short wchar_t disregarding the flag.
+#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_UNIX)
+			return sizeof(wchar_t) == 4;
+#endif
+		}
+#endif
+	}
+	
 	///////////////////////////////////////////////////////////////////////////////
 	/// DecodePart
 	///
@@ -228,6 +247,21 @@ namespace eastl
 		return 0;
 	}
 
+#if defined(EA_COMPILER_CPP17_ENABLED)
+	// All main compilers offer a constexpr __builtin_memcmp as soon as C++17 was available.
+	constexpr int Compare(const char* p1, const char* p2, size_t n) { return __builtin_memcmp(p1, p2, n); }
+
+#if !defined(EA_COMPILER_GNUC)
+	// GCC doesn't offer __builtin_wmemcmp.
+	constexpr int Compare(const wchar_t* p1, const wchar_t* p2, size_t n)
+	{
+		if constexpr (details::UseNativeWideChar())
+			return __builtin_wmemcmp(p1, p2, n);
+		else
+			return Compare<wchar_t>(p1, p2, n);
+	}
+#endif // !defined(EA_COMPILER_GNUC)
+#else
 	inline int Compare(const char* p1, const char* p2, size_t n)
 	{
 		if (n > 0)
@@ -235,7 +269,7 @@ namespace eastl
 		else
 			return 0;
 	}
-
+#endif
 
 	template <typename T>
 	inline int CompareI(const T* p1, const T* p2, size_t n)
@@ -254,7 +288,7 @@ namespace eastl
 
 
 	template<typename T>
-	inline const T* Find(const T* p, T c, size_t n)
+	inline EA_CPP14_CONSTEXPR const T* Find(const T* p, T c, size_t n)
 	{
 		for(; n > 0; --n, ++p)
 		{
@@ -262,24 +296,45 @@ namespace eastl
 				return p;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
+#if defined(EA_COMPILER_CPP17_ENABLED) && defined(EA_COMPILER_CLANG)
+	// Only clang have __builtin_char_memchr.
+	// __builtin_memchr doesn't work in a constexpr context since we need to cast the returned void* to a char*.
+	inline constexpr const char* Find(const char* p, char c, size_t n)
+	{
+		return __builtin_char_memchr(p, c, n);
+	}
+#else
 	inline const char* Find(const char* p, char c, size_t n)
 	{
 		return (const char*)memchr(p, c, n);
 	}
+#endif
 
-
-	template<typename T>
+	template <typename T>
 	inline EA_CPP14_CONSTEXPR size_t CharStrlen(const T* p)
 	{
 		const auto* pCurrent = p;
-		while(*pCurrent)
+		while (*pCurrent)
 			++pCurrent;
 		return (size_t)(pCurrent - p);
 	}
 
+#if defined(EA_COMPILER_CPP17_ENABLED) && !defined(EA_COMPILER_GNUC)
+	// So far, GCC seems to struggle with builtin_strlen: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70816
+	// MSVC and Clang support both builtins as soon as C++17 was available.
+	constexpr size_t CharStrlen(const char* p) { return __builtin_strlen(p); }
+
+	constexpr size_t CharStrlen(const wchar_t* p)
+	{
+		if constexpr (details::UseNativeWideChar())
+			return __builtin_wcslen(p);
+		else
+			return CharStrlen<wchar_t>(p);
+	}
+#endif
 
 	// If either pDestination or pSource is an invalid or null pointer, the behavior is undefined, even if (pSourceEnd - pSource) is zero.
 	template <typename T>
@@ -290,6 +345,9 @@ namespace eastl
 	}
 
 
+	// CharTypeStringFindEnd
+	// Specialized char version of STL find() from back function.
+	// Not the same as RFind because search range is specified as forward iterators.
 	template <typename T>
 	const T* CharTypeStringFindEnd(const T* pBegin, const T* pEnd, T c)
 	{
@@ -303,7 +361,57 @@ namespace eastl
 		return pEnd;
 	}
 
-    
+
+	// CharTypeStringSearch
+	// Specialized value_type version of STL search() function.
+	// Purpose: find p2 within p1. Return p1End if not found or if either string is zero length.
+	template <typename T>
+	const T* CharTypeStringSearch(const T* p1Begin, const T* p1End,
+								  const T* p2Begin, const T* p2End)
+	{
+		// Test for zero length strings, in which case we have a match or a failure,
+		// but the return value is the same either way.
+		if((p1Begin == p1End) || (p2Begin == p2End))
+			return p1Begin;
+
+		// Test for a pattern of length 1.
+		if((p2Begin + 1) == p2End)
+			return eastl::find(p1Begin, p1End, *p2Begin);
+
+		// General case.
+		const T* pTemp;
+		const T* pTemp1 = (p2Begin + 1);
+		const T* pCurrent = p1Begin;
+
+		while(p1Begin != p1End)
+		{
+			p1Begin = eastl::find(p1Begin, p1End, *p2Begin);
+			if(p1Begin == p1End)
+				return p1End;
+
+			pTemp = pTemp1;
+			pCurrent = p1Begin;
+			if(++pCurrent == p1End)
+				return p1End;
+
+			while(*pCurrent == *pTemp)
+			{
+				if(++pTemp == p2End)
+					return p1Begin;
+				if(++pCurrent == p1End)
+					return p1End;
+			}
+
+			++p1Begin;
+		}
+
+		return p1Begin;
+	}
+
+
+	// CharTypeStringRSearch
+	// Specialized value_type version of STL find_end() function (which really is a reverse search function).
+	// Purpose: find last instance of p2 within p1. Return p1End if not found or if either string is zero length.
 	template <typename T>
 	const T* CharTypeStringRSearch(const T* p1Begin, const T* p1End, 
 								   const T* p2Begin, const T* p2End)
@@ -323,33 +431,30 @@ namespace eastl
 
 		// General case.
 		const T* pSearchEnd = (p1End - (p2End - p2Begin) + 1);
-		const T* pCurrent1;
-		const T* pCurrent2;
 
-		while(pSearchEnd != p1Begin)
+		const T* pMatchCandidate;
+		while((pMatchCandidate = CharTypeStringFindEnd(p1Begin, pSearchEnd, *p2Begin)) != pSearchEnd)
 		{
-			// Search for the last occurrence of *p2Begin.
-			pCurrent1 = CharTypeStringFindEnd(p1Begin, pSearchEnd, *p2Begin);
-			if(pCurrent1 == pSearchEnd) // If the first char of p2 wasn't found, 
-				return p1End;           // then we immediately have failure.
-
-			// In this case, *pTemp == *p2Begin. So compare the rest.
-			pCurrent2 = p2Begin;
+			// In this case, *pMatchCandidate == *p2Begin. So compare the rest.
+			const T* pCurrent1 = pMatchCandidate;
+			const T* pCurrent2 = p2Begin;
 			while(*pCurrent1++ == *pCurrent2++)
 			{
 				if(pCurrent2 == p2End)
 					return (pCurrent1 - (p2End - p2Begin));
 			}
 
-			// A smarter algorithm might know to subtract more than just one,
-			// but in most cases it won't make much difference anyway.
-			--pSearchEnd;
+			// This match failed, search again with this new end.
+			pSearchEnd = pMatchCandidate;
 		}
 
 		return p1End;
 	}
 
 
+	// CharTypeStringFindFirstOf
+	// Specialized value_type version of STL find_first_of() function.
+	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
 	template <typename T>
 	inline const T* CharTypeStringFindFirstOf(const T* p1Begin, const T* p1End, const T* p2Begin, const T* p2End)
 	{
@@ -365,6 +470,8 @@ namespace eastl
 	}
 
 
+	// CharTypeStringRFindFirstNotOf
+	// Specialized value_type version of STL find_first_not_of() function in reverse.
 	template <typename T>
 	inline const T* CharTypeStringRFindFirstNotOf(const T* p1RBegin, const T* p1REnd, const T* p2Begin, const T* p2End)
 	{
@@ -383,6 +490,8 @@ namespace eastl
 	}
 
 
+	// CharTypeStringFindFirstNotOf
+	// Specialized value_type version of STL find_first_not_of() function.
 	template <typename T>
 	inline const T* CharTypeStringFindFirstNotOf(const T* p1Begin, const T* p1End, const T* p2Begin, const T* p2End)
 	{
@@ -401,6 +510,9 @@ namespace eastl
 	}
 
 
+	// CharTypeStringRFindFirstOf
+	// Specialized value_type version of STL find_first_of() function in reverse.
+	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
 	template <typename T>
 	inline const T* CharTypeStringRFindFirstOf(const T* p1RBegin, const T* p1REnd, const T* p2Begin, const T* p2End)
 	{
@@ -416,6 +528,8 @@ namespace eastl
 	}
 
 
+	// CharTypeStringRFind
+	// Specialized value_type version of STL find() function in reverse.
 	template <typename T>
 	inline const T* CharTypeStringRFind(const T* pRBegin, const T* pREnd, const T c)
 	{

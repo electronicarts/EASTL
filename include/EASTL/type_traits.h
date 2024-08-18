@@ -344,6 +344,11 @@ namespace eastl
 	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
 	struct EASTL_REMOVE_AT_2024_APRIL type_select { typedef ConditionIsTrueType type; };
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template <typename ConditionIsTrueType, class ConditionIsFalseType>
 	struct EASTL_REMOVE_AT_2024_APRIL type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
 
@@ -351,6 +356,7 @@ namespace eastl
 		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
 		using type_select_t EASTL_REMOVE_AT_2024_APRIL = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
 	#endif
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 
@@ -379,8 +385,14 @@ namespace eastl
 	template <bool b1, bool b2, bool b3, bool b4, bool b5>
 	struct EASTL_REMOVE_AT_2024_APRIL type_or { static const bool value = true; };
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template <>
 	struct EASTL_REMOVE_AT_2024_APRIL type_or<false, false, false, false, false> { static const bool value = false; };
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 
@@ -399,8 +411,14 @@ namespace eastl
 	template <bool b1, bool b2, bool b3, bool b4, bool b5>
 	struct EASTL_REMOVE_AT_2024_APRIL type_and{ static const bool value = false; };
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template <>
 	struct EASTL_REMOVE_AT_2024_APRIL type_and<true, true, true, true, true>{ static const bool value = true; };
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 
@@ -436,8 +454,14 @@ namespace eastl
 	template <bool b>
 	struct EASTL_REMOVE_AT_2024_APRIL type_not{ static const bool value = true; };
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template <>
 	struct EASTL_REMOVE_AT_2024_APRIL type_not<true>{ static const bool value = false; };
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 
@@ -571,13 +595,21 @@ namespace eastl
 	// standard. This is a legacy EASTL type we continue to support for
 	// backwards compatibility. 
 	//
+	// todo: add identity function object on removal.
+	// https://en.cppreference.com/w/cpp/utility/functional/identity
 	template <typename T>
 	struct EASTL_REMOVE_AT_2024_APRIL identity { using type = T; };
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings in template variable
+	// declarations even if the variable is not insantiated here, so turn the warning off
+	// here. If this varialbe is used, the warning will still trigger in the user code, this
+	// just disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template <typename T>
 		using identity_t EASTL_REMOVE_AT_2024_APRIL = typename identity<T>::type;
 	#endif
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	///////////////////////////////////////////////////////////////////////

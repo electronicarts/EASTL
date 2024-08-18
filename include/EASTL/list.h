@@ -138,7 +138,13 @@ namespace eastl
 	public:
 		ListIterator() EA_NOEXCEPT;
 		ListIterator(const ListNodeBase* pNode) EA_NOEXCEPT;
-		ListIterator(const iterator& x) EA_NOEXCEPT;
+
+		template <typename This = this_type, enable_if_t<!is_same_v<This, iterator>, bool> = true>
+		inline ListIterator(const iterator& x) EA_NOEXCEPT
+			: mpNode(x.mpNode)
+		{
+			// Empty
+		}
 
 		this_type next() const EA_NOEXCEPT;
 		this_type prev() const EA_NOEXCEPT;
@@ -324,10 +330,10 @@ namespace eastl
 		const_reference back() const;
 
 		template <typename... Args>
-		void emplace_front(Args&&... args);
+		reference emplace_front(Args&&... args);
 
 		template <typename... Args>
-		void emplace_back(Args&&... args);
+		reference emplace_back(Args&&... args);
 
 		void      push_front(const value_type& value);
 		void      push_front(value_type&& x);
@@ -392,10 +398,10 @@ namespace eastl
 		template <typename Compare>
 		void merge(this_type&& x, Compare compare);
 
-		void unique();
+		size_type unique();
 
 		template <typename BinaryPredicate>
-		void unique(BinaryPredicate);
+		size_type unique(BinaryPredicate);
 
 		// Sorting functionality
 		// This is independent of the global sort algorithms, as lists are 
@@ -561,14 +567,6 @@ namespace eastl
 	{
 		// Empty
 	}
-
-
-	template <typename T, typename Pointer, typename Reference>
-	inline ListIterator<T, Pointer, Reference>::ListIterator(const iterator& x) EA_NOEXCEPT
-		: mpNode(const_cast<base_node_type*>(x.mpNode))
-	{
-		// Empty
-	} 
 
 
 	template <typename T, typename Pointer, typename Reference>
@@ -1178,16 +1176,18 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename... Args>
-	void list<T, Allocator>::emplace_front(Args&&... args)
+	typename list<T, Allocator>::reference list<T, Allocator>::emplace_front(Args&&... args)
 	{
 		DoInsertValue(internalNode().mpNext, eastl::forward<Args>(args)...);
+		return static_cast<node_type*>(internalNode().mpNext)->mValue; // Same as return front();
 	}
 
 	template <typename T, typename Allocator>
 	template <typename... Args>
-	void list<T, Allocator>::emplace_back(Args&&... args)
+	typename list<T, Allocator>::reference list<T, Allocator>::emplace_back(Args&&... args)
 	{
 		DoInsertValue(&internalNode(), eastl::forward<Args>(args)...);
+		return static_cast<node_type*>(internalNode().mpPrev)->mValue; // Same as return back();
 	}
 
 
@@ -1657,8 +1657,9 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	void list<T, Allocator>::unique()
+	typename list<T, Allocator>::size_type list<T, Allocator>::unique()
 	{
+		size_type      numRemoved = 0;
 		iterator       first(begin());
 		const iterator last(end());
 
@@ -1668,20 +1669,28 @@ namespace eastl
 
 			while(++next != last)
 			{
-				if(*first == *next)
+				if (*first == *next)
+				{
 					DoErase(next.mpNode);
+					++numRemoved;
+					next = first;
+				}
 				else
+				{
 					first = next;
-				next = first;
+				}
 			}
 		}
+
+		return numRemoved;
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename BinaryPredicate>
-	void list<T, Allocator>::unique(BinaryPredicate predicate)
+	typename list<T, Allocator>::size_type list<T, Allocator>::unique(BinaryPredicate predicate)
 	{
+		size_type      numRemoved = 0;
 		iterator       first(begin());
 		const iterator last(end());
 
@@ -1691,13 +1700,20 @@ namespace eastl
 
 			while(++next != last)
 			{
-				if(predicate(*first, *next))
+				if (predicate(*first, *next))
+				{
 					DoErase(next.mpNode);
+					++numRemoved;
+					next = first;
+				}
 				else
+				{
 					first = next;
-				next = first;
+				}
 			}
 		}
+
+		return numRemoved;
 	}
 
 

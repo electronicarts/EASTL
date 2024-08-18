@@ -31,7 +31,9 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/initializer_list.h>
 #include <EASTL/memory.h> // eastl::addressof
+#include <EASTL/internal/concepts.h>
 #include <EASTL/internal/in_place_t.h> // eastl::in_place_t
+
 
 #if EASTL_EXCEPTIONS_ENABLED
 	EA_DISABLE_ALL_VC_WARNINGS()
@@ -77,8 +79,20 @@ namespace eastl
 		};
 	#endif
 
+	template <typename T>
+	class optional; // Forward declaration for Internal::is_optional.
+		
 	namespace Internal
 	{
+		template <typename T>
+		struct is_optional : false_type {};
+
+		template <typename T>
+		struct is_optional<optional<T>> : true_type {};
+
+		template <typename T>
+		constexpr bool is_optional_v = is_optional<T>::value;
+		
 		///////////////////////////////////////////////////////////////////////////////
 		/// optional_storage
 		///
@@ -192,17 +206,18 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////////
 	/// optional
 	///
-    template <typename T>
-    class optional : private Internal::optional_storage<T>
-    {
-		typedef Internal::optional_storage<T> base_type;
+	template <typename T>
+	class optional : private Internal::optional_storage<remove_cv_t<T>>
+	{
+		using base_type = Internal::optional_storage<remove_cv_t<T>>;
 
 		using base_type::destruct_value;
 		using base_type::engaged;
 		using base_type::val;
 
 	public:
-		typedef T value_type;
+		using value_type = T;
+		using value_result_type = remove_volatile_t<value_type>;
 
 	    // (ISOCPP 20.6.3) A program that necessitates the instantiation of template optional for a reference type, or
 	    // for possibly cv-qualified types in_place_t or nullopt_t is ill-formed.
@@ -346,12 +361,12 @@ namespace eastl
 		EA_CONSTEXPR inline bool has_value() const EA_NOEXCEPT { return engaged; }
 
 	    template <class U>
-	    inline value_type value_or(U&& default_value) const
-			{ return engaged ? *get_value_address() : static_cast<value_type>(eastl::forward<U>(default_value)); }
+	    inline value_result_type value_or(U&& default_value) const&
+			{ return engaged ? value() : static_cast<value_type>(eastl::forward<U>(default_value)); }
 
 	    template <class U>
-	    inline value_type value_or(U&& default_value)
-			{ return engaged ? *get_value_address() : static_cast<value_type>(eastl::forward<U>(default_value)); }
+	    inline value_result_type value_or(U&& default_value) &&
+			{ return engaged ? eastl::move(value()) : static_cast<value_type>(eastl::forward<U>(default_value)); }
 
 		inline T& value()&                    { return get_value_ref(); }
 		inline const T& value() const&        { return get_value_ref(); }
@@ -365,8 +380,169 @@ namespace eastl
 	    inline const T& operator*() const&    { return get_value_ref(); }
 		inline const T&& operator*() const&&  { return get_rvalue_ref(); }
 
+		// Monadic operations
+		template <typename F>
+		constexpr inline auto and_then(F&& f) &
+		{
+			using U = eastl::invoke_result_t<F, decltype(value())>;
+			static_assert(Internal::is_optional_v<eastl::remove_cvref_t<U>>,
+						  "The supplied callable isn't returning an optional.");
+
+			if (has_value())
+			{
+				return eastl::invoke(eastl::forward<F>(f), value());
+			}
+
+			return eastl::remove_cvref_t<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto and_then(F&& f) const&
+		{
+			using U = eastl::invoke_result_t<F, decltype(value())>;
+			static_assert(Internal::is_optional_v<eastl::remove_cvref_t<U>>,
+						  "The supplied callable isn't returning an optional.");
+
+			if (has_value())
+			{
+				return eastl::invoke(eastl::forward<F>(f), value());
+			}
+
+			return eastl::remove_cvref_t<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto and_then(F&& f) &&
+		{
+			using U = eastl::invoke_result_t<F, decltype(eastl::move(value()))>;
+			static_assert(Internal::is_optional_v<eastl::remove_cvref_t<U>>,
+						  "The supplied callable isn't returning an optional.");
+
+			if (has_value())
+			{
+				return eastl::invoke(eastl::forward<F>(f), eastl::move(value()));
+			}
+
+			return eastl::remove_cvref_t<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto and_then(F&& f) const&&
+		{
+			using U = eastl::invoke_result_t<F, decltype(eastl::move(value()))>;
+			static_assert(Internal::is_optional_v<eastl::remove_cvref_t<U>>,
+						  "The supplied callable isn't returning an optional.");
+
+			if (has_value())
+			{
+				return eastl::invoke(eastl::forward<F>(f), eastl::move(value()));
+			}
+
+			return eastl::remove_cvref_t<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto transform(F&& f) &
+		{
+			using U = eastl::remove_cvref_t<eastl::invoke_result_t<F, decltype(value())>>;
+
+			static_assert(!eastl::is_same_v<U, in_place_t>, "The supplied callable cannot return in_place_t.");
+			static_assert(!eastl::is_same_v<U, nullopt_t>, "The supplied callable cannot return nullopt_t.");
+			static_assert(eastl::is_object_v<U>, "The supplied callable must return an object type.");
+			static_assert(!eastl::is_array_v<U>, "The supplied callable cannot return an array type.");
+
+			if (has_value())
+			{
+				return eastl::optional<U>(eastl::invoke(eastl::forward<F>(f), value()));
+			}
+
+			return eastl::optional<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto transform(F&& f) const&
+		{
+			using U = eastl::remove_cvref_t<eastl::invoke_result_t<F, decltype(value())>>;
+
+			static_assert(!eastl::is_same_v<U, in_place_t>, "The supplied callable cannot return in_place_t.");
+			static_assert(!eastl::is_same_v<U, nullopt_t>, "The supplied callable cannot return nullopt_t.");
+			static_assert(eastl::is_object_v<U>, "The supplied callable must return an object type.");
+			static_assert(!eastl::is_array_v<U>, "The supplied callable cannot return an array type.");
+
+			if (has_value())
+			{
+				return eastl::optional<U>(eastl::invoke(eastl::forward<F>(f), value()));
+			}
+
+			return eastl::optional<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto transform(F&& f) &&
+		{
+			using U = eastl::remove_cvref_t<eastl::invoke_result_t<F, decltype(eastl::move(value()))>>;
+
+			static_assert(!eastl::is_same_v<U, in_place_t>, "The supplied callable cannot return in_place_t.");
+			static_assert(!eastl::is_same_v<U, nullopt_t>, "The supplied callable cannot return nullopt_t.");
+			static_assert(eastl::is_object_v<U>, "The supplied callable must return an object type.");
+			static_assert(!eastl::is_array_v<U>, "The supplied callable cannot return an array type.");
+
+			if (has_value())
+			{
+				return eastl::optional<U>(eastl::invoke(eastl::forward<F>(f), eastl::move(value())));
+			}
+
+			return eastl::optional<U>();
+		}
+
+		template <typename F>
+		constexpr inline auto transform(F&& f) const&&
+		{
+			using U = eastl::remove_cvref_t<eastl::invoke_result_t<F, decltype(eastl::move(value()))>>;
+
+			static_assert(!eastl::is_same_v<U, in_place_t>, "The supplied callable cannot return in_place_t.");
+			static_assert(!eastl::is_same_v<U, nullopt_t>, "The supplied callable cannot return nullopt_t.");
+			static_assert(eastl::is_object_v<U>, "The supplied callable must return an object type.");
+			static_assert(!eastl::is_array_v<U>, "The supplied callable cannot return an array type.");
+
+			if (has_value())
+			{
+				return eastl::optional<U>(eastl::invoke(eastl::forward<F>(f), eastl::move(value())));
+			}
+
+			return eastl::optional<U>();
+		}
+
+		template <typename F, enable_if_t<is_invocable_v<F> && internal::concepts::copy_constructible<T>, int> = 0>
+		constexpr inline optional or_else(F&& f) const&
+		{
+			static_assert(eastl::is_same_v<eastl::remove_cvref_t<eastl::invoke_result_t<F>>, optional>,
+						  "The supplied callable must return an optional of the same type.");
+
+			if (has_value())
+			{
+				return *this;
+			}
+
+			return eastl::forward<F>(f)();
+		}
+
+		template <typename F, enable_if_t<is_invocable_v<F> && internal::concepts::move_constructible<T>, int> = 0>
+		constexpr inline optional or_else(F&& f) &&
+		{
+			static_assert(eastl::is_same_v<eastl::remove_cvref_t<eastl::invoke_result_t<F>>, optional>,
+						  "The supplied callable must return an optional of the same type.");
+
+			if (has_value())
+			{
+				return eastl::move(*this);
+			}
+
+			return eastl::forward<F>(f)();
+		}
+
 		template <class... Args>
-		void emplace(Args&&... args)
+		T& emplace(Args&&... args)
 		{
 			if (engaged)
 			{
@@ -375,10 +551,11 @@ namespace eastl
 			}
 			construct_value(eastl::forward<Args>(args)...);
 			engaged = true;
+			return get_value_ref();
 		}
 
 		template <class U, class... Args>
-		void emplace(std::initializer_list<U> ilist, Args&&... args)
+		T& emplace(std::initializer_list<U> ilist, Args&&... args)
 		{
 			if (engaged)
 			{
@@ -387,6 +564,7 @@ namespace eastl
 			}
 			construct_value(ilist, eastl::forward<Args>(args)...);
 			engaged = true;
+			return get_value_ref();
 		}
 
 	    inline void swap(optional& other)

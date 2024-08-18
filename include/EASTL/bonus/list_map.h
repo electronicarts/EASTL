@@ -9,6 +9,8 @@
 
 #include <EASTL/map.h>
 
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4512 4626);
 
 namespace eastl
 {
@@ -86,8 +88,15 @@ namespace eastl
 	public:
 		list_map_iterator();
 		list_map_iterator(const base_node_type* pNode);
-		// Note: this isn't always a copy constructor, iterator is not always equal to this_type
-		list_map_iterator(const iterator& x);
+
+		// This is the converting constructor of a non-const iterator to a const iterator
+		// This is never a copy constructor (due to enable_if)
+		template <typename This = this_type, enable_if_t<!is_same_v<This, iterator>, bool> = true>
+		inline list_map_iterator(const iterator& x)
+			: mpNode(x.mpNode)
+		{
+			// Empty
+		}
 
 		reference operator*() const;
 		pointer   operator->() const;
@@ -432,14 +441,6 @@ namespace eastl
 	{
 		// Empty
 	}
-
-
-	template <typename T, typename Pointer, typename Reference>
-	inline list_map_iterator<T, Pointer, Reference>::list_map_iterator(const iterator& x)
-		: mpNode(x.mpNode)
-	{
-		// Empty
-	} 
 
 
 	template <typename T, typename Pointer, typename Reference>
@@ -956,6 +957,7 @@ namespace eastl
 
 } // namespace eastl
 
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
 

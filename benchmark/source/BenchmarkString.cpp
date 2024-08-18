@@ -95,7 +95,7 @@ namespace
 		for(typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += c[j];
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 

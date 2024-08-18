@@ -46,12 +46,15 @@ namespace eastl
 	/// stack
 	///
 	/// stack is an adapter class provides a LIFO (last-in, first-out) interface
-	/// via wrapping a sequence that provides at least the following operations:
+	/// via wrapping a sequence container (https://en.cppreference.com/w/cpp/named_req/SequenceContainer)
+	/// that additionally provides the following operations:
 	///     push_back
 	///     pop_back
 	///     back
 	///
-	/// In practice this means vector, deque, string, list, intrusive_list. 
+	/// In practice this means vector, deque, list, intrusive_list and (the pseudo-container) string.
+	/// 
+	/// Note: the default underlying container is vector, rather than the standard's deque.
 	///
 	template <typename T, typename Container = eastl::vector<T> >
 	class stack
@@ -102,6 +105,12 @@ namespace eastl
 		//
 		// template <class Allocator>
 		// stack(container_type&& x, const Allocator& allocator);
+		//
+		// template <class InputIt>
+		// stack(InputIt first, InputIt last);
+		//
+		// template <class InputIt, class Allocator>
+		// stack(InputIt first, InputIt last, const Allocator& allocator);
 
 		stack(std::initializer_list<value_type> ilist); // The first item in the initializer list is pushed first. C++11 doesn't specify that std::stack has initializer list support.
 
@@ -114,7 +123,7 @@ namespace eastl
 		void push(const value_type& value);
 		void push(value_type&& x);
 
-		template <class... Args> void emplace_back(Args&&... args); // backwards compatibility
+		template <class... Args> EASTL_REMOVE_AT_2024_SEPT void emplace_back(Args&&... args); // use emplace() instead. they are equivalent.
 		template <class... Args> decltype(auto) emplace(Args&&... args);
 
 		void pop();
@@ -193,6 +202,11 @@ namespace eastl
 	inline typename stack<T, Container>::reference
 	stack<T, Container>::top()
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("stack::top -- empty container");
+#endif
+
 		return c.back();
 	}
 
@@ -201,6 +215,11 @@ namespace eastl
 	inline typename stack<T, Container>::const_reference
 	stack<T, Container>::top() const
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("stack::top -- empty container");
+#endif
+
 		return c.back();
 	}
 
@@ -238,6 +257,11 @@ namespace eastl
 	template <typename T, typename Container>
 	inline void stack<T, Container>::pop()
 	{
+#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("stack::pop -- empty container");
+#endif
+
 		c.pop_back();
 	}
 

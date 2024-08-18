@@ -29,6 +29,9 @@
 #include <EASTL/memory.h>
 #include <EASTL/tuple.h>
 #include <EASTL/utility.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -244,7 +247,7 @@ struct TupleVecLeaf
 	{
 		T* pBegin = mpData + begin;
 		T* pEnd = mpData + end;
-		eastl::uninitialized_move_ptr_if_noexcept(pBegin, pEnd, pDest);
+		eastl::uninitialized_move_if_noexcept(pBegin, pEnd, pDest);
 		eastl::destruct(pBegin, pEnd);
 	}
 
@@ -256,14 +259,14 @@ struct TupleVecLeaf
 		const size_type nExtra = (numElements - pos);
 		if (n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
 		{
-			eastl::uninitialized_move_ptr(pDataEnd - n, pDataEnd, pDataEnd);
+			eastl::uninitialized_move(pDataEnd - n, pDataEnd, pDataEnd);
 			eastl::move_backward(pDest, pDataEnd - n, pDataEnd); // We need move_backward because of potential overlap issues.
 			eastl::fill(pDest, pDest + n, temp);
 		}
 		else
 		{
-			eastl::uninitialized_fill_n_ptr(pDataEnd, n - nExtra, temp);
-			eastl::uninitialized_move_ptr(pDest, pDataEnd, pDataEnd + n - nExtra);
+			eastl::uninitialized_fill_n(pDataEnd, n - nExtra, temp);
+			eastl::uninitialized_move(pDest, pDataEnd, pDataEnd + n - nExtra);
 			eastl::fill(pDest, pDataEnd, temp);
 		}
 	}
@@ -276,14 +279,14 @@ struct TupleVecLeaf
 		const size_type nExtra = numDataElements - pos;
 		if (n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
 		{
-			eastl::uninitialized_move_ptr(pDataEnd - n, pDataEnd, pDataEnd);
+			eastl::uninitialized_move(pDataEnd - n, pDataEnd, pDataEnd);
 			eastl::move_backward(pDestBegin, pDataEnd - n, pDataEnd); // We need move_backward because of potential overlap issues.
 			eastl::copy(pSrcBegin, pSrcEnd, pDestBegin);
 		}
 		else
 		{
 			eastl::uninitialized_copy(pSrcEnd - (n - nExtra), pSrcEnd, pDataEnd);
-			eastl::uninitialized_move_ptr(pDestBegin, pDataEnd, pDataEnd + n - nExtra);
+			eastl::uninitialized_move(pDestBegin, pDataEnd, pDataEnd + n - nExtra);
 			eastl::copy(pSrcBegin, pSrcEnd - (n - nExtra), pDestBegin);
 		}
 	}
@@ -293,7 +296,7 @@ struct TupleVecLeaf
 		T* pDest = mpData + pos;
 		T* pDataEnd = mpData + numElements;
 
-		eastl::uninitialized_move_ptr(pDataEnd - 1, pDataEnd, pDataEnd);
+		eastl::uninitialized_move(pDataEnd - 1, pDataEnd, pDataEnd);
 		eastl::move_backward(pDest, pDataEnd - 1, pDataEnd); // We need move_backward because of potential overlap issues.
 		eastl::destruct(pDest);
 		::new (pDest) T(eastl::forward<T>(arg));
@@ -591,7 +594,7 @@ public:
 		{
 			size_type oldNumElements = mNumElements;
 			swallow((eastl::fill(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, args), 0)...);
-			swallow((eastl::uninitialized_fill_ptr(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
+			swallow((eastl::uninitialized_fill(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
 					                       TupleVecLeaf<Indices, Ts>::mpData + n, args), 0)...);
 			mNumElements = n;
 		}
@@ -625,7 +628,7 @@ public:
 				swallow((eastl::copy((Ts*)(ppOtherData[Indices]) + firstIdx,
 						       (Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
 						       TupleVecLeaf<Indices, Ts>::mpData), 0)...);
-				swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
+				swallow((eastl::uninitialized_copy((Ts*)(ppOtherData[Indices]) + firstIdx + oldNumElements,
 						                       (Ts*)(ppOtherData[Indices]) + lastIdx,
 						                       TupleVecLeaf<Indices, Ts>::mpData + oldNumElements), 0)...);
 				mNumElements = newNumElements;
@@ -781,7 +784,7 @@ public:
 					0, firstIdx, (Ts*)ppNewLeaf[Indices]), 0)...);
 				swallow((TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
 					firstIdx, oldNumElements, (Ts*)ppNewLeaf[Indices] + lastIdx), 0)...);
-				swallow((eastl::uninitialized_fill_ptr((Ts*)ppNewLeaf[Indices] + firstIdx, (Ts*)ppNewLeaf[Indices] + lastIdx, args), 0)...);
+				swallow((eastl::uninitialized_fill((Ts*)ppNewLeaf[Indices] + firstIdx, (Ts*)ppNewLeaf[Indices] + lastIdx, args), 0)...);
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
 		
 				EASTLFree(get_allocator(), mpData, internalDataSize());
@@ -796,7 +799,7 @@ public:
 		}
 		else
 		{
-			swallow((eastl::uninitialized_fill_ptr(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
+			swallow((eastl::uninitialized_fill(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
 					                       TupleVecLeaf<Indices, Ts>::mpData + newNumElements, args), 0)...);
 		}
 		return begin() + firstIdx;
@@ -833,7 +836,7 @@ public:
 					0, posIdx, (Ts*)ppNewLeaf[Indices]), 0)...);
 				swallow((TupleVecLeaf<Indices, Ts>::DoUninitializedMoveAndDestruct(
 					posIdx, oldNumElements, (Ts*)ppNewLeaf[Indices] + posIdx + numToInsert), 0)...);
-				swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx,
+				swallow((eastl::uninitialized_copy((Ts*)(ppOtherData[Indices]) + firstIdx,
 						                       (Ts*)(ppOtherData[Indices]) + lastIdx,
 						                       (Ts*)ppNewLeaf[Indices] + posIdx), 0)...);
 				swallow(TupleVecLeaf<Indices, Ts>::mpData = (Ts*)ppNewLeaf[Indices]...);
@@ -852,7 +855,7 @@ public:
 		}
 		else
 		{
-			swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + firstIdx,
+			swallow((eastl::uninitialized_copy((Ts*)(ppOtherData[Indices]) + firstIdx,
 					                       (Ts*)(ppOtherData[Indices]) + lastIdx,
 					                       TupleVecLeaf<Indices, Ts>::mpData + posIdx), 0)...);
 		}
@@ -905,7 +908,7 @@ public:
 				void* ppDataBegin[sizeof...(Ts)] = { (void*)(TupleVecLeaf<Indices, Ts>::mpData + posIdx)... };
 				if (numToInsert < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
 				{
-					swallow((eastl::uninitialized_move_ptr((Ts*)ppDataEnd[Indices] - numToInsert,
+					swallow((eastl::uninitialized_move((Ts*)ppDataEnd[Indices] - numToInsert,
 						(Ts*)ppDataEnd[Indices], (Ts*)ppDataEnd[Indices]), 0)...);
 					// We need move_backward because of potential overlap issues.
 					swallow((eastl::move_backward((Ts*)ppDataBegin[Indices],
@@ -916,7 +919,7 @@ public:
 				else
 				{
 					size_type numToInitialize = numToInsert - nExtra;
-					swallow((eastl::uninitialized_move_ptr((Ts*)ppDataBegin[Indices],
+					swallow((eastl::uninitialized_move((Ts*)ppDataBegin[Indices],
 						(Ts*)ppDataEnd[Indices], (Ts*)ppDataEnd[Indices] + numToInitialize), 0)...);
 					
 					DoCopyFromTupleArray(pos, begin() + oldNumElements, first);
@@ -1003,7 +1006,7 @@ public:
 			{
 				DoReallocate(oldNumElements, eastl::max<size_type>(GetNewCapacity(oldNumCapacity), n));
 			} 
-			swallow((eastl::uninitialized_fill_ptr(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
+			swallow((eastl::uninitialized_fill(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements,
 					                       TupleVecLeaf<Indices, Ts>::mpData + n, args), 0)...);
 		}
 		else
@@ -1152,11 +1155,9 @@ public:
 	
 	reference_tuple back() 
 	{
-		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
 				EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
-		#else
-			// We allow the user to reference an empty container.
 		#endif
 
 		return at(size() - 1); 
@@ -1164,11 +1165,9 @@ public:
 
 	const_reference_tuple back() const 
 	{
-		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY(mNumElements == 0)) // We don't allow the user to reference an empty container.
 				EASTL_FAIL_MSG("tuple_vector::back -- empty vector");
-		#else
-			// We allow the user to reference an empty container.
 		#endif
 
 		return at(size() - 1); 
@@ -1253,11 +1252,15 @@ public:
 		return (first.mIndex <= last.mIndex) && variadicAnd(first.mpData[Indices] == last.mpData[Indices]...);
 	}
 
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'unwrap_iterator': was declared deprecated
+	
 	template <typename Iterator, typename = typename enable_if<is_iterator_wrapper<Iterator>::value, bool>::type>
-	int validate_iterator(Iterator iter) const EA_NOEXCEPT { return validate_iterator(unwrap_iterator(iter)); }
+	EASTL_REMOVE_AT_2024_SEPT int validate_iterator(Iterator iter) const EA_NOEXCEPT { return validate_iterator(unwrap_iterator(iter)); }
 
 	template <typename Iterator, typename = typename enable_if<is_iterator_wrapper<Iterator>::value, bool>::type>
-	static bool validate_iterator_pair(Iterator first, Iterator last) EA_NOEXCEPT { return validate_iterator_pair(unwrap_iterator(first), unwrap_iterator(last)); }
+	EASTL_REMOVE_AT_2024_SEPT static bool validate_iterator_pair(Iterator first, Iterator last) EA_NOEXCEPT { return validate_iterator_pair(unwrap_iterator(first), unwrap_iterator(last)); }
+
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 	allocator_type& get_allocator() EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
 	const allocator_type& get_allocator() const EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
@@ -1283,7 +1286,7 @@ protected:
 	void DoInitFromIterator(move_iterator<MoveIterBase> begin, move_iterator<MoveIterBase> end)
 	{
 #if EASTL_ASSERT_ENABLED
-		if (EASTL_UNLIKELY(!validate_iterator_pair(begin, end)))
+		if (EASTL_UNLIKELY(!validate_iterator_pair(begin.base(), end.base())))
 			EASTL_FAIL_MSG("tuple_vector::erase -- invalid iterator pair");
 #endif
 		size_type newNumElements = (size_type)(end - begin);
@@ -1292,7 +1295,7 @@ protected:
 		size_type endIdx = end.base().mIndex;
 		DoConditionalReallocate(0, mNumCapacity, newNumElements);
 		mNumElements = newNumElements;
-		swallow((eastl::uninitialized_move_ptr(eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
+		swallow((eastl::uninitialized_move(eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + beginIdx),
 				                       eastl::move_iterator<Ts*>((Ts*)(ppOtherData[Indices]) + endIdx),
 				                       TupleVecLeaf<Indices, Ts>::mpData), 0)...);
 	}
@@ -1309,7 +1312,7 @@ protected:
 		size_type endIdx = end.mIndex;
 		DoConditionalReallocate(0, mNumCapacity, newNumElements);
 		mNumElements = newNumElements;
-		swallow((eastl::uninitialized_copy_ptr((Ts*)(ppOtherData[Indices]) + beginIdx,
+		swallow((eastl::uninitialized_copy((Ts*)(ppOtherData[Indices]) + beginIdx,
 				                       (Ts*)(ppOtherData[Indices]) + endIdx,
 				                       TupleVecLeaf<Indices, Ts>::mpData), 0)...);
 	}
@@ -1320,7 +1323,7 @@ protected:
 	{
 		DoConditionalReallocate(0, mNumCapacity, n);
 		mNumElements = n;
-		swallow((eastl::uninitialized_fill_ptr(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + n, args), 0)...);
+		swallow((eastl::uninitialized_fill(TupleVecLeaf<Indices, Ts>::mpData, TupleVecLeaf<Indices, Ts>::mpData + n, args), 0)...);
 	}
 
 	void DoInitDefaultFill(size_type n)
@@ -1408,7 +1411,6 @@ class move_iterator<TupleVecInternal::TupleVecIter<index_sequence<Indices...>, T
 {
 public:
 	typedef TupleVecInternal::TupleVecIter<index_sequence<Indices...>, Ts...> iterator_type;
-												 // a wrapping iterator type.
 	typedef iterator_traits<iterator_type> traits_type;
 	typedef typename traits_type::iterator_category iterator_category;
 	typedef typename traits_type::value_type value_type;
@@ -1474,12 +1476,14 @@ private:
 		return reference(eastl::move(((Ts*)mIterator.mpData[Indices])[mIterator.mIndex])...);
 	}
 
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'is_iterator_wrapper': was declared deprecated
 	// Unwrapping interface, not part of the public API.
-	iterator_type unwrap() const { return mIterator; }
+	EASTL_REMOVE_AT_2024_SEPT iterator_type unwrap() const { return mIterator; }
 
 	// The unwrapper helpers need access to unwrap().
 	friend is_iterator_wrapper_helper<this_type, true>;
 	friend is_iterator_wrapper<this_type>;
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 };
 
 template <typename AllocatorA, typename AllocatorB, typename Indices, typename... Ts>

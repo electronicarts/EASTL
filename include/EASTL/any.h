@@ -193,14 +193,19 @@ namespace eastl
 				refAny.m_handler = nullptr;
 			}
 
+			static void* get(const any* pThis)
+			{
+				EASTL_ASSERT(pThis);
+				return (void*)(&pThis->m_storage.internal_storage);
+			}
+
 			static void* handler_func(storage_operation op, const any* pThis, any* pOther)
 			{
 				switch (op)
 				{
 					case storage_operation::GET:
 					{
-						EASTL_ASSERT(pThis);
-						return (void*)(&pThis->m_storage.internal_storage);
+						return get(pThis);
 					}
 					break;
 
@@ -280,15 +285,20 @@ namespace eastl
 				refAny.m_handler = nullptr;
 			}
 
+			static void* get(const any* pThis)
+			{
+				EASTL_ASSERT(pThis);
+				EASTL_ASSERT(pThis->m_storage.external_storage);
+				return static_cast<void*>(pThis->m_storage.external_storage);
+			}
+
 			static void* handler_func(storage_operation op, const any* pThis, any* pOther)
 			{
 				switch (op)
 				{
 					case storage_operation::GET:
 					{
-						EASTL_ASSERT(pThis);
-						EASTL_ASSERT(pThis->m_storage.external_storage);
-						return static_cast<void*>(pThis->m_storage.external_storage);
+						return get(pThis);
 					}
 					break;
 
@@ -456,18 +466,19 @@ namespace eastl
         // 20.7.3.3, modifiers
 		#if EASTL_VARIADIC_TEMPLATES_ENABLED
 			template <class T, class... Args>
-			void emplace(Args&&... args)
+			typename eastl::enable_if<eastl::is_constructible_v<eastl::decay_t<T>, Args...> && eastl::is_copy_constructible_v<eastl::decay_t<T>>, eastl::decay_t<T>&>::type
+			emplace(Args&&... args)
 			{
 			    typedef storage_handler<decay_t<T>> StorageHandlerT;
-				static_assert(eastl::is_constructible<T, Args...>::value, "T must be constructible with Args...");
 
 			    reset();
 				StorageHandlerT::construct_inplace(m_storage, eastl::forward<Args>(args)...);
 				m_handler = &StorageHandlerT::handler_func;
+				return *static_cast<decay_t<T>*>(StorageHandlerT::get(this));
 			}
 
 			template <class NT, class U, class... Args>
-		    typename eastl::enable_if<eastl::is_constructible<NT, std::initializer_list<U>&, Args...>::value, void>::type
+		    typename eastl::enable_if<eastl::is_constructible_v<eastl::decay_t<NT>, std::initializer_list<U>&, Args...> && eastl::is_copy_constructible_v<eastl::decay_t<NT>>, eastl::decay_t<NT>&>::type
 			emplace(std::initializer_list<U> il, Args&&... args)
 			{
 			    typedef storage_handler<decay_t<NT>> StorageHandlerT;
@@ -475,6 +486,7 @@ namespace eastl
 				reset();
 				StorageHandlerT::construct_inplace(m_storage, il, eastl::forward<Args>(args)...);
 				m_handler = &StorageHandlerT::handler_func;
+				return *static_cast<decay_t<NT>*>(StorageHandlerT::get(this));
 			}
         #endif
 

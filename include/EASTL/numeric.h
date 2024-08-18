@@ -232,68 +232,163 @@ namespace eastl
 		return result;
 	}
 
+}
 
-	#if defined(EA_COMPILER_CPP20_ENABLED)
-	/// midpoint
-	///
-	/// Computes the midpoint between the LHS and RHS by adding them together, then dividing the sum by 2.
-	/// If the operands are of integer type and the sum is odd, the result will be rounded closer to the LHS.
-	/// If the operands are floating points, then at most one inexact operation occurs.
-	///
-	template <typename T>
-	constexpr eastl::enable_if_t<eastl::is_arithmetic_v<T> && !eastl::is_same_v<eastl::remove_cv_t<T>, bool>, T> midpoint(const T lhs, const T rhs) EA_NOEXCEPT
+
+///
+/// is_constant_evaluated
+///
+/// Detects whether the function call occurs within a constant-evaluated context.
+///
+/// See: https://en.cppreference.com/w/cpp/types/is_constant_evaluated
+/// 
+#if defined(__cpp_lib_is_constant_evaluated)
+namespace eastl
+{
+	[[nodiscard]] constexpr bool is_constant_evaluated() noexcept
 	{
-		// If T is an integral type...
+		// MSVC, Clang, and GCC all use the same builtin name
+		return __builtin_is_constant_evaluated();
+	}
+}
+#endif
+
+///
+/// isnan
+///
+/// Returns true if the argument is a NaN floating-point value.
+///
+#if defined(EA_COMPILER_CPP20_ENABLED)
+namespace eastl
+{
+	[[nodiscard]] constexpr bool isnan(float f)
+	{
+		return f != f;
+	}
+
+	[[nodiscard]] constexpr bool isnan(double d)
+	{
+		return d != d;
+	}
+
+	[[nodiscard]] constexpr bool isnan(long double d)
+	{
+		return d != d;
+	}
+}
+#endif
+
+
+///
+/// midpoint
+///
+/// Computes the midpoint of integers, floating-points, or pointers @lhs and @rhs
+/// 
+/// If the operands are of integer type and the sum is odd, the result will be rounded closer to @lhs
+/// If the operands are floating points, then at most one inexact operation occurs.
+///
+#if defined(EA_COMPILER_CPP20_ENABLED)
+namespace eastl
+{
+	template <typename T, enable_if_t<is_arithmetic_v<T> && !is_same_v<remove_cv_t<T>, bool>, int> = 0>
+	constexpr T midpoint(T lhs, T rhs) noexcept
+	{
+		// If T is an integral type
 		if constexpr(eastl::is_integral_v<T>)
 		{
 			using U = eastl::make_unsigned_t<T>;
 
-			int sign = 1;
-			U m = lhs;
-			U M = rhs;
+			bool const lgtr = lhs > rhs;
+			int const sign = lgtr ? -1 : 1;
+			U const a = lgtr ? lhs : rhs;
+			U const b = lgtr ? rhs : lhs;
 
-			if (lhs > rhs)
-			{
-				sign = -1;
-				m = rhs;
-				M = lhs;
-			}
-
-			return lhs + static_cast<T>(sign * static_cast<T>((U(M - m)) / 2 ));
+			return lhs + static_cast<T>(sign * static_cast<T>(static_cast<U>(a - b) / 2));
 		}
-
 		// otherwise if T is a floating point
 		else
 		{
-			const T LO = eastl::numeric_limits<T>::min() * 2;
-			const T HI = eastl::numeric_limits<T>::max() / 2;
+			if (eastl::is_constant_evaluated())
+			{
+				// almost any operation, including addition, on floating-point
+				// values that include a signalling-NaN will throw a floating-
+				// point exception. this is UB when it occurs in constexpr
+				// expression evaluation. to circumvent this we will simply
+				// return the NaN value outright.
 
-			const T lhs_abs = (lhs < 0) ? -lhs : lhs;
-			const T rhs_abs = (rhs < 0) ? -rhs : rhs;
+				if (isnan(lhs))
+				{
+					return lhs;
+				}
 
-			if (lhs_abs <= HI && rhs_abs <= HI)
+				if (isnan(rhs))
+				{
+					return rhs;
+				}
+			}
+			else if (isnan(lhs) || isnan(rhs))
+			{
+				// when we encounter a NaN at runtime, we will propagate the
+				// NaNiness immediately and raise FE_INVALID
+
+				return lhs + rhs;
+			}
+
+			auto lhs_abs = (lhs < 0) ? -lhs : lhs;
+			auto rhs_abs = (rhs < 0) ? -rhs : rhs;
+
+			constexpr T hi = eastl::numeric_limits<T>::max() / 2;
+			if (lhs_abs <= hi && rhs_abs <= hi)
+			{
+				// lhs and rhs are small enough that this will not overflow
 				return (lhs + rhs) / 2;
-			if (lhs_abs < LO)
-				return lhs + (rhs / 2);
-			if (rhs_abs < LO)
-				return (lhs / 2) + rhs;
-			return (lhs / 2) + (rhs / 2);
+			}
+
+			// either lhs or rhs has a very small magnitude. we divide the
+			// larger of the two (an inexact operation), and add the small
+			// value to it. because the small value is so very small (smaller
+			// than one ULP) we can simply add it directly.
+			constexpr T lo = eastl::numeric_limits<T>::min() * 2;
+			if (lhs_abs < lo)
+			{
+				return lhs + rhs / 2;
+			}
+			else if (rhs_abs < lo)
+			{
+				return lhs / 2 + rhs;
+			}
+
+			// neither lhs nor rhs are small enough to allow for the above
+			// magic, and they are too large to first add and then perform a
+			// single division, so we perform the slowest but correct
+			// operation by dividing both in half first before summing.
+			return lhs / 2 + rhs / 2;
 		}
 	}
 
 
-	/// midpoint
-	///
-	/// Computes the midpoint address between pointers LHS and RHS.
-	/// The midpoint address closer to the LHS is chosen.
-	///
-	template <typename T>
-	constexpr eastl::enable_if_t<eastl::is_object_v<T>, T*> midpoint(T* lhs, T* rhs)
+	template <typename T, enable_if_t<is_object_v<T>, int> = 0>
+	[[nodiscard]] constexpr T* midpoint(T* lhs, T* rhs) noexcept
 	{
-		return lhs + ((rhs - lhs) / 2);
+		if (lhs > rhs)
+		{
+			return lhs - ((lhs - rhs) >> 1);
+		}
+		else
+		{
+			return lhs + ((rhs - lhs) >> 1);
+		}
 	}
+}
+#endif
 
 
+
+
+
+namespace eastl
+{
+	#if defined(EA_COMPILER_CPP20_ENABLED)
 	template <class T>
 	constexpr T shared_lerp(const T a, const T b, const T t) EA_NOEXCEPT
 	{
@@ -330,15 +425,9 @@ namespace eastl
 	constexpr double lerp(double a, double b, double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
 	constexpr long double lerp(long double a, long double b, long double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
 	#endif
+}
 
-} // namespace eastl
 
 
 #endif // Header include guard
-
-
-
-
-
-
 

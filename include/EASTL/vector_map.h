@@ -40,6 +40,9 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
 #include <stddef.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -264,6 +267,15 @@ namespace eastl
 		//     vMap[100] = vMap[0]
 		mapped_type& operator[](const key_type& k);
 		mapped_type& operator[](key_type&& k);
+
+		// non-standard! this was originally inherited from vector with incorrect semantics.
+		// this is only defined so that we can deprecate it.
+		// use `*(map.begin() + index)` if you want to get an element by index.
+		EASTL_REMOVE_AT_2024_SEPT reference at(size_type index);
+		EASTL_REMOVE_AT_2024_SEPT const_reference at(size_type index) const;
+		// after the deprecation period the above should be replaced with:
+		// mapped_type& at(const key_type& k) { return at_key(k); }
+		// const mapped_type& at(const key_type& k) const { return at_key(k); }
 
 		// aka. the standard's at() member function.
 		mapped_type& at_key(const key_type& k);
@@ -827,6 +839,19 @@ namespace eastl
 		return (*itLB).second;
 	}
 
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline typename vector_map<K, T, C, A, RAC>::reference
+		vector_map<K, T, C, A, RAC>::at(size_type index)
+	{
+		return *(begin() + index);
+	}
+
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline typename vector_map<K, T, C, A, RAC>::const_reference
+		vector_map<K, T, C, A, RAC>::at(size_type index) const
+	{
+		return *(begin() + index);
+	}
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline typename vector_map<K, T, C, A, RAC>::mapped_type&

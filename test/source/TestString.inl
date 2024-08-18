@@ -1717,6 +1717,49 @@ int TEST_STRING_NAME()
 		VERIFY(str.rfind(LITERAL('1'), 20) == StringType::npos);
 	}
 
+	{
+		StringType str(LITERAL("abcdabcdabcdabcd"));
+
+		VERIFY(str.rfind(StringType(LITERAL("d")))     == (str.size() - 1));
+		VERIFY(str.rfind(StringType(LITERAL("abc")))   == (str.size() - 4));
+		VERIFY(str.rfind(StringType(LITERAL("dab")))   == (str.size() - 5));
+		VERIFY(str.rfind(StringType(LITERAL("e")))     == StringType::npos);
+		VERIFY(str.rfind(StringType(LITERAL("abcde"))) == StringType::npos);
+
+		VERIFY(str.rfind(StringType(LITERAL("d")), 8)     == 7);
+		VERIFY(str.rfind(StringType(LITERAL("abc")), 8)   == 8);
+		VERIFY(str.rfind(StringType(LITERAL("abc")), 7)   == 4);
+		VERIFY(str.rfind(StringType(LITERAL("dab")), 8)   == 7);
+		VERIFY(str.rfind(StringType(LITERAL("dab")), 7)   == 7);
+		VERIFY(str.rfind(StringType(LITERAL("e")), 8)     == StringType::npos);
+		VERIFY(str.rfind(StringType(LITERAL("abcde")), 8) == StringType::npos);
+
+		VERIFY(str.rfind(LITERAL("d"))     == (str.size() - 1));
+		VERIFY(str.rfind(LITERAL("abcd"))  == (str.size() - 4));
+		VERIFY(str.rfind(LITERAL("abc"))   == (str.size() - 4));
+		VERIFY(str.rfind(LITERAL("e"))     == StringType::npos);
+		VERIFY(str.rfind(LITERAL("abcde")) == StringType::npos);
+
+		VERIFY(str.rfind(LITERAL("d"), 8)     == 7);
+		VERIFY(str.rfind(LITERAL("abc"), 8)   == 8);
+		VERIFY(str.rfind(LITERAL("abc"), 7)   == 4);
+		VERIFY(str.rfind(LITERAL("dab"), 8)   == 7);
+		VERIFY(str.rfind(LITERAL("dab"), 7)   == 7);
+		VERIFY(str.rfind(LITERAL("e"), 8)     == StringType::npos);
+		VERIFY(str.rfind(LITERAL("abcde"), 8) == StringType::npos);
+	}
+
+	{
+		StringType str(LITERAL("abcdeaababcdabcdx"));
+
+		VERIFY(str.rfind(StringType(LITERAL("abcde")))    == 0);
+		VERIFY(str.rfind(StringType(LITERAL("abcde")), 8) == 0);
+
+		VERIFY(str.rfind(LITERAL("abcde"))    == 0);
+		VERIFY(str.rfind(LITERAL("abcde"), 8) == 0);
+	}
+
+
 	// size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
 	// size_type find_first_of(const value_type* p, size_type position = 0) const;
 	// size_type find_first_of(const value_type* p, size_type position, size_type n) const;

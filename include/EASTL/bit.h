@@ -13,6 +13,7 @@
 
 #include <EASTL/internal/memory_base.h>
 #include <EASTL/type_traits.h>
+#include <EASTL/numeric_limits.h>
 #include <string.h> // memcpy
 
 namespace eastl

@@ -1543,26 +1543,28 @@ int TestVector()
 		// because the existing elements of this were allocated by a different allocator and
 		// will be freed in the future with the allocator copied from x.
 		// The test below should work for the case of EASTL_ALLOCATOR_COPY_ENABLED == 0 or 1.
+		{
+			InstanceAllocator ia0((uint8_t)0);
+			InstanceAllocator ia1((uint8_t)1);
+
+			eastl::vector<int, InstanceAllocator> v0((eastl_size_t)1, (int)0, ia0);
+			eastl::vector<int, InstanceAllocator> v1((eastl_size_t)1, (int)1, ia1);
+
+			EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
+			EATEST_VERIFY(v0.get_allocator() != v1.get_allocator());
+			v0 = v1;
+			EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
+			EATEST_VERIFY(InstanceAllocator::mMismatchCount == 0);
+			EATEST_VERIFY(v0.validate());
+			EATEST_VERIFY(v1.validate());
+			bool allocatorsEqual = (v0.get_allocator() == v1.get_allocator());
+			EATEST_VERIFY(allocatorsEqual == (bool)EASTL_ALLOCATOR_COPY_ENABLED);
+
+			// destroying containers to invoke InstanceAllocator::deallocate() checks
+		}
+
+		EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
 		InstanceAllocator::reset_all();
-
-		InstanceAllocator ia0((uint8_t)0);
-		InstanceAllocator ia1((uint8_t)1);
-
-		eastl::vector<int, InstanceAllocator> v0((eastl_size_t)1, (int)0, ia0);
-		eastl::vector<int, InstanceAllocator> v1((eastl_size_t)1, (int)1, ia1);
-
-		EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
-#if EASTL_ALLOCATOR_COPY_ENABLED
-		EATEST_VERIFY(v0.get_allocator() != v1.get_allocator());
-#endif
-		v0 = v1;
-		EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
-		EATEST_VERIFY(InstanceAllocator::mMismatchCount == 0);
-		EATEST_VERIFY(v0.validate());
-		EATEST_VERIFY(v1.validate());
-#if EASTL_ALLOCATOR_COPY_ENABLED
-		EATEST_VERIFY(v0.get_allocator() == v1.get_allocator());
-#endif
 	}
 
 	{
@@ -1750,7 +1752,6 @@ int TestVector()
 				// malloc).  The memory allocated from one instance can be freed by another instance in the case where
 				// allocators compare equal.  This test is verifying functionality in the opposite case where allocators
 				// instances do not compare equal and must clean up its own allocated memory.
-				InstanceAllocator::reset_all();
 				{
 					InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
 					eastl::vector<eastl::unique_ptr<int>, InstanceAllocator> v1(a1);
@@ -1769,8 +1770,12 @@ int TestVector()
 					VERIFY(v1.empty() && !v2.empty());
 					v1.swap(v2); 
 					VERIFY(!v1.empty() && v2.empty());
+
+					// destroying containers to invoke InstanceAllocator::deallocate() checks
 				}
-				VERIFY(InstanceAllocator::mMismatchCount == 0);
+
+				EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
+				InstanceAllocator::reset_all();
 			}
 		}
 	#endif
@@ -1807,5 +1812,54 @@ int TestVector()
 		}
 	}
 
+	// Tests for erase_unordered
+	{
+		{
+			eastl::vector<int> vec = {0, 1, 2, 3};
+			auto numErased = eastl::erase_unsorted(vec, 1);
+			EATEST_VERIFY(numErased == 1);
+			EATEST_VERIFY(VerifySequence(vec, {0, 3, 2}, "erase_unordered") );
+		}
+		{
+			eastl::vector<int> vec = {};
+			auto numErased = eastl::erase_unsorted(vec, 42);
+			EATEST_VERIFY(numErased == 0);
+			EATEST_VERIFY(vec.size() == 0);
+		}
+		// The following test checks that the correct implementation is called for vector by checking the order
+		// of the remaining values. It is not a strict requirement that they have this order but it
+		// is expected to be the result based on that it minimizes the amount of work.
+		{
+			eastl::vector<int> vec = {0, 1, 2, 3, 1, 5, 6, 1, 8, 9};
+			auto numErased = eastl::erase_unsorted(vec, 1);
+			EATEST_VERIFY(numErased == 3);
+			EATEST_VERIFY(VerifySequence(vec, {0, 9, 2, 3, 8, 5, 6}, "erase_unordered") );
+		}
+	}
+
+	// Tests for erase_unordered_if
+	{
+		{
+			eastl::vector<int> vec = {0, 1, 2, 3};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 2);
+			EATEST_VERIFY(VerifySequence(vec, {0, 2}, "erase_unordered_if") );
+		}
+		{
+			eastl::vector<int> vec = {};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 0);
+			EATEST_VERIFY(vec.size() == 0);
+		}
+		// The following test checks that the correct implementation is called for vector by checking the order
+		// of the remaining values. It is not a strict requirement that they have this order but it
+		// is expected to be the result based on that it minimizes the amount of work.
+		{
+			eastl::vector<int> vec = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+			auto numErased = eastl::erase_unsorted_if(vec, [](const int& v) { return v % 2 == 1; });
+			EATEST_VERIFY(numErased == 5);
+			EATEST_VERIFY(VerifySequence(vec, {0, 8, 2, 6, 4}, "erase_unordered_if") );
+		}
+	}
 	return nErrorCount;
 }

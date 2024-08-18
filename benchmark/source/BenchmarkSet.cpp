@@ -45,7 +45,7 @@ namespace
 		typename Container::const_iterator it = eastl::find(c.begin(), c.end(), uint32_t(9999999));
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)*it);
 	}
 
 
@@ -61,7 +61,7 @@ namespace
 			temp += *it;
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -73,7 +73,7 @@ namespace
 		while(pArrayBegin != pArrayEnd)
 			temp += c.count(*pArrayBegin++);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -89,7 +89,7 @@ namespace
 			temp += *it; // We know that it != end because earlier we inserted 0xffffffff.
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -105,7 +105,7 @@ namespace
 			temp += *it; // We know that it != end because earlier we inserted 0xffffffff.
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -119,7 +119,7 @@ namespace
 			temp += *(c.equal_range(*pArrayBegin++).first); // We know that it != end because earlier we inserted 0xffffffff.
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)temp);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)temp);
 	}
 
 
@@ -130,7 +130,7 @@ namespace
 		while(pArrayBegin != pArrayEnd)
 			c.erase(*pArrayBegin++);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 	}
 
 
@@ -185,7 +185,7 @@ namespace
 		stopwatch.Restart();
 		c.clear();
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 	}
 
 

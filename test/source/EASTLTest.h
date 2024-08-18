@@ -8,6 +8,7 @@
 
 
 #include <EABase/eabase.h>
+#include <EAStdC/EASprintf.h>
 #include <EATest/EATest.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -24,12 +25,17 @@ EA_RESTORE_ALL_VC_WARNINGS();
 
 int TestAlgorithm();
 int TestAllocator();
+int TestAllocatorPropagate();
 int TestAny();
 int TestArray();
+#if defined(EA_COMPILER_CPP20_ENABLED)
+int TestBit();
+#endif
 int TestBitVector();
 int TestBitset();
 int TestCharTraits();
 int TestChrono();
+int TestConcepts();
 int TestCppCXTypeTraits();
 int TestDeque();
 int TestExtra();
@@ -81,8 +87,20 @@ int TestVector();
 int TestVectorMap();
 int TestVectorSet();
 int TestAtomicBasic();
+int TestAtomicMultiThreaded();
 int TestAtomicAsm();
 int TestBitcast();
+int TestGslAlgorithum();
+int TestGslAssertion();
+int TestGslAt();
+int TestGslByte();
+int TestGslNotNull();
+int TestGslOwner();
+int TestGslSpanCompatibility();
+int TestGslSpanExt();
+int TestGslSpan();
+int TestGslStrictNotNull();
+int TestGslUtils();
 
 
 // Now enable warnings as desired.
@@ -1350,8 +1368,9 @@ public:
 		kMultiplier = 16
 	}; // Use 16 because it's the highest currently known platform alignment requirement.
 
-	InstanceAllocator(const char* = NULL, uint8_t instanceId = 0) : mInstanceId(instanceId) {}
-	InstanceAllocator(uint8_t instanceId) : mInstanceId(instanceId) {}
+	InstanceAllocator() : mInstanceId(0) {}
+	explicit InstanceAllocator(const char*, uint8_t instanceId = 0) : mInstanceId(instanceId) {}
+	explicit InstanceAllocator(uint8_t instanceId) : mInstanceId(instanceId) {}
 	InstanceAllocator(const InstanceAllocator& x) : mInstanceId(x.mInstanceId) {}
 	InstanceAllocator(const InstanceAllocator& x, const char*) : mInstanceId(x.mInstanceId) {}
 
@@ -1399,7 +1418,7 @@ public:
 
 	const char* get_name()
 	{
-		sprintf(mName, "InstanceAllocator %u", mInstanceId);
+		EA::StdC::Snprintf(mName, kNameBufferSize, "InstanceAllocator %u", mInstanceId);
 		return mName;
 	}
 
@@ -1408,8 +1427,9 @@ public:
 	static void reset_all() { mMismatchCount = 0; }
 
 public:
+	const static int kNameBufferSize = 32;
 	uint8_t mInstanceId;
-	char mName[32];
+	char mName[kNameBufferSize];
 
 	static int mMismatchCount;
 };
@@ -1607,6 +1627,23 @@ struct MoveOnlyTypeDefaultCtor
 
 	int mVal;
 };
+
+struct NonTriviallyCopyable {
+	// non-trivial special members (that is equivalent to the defaults)
+	NonTriviallyCopyable(unsigned int v = 0) noexcept : mValue(v) {}
+	NonTriviallyCopyable(NonTriviallyCopyable&& other) noexcept : mValue(other.mValue) {}
+	NonTriviallyCopyable& operator=(NonTriviallyCopyable&& other) noexcept { mValue = other.mValue; return *this; }
+	NonTriviallyCopyable(const NonTriviallyCopyable& other) noexcept : mValue(other.mValue) {}
+	NonTriviallyCopyable& operator=(const NonTriviallyCopyable& other) noexcept { mValue = other.mValue; return *this; }
+
+	friend bool operator==(const NonTriviallyCopyable& lhs, const NonTriviallyCopyable& rhs) { return lhs.mValue == rhs.mValue; }
+
+public:
+	unsigned int mValue;
+};
+static_assert(eastl::is_default_constructible<NonTriviallyCopyable>::value, "NonTriviallyCopyable");
+static_assert(!eastl::is_trivially_copyable<NonTriviallyCopyable>::value, "NonTriviallyCopyable");
+static_assert(eastl::is_standard_layout<NonTriviallyCopyable>::value, "NonTriviallyCopyable");
 
 struct TriviallyCopyableWithCopy {
 	// non-trivial default ctor

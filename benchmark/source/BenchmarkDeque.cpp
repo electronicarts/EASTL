@@ -56,15 +56,6 @@ namespace
 }
 
 
-EASTL_DECLARE_POD(ValuePair)
-EASTL_DECLARE_TRIVIAL_CONSTRUCTOR(ValuePair)
-EASTL_DECLARE_TRIVIAL_COPY(ValuePair)
-EASTL_DECLARE_TRIVIAL_ASSIGN(ValuePair)
-EASTL_DECLARE_TRIVIAL_DESTRUCTOR(ValuePair)
-EASTL_DECLARE_TRIVIAL_RELOCATE(ValuePair)
-
-
-
 typedef std::deque<ValuePair>   StdDeque;
 typedef eastl::deque<ValuePair, EASTLAllocatorType, 128> EaDeque;  // What value do we pick for the subarray size to make the comparison fair? Using the default isn't ideal because it results in this test measuring speed efficiency and ignoring memory efficiency. 
 
@@ -106,7 +97,7 @@ namespace
 		for(typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
 			temp += c[j].key;
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(temp & 0xffffffff));
 	}
 
 
@@ -119,7 +110,7 @@ namespace
 			++it;
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 
 		/* Alternative way to measure:
 		const eastl_size_t n = c.size();
@@ -128,7 +119,7 @@ namespace
 			++it;
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 		*/
 	}
 
@@ -143,7 +134,7 @@ namespace
 		typename Container::iterator it = eastl::find(c.begin(), c.end(), vp);
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(*it).key);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)(*it).key);
 	}
 
 
@@ -156,7 +147,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(c.begin(), c.end(), vpCompare);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c[0].key);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c[0].key);
 	}
 
 

@@ -95,7 +95,7 @@ namespace
 		stopwatch.Restart();
 		std::sort(stdVectorVP.begin(), stdVectorVP.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)stdVectorVP[0].key);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)stdVectorVP[0].key);
 	}
 
 
@@ -104,7 +104,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(eaVectorVP.begin(), eaVectorVP.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eaVectorVP[0].key);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)eaVectorVP[0].key);
 	}
 
 
@@ -113,7 +113,7 @@ namespace
 		stopwatch.Restart();
 		std::sort(stdVectorInt.begin(), stdVectorInt.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)stdVectorInt[0]);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)stdVectorInt[0]);
 	}
 
 
@@ -122,7 +122,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(eaVectorInt.begin(), eaVectorInt.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eaVectorInt[0]);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)eaVectorInt[0]);
 	}
 
 
@@ -131,7 +131,7 @@ namespace
 		stopwatch.Restart();
 		std::sort(stdVectorTO.begin(), stdVectorTO.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)stdVectorTO[0].mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)stdVectorTO[0].mX);
 	}
 
 
@@ -140,7 +140,7 @@ namespace
 		stopwatch.Restart();
 		eastl::quick_sort(eaVectorTO.begin(), eaVectorTO.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)eaVectorTO[0].mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)eaVectorTO[0].mX);
 	}
 
 } // namespace

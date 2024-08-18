@@ -14,6 +14,9 @@
 			 // improvements in apps as a result.
 #endif
 
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4512 4626);
+
 namespace eastl
 {
 	///////////////////////////////////////////////////////////////////////////
@@ -77,5 +80,7 @@ namespace eastl
 	}
 
 } // namespace eastl
+
+EA_RESTORE_VC_WARNING();
 
 #endif // EASTL_OVERLOADED_H

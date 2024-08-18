@@ -11,6 +11,9 @@
 #include <EASTL/internal/red_black_tree.h>
 #include <EASTL/functional.h>
 #include <EASTL/utility.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -126,9 +129,20 @@ namespace eastl
 		map(this_type&& x);
 		map(this_type&& x, const allocator_type& allocator);
 		map(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
+		map(std::initializer_list<value_type> ilist, const allocator_type& allocator);
 
 		template <typename Iterator>
 		map(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To consider: Make a second version of this function without a default arg.
+
+		// missing constructors, to implement:
+		// 
+		// map(const this_type& x, const allocator_type& allocator);
+		// 
+		// template <typename InputIterator>
+		// map(InputIterator first, InputIterator last, const Compare& comp = Compare(), const Allocator& alloc = Allocator());
+		//
+		// template <typename InputIterator>
+		// map(InputIterator first, InputIterator last, const Allocator& alloc);
 
 		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
 		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
@@ -147,8 +161,18 @@ namespace eastl
 		size_type erase(const Key& key);
 		size_type count(const Key& key) const;
 
+		// missing transparent key support:
+		// template<typename K>
+		// size_type count(const K& k) const;
+
 		eastl::pair<iterator, iterator>             equal_range(const Key& key);
 		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+
+		// missing transparent key support:
+		// template<typename K>
+		// eastl::pair<iterator, iterator>             equal_range(const K& k);
+		// template<typename K>
+		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
 
 		T& operator[](const Key& key); // Of map, multimap, set, and multimap, only map has operator[].
 		T& operator[](Key&& key); 
@@ -247,9 +271,20 @@ namespace eastl
 		multimap(this_type&& x);
 		multimap(this_type&& x, const allocator_type& allocator);
 		multimap(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR);
+		multimap(std::initializer_list<value_type> ilist, const allocator_type& allocator);
 
 		template <typename Iterator>
 		multimap(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To consider: Make a second version of this function without a default arg.
+
+		// missing constructors, to implement:
+		// 
+		// multimap(const this_type& x, const allocator_type& allocator);
+		// 
+		// template <typename InputIterator>
+		// multimap(InputIterator first, InputIterator last, const Compare& comp = Compare(), const Allocator& alloc = Allocator());
+		//
+		// template <typename InputIterator>
+		// multimap(InputIterator first, InputIterator last, const Allocator& alloc);
 
 		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
 		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
@@ -268,14 +303,30 @@ namespace eastl
 		size_type erase(const Key& key);
 		size_type count(const Key& key) const;
 
+		// missing transparent key support:
+		// template<typename K>
+		// size_type count(const K& k) const;
+
 		eastl::pair<iterator, iterator>             equal_range(const Key& key);
 		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+
+		// missing transparent key support:
+		// template<typename K>
+		// eastl::pair<iterator, iterator>             equal_range(const K& k);
+		// template<typename K>
+		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
 
 		/// equal_range_small
 		/// This is a special version of equal_range which is optimized for the 
 		/// case of there being few or no duplicated keys in the tree.
 		eastl::pair<iterator, iterator>             equal_range_small(const Key& key);
 		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const;
+
+		// missing transparent key support:
+		// template<typename K>
+		// eastl::pair<iterator, iterator>             equal_range_small(const K& k);
+		// template<typename K>
+		// eastl::pair<const_iterator, const_iterator> equal_range_small(const K& k) const;
 
 	private:
 		// these base member functions are not included in multimaps
@@ -327,6 +378,13 @@ namespace eastl
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline map<Key, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist, const Compare& compare, const allocator_type& allocator)
 		: base_type(ilist.begin(), ilist.end(), compare, allocator)
+	{
+	}
+
+
+	template <typename Key, typename T, typename Compare, typename Allocator>
+	inline map<Key, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist, const allocator_type& allocator)
+		: base_type(ilist.begin(), ilist.end(), Compare(), allocator)
 	{
 	}
 
@@ -623,6 +681,13 @@ namespace eastl
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline multimap<Key, T, Compare, Allocator>::multimap(std::initializer_list<value_type> ilist, const Compare& compare, const allocator_type& allocator)
 		: base_type(ilist.begin(), ilist.end(), compare, allocator)
+	{
+	}
+
+
+	template <typename Key, typename T, typename Compare, typename Allocator>
+	inline multimap<Key, T, Compare, Allocator>::multimap(std::initializer_list<value_type> ilist, const allocator_type& allocator)
+		: base_type(ilist.begin(), ilist.end(), Compare(), allocator)
 	{
 	}
 

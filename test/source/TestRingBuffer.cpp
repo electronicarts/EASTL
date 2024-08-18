@@ -4,6 +4,7 @@
 
 
 #include "EASTLTest.h"
+#include <EAStdC/EASprintf.h>
 #include <EASTL/bonus/ring_buffer.h>
 #include <EASTL/bonus/fixed_ring_buffer.h>
 #include <EASTL/vector.h>
@@ -82,7 +83,8 @@ int TestRingBuffer()
 		typedef ring_buffer< string, vector<string> > RBVectorString;
 
 		int  counter = 0;
-		char counterBuffer[32];
+		const int kBufferSize = 32;
+		char counterBuffer[kBufferSize];
 
 		// explicit ring_buffer(size_type size = 0);
 		const int kOriginalCapacity = 50;
@@ -120,7 +122,7 @@ int TestRingBuffer()
 		}
 
 		// void push_back(const value_type& value);
-		sprintf(counterBuffer, "%d", counter++);
+		EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 		rbVectorString.push_back(string(counterBuffer));
 		EATEST_VERIFY(rbVectorString.validate());
 		EATEST_VERIFY(!rbVectorString.empty());
@@ -149,7 +151,7 @@ int TestRingBuffer()
 		EATEST_VERIFY(rbVectorString.validate_iterator(it) == (isf_valid | isf_current | isf_can_dereference));
 		EATEST_VERIFY(it->empty());
 
-		sprintf(counterBuffer, "%d", counter++);
+		EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 		*it = counterBuffer;
 		EATEST_VERIFY(*it == "1");
 
@@ -173,21 +175,21 @@ int TestRingBuffer()
 		// Now we start hammering the ring buffer with push_back.
 		for(eastl_size_t i = 0, iEnd = rbVectorString.capacity() * 5; i != iEnd; i++)
 		{
-			sprintf(counterBuffer, "%d", counter++);
+			EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 			rbVectorString.push_back(string(counterBuffer));
 			EATEST_VERIFY(rbVectorString.validate());
 		}
 
 		int  counterCheck = counter - 1;
-		char counterCheckBuffer[32];
-		sprintf(counterCheckBuffer, "%d", counterCheck);
+		char counterCheckBuffer[kBufferSize];
+		EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", counterCheck);
 		EATEST_VERIFY(rbVectorString.back() == counterCheckBuffer);
 
 		// reverse_iterator rbegin();
 		// reverse_iterator rend();
 		for(RBVectorString::reverse_iterator ri = rbVectorString.rbegin(); ri != rbVectorString.rend(); ++ri)
 		{
-			sprintf(counterCheckBuffer, "%d", counterCheck--);
+			EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", counterCheck--);
 			EATEST_VERIFY(*ri == counterCheckBuffer);
 		}
 
@@ -199,7 +201,7 @@ int TestRingBuffer()
 		{
 			EATEST_VERIFY(rbVectorString.validate_iterator(i) == (isf_valid | isf_current | isf_can_dereference));
 			EATEST_VERIFY(*i == counterCheckBuffer);
-			sprintf(counterCheckBuffer, "%d", ++counterCheck);
+			EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", ++counterCheck);
 		}
 
 		// void clear();
@@ -213,7 +215,7 @@ int TestRingBuffer()
 		// Not easy to test the expected values without some tedium.
 		for(int j = 0; j < 10000 + (gEASTL_TestLevel * 10000); j++)
 		{
-			sprintf(counterBuffer, "%d", counter++);
+			EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 
 			const eastl_size_t op = rng.RandLimit(12);
 			const eastl_size_t s  = rbVectorString.size();
@@ -606,7 +608,8 @@ int TestRingBuffer()
 		typedef ring_buffer< string, list<string> > RBListString;
 
 		int  counter = 0;
-		char counterBuffer[32];
+		const int kBufferSize = 32;
+		char counterBuffer[kBufferSize];
 
 		// explicit ring_buffer(size_type size = 0);
 		const int kOriginalCapacity = 50;
@@ -644,7 +647,7 @@ int TestRingBuffer()
 		}
 
 		// void push_back(const value_type& value);
-		sprintf(counterBuffer, "%d", counter++);
+		EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 		rbListString.push_back(string(counterBuffer));
 		EATEST_VERIFY(rbListString.validate());
 		EATEST_VERIFY(!rbListString.empty());
@@ -673,7 +676,7 @@ int TestRingBuffer()
 		EATEST_VERIFY(rbListString.validate_iterator(it) == (isf_valid | isf_current | isf_can_dereference));
 		EATEST_VERIFY(it->empty());
 
-		sprintf(counterBuffer, "%d", counter++);
+		EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 		*it = counterBuffer;
 		EATEST_VERIFY(*it == "1");
 
@@ -697,21 +700,21 @@ int TestRingBuffer()
 		// Now we start hammering the ring buffer with push_back.
 		for(eastl_size_t i = 0, iEnd = rbListString.capacity() * 5; i != iEnd; i++)
 		{
-			sprintf(counterBuffer, "%d", counter++);
+			EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 			rbListString.push_back(string(counterBuffer));
 			EATEST_VERIFY(rbListString.validate());
 		}
 
 		int  counterCheck = counter - 1;
-		char counterCheckBuffer[32];
-		sprintf(counterCheckBuffer, "%d", counterCheck);
+		char counterCheckBuffer[kBufferSize];
+		EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", counterCheck);
 		EATEST_VERIFY(rbListString.back() == counterCheckBuffer);
 
 		// reverse_iterator rbegin();
 		// reverse_iterator rend();
 		for(RBListString::reverse_iterator ri = rbListString.rbegin(); ri != rbListString.rend(); ++ri)
 		{
-			sprintf(counterCheckBuffer, "%d", counterCheck--);
+			EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", counterCheck--);
 			EATEST_VERIFY(*ri == counterCheckBuffer);
 		}
 
@@ -723,7 +726,7 @@ int TestRingBuffer()
 		{
 			EATEST_VERIFY(rbListString.validate_iterator(i) == (isf_valid | isf_current | isf_can_dereference));
 			EATEST_VERIFY(*i == counterCheckBuffer);
-			sprintf(counterCheckBuffer, "%d", ++counterCheck);
+			EA::StdC::Snprintf(counterCheckBuffer, kBufferSize, "%d", ++counterCheck);
 		}
 
 		// void clear();
@@ -737,7 +740,7 @@ int TestRingBuffer()
 		// Not easy to test the expected values without some tedium.
 		for(int j = 0; j < 10000 + (gEASTL_TestLevel * 10000); j++)
 		{
-			sprintf(counterBuffer, "%d", counter++);
+			EA::StdC::Snprintf(counterBuffer, kBufferSize, "%d", counter++);
 
 			const eastl_size_t op = rng.RandLimit(12);
 			const eastl_size_t s  = rbListString.size();

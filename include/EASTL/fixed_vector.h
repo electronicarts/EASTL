@@ -238,21 +238,18 @@ namespace eastl
 	inline fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_vector(this_type&& x)
 		: base_type(fixed_allocator_type(mBuffer.buffer))
 	{
-		// Since we are a fixed_vector, we can't swap pointers. We can possibly so something like fixed_swap or
+		// Since we are a fixed_vector, we can't swap pointers. We can possibly do something like fixed_swap or
 		// we can just do an assignment from x. If we want to do the former then we need to have some complicated
 		// code to deal with overflow or no overflow, and whether the memory is in the fixed-size buffer or in 
 		// the overflow allocator. 90% of the time the memory should be in the fixed buffer, in which case
 		// a simple assignment is no worse than the fancy pathway.
 
-		// Since we are a fixed_list, we can't normally swap pointers unless both this and 
+		// Since we are a fixed_vector, we can't normally swap pointers unless both this and 
 		// x are using using overflow and the overflow allocators are equal. To do:
 		//if(has_overflowed() && x.has_overflowed() && (get_overflow_allocator() == x.get_overflow_allocator()))
 		//{
 		//    We can swap contents and may need to swap the allocators as well.
 		//}
-
-		// The following is currently identical to the fixed_vector(const this_type& x) code above. If it stays that
-		// way then we may want to make a shared implementation.
 		get_allocator().copy_overflow_allocator(x.get_allocator());
 
 		#if EASTL_NAME_ENABLED
@@ -269,19 +266,10 @@ namespace eastl
 	inline fixed_vector<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_vector(this_type&& x, const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, overflowAllocator))
 	{
-		// See the discussion above.
-
-		// The following is currently identical to the fixed_vector(const this_type& x) code above. If it stays that
-		// way then we may want to make a shared implementation.
-		get_allocator().copy_overflow_allocator(x.get_allocator());
-
-		#if EASTL_NAME_ENABLED
-			get_allocator().set_name(x.get_allocator().get_name());
-		#endif
-
+		// Since we are not swapping the allocated buffers but simply move the elements, we do not have to care about allocator compatibility.
 		mpBegin = mpEnd = (value_type*)&mBuffer.buffer[0];
 		internalCapacityPtr() = mpBegin + nodeCount;
-		base_type::template DoAssign<iterator, true>(x.begin(), x.end(), false_type());
+		base_type::template DoAssign<move_iterator<iterator>, true>(eastl::make_move_iterator(x.begin()), eastl::make_move_iterator(x.end()), false_type());
 	}
 
 
@@ -399,7 +387,7 @@ namespace eastl
 			{
 				T* const pNewData = (n <= kMaxSize) ? (T*)&mBuffer.buffer[0] : DoAllocate(n);
 				T* const pCopyEnd = (n < nPrevSize) ? (mpBegin + n) : mpEnd;
-				eastl::uninitialized_move_ptr(mpBegin, pCopyEnd, pNewData); // Move [mpBegin, pCopyEnd) to p.
+				eastl::uninitialized_move(mpBegin, pCopyEnd, pNewData); // Move [mpBegin, pCopyEnd) to p.
 				eastl::destruct(mpBegin, mpEnd);
 				if((uintptr_t)mpBegin != (uintptr_t)mBuffer.buffer)
 					DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));

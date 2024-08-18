@@ -91,7 +91,7 @@ namespace Benchmark
 
 
 	// Scratch sprintf buffer
-	char gScratchBuffer[1024];
+	char gScratchBuffer[kScratchBufferSize];
 
 
 	void DoNothing(...)
