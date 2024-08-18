@@ -13,6 +13,19 @@ struct NoExceptFalseDestructor
 	~NoExceptFalseDestructor() noexcept(false) = default;
 };
 
+// In GCC prior to version 14, the following static_assert fails:
+//
+//    static_assert(!noexcept(std::declval<NoExceptFalseDestructor&>().~NoExceptFalseDestructor()), "bad noexcept!");
+//
+// our implementation of some of these concepts depends on that working correctly so we don't
+// do these tests in older versions of GCC. Clang handles this properly and on MSVC we use
+// __is_nothrow_destructible instead of rolling our own.
+#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 14000)
+	#define EA_TEST_NoExceptFalseDestructor 0
+#else
+	#define EA_TEST_NoExceptFalseDestructor 1
+#endif
+
 struct From;
 
 struct To
@@ -54,7 +67,9 @@ int TestConcepts()
 	{
 		static_assert(internal::concepts::destructible<int>, "destructible concept failure.");
 		static_assert(!internal::concepts::destructible<void>, "destructible concept failure.");
+#if EA_TEST_NoExceptFalseDestructor
 		static_assert(!internal::concepts::destructible<NoExceptFalseDestructor>, "destructible concept failure.");
+#endif
 	}
 
 	// constructible_from
@@ -67,8 +82,10 @@ int TestConcepts()
 		static_assert(!internal::concepts::constructible_from<int, int*>, "constructible_from concept failure.");
 		static_assert(!internal::concepts::constructible_from<int, bool, bool>, "constructible_from concept failure.");
 		static_assert(!internal::concepts::constructible_from<int, void>, "constructible_from concept failure.");
+#if EA_TEST_NoExceptFalseDestructor
 		static_assert(!internal::concepts::constructible_from<NoExceptFalseDestructor>, "constructible_from concept failure.");
 		static_assert(!internal::concepts::constructible_from<NoExceptFalseDestructor, NoExceptFalseDestructor>, "constructible_from concept failure.");
+#endif
 	}
 
 	// constructible_to
@@ -88,7 +105,9 @@ int TestConcepts()
 		static_assert(internal::concepts::move_constructible<int>, "move_constructible concept failure.");
 		static_assert(internal::concepts::move_constructible<unique_ptr<int>>, "move_constructible concept failure.");
 
+#if EA_TEST_NoExceptFalseDestructor
 		static_assert(!internal::concepts::move_constructible<NoExceptFalseDestructor>, "move_constructible concept failure.");
+#endif
 		static_assert(!internal::concepts::move_constructible<NotMoveable>, "move_constructible concept failure.");
 	}
 
@@ -97,7 +116,9 @@ int TestConcepts()
 		static_assert(internal::concepts::copy_constructible<int>, "copy_constructible concept failure.");
 		
 		static_assert(!internal::concepts::copy_constructible<unique_ptr<int>>, "copy_constructible concept failure.");
+#if EA_TEST_NoExceptFalseDestructor
 		static_assert(!internal::concepts::move_constructible<NoExceptFalseDestructor>, "copy_constructible concept failure.");
+#endif
 		static_assert(!internal::concepts::move_constructible<NotMoveable>, "copy_constructible concept failure.");
 	}
 
