@@ -376,9 +376,15 @@ namespace eastl
 
 	template<typename> struct EASTL_REMOVE_AT_2024_APRIL result_of;
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template<typename F, typename... ArgTypes>
 	struct EASTL_REMOVE_AT_2024_APRIL result_of<F(ArgTypes...)>
 		{ typedef decltype(eastl::declval<F>()(eastl::declval<ArgTypes>()...)) type; };
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	// result_of_t is the C++14 using typedef for typename result_of<T>::type.
@@ -386,9 +392,15 @@ namespace eastl
 	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		#define EASTL_RESULT_OF_T(T) typename result_of<T>::type
 	#else
+	// Note: some compilers (notably GCC) trigger deprecation warnings in template variable
+	// declarations even if the variable is not insantiated here, so turn the warning off
+	// here. If this varialbe is used, the warning will still trigger in the user code, this
+	// just disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 		template <typename T>
 		using result_of_t EASTL_REMOVE_AT_2024_APRIL = typename result_of<T>::type;
 		#define EASTL_RESULT_OF_T(T) result_of_t<T>
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 	#endif
 
 

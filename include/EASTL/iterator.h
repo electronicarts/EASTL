@@ -222,6 +222,11 @@ namespace eastl
 	};
 
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template <typename Iterator>
 	struct EASTL_REMOVE_AT_2024_SEPT is_iterator_wrapper_helper<Iterator, true>
 	{
@@ -238,6 +243,7 @@ namespace eastl
 	template <typename Iterator>
 	EASTL_REMOVE_AT_2024_SEPT inline typename is_iterator_wrapper_helper<Iterator, eastl::is_iterator_wrapper<Iterator>::value>::iterator_type unwrap_iterator(Iterator it)
 		{ return eastl::is_iterator_wrapper_helper<Iterator, eastl::is_iterator_wrapper<Iterator>::value>::get_unwrapped(it); }
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 
@@ -424,9 +430,15 @@ namespace eastl
 	struct EASTL_REMOVE_AT_2024_SEPT is_reverse_iterator
 		: public eastl::false_type {};
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template<typename Iterator>
 	struct EASTL_REMOVE_AT_2024_SEPT is_reverse_iterator<eastl::reverse_iterator<Iterator>>
 		: public eastl::true_type {};
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 	/// unwrap_reverse_iterator is not implemented since there's no
 	/// good use case and there's some abiguitiy. Note that
@@ -642,9 +654,15 @@ namespace eastl
 	struct EASTL_REMOVE_AT_2024_SEPT is_move_iterator
 		: public eastl::false_type {};
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template<typename Iterator>
 	struct EASTL_REMOVE_AT_2024_SEPT is_move_iterator<eastl::move_iterator<Iterator>>
 		: public eastl::true_type {};
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	/// unwrap_move_iterator
@@ -656,12 +674,14 @@ namespace eastl
 	///      eastl::move_iterator<vector<int>::iterator> moveIterator(intVector.begin());
 	///      vector<int>::iterator it = unwrap_move_iterator(moveIterator);
 	///
+EASTL_INTERNAL_DISABLE_DEPRECATED() // is_iterator_wrapper_helper is deprecated
 	template <typename Iterator>
 	EASTL_REMOVE_AT_2024_SEPT inline typename eastl::is_iterator_wrapper_helper<Iterator, eastl::is_move_iterator<Iterator>::value>::iterator_type unwrap_move_iterator(Iterator it)
 	{
 		// get_unwrapped(it) -> it.unwrap() which is equivalent to `it.base()` for move_iterator and to `it` otherwise.
 		return eastl::is_iterator_wrapper_helper<Iterator, eastl::is_move_iterator<Iterator>::value>::get_unwrapped(it);
 	}
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	/// back_insert_iterator
@@ -856,9 +876,15 @@ namespace eastl
 	struct EASTL_REMOVE_AT_2024_SEPT is_insert_iterator
 		: public eastl::false_type {};
 
+	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
+	// specialization if the main template is derpecated, so turn the warning off here. If this
+	// specialization is used, the warning will still trigger in the user code, this just
+	// disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 	template<typename Iterator>
 	struct EASTL_REMOVE_AT_2024_SEPT is_insert_iterator<eastl::insert_iterator<Iterator>>
 		: public eastl::true_type {};
+EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 

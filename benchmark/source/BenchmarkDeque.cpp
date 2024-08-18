@@ -56,15 +56,6 @@ namespace
 }
 
 
-EASTL_DECLARE_POD(ValuePair)
-EASTL_DECLARE_TRIVIAL_CONSTRUCTOR(ValuePair)
-EASTL_DECLARE_TRIVIAL_COPY(ValuePair)
-EASTL_DECLARE_TRIVIAL_ASSIGN(ValuePair)
-EASTL_DECLARE_TRIVIAL_DESTRUCTOR(ValuePair)
-EASTL_DECLARE_TRIVIAL_RELOCATE(ValuePair)
-
-
-
 typedef std::deque<ValuePair>   StdDeque;
 typedef eastl::deque<ValuePair, EASTLAllocatorType, 128> EaDeque;  // What value do we pick for the subarray size to make the comparison fair? Using the default isn't ideal because it results in this test measuring speed efficiency and ignoring memory efficiency. 
 

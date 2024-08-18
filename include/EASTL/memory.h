@@ -362,15 +362,15 @@ namespace eastl
 			return *this;
 		}
 
-		raw_storage_iterator<OutputIterator, T>& operator++()
+		raw_storage_iterator& operator++()
 		{
 			++mIterator;
 			return *this;
 		}
 
-		raw_storage_iterator<OutputIterator, T> operator++(int)
+		raw_storage_iterator operator++(int)
 		{
-			raw_storage_iterator<OutputIterator, T> tempIterator = *this;
+			raw_storage_iterator tempIterator = *this;
 			++mIterator;
 			return tempIterator;
 		}
