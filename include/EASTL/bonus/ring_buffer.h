@@ -299,10 +299,10 @@ namespace eastl
 
 		/* To do:
 			template <class... Args>
-			void emplace_front(Args&&... args);
+			reference emplace_front(Args&&... args);
 
 			template <class... Args>
-			void emplace_back(Args&&... args);
+			reference emplace_back(Args&&... args);
 
 			template <class... Args>
 			iterator emplace(const_iterator position, Args&&... args);

@@ -27,6 +27,7 @@
 
 #include <EASTL/set.h>
 #include <EASTL/string.h>
+#include <EAStdC/EASprintf.h>
 #include <EAStdC/EAStopwatch.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,7 +93,8 @@ namespace Benchmark
 
 
 	// Scratch sprintf buffer
-	extern char gScratchBuffer[1024];
+	const int kScratchBufferSize = 1024;
+	extern char gScratchBuffer[kScratchBufferSize];
 
 
 

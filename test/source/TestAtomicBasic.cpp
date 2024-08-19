@@ -1277,7 +1277,7 @@ void AtomicPointerBasicTest::TestAtomicPointerStandalone()
 	{
 		AtomicType atomic;
 
-		PtrType ret = atomic_load_cond(&atomic, [](PtrType val) { return true; });
+		PtrType ret = atomic_load_cond(&atomic, [](PtrType) { return true; });
 
 		VERIFY(ret == (PtrType)0x0);
 	}
@@ -1285,7 +1285,7 @@ void AtomicPointerBasicTest::TestAtomicPointerStandalone()
 	{
 		AtomicType atomic;
 
-		PtrType ret = atomic_load_cond_explicit(&atomic, [](PtrType val) { return true; }, eastl::memory_order_relaxed);
+		PtrType ret = atomic_load_cond_explicit(&atomic, [](PtrType) { return true; }, eastl::memory_order_relaxed);
 
 		VERIFY(ret == (PtrType)0x0);
 	}
@@ -3750,7 +3750,7 @@ void AtomicIntegralBasicTest<T>::TestAtomicStandalone()
 	{
 		AtomicType atomic;
 
-		IntegralType ret = atomic_load_cond(&atomic, [](IntegralType val) { return true; });
+		IntegralType ret = atomic_load_cond(&atomic, [](IntegralType) { return true; });
 
 		VERIFY(ret == 0);
 	}
@@ -3758,7 +3758,7 @@ void AtomicIntegralBasicTest<T>::TestAtomicStandalone()
 	{
 		AtomicType atomic;
 
-		IntegralType ret = atomic_load_cond_explicit(&atomic, [](IntegralType val) { return true; }, eastl::memory_order_relaxed);
+		IntegralType ret = atomic_load_cond_explicit(&atomic, [](IntegralType) { return true; }, eastl::memory_order_relaxed);
 
 		VERIFY(ret == 0);
 	}

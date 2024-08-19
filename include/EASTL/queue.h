@@ -46,16 +46,17 @@ namespace eastl
 	/// queue
 	///
 	/// queue is an adapter class provides a FIFO (first-in, first-out) interface
-	/// via wrapping a sequence that provides at least the following operations:
+	/// via wrapping a sequence container (https://en.cppreference.com/w/cpp/named_req/SequenceContainer)
+	/// that additionally provides:
 	///     push_back
 	///     pop_front
 	///     front
 	///     back
 	///
-	/// In practice this usually means deque, list, intrusive_list. vector and string  
-	/// cannot be used because they don't provide pop-front. This is reasonable because
-	/// a vector or string pop_front would be inefficient and could lead to 
-	/// silently poor performance.
+	/// In practice this means deque, list, intrusive_list. vector and (the pseudo-container) string  
+	/// cannot be used because they don't provide pop_front. This is reasonable because
+	/// a vector or string pop_front would be inefficient as such an operation would have linear complexity
+	/// (to move elements after removing the front element, maintaining ordering).
 	///
 	template <typename T, typename Container = eastl::deque<T, EASTLAllocatorType, DEQUE_DEFAULT_SUBARRAY_SIZE(T)> >
 	class queue
@@ -106,6 +107,12 @@ namespace eastl
 		//
 		// template <class Allocator>
 		// queue(container_type&& x, const Allocator& allocator);
+		//
+		// template <class InputIt>
+		// queue(InputIt first, InputIt last);
+		//
+		// template <class InputIt, class Allocator>
+		// queue(InputIt first, InputIt last, const Allocator& allocator);
 
 		queue(std::initializer_list<value_type> ilist); // C++11 doesn't specify that std::queue has initializer list support.
 
@@ -204,6 +211,11 @@ namespace eastl
 	inline typename queue<T, Container>::reference
 	queue<T, Container>::front()
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("queue::front -- empty container");
+#endif
+
 		return c.front();
 	}
 
@@ -212,6 +224,11 @@ namespace eastl
 	inline typename queue<T, Container>::const_reference
 	queue<T, Container>::front() const
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("queue::front -- empty container");
+#endif
+
 		return c.front();
 	}
 
@@ -220,6 +237,11 @@ namespace eastl
 	inline typename queue<T, Container>::reference
 	queue<T, Container>::back()
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("queue::back -- empty container");
+#endif
+
 		return c.back();
 	}
 
@@ -228,6 +250,11 @@ namespace eastl
 	inline typename queue<T, Container>::const_reference
 	queue<T, Container>::back() const
 	{
+#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("queue::back -- empty container");
+#endif
+
 		return c.back();
 	}
 
@@ -264,6 +291,11 @@ namespace eastl
 	template <typename T, typename Container>
 	inline void queue<T, Container>::pop()
 	{
+#if EASTL_ASSERT_ENABLED
+		if (EASTL_UNLIKELY(c.empty()))
+			EASTL_FAIL_MSG("queue::pop -- empty container");
+#endif
+
 		c.pop_front();
 	}
 

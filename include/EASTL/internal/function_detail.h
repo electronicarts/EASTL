@@ -330,7 +330,7 @@ namespace eastl
 						break;
 						case MGROPS_GET_FUNC_PTR:
 						{
-							return static_cast<void*>(Base::GetFunctorPtr(*static_cast<FunctorStorageType*>(to)));
+							return static_cast<void*>(Base::GetFunctorPtr(*static_cast<const FunctorStorageType*>(to)));
 						}
 						break;
 						default:
@@ -600,7 +600,11 @@ namespace eastl
 				{
 					if (HaveManager() && target_type() == typeid(Functor))
 					{
-						void* ret = (*mMgrFuncPtr)(static_cast<void*>(&mStorage), nullptr,
+						// Note: the const_cast on &mStorage is "safe" here because we're doing a
+						// MGROPS_GET_FUNC_PTR operation. We can't change the entire signature
+						// of mMgrFuncPtr because we use it to modify the storage with other
+						// operations.
+						const void* ret = (*mMgrFuncPtr)(static_cast<void*>(const_cast<FunctorStorageType*>(&mStorage)), nullptr,
 												   Base::ManagerOperations::MGROPS_GET_FUNC_PTR);
 						return ret ? static_cast<const Functor*>(ret) : nullptr;
 					}

@@ -180,6 +180,12 @@ namespace eastl
 		typedef VectorBase<T, Allocator>                      base_type;
 		typedef vector<T, Allocator>                          this_type;
 
+		template <class T2, class Allocator2, class U>
+		friend typename vector<T2, Allocator2>::size_type erase_unsorted(vector<T2, Allocator2>& c, const U& value);
+
+		template <class T2, class Allocator2, class P>
+		friend typename vector<T2, Allocator2>::size_type erase_unsorted_if(vector<T2, Allocator2>& c, P predicate);
+
 	protected:
 		using base_type::mpBegin;
 		using base_type::mpEnd;
@@ -541,7 +547,7 @@ namespace eastl
 	inline vector<T, Allocator>::vector(size_type n, const value_type& value, const allocator_type& allocator)
 		: base_type(n, allocator)
 	{
-		eastl::uninitialized_fill_n_ptr(mpBegin, n, value);
+		eastl::uninitialized_fill_n(mpBegin, n, value);
 		mpEnd = mpBegin + n;
 	}
 
@@ -550,7 +556,7 @@ namespace eastl
 	inline vector<T, Allocator>::vector(const this_type& x)
 		: base_type(x.size(), x.internalAllocator())
 	{
-		mpEnd = eastl::uninitialized_copy_ptr(x.mpBegin, x.mpEnd, mpBegin);
+		mpEnd = eastl::uninitialized_copy(x.mpBegin, x.mpEnd, mpBegin);
 	}
 
 
@@ -558,7 +564,7 @@ namespace eastl
 	inline vector<T, Allocator>::vector(const this_type& x, const allocator_type& allocator)
 		: base_type(x.size(), allocator)
 	{
-		mpEnd = eastl::uninitialized_copy_ptr(x.mpBegin, x.mpEnd, mpBegin);
+		mpEnd = eastl::uninitialized_copy(x.mpBegin, x.mpEnd, mpBegin);
 	}
 
 
@@ -1007,11 +1013,11 @@ namespace eastl
 	inline typename vector<T, Allocator>::reference
 	vector<T, Allocator>::back()
 	{
-		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((mpBegin == nullptr) || (mpEnd <= mpBegin))) // We don't allow the user to reference an empty container.
+		#if EASTL_ASSERT_ENABLED
+			// if mpEnd is nullptr the expression (mpEnd - 1) is undefined behaviour.
+			// any use of back() with an empty vector is thus conceptually wrong.
+			if (EASTL_UNLIKELY((mpBegin == nullptr) || (mpEnd <= mpBegin)))
 				EASTL_FAIL_MSG("vector::back -- empty vector");
-		#else
-			// We allow the user to reference an empty container.
 		#endif
 
 		return *(mpEnd - 1);
@@ -1022,11 +1028,11 @@ namespace eastl
 	inline typename vector<T, Allocator>::const_reference
 	vector<T, Allocator>::back() const
 	{
-		#if EASTL_ASSERT_ENABLED && EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((mpBegin == nullptr) || (mpEnd <= mpBegin))) // We don't allow the user to reference an empty container.
+		#if EASTL_ASSERT_ENABLED
+			// if mpEnd is nullptr the expression (mpEnd - 1) is undefined behaviour.
+			// any use of back() with an empty vector is thus conceptually wrong.
+			if (EASTL_UNLIKELY((mpBegin == nullptr) || (mpEnd <= mpBegin)))
 				EASTL_FAIL_MSG("vector::back -- empty vector");
-		#else
-			// We allow the user to reference an empty container.
 		#endif
 
 		return *(mpEnd - 1);
@@ -1403,7 +1409,7 @@ namespace eastl
 	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
 	{
 		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
-		eastl::uninitialized_copy_ptr(first, last, p); // copy-constructs p from [first,last).
+		eastl::uninitialized_copy(first, last, p); // copy-constructs p from [first,last).
 		return p;
 	}
 
@@ -1414,7 +1420,7 @@ namespace eastl
 	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
 	{
 		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
-		eastl::uninitialized_move_ptr_if_noexcept(first, last, p); // move-constructs p from [first,last).
+		eastl::uninitialized_move_if_noexcept(first, last, p); // move-constructs p from [first,last).
 		return p;
 	}
 
@@ -1427,7 +1433,7 @@ namespace eastl
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
-		eastl::uninitialized_fill_n_ptr<value_type, Integer>(mpBegin, n, value);
+		eastl::uninitialized_fill_n(mpBegin, n, value);
 	}
 
 
@@ -1459,7 +1465,7 @@ namespace eastl
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
-		eastl::uninitialized_copy_ptr(first, last, mpBegin);
+		eastl::uninitialized_copy(first, last, mpBegin);
 	}
 
 
@@ -1491,7 +1497,7 @@ namespace eastl
 		else if(n > size_type(mpEnd - mpBegin)) // If n > size ...
 		{
 			eastl::fill(mpBegin, mpEnd, value);
-			eastl::uninitialized_fill_n_ptr(mpEnd, n - size_type(mpEnd - mpBegin), value);
+			eastl::uninitialized_fill_n(mpEnd, n - size_type(mpEnd - mpBegin), value);
 			mpEnd += n - size_type(mpEnd - mpBegin);
 		}
 		else // else 0 <= n <= size
@@ -1547,7 +1553,7 @@ namespace eastl
 		{
 			RandomAccessIterator position = first + (mpEnd - mpBegin);
 			eastl::copy(first, position, mpBegin); // Since we are copying to mpBegin, we don't have to worry about needing copy_backward or a memmove-like copy (as opposed to memcpy-like copy).
-			mpEnd = eastl::uninitialized_copy_ptr(position, last, mpEnd);
+			mpEnd = eastl::uninitialized_copy(position, last, mpEnd);
 		}
 	}
 
@@ -1600,7 +1606,7 @@ namespace eastl
 
 				if(n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
 				{
-					eastl::uninitialized_move_ptr(mpEnd - n, mpEnd, mpEnd);
+					eastl::uninitialized_move(mpEnd - n, mpEnd, mpEnd);
 					eastl::move_backward(destPosition, mpEnd - n, mpEnd); // We need move_backward because of potential overlap issues.
 					eastl::copy(first, last, destPosition);
 				}
@@ -1608,8 +1614,8 @@ namespace eastl
 				{
 					BidirectionalIterator iTemp = first;
 					eastl::advance(iTemp, nExtra);
-					eastl::uninitialized_copy_ptr(iTemp, last, mpEnd);
-					eastl::uninitialized_move_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
+					eastl::uninitialized_copy(iTemp, last, mpEnd);
+					eastl::uninitialized_move(destPosition, mpEnd, mpEnd + n - nExtra);
 					eastl::copy_backward(first, iTemp, destPosition + nExtra);
 				}
 
@@ -1626,9 +1632,9 @@ namespace eastl
 					pointer pNewEnd = pNewData;
 					try
 					{
-						pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-						pNewEnd = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
-						pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
+						pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, destPosition, pNewData);
+						pNewEnd = eastl::uninitialized_copy(first, last, pNewEnd);
+						pNewEnd = eastl::uninitialized_move_if_noexcept(destPosition, mpEnd, pNewEnd);
 					}
 					catch(...)
 					{
@@ -1637,9 +1643,9 @@ namespace eastl
 						throw;
 					}
 				#else
-					pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-					pNewEnd         = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
-					pNewEnd         = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
+					pointer pNewEnd = eastl::uninitialized_move(mpBegin, destPosition, pNewData);
+					pNewEnd         = eastl::uninitialized_copy(first, last, pNewEnd);
+					pNewEnd         = eastl::uninitialized_move(destPosition, mpEnd, pNewEnd);
 				#endif
 
 				eastl::destruct(mpBegin, mpEnd);
@@ -1674,14 +1680,14 @@ namespace eastl
 
 				if(n < nExtra)
 				{
-					eastl::uninitialized_move_ptr(mpEnd - n, mpEnd, mpEnd);
+					eastl::uninitialized_move(mpEnd - n, mpEnd, mpEnd);
 					eastl::move_backward(destPosition, mpEnd - n, mpEnd); // We need move_backward because of potential overlap issues.
 					eastl::fill(destPosition, destPosition + n, temp);
 				}
 				else
 				{
-					eastl::uninitialized_fill_n_ptr(mpEnd, n - nExtra, temp);
-					eastl::uninitialized_move_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
+					eastl::uninitialized_fill_n(mpEnd, n - nExtra, temp);
+					eastl::uninitialized_move(destPosition, mpEnd, mpEnd + n - nExtra);
 					eastl::fill(destPosition, mpEnd, temp);
 				}
 
@@ -1699,9 +1705,9 @@ namespace eastl
 				pointer pNewEnd = pNewData;
 				try
 				{
-					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-					eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
-					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
+					pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, destPosition, pNewData);
+					eastl::uninitialized_fill_n(pNewEnd, n, value);
+					pNewEnd = eastl::uninitialized_move_if_noexcept(destPosition, mpEnd, pNewEnd + n);
 				}
 				catch(...)
 				{
@@ -1710,9 +1716,9 @@ namespace eastl
 					throw;
 				}
 			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-				eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
+				pointer pNewEnd = eastl::uninitialized_move(mpBegin, destPosition, pNewData);
+				eastl::uninitialized_fill_n(pNewEnd, n, value);
+				pNewEnd = eastl::uninitialized_move(destPosition, mpEnd, pNewEnd + n);
 			#endif
 
 			eastl::destruct(mpBegin, mpEnd);
@@ -1739,7 +1745,7 @@ namespace eastl
 	{
 		pointer const pNewData = DoAllocate(n);
 
-		pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+		pointer pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData);
 
 		eastl::destruct(mpBegin, mpEnd);
 		DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
@@ -1774,7 +1780,7 @@ namespace eastl
 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 				try
 				{
-					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+					pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData);
 				}
 				catch(...)
 				{
@@ -1783,10 +1789,10 @@ namespace eastl
 					throw;
 				}
 			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				pointer pNewEnd = eastl::uninitialized_move(mpBegin, mpEnd, pNewData);
 			#endif
 
-			eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
+			eastl::uninitialized_fill_n(pNewEnd, n, value);
 			pNewEnd += n;
 
 			eastl::destruct(mpBegin, mpEnd);
@@ -1798,7 +1804,7 @@ namespace eastl
 		}
 		else
 		{
-			eastl::uninitialized_fill_n_ptr(mpEnd, n, value);
+			eastl::uninitialized_fill_n(mpEnd, n, value);
 			mpEnd += n;
 		}
 	}
@@ -1815,7 +1821,7 @@ namespace eastl
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
-				try { pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
+				try { pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData); }
 				catch (...)
 				{
 					eastl::destruct(pNewData, pNewEnd);
@@ -1823,7 +1829,7 @@ namespace eastl
 					throw;
 				}
 			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				pointer pNewEnd = eastl::uninitialized_move(mpBegin, mpEnd, pNewData);
 			#endif
 
 			eastl::uninitialized_value_construct_n(pNewEnd, n);
@@ -1891,8 +1897,8 @@ namespace eastl
 					// call eastl::destruct on the entire range if only the first part of the range was constructed.
 					::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
 					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
-					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
-					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);
+					pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, destPosition, pNewData);           // the value first, because it might possibly be a reference to the old data being moved.
+					pNewEnd = eastl::uninitialized_move_if_noexcept(destPosition, mpEnd, ++pNewEnd);
 				}
 				catch(...)
 				{
@@ -1905,8 +1911,8 @@ namespace eastl
 				}
 			#else
 				::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);                  // Because the old data is potentially being moved rather than copied, we need to move 
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);   // the value first, because it might possibly be a reference to the old data being moved.
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we assume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
+				pointer pNewEnd = eastl::uninitialized_move(mpBegin, destPosition, pNewData);					// the value first, because it might possibly be a reference to the old data being moved.
+				pNewEnd = eastl::uninitialized_move(destPosition, mpEnd, ++pNewEnd);
 			#endif
 
 			eastl::destruct(mpBegin, mpEnd);
@@ -1931,7 +1937,7 @@ namespace eastl
 			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 			try
 			{
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData);
 				::new((void*)pNewEnd) value_type(eastl::forward<Args>(args)...);
 				pNewEnd++;
 			}
@@ -1942,7 +1948,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+			pointer pNewEnd = eastl::uninitialized_move(mpBegin, mpEnd, pNewData);
 			::new((void*)pNewEnd) value_type(eastl::forward<Args>(args)...);
 			pNewEnd++;
 		#endif
@@ -2075,6 +2081,110 @@ namespace eastl
 		auto newEnd = eastl::remove_if(c.begin(), origEnd, predicate);
 		auto numRemoved = eastl::distance(newEnd, origEnd);
 		c.erase(newEnd, origEnd);
+
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the vector
+		// should not have more elements than fit in a uint32_t and so
+		// the distance here should fit in a size_type.
+		return static_cast<typename vector<T, Allocator>::size_type>(numRemoved);
+	}
+
+
+	///////////////////////////////////////////////////////////////////////
+	// erase_unsorted
+	// 
+	// This serves a similar purpose as erase above but with the difference
+	// that it doesn't preserve the relative order of what is left in the
+	// vector.
+	//
+	// Effects: Removes all elements equal to value from the vector while
+	// optimizing for speed with the potential reordering of elements as a
+	// side effect.
+	//
+	// Complexity: Linear
+	//
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class U>
+	typename vector<T, Allocator>::size_type erase_unsorted(vector<T, Allocator>& c, const U& value)
+	{
+		auto itRemove = c.begin();
+		auto ritMove = c.rbegin();
+
+		while(true)
+		{
+			itRemove = eastl::find(itRemove, ritMove.base(), value);
+			if (itRemove == ritMove.base()) // any elements to remove?
+				break;
+
+			ritMove = eastl::find_if(ritMove, eastl::make_reverse_iterator(itRemove), [&value](const T& elem) { return elem != value; });
+			if (itRemove == ritMove.base()) // any elements that can be moved into place?
+				break;
+
+			*itRemove = eastl::move(*ritMove);
+			++itRemove;
+			++ritMove;
+		}
+
+		// now all elements in the range [itRemove, c.end()) are either to be removed or have already been moved from.
+
+		auto numRemoved = eastl::distance(itRemove, c.end());
+
+		eastl::destruct(itRemove, c.end());
+		c.mpEnd = itRemove;
+
+		// Note: This is technically a lossy conversion when size_type
+		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit
+		// systems when EASTL_SIZE_T_32BIT is set). In practice this
+		// is fine because if EASTL_SIZE_T_32BIT is set then the vector
+		// should not have more elements than fit in a uint32_t and so
+		// the distance here should fit in a size_type.
+		return static_cast<typename vector<T, Allocator>::size_type>(numRemoved);
+	}
+
+	///////////////////////////////////////////////////////////////////////
+	// erase_unsorted_if
+	// 
+	// This serves a similar purpose as erase_if above but with the
+	// difference that it doesn't preserve the relative order of what is
+	// left in the vector.
+	//
+	// Effects: Removes all elements that return true for the predicate
+	// while optimizing for speed with the potential reordering of elements
+	// as a side effect.
+	//
+	// Complexity: Linear
+	//
+	///////////////////////////////////////////////////////////////////////
+	template <class T, class Allocator, class Predicate>
+	typename vector<T, Allocator>::size_type erase_unsorted_if(vector<T, Allocator>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy predicate from the container. 
+		auto itRemove = c.begin();
+		auto ritMove = c.rbegin();
+
+		while(true)
+		{
+			itRemove = eastl::find_if(itRemove, ritMove.base(), predicate);
+			if (itRemove == ritMove.base()) // any elements to remove?
+				break;
+
+			ritMove = eastl::find_if(ritMove, eastl::make_reverse_iterator(itRemove), not_fn(predicate));
+			if (itRemove == ritMove.base()) // any elements that can be moved into place?
+				break;
+
+			*itRemove = eastl::move(*ritMove);
+			++itRemove;
+			++ritMove;
+		}
+
+		// now all elements in the range [itRemove, c.end()) are either to be removed or have already been moved from.
+
+		auto numRemoved = eastl::distance(itRemove, c.end());
+
+		eastl::destruct(itRemove, c.end());
+		c.mpEnd = itRemove;
 
 		// Note: This is technically a lossy conversion when size_type
 		// is 32bits and ptrdiff_t is 64bits (could happen on 64bit

@@ -61,8 +61,10 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <stddef.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-EA_DISABLE_VC_WARNING(4530); // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-EA_DISABLE_VC_WARNING(4571); // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+// 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+// 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4530 4571 4512 4626);
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -1675,13 +1677,13 @@ namespace eastl
 	{
 		EASTL_REMOVE_AT_2024_APRIL typedef bool result_type;
 
-		bool operator()(shared_ptr<T> const& a, shared_ptr<T> const& b) const
+		bool operator()(shared_ptr<T> const& a, shared_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 
-		bool operator()(shared_ptr<T> const& a, weak_ptr<T> const& b) const
+		bool operator()(shared_ptr<T> const& a, weak_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 
-		bool operator()(weak_ptr<T> const& a, shared_ptr<T> const& b) const
+		bool operator()(weak_ptr<T> const& a, shared_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 	};
 
@@ -1690,21 +1692,50 @@ namespace eastl
 	{
 		EASTL_REMOVE_AT_2024_APRIL typedef bool result_type;
 
-		bool operator()(weak_ptr<T> const& a, weak_ptr<T> const& b) const
+		bool operator()(weak_ptr<T> const& a, weak_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 
-		bool operator()(weak_ptr<T> const& a, shared_ptr<T> const& b) const
+		bool operator()(weak_ptr<T> const& a, shared_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 
-		bool operator()(shared_ptr<T> const& a, weak_ptr<T> const& b) const
+		bool operator()(shared_ptr<T> const& a, weak_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
+	};
+
+	template <>
+	struct owner_less<void>
+	{
+		typedef int is_transparent;
+
+		template<typename T, typename U>
+		bool operator()(shared_ptr<T> const& a, shared_ptr<U> const& b) const EA_NOEXCEPT
+		{
+			return a.owner_before(b);
+		}
+
+		template<typename T, typename U>
+		bool operator()(shared_ptr<T> const& a, weak_ptr<U> const& b) const EA_NOEXCEPT
+		{
+			return a.owner_before(b);
+		}
+
+		template<typename T, typename U>
+		bool operator()(weak_ptr<T> const& a, shared_ptr<U> const& b) const EA_NOEXCEPT
+		{
+			return a.owner_before(b);
+		}
+
+		template<typename T, typename U>
+		bool operator()(weak_ptr<T> const& a, weak_ptr<U> const& b) const EA_NOEXCEPT
+		{
+			return a.owner_before(b);
+		}
 	};
 
 
 } // namespace eastl
 
 
-EA_RESTORE_VC_WARNING();
 EA_RESTORE_VC_WARNING();
 
 

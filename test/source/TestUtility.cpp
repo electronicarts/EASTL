@@ -108,23 +108,25 @@ static int TestUtilityPair()
 		pair<int, float> p1 = make_pair(int(0), float(1));
 		EATEST_VERIFY((p1.first == 0) && (p1.second == 1.f));
 
+		EASTL_INTERNAL_DISABLE_DEPRECATED() // make_pair_ref: was declared deprecated
 		pair<int, float> p2 = make_pair_ref(int(0), float(1));
 		EATEST_VERIFY((p2.first == 0) && (p2.second == 1.f));
+		EASTL_INTERNAL_RESTORE_DEPRECATED() // make_pair_ref: was declared deprecated
 
 		pair<const char*, int> p3 = eastl::make_pair("a", 1);
 		EATEST_VERIFY((EA::StdC::Strcmp(p3.first, "a") == 0) && (p3.second == 1));
 
-		pair<const char*, int> p4 = eastl::make_pair<const char*, int>("a", 1);
+		pair<const char*, int> p4 = eastl::make_pair("a", 1);
 		EATEST_VERIFY((EA::StdC::Strcmp(p4.first, "a") == 0) && (p4.second == 1));
 
-		pair<int, const char*> p5 = eastl::make_pair<int, const char*>(1, "b");
+		pair<int, const char*> p5 = eastl::make_pair(1, "b");
 		EATEST_VERIFY((p5.first == 1) && (EA::StdC::Strcmp(p5.second, "b") == 0));
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
-		pair<int, int> p6 = eastl::make_pair<int, int>(1, 2);
-		pair<int, int> p7 = eastl::make_pair<int, int>(2, 1);
-		pair<int, int> p8 = eastl::make_pair<int, int>(7, 8);
-		pair<int, int> p9 = eastl::make_pair<int, int>(10, 1);
+		pair<int, int> p6 = eastl::make_pair(1, 2);
+		pair<int, int> p7 = eastl::make_pair(2, 1);
+		pair<int, int> p8 = eastl::make_pair(7, 8);
+		pair<int, int> p9 = eastl::make_pair(10, 1);
 
 		EATEST_VERIFY( (p6 <=> p7) != 0);
 		EATEST_VERIFY( (p6 <=> p6) == 0);
@@ -161,6 +163,102 @@ static int TestUtilityPair()
 		EATEST_VERIFY((EA::StdC::Strcmp(p81.first, "a") == 0) && (EA::StdC::Strcmp(p81.second, "bc") == 0));
 #endif
 	}
+
+#if EASTL_TUPLE_ENABLED
+	// get<I>(pair&)
+	// get<T>(pair&)
+	// get<T, U>(pair&)
+	{
+		pair<int, float> p{2, 3.3f};
+		EATEST_VERIFY(get<0>(p) == 2);
+		EATEST_VERIFY(get<1>(p) == 3.3f);
+
+		EATEST_VERIFY(get<int>(p) == 2);
+		EATEST_VERIFY(get<float>(p) == 3.3f);
+		EATEST_VERIFY((get<int, float>(p) == 2));
+		EATEST_VERIFY((get<float, int>(p) == 3.3f));
+
+		get<int>(p) = 3;
+		EATEST_VERIFY(p.first == 3);
+		get<float>(p) = 4.0f;
+		EATEST_VERIFY(p.second == 4.0f);
+
+		// no matching overload, index is not in range.
+		// get<2>(p);
+	}
+
+	// get<I>(const pair&)
+	// get<T>(const pair&)
+	// get<T, U>(const pair&)
+	{
+		const pair<int, float> p{ 2, 3.3f };
+		EATEST_VERIFY(get<0>(p) == 2);
+		EATEST_VERIFY(get<1>(p) == 3.3f);
+
+		EATEST_VERIFY(get<int>(p) == 2);
+		EATEST_VERIFY(get<float>(p) == 3.3f);
+		EATEST_VERIFY((get<int, float>(p) == 2));
+		EATEST_VERIFY((get<float, int>(p) == 3.3f));
+
+		// cannot assign to a const&.
+		// get<int>(p) = 3;
+		// get<float>(p) = 4.0f;
+	}
+
+	// get<I>(pair&&)
+	// get<T>(pair&&)
+	// get<T, U>(pair&&)
+	{
+		EATEST_VERIFY(get<0>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) }) == 2);
+		MoveOnlyType mo = get<1>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) });
+		EATEST_VERIFY(mo == MoveOnlyType(3));
+
+		EATEST_VERIFY(get<int>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) }) == 2);
+		EATEST_VERIFY(get<MoveOnlyType>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) }) == MoveOnlyType(3));
+		EATEST_VERIFY((get<int, MoveOnlyType>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) }) == 2));
+		EATEST_VERIFY((get<MoveOnlyType, int>(pair<int, MoveOnlyType>{ 2, MoveOnlyType(3) }) == MoveOnlyType(3)));
+	}
+
+	// get<I>(const pair&&)
+	// get<T>(const pair&&)
+	// get<T, U>(const pair&&)
+	{
+		using pair_type = const pair<int, MoveOnlyType>;
+		EATEST_VERIFY(get<0>(pair_type{ 2, MoveOnlyType(3) }) == 2);
+		EATEST_VERIFY(get<1>(pair_type{ 2, MoveOnlyType(3) }) == MoveOnlyType(3));
+
+		EATEST_VERIFY(get<int>(pair_type{ 2, MoveOnlyType(3) }) == 2);
+		EATEST_VERIFY(get<MoveOnlyType>(pair_type{ 2, MoveOnlyType(3) }) == MoveOnlyType(3));
+		EATEST_VERIFY((get<int, MoveOnlyType>(pair_type{ 2, MoveOnlyType(3) }) == 2));
+		EATEST_VERIFY((get<MoveOnlyType, int>(pair_type{ 2, MoveOnlyType(3) }) == MoveOnlyType(3)));
+	}
+
+	// get(pair<T, T>)
+	{
+		pair<int, int> p{ 1, 2 };
+		EATEST_VERIFY(get<0>(p) == 1);
+		EATEST_VERIFY(get<1>(p) == 2);
+
+		get<0>(p) = 3;
+		EATEST_VERIFY(p.first == 3);
+		get<1>(p) = 4;
+		EATEST_VERIFY(p.second == 4);
+
+		// no matching overload, ambiguous which element.
+		// get<int>(p)
+	}
+
+	// get<I>(pair) and get<T>(pair) are constexpr
+	{
+		constexpr pair<int, float> cp{ 1, 2.0f };
+		constexpr int ci = get<0>(cp);
+		constexpr float cf = get<float>(cp);
+		static_assert(ci == 1, "unexpected return from get<I>(pair)");
+		static_assert(cf == 2.0f, "unexpected return from get<T>(pair)");
+	}
+
+
+#endif
 
 	{
 // One-off tests and regressions
@@ -810,58 +908,102 @@ static int TestUtilityIntegralComp()
 	nErrorCount += TestCmpCommon<unsigned long>();
 	nErrorCount += TestCmpCommon<unsigned long long>();
 
+	//
 	// Test integral comparison among different types
-	nErrorCount += TestUtilityCmpEql(int(0), short(0));
-	nErrorCount += TestUtilityCmpEql(short(2), long(2));
-	nErrorCount += TestUtilityCmpEql(short(3), unsigned long(3));
-	nErrorCount += TestUtilityCmpEql(int(-5), long long(-5));
-	nErrorCount += TestUtilityCmpEql(short(-100), long long(-100));
-	nErrorCount += TestUtilityCmpEql(unsigned int(100), long(100));
-	nErrorCount += TestUtilityCmpEql(unsigned long long(100), int(100));
+	//
+	// we're now using integer-suffixes because Clang on
+	// unix was failing to construct integer types with a
+	// space in them, like 'unsigned long', e.g.
+	// 
+	//    TestUilityCmpLess(4, unsigned long(4))
+	// 
+	// 
+	// Integer literal suffixes:
+	// 
+	//    u/U   : unsigned (`unsigned int` by default)
+	// 
+	//    l/L   : long
+	//    ll/LL : long long
+	//    z/Z   : (c++23) the signed version of size_t
+	//    uz/UZ : (c++23) size_t
+	//
+	// unsignedness & the width suffixes can be combined together.
+	// thus `2ull` is an unsigned long long (of value 2). because
+	// there's no ordering for u vs ll, we can also write the
+	// equivalent `2llu`, or `2ULL`
+	// 
+	// NOTE: integer literals that are too large to fit into the
+	//       requested type will be promoted a little bit to a
+	//       "sensible" (post c++11) higher category. so the
+	//       following:
+	// 
+	//           235763456234623452345L
+	//
+	//       is way to large to fit into `L` (long int), and so
+	//       and so will be interpreted as a `long long int` literal.
+	// 
+	// DOUBLE NOTE: the above promotion rules are expanded a bit for
+	//              binary, hexadecimal, or octal literals. basically
+	//              they can be unsigned sometimes. this is why
+	//              compilers give you a warning when you mess this up.
+	// 
+	// the more you know!!
+	// 
+	// 
+	// Further reading
+	//     https://en.cppreference.com/w/cpp/language/integer_literal
+	//
+	nErrorCount += TestUtilityCmpEql(0, short(0));
+	nErrorCount += TestUtilityCmpEql(short(2), 2l);
+	nErrorCount += TestUtilityCmpEql(short(3), 3ul);
+	nErrorCount += TestUtilityCmpEql(-5, -5ll);
+	nErrorCount += TestUtilityCmpEql(short(-100), -100ll);
+	nErrorCount += TestUtilityCmpEql(100u, 100l);
+	nErrorCount += TestUtilityCmpEql(100ull, 100);
 
-	nErrorCount += TestUtilityCmpLess(int(0), long long(1));
-	nErrorCount += TestUtilityCmpLess(int(-1), unsigned long(1));
-	nErrorCount += TestUtilityCmpLess(short(-100), long long(100));
+	nErrorCount += TestUtilityCmpLess(0, 1ll);
+	nErrorCount += TestUtilityCmpLess(-1, 1ul);
+	nErrorCount += TestUtilityCmpLess(short(-100), 100ll);
 	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<long>::min(), short(0));
 	nErrorCount += TestUtilityCmpLess(short(0), eastl::numeric_limits<int>::max());
 	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<unsigned short>::min(), eastl::numeric_limits<int>::max());
 	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<short>::max(), eastl::numeric_limits<long>::max());
 	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<int>::max(), eastl::numeric_limits<long long>::max());
-	nErrorCount += TestUtilityCmpLess(int(-100), unsigned int(0));
+	nErrorCount += TestUtilityCmpLess(-100, 0u);
 	nErrorCount += TestUtilityCmpLess(eastl::numeric_limits<int>::min(), eastl::numeric_limits<unsigned int>::min());
 
-	nErrorCount += TestUtilityCmpGreater(int(1), short(0));
-	nErrorCount += TestUtilityCmpGreater(unsigned long(1), int(-1));
-	nErrorCount += TestUtilityCmpGreater(unsigned long long(100), short(-100));
+	nErrorCount += TestUtilityCmpGreater(1, short(0));
+	nErrorCount += TestUtilityCmpGreater(1ul, -1);
+	nErrorCount += TestUtilityCmpGreater(100ull, short(-100));
 	nErrorCount += TestUtilityCmpGreater(short(0), eastl::numeric_limits<short>::min());
-	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long>::max(), unsigned short(5));
+	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long>::max(), (unsigned short)5);
 	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long>::max(), eastl::numeric_limits<int>::min());
 	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::max());
 	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<long long>::max(), eastl::numeric_limits<int>::max());
-	nErrorCount += TestUtilityCmpGreater(unsigned int(0), int(-100));
+	nErrorCount += TestUtilityCmpGreater(0u, -100);
 	nErrorCount += TestUtilityCmpGreater(eastl::numeric_limits<unsigned int>::min(), eastl::numeric_limits<int>::min());
 
-	nErrorCount += TestUtilityCmpLessEq(int(0), short(1));
-	nErrorCount += TestUtilityCmpLessEq(int(-1), long long(-1));
-	nErrorCount += TestUtilityCmpLessEq(short(-100), unsigned long long(100));
-	nErrorCount += TestUtilityCmpLessEq(short(-100), long long(-100));
+	nErrorCount += TestUtilityCmpLessEq(0, short(1));
+	nErrorCount += TestUtilityCmpLessEq(-1, -1ll);
+	nErrorCount += TestUtilityCmpLessEq(short(-100), 100ull);
+	nErrorCount += TestUtilityCmpLessEq(short(-100), -100ll);
 	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::min(), short(0));
 	nErrorCount += TestUtilityCmpLessEq(short(0), eastl::numeric_limits<int>::max());
 	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<short>::min(), eastl::numeric_limits<short>::min());
 	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<int>::max());
 	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<long long>::max());
-	nErrorCount += TestUtilityCmpLessEq(int(50), unsigned int(50));
+	nErrorCount += TestUtilityCmpLessEq(50, 50u);
 	nErrorCount += TestUtilityCmpLessEq(eastl::numeric_limits<int>::min(), eastl::numeric_limits<unsigned int>::min());
 
-	nErrorCount += TestUtilityCmpGreaterEq(int(1), short(1));
-	nErrorCount += TestUtilityCmpGreaterEq(long long(-1), int(-1));
-	nErrorCount += TestUtilityCmpGreaterEq(long long(-100), short(-100));
-	nErrorCount += TestUtilityCmpGreaterEq(short(0), long(0));
+	nErrorCount += TestUtilityCmpGreaterEq(1, short(1));
+	nErrorCount += TestUtilityCmpGreaterEq(-1ll, -1);
+	nErrorCount += TestUtilityCmpGreaterEq(-100ll, short(-100));
+	nErrorCount += TestUtilityCmpGreaterEq(short(0), 0l);
 	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<long>::max(), eastl::numeric_limits<long>::max());
 	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::min());
 	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<int>::max(), eastl::numeric_limits<short>::max());
 	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<long long>::max(), eastl::numeric_limits<int>::max());
-	nErrorCount += TestUtilityCmpGreaterEq(unsigned int(0), int(0));
+	nErrorCount += TestUtilityCmpGreaterEq(0u, 0);
 	nErrorCount += TestUtilityCmpGreaterEq(eastl::numeric_limits<unsigned int>::min(), eastl::numeric_limits<int>::min());
 
 	// Test in_range

@@ -18,6 +18,8 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4512 4626);
 
 
 namespace eastl
@@ -332,6 +334,8 @@ namespace eastl
 		return !compare(a, b) || !compare(b, a); // If (a <= b), then !(b <= a)
 	}
 
+	// todo: when C++20 support added, add a compare_three_way function object.
+
 	template <typename T = void>
 	struct logical_and
 	{
@@ -383,6 +387,103 @@ namespace eastl
 			{ return !eastl::forward<T>(t); }
 	};
 
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_and
+	template <typename T = void>
+	struct bit_and
+	{
+		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
+		{
+			return a & b;
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_and_void
+	template <>
+	struct bit_and<void>
+	{
+		typedef int is_transparent;
+
+		template<typename T, typename U>
+		EA_CPP14_CONSTEXPR auto operator()(T&& a, U&& b) const
+			-> decltype(eastl::forward<T>(a) & eastl::forward<U>(b))
+		{
+			return eastl::forward<T>(a) & eastl::forward<U>(b);
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_or
+	template <typename T = void>
+	struct bit_or
+	{
+		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
+		{
+			return a | b;
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_or_void
+	template <>
+	struct bit_or<void>
+	{
+		typedef int is_transparent;
+
+		template<typename T, typename U>
+		EA_CPP14_CONSTEXPR auto operator()(T&& a, U&& b) const
+			-> decltype(eastl::forward<T>(a) | eastl::forward<U>(b))
+		{
+			return eastl::forward<T>(a) | eastl::forward<U>(b);
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_xor
+	template <typename T = void>
+	struct bit_xor
+	{
+		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
+		{
+			return a ^ b;
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_xor_void
+	template <>
+	struct bit_xor<void>
+	{
+		typedef int is_transparent;
+
+		template<typename T, typename U>
+		EA_CPP14_CONSTEXPR auto operator()(T&& a, U&& b) const
+			-> decltype(eastl::forward<T>(a) ^ eastl::forward<U>(b))
+		{
+			return eastl::forward<T>(a) ^ eastl::forward<U>(b);
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_not
+	template <typename T = void>
+	struct bit_not
+	{
+		EA_CPP14_CONSTEXPR T operator()(const T& a) const
+		{
+			return ~a;
+		}
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/bit_not_void
+	template <>
+	struct bit_not<void>
+	{
+		typedef int is_transparent;
+
+		template<typename T>
+		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
+			-> decltype(~eastl::forward<T>(t))
+		{
+			return ~eastl::forward<T>(t);
+		}
+	};
+
+	// todo: add identity function object after removal of non-standard identity (renamed to type_identity).
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1256,6 +1357,8 @@ namespace eastl
 } // namespace eastl
 
 #include <EASTL/internal/function.h>
+
+EA_RESTORE_VC_WARNING();
 
 #endif // Header include guard
 

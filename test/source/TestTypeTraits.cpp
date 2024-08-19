@@ -1910,10 +1910,11 @@ int TestTypeTraits()
 		eastl::add_const<int32_t>::type i32 = 47;
 		EATEST_VERIFY(i32 == 47);
 
-		eastl::add_volatile<volatile int16_t>::type i16 = 47;
-		EATEST_VERIFY(++i16 == 48);
+		// C++20 deprecated a lot of volatile operations
+		eastl::add_volatile<int16_t>::type i16 = 47;
+		EATEST_VERIFY(i16 + 1 == 48);
 
-		eastl::add_cv<const volatile int32_t>::type i64 = 47;
+		eastl::add_cv<int32_t>::type i64 = 47;
 		EATEST_VERIFY(i64 == 47);
 	}
 

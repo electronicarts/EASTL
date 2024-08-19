@@ -17,6 +17,9 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <functional>
 EA_RESTORE_ALL_VC_WARNINGS()
 
+// 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
+EA_DISABLE_VC_WARNING(4512 4626);
+
 // contains tests for library features that are deprecated
 EASTL_INTERNAL_DISABLE_DEPRECATED() // *: was declared deprecated
 
@@ -547,7 +550,7 @@ int TestFunctional()
 			void Add(int addAmount) { value += addAmount; }
 			int GetValue() { return value; }
 			int& GetValueReference() { return value; }
-			void NoThrow(int inValue) EA_NOEXCEPT {}
+			void NoThrow(int) EA_NOEXCEPT {}
 			int value;
 		};
 
@@ -682,8 +685,8 @@ int TestFunctional()
 		{
 			struct TestInvokeConstAccess
 			{
-				void ConstMemberFunc(int i) const {}
-				void ConstVolatileMemberFunc(int i) const volatile {}
+				void ConstMemberFunc(int) const {}
+				void ConstVolatileMemberFunc(int) const volatile {}
 
 				int mI;
 			};
@@ -1174,6 +1177,35 @@ int TestFunctional()
 			}
 		}
 		#endif // __cpp_deduction_guides
+
+		#if EASTL_RTTI_ENABLED
+		{
+			struct Functor { int operator()() { return 42; } };
+			struct Functor2 { int operator()() { return 43; } };
+
+			eastl::function<int(void)> fn = Functor();
+
+			const std::type_info& type = typeid(Functor);
+			const std::type_info& targetType = fn.target_type();
+			EATEST_VERIFY(targetType == type);
+
+
+			Functor* target = fn.target<Functor>();
+			EATEST_VERIFY(target != nullptr);
+
+			Functor2* target2 = fn.target<Functor2>();
+			EATEST_VERIFY(target2 == nullptr);
+
+			// This tests the `const` overloads
+			const auto& constFn = fn;
+
+			const Functor* constTarget = constFn.target<Functor>();
+			EATEST_VERIFY(constTarget != nullptr);
+
+			const Functor2* constTarget2 = constFn.target<Functor2>();
+			EATEST_VERIFY(constTarget2 == nullptr);
+		}
+		#endif
 	}
 
 	// Checking _MSC_EXTENSIONS is required because the Microsoft calling convention classifiers are only available when
@@ -1460,6 +1492,82 @@ int TestFunctional()
 			result = eastl::logical_not<>{}(false);
 			EATEST_VERIFY(result);
 		}
+
+		// eastl::bit_and
+		{
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x11, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x01, 0x10) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x11, 0x01) == 0x01);
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x01, 0x11) == 0x01);
+			EATEST_VERIFY(eastl::bit_and<char>{}(0x11, 0x11) == 0x11);
+		}
+
+		// eastl::bit_and<void>
+		{
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x11, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x01, 0x10) == 0x00);
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x11, 0x01) == 0x01);
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x01, 0x11) == 0x01);
+			EATEST_VERIFY(eastl::bit_and<void>{}(0x11, 0x11) == 0x11);
+		}
+
+		// eastl::bit_or
+		{
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x11, 0x00) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x01, 0x10) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x11, 0x01) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x01, 0x11) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<char>{}(0x11, 0x11) == 0x11);
+		}
+
+		// eastl::bit_or<void>
+		{
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x11, 0x00) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x01, 0x10) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x11, 0x01) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x01, 0x11) == 0x11);
+			EATEST_VERIFY(eastl::bit_or<void>{}(0x11, 0x11) == 0x11);
+		}
+
+		// eastl::bit_xor
+		{
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x11, 0x00) == 0x11);
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x01, 0x10) == 0x11);
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x11, 0x01) == 0x10);
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x01, 0x11) == 0x10);
+			EATEST_VERIFY(eastl::bit_xor<char>{}(0x11, 0x11) == 0x00);
+		}
+
+		// eastl::bit_xor<void>
+		{
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x00, 0x00) == 0x00);
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x11, 0x00) == 0x11);
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x01, 0x10) == 0x11);
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x11, 0x01) == 0x10);
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x01, 0x11) == 0x10);
+			EATEST_VERIFY(eastl::bit_xor<void>{}(0x11, 0x11) == 0x00);
+		}
+
+		// eastl::bit_not
+		{
+			EATEST_VERIFY(eastl::bit_not<unsigned char>{}(0x0) == (unsigned char) 0xFF);
+			EATEST_VERIFY(eastl::bit_not<unsigned char>{}(0x0F) == (unsigned char) 0xF0);
+			EATEST_VERIFY(eastl::bit_not<unsigned char>{}(0xF0) == (unsigned char) 0x0F);
+			EATEST_VERIFY(eastl::bit_not<unsigned char>{}(0xFF) == (unsigned char) 0x0);
+		}
+
+		// eastl::bit_not<void>
+		{
+			EATEST_VERIFY((unsigned char)eastl::bit_not<void>{}(0x0) == (unsigned char)0xFF);
+			EATEST_VERIFY((unsigned char)eastl::bit_not<void>{}(0x0F) == (unsigned char)0xF0);
+			EATEST_VERIFY((unsigned char)eastl::bit_not<void>{}(0xF0) == (unsigned char)0x0F);
+			EATEST_VERIFY((unsigned char)eastl::bit_not<void>{}(0xFF) == (unsigned char)0x0);
+		}
 	}
 	#endif
 
@@ -1608,3 +1716,5 @@ static_assert(eastl::is_invocable_r<void, TestCallableRefInvokeResult, int>::val
 static_assert(eastl::is_invocable_r<int, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
 
 EASTL_INTERNAL_RESTORE_DEPRECATED()
+
+EA_RESTORE_VC_WARNING();

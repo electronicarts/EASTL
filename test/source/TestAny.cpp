@@ -278,11 +278,11 @@ int TestAny()
 	{
 		any a;
 
-		a.emplace<int>(42);
+		VERIFY(a.emplace<int>(42) == 42);
 		VERIFY(a.has_value());
 		VERIFY(any_cast<int>(a) == 42);
 
-		a.emplace<short>((short)8); // no way to define a short literal we must cast here.
+		VERIFY(a.emplace<short>((short)8) == (short)8); // no way to define a short literal we must cast here.
 		VERIFY(any_cast<short>(a) == 8);
 		VERIFY(a.has_value());
 
@@ -295,7 +295,7 @@ int TestAny()
 		TestObject::Reset();
 		{
 			any a;
-			a.emplace<TestObject>();
+			VERIFY(a.emplace<TestObject>() == TestObject());
 			VERIFY(a.has_value());
 		}
 		VERIFY(TestObject::IsClear());
@@ -305,10 +305,40 @@ int TestAny()
 	{
 		{
 			any a;
-			a.emplace<RequiresInitList>(std::initializer_list<int>{1,2,3,4,5,6});
+			VERIFY((a.emplace<RequiresInitList>(std::initializer_list<int>{1, 2, 3, 4, 5, 6}).sum == RequiresInitList{ 1, 2, 3, 4, 5, 6 }.sum));
 
 			VERIFY(a.has_value());
 			VERIFY(any_cast<RequiresInitList>(a).sum == 21);
+		}
+	}
+
+	// emplace, types that decay
+	{
+		// T[] decays to T*
+		{
+			any a;
+			int arr[] = { 1, 2, 3 };
+			auto emplaced = a.emplace<int[]>(arr);
+			static_assert(eastl::is_same_v<decltype(emplaced), int*>, "decay-ed emplace");
+			VERIFY(VerifySequence(emplaced, emplaced + 3, { 1, 2, 3 }, "any::emplace()"));
+		}
+
+		// function decays to pointer to function
+		{
+			int(*func) (char, char) = [](char, char) { return 0; };
+
+			any a;
+			auto emplaced = a.emplace<int(char, char)>(func);
+			static_assert(eastl::is_same_v<decltype(emplaced), int(*)(char, char)>, "decay-ed emplace");
+			VERIFY(emplaced == func);
+		}
+
+		// const T decays to T
+		{
+			any a;
+			auto emplaced = a.emplace<const int>(10);
+			static_assert(eastl::is_same_v<decltype(emplaced), int>, "decay-ed emplace");
+			VERIFY(emplaced == 10);
 		}
 	}
 

@@ -211,6 +211,7 @@ namespace eastl
 		explicit intrusive_hashtable_iterator(value_type** pBucket)
 			: base_type(*pBucket, pBucket) { }
 
+		template <bool IsConst = bConst, typename enable_if<IsConst, bool>::type = false>
 		intrusive_hashtable_iterator(const this_type_non_const& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 

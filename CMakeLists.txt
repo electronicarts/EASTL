@@ -1,7 +1,8 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.11)
+include(FetchContent)
 project(EASTL CXX)
 
 #-------------------------------------------------------------------------------------------
@@ -10,6 +11,11 @@ project(EASTL CXX)
 option(EASTL_BUILD_BENCHMARK "Enable generation of build files for benchmark" OFF)
 option(EASTL_BUILD_TESTS "Enable generation of build files for tests" OFF)
 option(EASTL_STD_ITERATOR_CATEGORY_ENABLED "Enable compatibility with std:: iterator categories" OFF)
+
+
+option(EASTL_DISABLE_APRIL_2024_DEPRECATIONS "Enable use of API marked for removal in April 2024." OFF)
+option(EASTL_DISABLE_SEPT_2024_DEPRECATIONS "Enable use of API marked for removal in September 2024." OFF)
+option(EASTL_DISABLE_APRIL_2025_DEPRECATIONS "Enable use of API marked for removal in April 2025." OFF)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -64,11 +70,30 @@ target_include_directories(EASTL PUBLIC include)
 #-------------------------------------------------------------------------------------------
 # Dependencies
 #-------------------------------------------------------------------------------------------
-if (NOT TARGET EABase)
-    add_subdirectory(test/packages/EABase)
-endif()
+FetchContent_Declare(
+  EABase
+  GIT_REPOSITORY https://github.com/electronicarts/EABase.git
+  GIT_TAG        123363eb82e132c0181ac53e43226d8ee76dea12
+  GIT_SUBMODULES "" # This should be temporary until we update the cyclic submodule dependencies in EABase.
+)
+
+FetchContent_MakeAvailable(EABase)
 
 target_link_libraries(EASTL EABase)
+
+#-------------------------------------------------------------------------------------------
+# Deprecations
+#-------------------------------------------------------------------------------------------
+if(EASTL_DISABLE_APRIL_2024_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2024_APRIL=EA_DISABLED)
+endif()
+if(EASTL_DISABLE_SEPT_2024_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2024_SEPT=EA_DISABLED)
+endif()
+if(EASTL_DISABLE_APRIL_2025_DEPRECATIONS)
+  target_compile_definitions(EASTL PUBLIC EA_DEPRECATIONS_FOR_2025_APRIL=EA_DISABLED)
+endif()
+
 
 #-------------------------------------------------------------------------------------------
 # Installation

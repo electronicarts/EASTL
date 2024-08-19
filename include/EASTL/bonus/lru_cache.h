@@ -31,6 +31,8 @@
 #include <EASTL/list.h>
 #include <EASTL/unordered_map.h>
 #include <EASTL/optional.h>
+#include <EASTL/utility.h> // for pair
+#include <EASTL/functional.h> // for function, hash, equal_to
 
 namespace eastl
 {
@@ -53,14 +55,14 @@ namespace eastl
 	///
 	/// Implements a caching map based off of a key and data.
 	/// LRUList parameter is any container that guarantees the validity of its iterator even after a modification (e.g. list)
-	/// LRUMap is any mapping container that can map a key to some data.  By default, we use unordered_set, but it might be better
+	/// LRUMap is any associative container that can map a key to some data.  By default, we use unordered_map, but it might be better
 	/// to use hash_map or some other structure depending on your key/data combination.  For example, you may want to swap the 
-	/// map backing if using strings as keys or if the data objects are small.  In any case, unordered_set is a good default and should
+	/// map backing if using strings as keys or if the data objects are small.  In any case, unordered_map is a good default and should
 	/// work well enough since the purpose of this class is to cache results of expensive, order of milliseconds, operations
 	///
 	/// Algorithmic Performance (default data structures):
 	///		touch() -> O(1)
-	///		insert() / update(), get() / operator[] -> equivalent to unordered_set (O(1) on average, O(n) worst)
+	///		insert() / update(), get() / operator[] -> equivalent to unordered_map (O(1) on average, O(n) worst)
 	///		size() -> O(1)
 	///
 	/// All accesses to a given key (insert, update, get) will push that key to most recently used.
@@ -157,14 +159,23 @@ namespace eastl
 		/// emplace
 		/// 
 		/// Places a new object in place k created with args
-		/// If the key already exists, it is replaced.
+		/// If the key already exists, no change is made.
+		/// return value is a pair of the iterator to the emplaced or already-existing element and a bool denoting whether insertion took place.
 		template <typename... Args>
-		void emplace(const key_type& k, Args&&... args)
+		eastl::pair<iterator, bool> emplace(const key_type& k, Args&&... args)
 		{
-			make_space();
+			auto it = m_map.find(k);
+			if (it == m_map.end())
+			{
+				make_space();
 
-			m_list.push_front(k);
-			m_map.emplace(k, data_container_type(eastl::forward<Args>(args)..., m_list.begin()));
+				m_list.push_front(k);
+				return m_map.emplace(k, data_container_type(piecewise_construct, eastl::forward_as_tuple(eastl::forward<Args>(args)...), make_tuple(m_list.begin())));
+			}
+			else
+			{
+				return make_pair(it, false);
+			}
 		}
 
 		/// insert_or_assign

@@ -42,12 +42,14 @@ namespace TestSDListLocal
 	eastl::string IntListToString8(const T& cont)
 	{
 		eastl::string s("<");
-		char          buf[64];
+
+		const int kBufferSize = 64;
+		char buf[kBufferSize];
 
 		for(typename T::const_iterator it(cont.begin()), itEnd(cont.end()); it != itEnd; ++it)
 		{
 			const int& v = *it;
-			sprintf(buf, " %d", v);
+			EA::StdC::Snprintf(buf, kBufferSize, " %d", v);
 			s += buf;
 		}
 

@@ -46,7 +46,7 @@ namespace
 		stopwatch.Restart();
 		Container c(cs.begin(), cs.end());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -56,7 +56,7 @@ namespace
 		stopwatch.Restart();
 		Container c(10000);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -67,7 +67,7 @@ namespace
 		while(pTOBegin != pTOEnd)
 			c.push_back(*pTOBegin++);
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -86,7 +86,7 @@ namespace
 				it = c.begin();
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -103,36 +103,36 @@ namespace
 	template <typename Container>
 	void TestFind(EA::StdC::Stopwatch& stopwatch, Container& c, const TestObject& to)
 	{
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 		stopwatch.Restart();
 		typename Container::iterator it = eastl::find(c.begin(), c.end(), to);
 		stopwatch.Stop();
 		if(it != c.end())
-			sprintf(Benchmark::gScratchBuffer, "%d", (*it).mX);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%d", (*it).mX);
 	}
 
 
 	template <typename Container>
 	void TestReverse(EA::StdC::Stopwatch& stopwatch, Container& c)
 	{
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 		stopwatch.Restart();
 		c.reverse();
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
 	template <typename Container>
 	void TestRemove(EA::StdC::Stopwatch& stopwatch, Container& c, const TestObject* pTOBegin, const TestObject* const pTOEnd)
 	{
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 		stopwatch.Restart();
 		while(pTOBegin != pTOEnd)
 			c.remove(*pTOBegin++);
 		stopwatch.Stop();
 		if(!c.empty())
-			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+			EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -141,12 +141,12 @@ namespace
 	{
 		typename Container::iterator it = c.begin();
 		int i = 0, iEnd = (int)cSource.size() - 5;
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 		stopwatch.Restart();
 		while(i++ != iEnd)
 			c.splice(it, cSource, cSource.begin());
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 
@@ -155,7 +155,7 @@ namespace
 	{
 		typename Container::iterator it = c.begin();
 		int i = 0, iEnd = (int)c.size() - 5;
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.size());
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.size());
 		stopwatch.Restart();
 		while(i++ != iEnd)
 		{
@@ -167,7 +167,7 @@ namespace
 				it = c.begin();
 		}
 		stopwatch.Stop();
-		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)c.back().mX);
+		EA::StdC::Snprintf(Benchmark::gScratchBuffer, Benchmark::kScratchBufferSize, "%u", (unsigned)c.back().mX);
 	}
 
 } // namespace

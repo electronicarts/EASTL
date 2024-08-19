@@ -360,6 +360,7 @@ namespace eastl
 
 	/// bind1st
 	///
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // unariy_function is deprecated
 	template <typename Operation>
 	class EASTL_REMOVE_AT_2024_APRIL binder1st : public unary_function<typename Operation::second_argument_type, typename Operation::result_type>
 	{
@@ -377,6 +378,7 @@ namespace eastl
 			typename Operation::result_type operator()(typename Operation::second_argument_type& x) const
 				{ return op(value, x); }
 	};
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'eastl::binder1st<Operation>': was declared deprecated
@@ -390,6 +392,7 @@ namespace eastl
 
 	/// bind2nd
 	///
+	EASTL_INTERNAL_DISABLE_DEPRECATED() // unariy_function is deprecated
 	template <typename Operation>
 	class EASTL_REMOVE_AT_2024_APRIL binder2nd : public unary_function<typename Operation::first_argument_type, typename Operation::result_type>
 	{
@@ -407,6 +410,7 @@ namespace eastl
 			typename Operation::result_type operator()(typename Operation::first_argument_type& x) const
 				{ return op(x, value); }
 	};
+	EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'eastl::binder2nd<Operation>': was declared deprecated

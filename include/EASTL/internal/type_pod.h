@@ -401,8 +401,14 @@ namespace eastl
 	#define EASTL_DECLARE_TRIVIAL_DESTRUCTOR(T) namespace eastl{ template <> struct EASTL_REMOVE_AT_2024_APRIL has_trivial_destructor<T> : public true_type{}; template <> struct EASTL_REMOVE_AT_2024_APRIL has_trivial_destructor<const T> : public true_type{}; }
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+	// Note: some compilers (notably GCC) trigger deprecation warnings in template variable
+	// declarations even if the variable is not insantiated here, so turn the warning off
+	// here. If this varialbe is used, the warning will still trigger in the user code, this
+	// just disables the warning in this declaration.
+EASTL_INTERNAL_DISABLE_DEPRECATED()
 		template <class T>
 		EASTL_REMOVE_AT_2024_APRIL EA_CONSTEXPR bool has_trivial_destructor_v = has_trivial_destructor<T>::value;
+EASTL_INTERNAL_RESTORE_DEPRECATED()
     #endif
 
 
@@ -993,7 +999,7 @@ namespace eastl
 	#else
 
 		// If the compiler has this trait built-in (which ideally all compilers would have since it's necessary for full conformance) use it.
-		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_trivially_constructible)) || defined(EA_COMPILER_MSVC))
+		#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && ((EASTL_HAS_INTRINSIC(is_trivially_constructible)) || defined(EA_COMPILER_MSVC))
 			#define EASTL_TYPE_TRAIT_is_trivially_constructible_CONFORMANCE 1
 
 			// We have a problem with clang here as of clang 3.4: __is_trivially_constructible(int[]) is false, yet I believe it should be true.

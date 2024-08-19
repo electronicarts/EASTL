@@ -48,10 +48,10 @@ EA_DISABLE_ALL_VC_WARNINGS()
 	#include <stddef.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-// 4512 - 'class' : assignment operator could not be generated.
+// 4512/4626 - 'class' : assignment operator could not be generated.
 // 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 // 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-EA_DISABLE_VC_WARNING(4512 4530 4571);
+EA_DISABLE_VC_WARNING(4512 4626 4530 4571);
 
 
 namespace eastl
@@ -327,8 +327,14 @@ namespace eastl
 		hashtable_iterator(node_type** pBucket)
 			: base_type(*pBucket, pBucket) { }
 
+		template <bool IsConst = bConst, typename enable_if<IsConst, int>::type = 0>
 		hashtable_iterator(const this_type_non_const& x)
 			: base_type(x.mpNode, x.mpBucket) { }
+
+		hashtable_iterator(const hashtable_iterator&) = default;
+		hashtable_iterator(hashtable_iterator&&) = default;
+		hashtable_iterator& operator=(const hashtable_iterator&) = default;
+		hashtable_iterator& operator=(hashtable_iterator&&) = default;
 
 		reference operator*() const
 			{ return base_type::mpNode->mValue; }
@@ -889,6 +895,7 @@ namespace eastl
 		hashtable(size_type nBucketCount, const H1&, const H2&, const H&, const Equal&, const ExtractKey&, 
 				  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR);
 		
+		// note: standard only requires InputIterator.
 		template <typename FowardIterator>
 		hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
 				  const H1&, const H2&, const H&, const Equal&, const ExtractKey&, 
@@ -968,8 +975,12 @@ namespace eastl
 		size_type size() const EA_NOEXCEPT
 			{ return mnElementCount; }
 
+		// size_type max_size() const EA_NOEXCEPT;
+
 		size_type bucket_count() const EA_NOEXCEPT
 			{ return mnBucketCount; }
+
+		// size_type max_bucket_count() const;
 
 		size_type bucket_size(size_type n) const EA_NOEXCEPT
 			{ return (size_type)eastl::distance(begin(n), end(n)); }
@@ -981,6 +992,9 @@ namespace eastl
 		// there's an optimal 1 bucket for each element.
 		float load_factor() const EA_NOEXCEPT
 			{ return (float)mnElementCount / (float)mnBucketCount; }
+
+		// float max_load_factor() const;
+		// void max_load_factor( float ml );
 
 		// Inherited from the base class.
 		// Returns the max load factor, which is the load factor beyond
@@ -1011,8 +1025,12 @@ namespace eastl
 
 		insert_return_type                     insert(const value_type& value);
 		insert_return_type                     insert(value_type&& otherValue);
+		// template<typename P>
+		// insert_return_type					insert(P&& value); // sfinae: is_constructible<value_type, P&&>::value
 		iterator                               insert(const_iterator hint, const value_type& value);
 		iterator                               insert(const_iterator hint, value_type&& value);
+		// template<typename P>
+		// insert_return_type					insert(const_iterator hint, P&& value); // sfinae: is_constructible<value_type, P&&>::value
 		void                                   insert(std::initializer_list<value_type> ilist);
 		template <typename InputIterator> void insert(InputIterator first, InputIterator last);
 	  //insert_return_type                     insert(node_type&& nh);
@@ -1071,6 +1089,12 @@ namespace eastl
 
 		iterator       find(const key_type& key);
 		const_iterator find(const key_type& key) const;
+
+		// missing transparent key support:
+		// template<typename K>
+		// iterator       find(const K& key);
+		// template<typename K>
+		// const_iterator find(const K& key) const;
 
 		/// Implements a find whereby the user supplies a comparison of a different type
 		/// than the hashtable value_type. A useful case of this is one whereby you have
@@ -1167,8 +1191,18 @@ namespace eastl
 
 		size_type count(const key_type& k) const EA_NOEXCEPT;
 
+		// transparent key support:
+		// template<typename K>
+		// size_type count(const K& k) const;
+
 		eastl::pair<iterator, iterator>             equal_range(const key_type& k);
 		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
+
+		// transparent key support:
+		// template<typename K>
+		// eastl::pair<iterator, iterator>             equal_range(const K& k);
+		// template<typename K>
+		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
 
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
