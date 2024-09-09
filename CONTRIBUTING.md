@@ -27,7 +27,7 @@ Your pull request should:
 
 ### Getting the Repository
 
-EASTL uses git submodules for its dependencies as they are seperate git repositories.  Recursive clones will continue until HD space is exhausted unless they are manually limited.
+EASTL uses git submodules for its dependencies as they are seperate git repositories.
 It is recommended to use the following to get the source:
 
 ```bash
