@@ -1,0 +1,18 @@
+[submodule "test/packages/EABase"]
+	path = test/packages/EABase
+	url = ../EABase.git
+[submodule "test/packages/EAAssert"]
+	path = test/packages/EAAssert
+	url = ../EAAssert.git
+[submodule "test/packages/EAMain"]
+	path = test/packages/EAMain
+	url = ../EAMain.git
+[submodule "test/packages/EAStdC"]
+	path = test/packages/EAStdC
+	url = ../EAStdC.git
+[submodule "test/packages/EATest"]
+	path = test/packages/EATest
+	url = ../EATest.git
+[submodule "test/packages/EAThread"]
+	path = test/packages/EAThread
+	url = ../EAThread.git
