@@ -162,12 +162,19 @@ namespace eastl
 	inline void ref_count_sp::release()
 	{
 		EASTL_ASSERT((mRefCount.load(memory_order_relaxed) > 0));
-		if(mRefCount.fetch_sub(1, memory_order_release) == 1)
-		{
-			atomic_thread_fence(memory_order_acquire);
-			free_value();
-		}
-
+		#if !EASTL_TSAN_ENABLED
+			if(mRefCount.fetch_sub(1, memory_order_release) == 1)
+			{
+				atomic_thread_fence(memory_order_acquire);
+				free_value();
+			}
+		#else
+			// NOTE: TSAN does not support atomic_thread_fences
+			if(mRefCount.fetch_sub(1, memory_order_acq_rel) == 1)
+			{
+				free_value();
+			}
+		#endif
 		weak_release();
 	}
 
@@ -179,11 +186,18 @@ namespace eastl
 	inline void ref_count_sp::weak_release()
 	{
 		EASTL_ASSERT(mWeakRefCount.load(memory_order_relaxed) > 0);
-		if(mWeakRefCount.fetch_sub(1, memory_order_release) == 1)
-		{
-			atomic_thread_fence(memory_order_acquire);
-			free_ref_count_sp();
-		}
+		#if !EASTL_TSAN_ENABLED
+			if(mWeakRefCount.fetch_sub(1, memory_order_release) == 1)
+			{
+				atomic_thread_fence(memory_order_acquire);
+				free_ref_count_sp();
+			}
+		#else
+			if(mWeakRefCount.fetch_sub(1, memory_order_acq_rel) == 1)
+			{
+				free_ref_count_sp();
+			}
+		#endif
 	}
 
 	inline ref_count_sp* ref_count_sp::lock() EA_NOEXCEPT

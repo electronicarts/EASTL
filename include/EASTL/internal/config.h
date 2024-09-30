@@ -1836,4 +1836,18 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	EA_RESTORE_VC_WARNING();				\
 	EA_RESTORE_GCC_WARNING();
 
+#if defined(__has_feature)
+	#if __has_feature(thread_sanitizer)
+		#define EASTL_TSAN_ENABLED 1
+	#else
+		#define EASTL_TSAN_ENABLED 0
+	#endif
+#else
+	#if defined(__SANITIZE_THREAD__)
+		#define EASTL_TSAN_ENABLED 1
+	#else
+		#define EASTL_TSAN_ENABLED 0
+	#endif
+#endif
+
 #endif // Header include guard
