@@ -327,7 +327,12 @@ namespace chrono
 	}
 
 	template <typename Rep1, typename Period1, typename Rep2>
-	duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> EASTL_FORCE_INLINE
+	duration<
+		typename eastl::common_type<
+			Rep1,
+			typename eastl::enable_if<!Internal::IsDuration<Rep2>::value, Rep2>::type
+		>::type,
+		Period1> EASTL_FORCE_INLINE
 	operator/(const duration<Rep1, Period1>& lhs, const Rep2& rhs)
 	{
 		typedef duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> common_duration_t;
@@ -343,7 +348,12 @@ namespace chrono
 	}
 
 	template <typename Rep1, typename Period1, typename Rep2>
-	duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> EASTL_FORCE_INLINE
+	duration<
+		typename eastl::common_type<
+			Rep1,
+			typename eastl::enable_if<!Internal::IsDuration<Rep2>::value, Rep2>::type
+		>::type,
+		Period1> EASTL_FORCE_INLINE
 	operator%(const duration<Rep1, Period1>& lhs, const Rep2& rhs)
 	{
 		typedef duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> common_duration_t;
