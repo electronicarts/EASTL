@@ -101,6 +101,13 @@ int TestDuration()
 		}
 	}
 
+	{
+		seconds s(5);
+		milliseconds ms(10);
+		VERIFY(s / ms == 500);
+		VERIFY(ms / s.count() == milliseconds(2));
+	}
+
 	return nErrorCount;
 }
 
