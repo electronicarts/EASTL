@@ -968,9 +968,17 @@ EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
 // C++17 structured bindings support for eastl::tuple
 //
 #ifndef EA_COMPILER_NO_STRUCTURED_BINDING
+#ifdef EA_COMPILER_MSVC
+	namespace std
+	{
+		template <class> struct tuple_size;
+		template <size_t, class> struct tuple_element;
+	}
+#else
 // we can't forward declare tuple_size and tuple_element because some std implementations
 // don't declare it in the std namespace, but instead alias it.
 #include <tuple>
+#endif
 
 	namespace std
 	{
