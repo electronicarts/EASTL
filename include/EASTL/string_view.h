@@ -694,10 +694,10 @@ namespace eastl
 				// Temporarily disable the warning until we figure out why it thinks _sv is "at global scope".
 				EA_DISABLE_CLANG_WARNING(-Wreserved-identifier)
 				// Backwards compatibility.
-			    EA_CONSTEXPR inline string_view operator "" _sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline u16string_view operator "" _sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline u32string_view operator "" _sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline wstring_view operator "" _sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline string_view operator ""_sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u16string_view operator ""_sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline u32string_view operator ""_sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+			    EA_CONSTEXPR inline wstring_view operator ""_sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 				EA_RESTORE_CLANG_WARNING()	// -Wreserved-identifier
 
 				// C++20 char8_t support.
