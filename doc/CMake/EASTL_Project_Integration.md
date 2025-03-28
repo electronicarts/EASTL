@@ -83,11 +83,16 @@ ${EASTL_ROOT_DIR}/doc/EASTL.natvis
 
 ### Overloading operator new[]
 
-EASTL requires you to have an overload for the operator new[], here is an example that just forwards to global new[]:
+EASTL requires you to have an overload for the operator new[], and an aligned overload, here is an example that just forwards to global new[]:
 
 ```c
 void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 {
 	return new uint8_t[size];
+}
+
+void* __cdecl operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return new (std::align_val_t(alignment)) uint8_t[size];
 }
 ```
