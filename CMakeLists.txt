@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (C) Electronic Arts Inc.  All rights reserved.
 #-------------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.11...3.30)
 include(FetchContent)
 project(EASTL CXX)
 
