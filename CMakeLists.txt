@@ -72,8 +72,8 @@ target_include_directories(EASTL PUBLIC include)
 #-------------------------------------------------------------------------------------------
 FetchContent_Declare(
   EABase
-  GIT_REPOSITORY https://github.com/electronicarts/EABase.git
-  GIT_TAG        123363eb82e132c0181ac53e43226d8ee76dea12
+  GIT_REPOSITORY https://github.com/vikhik/EABase.git
+  GIT_TAG        c40192f
   GIT_SUBMODULES "" # This should be temporary until we update the cyclic submodule dependencies in EABase.
 )
 
