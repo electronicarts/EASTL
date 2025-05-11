@@ -684,10 +684,6 @@ namespace eastl
 	    {
 		    inline namespace string_view_literals
 		    {
-			    EA_CONSTEXPR inline string_view operator "" sv(const char* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline u16string_view operator "" sv(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline u32string_view operator "" sv(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-			    EA_CONSTEXPR inline wstring_view operator "" sv(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 
 				// We've seen _sv trigger the following warning on clang:
 				// identifier '_sv' is reserved because it starts with '_' at global scope [-Wreserved-identifier]
@@ -702,8 +698,7 @@ namespace eastl
 
 				// C++20 char8_t support.
 				#if EA_CHAR8_UNIQUE
-					EA_CONSTEXPR inline u8string_view operator "" sv(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
-					EA_CONSTEXPR inline u8string_view operator "" _sv(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
+					EA_CONSTEXPR inline u8string_view operator ""_sv(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, len}; }
 				#endif
 		    }
 	    }
