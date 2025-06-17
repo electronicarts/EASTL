@@ -53,7 +53,7 @@ After Rob, maintenance of EASTL passed to Max Winkler for roughly a year, until 
 Significant EASTL contributions were made by (in alphabetical order):
 
 * Avery Lee
-* Colin Andrews
+* Claire Andrews
 * JP Flouret
 * Liam Mitchell
 * Matt Newport
