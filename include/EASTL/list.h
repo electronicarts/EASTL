@@ -1571,7 +1571,9 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void list<T, Allocator>::swap(this_type& x)
 	{
-		if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
+		if constexpr (is_empty_v<allocator_type>)
+			DoSwap(x);
+		else if (internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
 			DoSwap(x);
 		else // else swap the contents.
 		{
