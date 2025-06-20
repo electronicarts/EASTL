@@ -81,7 +81,7 @@
 	static_assert(false, "eastl::variant requires a C++14 compatible compiler (at least) ");
 #endif
 
-EA_DISABLE_VC_WARNING(4625) // copy constructor was implicitly defined as deleted
+EA_DISABLE_VC_WARNING(4625 5267) // copy constructor was implicitly defined as deleted
 
 namespace eastl
 {
@@ -1336,9 +1336,8 @@ namespace eastl
 	//     variant<int, long, string> v = "Hello, Variant";
 	//     visit(MyVisitor{}, v);  // calls MyVisitor::operator()(string) {}
 	//
-	EA_DISABLE_VC_WARNING(4100) // warning C4100: 't': unreferenced formal parameter
 	template <typename... Variants>
-	static EA_CPP14_CONSTEXPR void visit_throw_bad_variant_access(Variants&&... variants)
+	static EA_CPP14_CONSTEXPR void visit_throw_bad_variant_access(EA_MAYBE_UNUSED Variants&&... variants)
 	{
 	#if EASTL_EXCEPTIONS_ENABLED
 		using bool_array_type = bool[];
@@ -1352,7 +1351,6 @@ namespace eastl
 		}
 	#endif
 	}
-	EA_RESTORE_VC_WARNING()
 
 	template <typename... Variants>
 	static EA_CONSTEXPR void visit_static_assert_check(Variants&&...)
