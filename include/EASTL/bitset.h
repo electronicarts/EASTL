@@ -48,7 +48,18 @@ EA_DISABLE_VC_WARNING(4127); // Conditional expression is constant
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_ARM64))
+extern "C" unsigned char _BitScanReverse(unsigned long *_Index, unsigned long _Mask);
+extern "C" unsigned char _BitScanForward(unsigned long *_Index, unsigned long _Mask);
+#pragma intrinsic(_BitScanReverse)
+#pragma intrinsic(_BitScanForward)
+#if defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_ARM64)
+extern "C" unsigned char _BitScanReverse64(unsigned long *_Index, unsigned __int64 _Mask);
+extern "C" unsigned char _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask);
+#pragma intrinsic(_BitScanReverse64)
+#pragma intrinsic(_BitScanForward64)
+#endif
+#endif
 
 namespace eastl
 {
@@ -649,7 +660,7 @@ namespace eastl
 	template<typename UInt32>
 	eastl::enable_if_t<detail::is_word_type_v<UInt32> && sizeof(UInt32) == 4, uint32_t> GetFirstBit(UInt32 x)
 	{
-#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_ARM64))
 		// This has been benchmarked as significantly faster than the generic code below.
 		unsigned char isNonZero;
 		unsigned long index;
@@ -679,7 +690,7 @@ namespace eastl
 	template<typename UInt64>
 	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> GetFirstBit(UInt64 x)
 	{
-#if defined(EA_COMPILER_MSVC) && defined(EA_PROCESSOR_X86_64)
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_ARM64))
 		// This has been benchmarked as significantly faster than the generic code below.
 		unsigned char isNonZero;
 		unsigned long index;
@@ -767,7 +778,7 @@ namespace eastl
 	template<typename UInt32>
 	eastl::enable_if_t<detail::is_word_type_v<UInt32> && sizeof(UInt32) == 4, uint32_t> GetLastBit(UInt32 x)
 	{
-#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_ARM64))
 		// This has been benchmarked as significantly faster than the generic code below.
 		unsigned char isNonZero;
 		unsigned long index;
@@ -798,7 +809,7 @@ namespace eastl
 	template<typename UInt64>
 	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> GetLastBit(UInt64 x)
 	{
-#if defined(EA_COMPILER_MSVC) && defined(EA_PROCESSOR_X86_64)
+#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86_64) || defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_ARM64))
 		// This has been benchmarked as significantly faster than the generic code below.
 		unsigned char isNonZero;
 		unsigned long index;
