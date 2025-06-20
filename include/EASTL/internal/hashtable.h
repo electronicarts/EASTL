@@ -1681,12 +1681,15 @@ namespace eastl
 		for(size_type i = 0; i < n; ++i)
 		{
 			node_type* pNode = pNodeArray[i];
-			while(pNode)
+			if (!pNode)
+				continue;
+			do
 			{
 				node_type* const pTempNode = pNode;
 				pNode = pNode->mpNext;
 				DoFreeNode(pTempNode);
 			}
+			while(pNode);
 			pNodeArray[i] = NULL;
 		}
 	}
