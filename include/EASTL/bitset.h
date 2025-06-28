@@ -87,7 +87,7 @@ namespace eastl
 	namespace detail
 	{
 		template<typename T>
-		struct is_word_type : std::bool_constant<!is_const_v<T> && !is_volatile_v<T> && !is_same_v<T, bool> && is_integral_v<T> && is_unsigned_v<T>> {};
+		struct is_word_type : bool_constant<!is_const_v<T> && !is_volatile_v<T> && !is_same_v<T, bool> && is_integral_v<T> && is_unsigned_v<T>> {};
 
 		template<typename T>
 		constexpr bool is_word_type_v = is_word_type<T>::value;
