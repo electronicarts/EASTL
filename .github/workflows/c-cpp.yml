@@ -83,7 +83,7 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
         compiler: [ clang, msvc, gcc ]
-        configuration: [ Debug, Release ]
+        std_iter_compatibility: [ std_iter_category_disabled, std_iter_category_enabled ]
         exclude:
         - os: windows-latest
           compiler: gcc
@@ -125,7 +125,7 @@ jobs:
       - name: Download a Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: Binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.configuration }}-${{ matrix.std_iter_compatibility }}
+          name: Binaries-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.configuration }}-std_iter_category_disabled
           path: Binaries/
       - if: matrix.os == 'ubuntu-latest'
         run: chmod 755 ./Binaries/benchmark/EASTLBenchmarks
