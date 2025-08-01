@@ -83,6 +83,7 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
         compiler: [ clang, msvc, gcc ]
+        configuration: [ Debug, Release ]
         std_iter_compatibility: [ std_iter_category_disabled, std_iter_category_enabled ]
         exclude:
         - os: windows-latest
