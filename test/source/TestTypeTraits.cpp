@@ -438,7 +438,25 @@ typename eastl::enable_if<eastl::is_integral<T>::value, T>::type EnableIfTestFun
 template<typename T>
 typename eastl::disable_if<eastl::is_signed<T>::value, T>::type EnableIfTestFunction(T) 
 	{ return 777; }
- 
+
+template<typename, typename...>
+struct has_common_type_impl : eastl::false_type {};
+
+template<typename... T>
+struct has_common_type_impl<eastl::void_t<typename eastl::common_type<T...>::type>, T...> : eastl::true_type {};
+
+template<typename... T>
+struct has_common_type : has_common_type_impl<void, T...> {};
+
+// Variant if common_type<T1, T2> exists
+template<typename T1, typename T2>
+eastl::common_type<T1, T2>::type CommonTypeSfinaeTestFunction(T1 t1, T2) 
+	{ return t1; }
+
+// Variant if common_type<T1, T2> does not exist
+template<typename T1, typename T2>
+T1 CommonTypeSfinaeTestFunction(T1 t, T2) 
+	{ return t; }
 
 
 // Test that EASTL_DECLARE_TRIVIAL_ASSIGN can be used to get around case whereby 
@@ -1577,7 +1595,17 @@ int TestTypeTraits()
 	static_assert((is_same<common_type<int>::type, int>::value), "common_type failure");
 	static_assert((is_same<common_type<void, void>::type, void>::value), "common_type failure");
 	static_assert((is_same<common_type<int, int>::type, int>::value), "common_type failure");
+	static_assert((is_same<common_type<float, double, int>::type, double>::value), "common_type failure");
+	static_assert((is_same<common_type<int, float, double>::type, double>::value), "common_type failure");
+	static_assert((is_same<common_type<double, int, float>::type, double>::value), "common_type failure");
+	// This should compile due to SFINAE selecting the second overload
+	CommonTypeSfinaeTestFunction(0, nullptr);
 
+	static_assert((has_common_type<>::value == false), "common_type failure");
+	static_assert((has_common_type<int>::value == true), "common_type failure");
+	static_assert((has_common_type<int, void*>::value == false), "common_type failure");
+	static_assert((has_common_type<int, void*, int>::value == false), "common_type failure");
+	static_assert((has_common_type<int, int, int, void*>::value == false), "common_type failure");
 
 	// rank
 	static_assert(rank<int[1][2][3][4][5][6]>::value == 6, "rank failure");

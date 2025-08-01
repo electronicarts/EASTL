@@ -623,26 +623,73 @@ namespace eastl
 	// specialize this trait if at least one template parameter in the specialization 
 	// is a user-defined type. Note: Such specializations are needed when only  
 	// explicit conversions are desired among the template arguments.
+	// 
+	// The implementation below conforms to C++17 and is compatible with
+	// usage in SFINAE contexts. Numbers in parentheses below refer to
+	// C++17 23.15.7.6,p3.
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_common_type_CONFORMANCE 1    // common_type is conforming.
 
+	// Declare common_type
 	template<typename... T>
 	struct common_type;
 
-	template<typename T>
-	struct common_type<T>
-		{ typedef decay_t<T> type; }; // Question: Should we use T or decay_t<T> here? The C++11 Standard specifically (20.9.7.6,p3) specifies that it be without decay, but libc++ uses decay.
+	// (3.1) sizeof(T...) is zero: Empty SFINAE fallback for zero template arguments
+	template<>
+	struct common_type<> {};
 
-	template<typename T, typename U>
-	struct common_type<T, U>
+
+	// (3.2) sizeof(T...) is one: Result is common_type<T,T> to apply the required conversions
+	template<typename T0>
+	struct common_type<T0> : common_type<T0, T0> {};
+
+
+	namespace Internal
 	{
-		typedef decay_t<decltype(true ? declval<T>() : declval<U>())> type; // The type of a tertiary expression is set by the compiler to be the common type of the two result types.
-	};
+		// (3.3.1) T1 != decay(T1) or T2 != decay(T2) -> apply common_type to decayed types.
+		template<typename T1, typename T2, typename D1 = decay_t<T1>, typename D2 = decay_t<T2>>
+		struct common_type2 : common_type<D1, D2> {};
 
-	template<typename T, typename U, typename... V>
-	struct common_type<T, U, V...>
-		{ typedef typename common_type<typename common_type<T, U>::type, V...>::type type; };
+		// Helper to determine the actual common type acc. (3.3.2)
+		template<typename D1, typename D2>
+		using actual_common_type2 = decltype(false ? declval<D1>() : declval<D2>()); // The type of a tertiary expression is set by the compiler to be the common type of the two result types.
+
+		// Empty fallback if common type deduction fails to support the last sentence of (3.3)
+		template<typename V, typename D1, typename D2>
+		struct common_type2_inner {};
+
+		// Deduction if common_type<T1, T2> exists acc. (3.3.2)
+		template<typename D1, typename D2>
+		struct common_type2_inner<void_t<actual_common_type2<D1, D2>>, D1, D2>
+			{ typedef decay_t<actual_common_type2<D1, D2>> type; };
+
+		// (3.3.2) T1 == decay(T1) and T2 == decay(T2) -> give the common type if it exists.
+		template<typename T1, typename T2>
+		struct common_type2<T1, T2, T1, T2>
+			: common_type2_inner<void, T1, T2> {};
+	}
+
+	// (3.3) sizeof(T...) is two: Use a helper template to resolve decay_t and give the common_type only if it exists, supporting SFINAE
+	template<typename T1, typename T2>
+	struct common_type<T1, T2>: Internal::common_type2<T1, T2> {};
+
+	namespace Internal
+	{
+		// Empty fallback if common type deduction fails to support the last sentence of (3.4)
+		template<typename V, typename T1, typename T2, typename... R>
+		struct common_type3 {};
+
+		// Deduction if common_type<T1, T2> exists acc. (3.4)
+		template<typename T1, typename T2, typename... R>
+		struct common_type3<void_t<typename common_type<T1, T2>::type>, T1, T2, R...>
+			: common_type<typename common_type<T1, T2>::type, R...> {};
+	}
+
+	// (3.4) sizeof(T...) is greater than two: Recursively apply common_type to the first two types and the rest
+	template<typename T1, typename T2, typename... R>
+	struct common_type<T1, T2, R...>
+		: Internal::common_type3<void, T1, T2, R...> {};
 
 
 	// common_type_t is the C++14 using typedef for typename common_type<T...>::type.
