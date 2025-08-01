@@ -84,7 +84,29 @@ namespace eastl
 	/// is useful for cases whereby the calculation of the hash value for
 	/// a contained object is very expensive.
 	///
+	/// Heterogeneous lookup, insertion and erasure
+	/// See
+	/// https://en.cppreference.com/w/cpp/utility/functional#Transparent_function_objects
+	/// https://en.cppreference.com/w/cpp/utility/functional/less_void
+	/// https://en.cppreference.com/w/cpp/container/unordered_map/find
+	/// 
+	/// You can avoid creating key objects when calling member functions
+	/// with a key_type parameter by declaring the container with a
+	/// transparent hash and comparison type (eg. equal_to<void>) and
+	/// passing objects to be passed to these function objects.
+	/// 
+	/// This optimization is supported for member functions that take a
+	/// key_type parameter, ie. heterogeneous lookup, insertion and erasure,
+	/// not just find().
+	/// 
+	/// Using transparent types is safer than using find_as because the
+	/// latter requires the user specify hash and equality function objects
+	/// which must have the same semantics as the container's hash and
+	/// equality objects, otherwise the behaviour is undefined.
+	/// 
 	/// find_as
+	/// Note: Prefer heterogeneous lookup (see above).
+	/// 
 	/// In order to support the ability to have a hashtable of strings but
 	/// be able to do efficiently lookups via char pointers (i.e. so they 
 	/// aren't converted to string objects), we provide the find_as 
@@ -122,6 +144,9 @@ namespace eastl
 		typedef typename base_type::const_iterator                                const_iterator;
 
 		using base_type::insert;
+
+		static_assert(!is_const<value_type>::value, "hash_map<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "hash_map<T> value_type must be non-volatile.");
 
 	public:
 		/// hash_map
@@ -259,48 +284,28 @@ namespace eastl
 			return base_type::DoInsertKey(true_type(), key);
 		}
 
-		T& at(const key_type& k)
-		{
-			iterator it = base_type::find(k);
-
-			if (it == base_type::end())
-			{
-				#if EASTL_EXCEPTIONS_ENABLED
-					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
-			}
-			// undefined behaviour if exceptions and asserts are disabled and it == end()
-			return it->second;
-		}
-
-
-		const T& at(const key_type& k) const
-		{
-			const_iterator it = base_type::find(k);
-
-			if (it == base_type::end())
-			{
-				#if EASTL_EXCEPTIONS_ENABLED
-					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
-			}
-			// undefined behaviour if exceptions and asserts are disabled and it == end()
-			return it->second;
-		}
-
-
 		insert_return_type insert(key_type&& key)
 		{
 			return base_type::DoInsertKey(true_type(), eastl::move(key));
 		}
+
+		template <typename P, eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		insert_return_type insert(P&& otherValue)
+		{
+			return base_type::emplace(eastl::forward<P>(otherValue));
+		}
+
+		T& at(const key_type& k) { return DoAt(k); }
+
+		const T& at(const key_type& k) const { return DoAt(k); }
+
+		template<typename KX, typename HX = Hash, typename PX = Predicate,
+			eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<HX> && eastl::detail::is_transparent_comparison_v<PX>, bool> = true>
+		T& at(const KX& k) { return DoAt(k); }
+
+		template<typename KX, typename HX = Hash, typename PX = Predicate,
+			eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<HX>&& eastl::detail::is_transparent_comparison_v<PX>, bool> = true>
+		const T& at(const KX& k) const { return DoAt(k); }
 
 
 		mapped_type& operator[](const key_type& key)
@@ -320,6 +325,13 @@ namespace eastl
 			return (*base_type::DoInsertKey(true_type(), eastl::move(key)).first).second;
 		}
 
+		template <typename KX, typename... Args, typename HX = Hash, typename PX = Predicate,
+			eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<HX> && eastl::detail::is_transparent_comparison_v<PX>, bool> = true>
+		mapped_type& operator[](KX&& key)
+		{
+			return try_emplace(eastl::forward<KX>(key)).first->second;
+		}
+
 		// try_emplace API added in C++17
 		template <class... Args>
 		inline insert_return_type try_emplace(const key_type& k, Args&&... args)
@@ -330,6 +342,13 @@ namespace eastl
 		template <class... Args>
 		inline insert_return_type try_emplace(key_type&& k, Args&&... args) {
 			return try_emplace_forwarding(eastl::move(k), eastl::forward<Args>(args)...);
+		}
+
+		template <typename KX, typename... Args, typename HX = Hash, typename PX = Predicate,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, const_iterator> && !eastl::is_convertible_v<KX&&, iterator>
+			&& eastl::detail::is_transparent_comparison_v<HX> && eastl::detail::is_transparent_comparison_v<PX>, bool> = true>
+		inline insert_return_type try_emplace(KX&& k, Args&&... args) {
+			return try_emplace_forwarding(eastl::forward<KX>(k), eastl::forward<Args>(args)...);
 		}
 
 		template <class... Args>
@@ -346,7 +365,53 @@ namespace eastl
 			return base_type::DoGetResultIterator(true_type(), result);
 		}
 
+		template <typename KX, typename... Args, typename HX = Hash, typename PX = Predicate,
+			eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<HX>&& eastl::detail::is_transparent_comparison_v<PX>, bool> = true>
+		inline iterator try_emplace(const_iterator, KX&& k, Args&&... args) {
+			// Currently, the first parameter is ignored.
+			insert_return_type result = try_emplace(eastl::forward<KX>(k), eastl::forward<Args>(args)...);
+			return base_type::DoGetResultIterator(true_type(), result);
+		}
+
 	private:
+		template<typename KX>
+		T& DoAt(const KX& k)
+		{
+			iterator it = base_type::find(k);
+
+			if (it == base_type::end())
+			{
+#if EASTL_EXCEPTIONS_ENABLED
+				// throw exeption if exceptions enabled
+				throw std::out_of_range("invalid hash_map<K, T> key");
+#else
+				// assert false if asserts enabled
+				EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+#endif
+			}
+			// undefined behaviour if exceptions and asserts are disabled and it == end()
+			return it->second;
+		}
+
+		template<typename KX>
+		const T& DoAt(const KX& k) const
+		{
+			const_iterator it = base_type::find(k);
+
+			if (it == base_type::end())
+			{
+#if EASTL_EXCEPTIONS_ENABLED
+				// throw exeption if exceptions enabled
+				throw std::out_of_range("invalid hash_map<K, T> key");
+#else
+				// assert false if asserts enabled
+				EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+#endif
+			}
+			// undefined behaviour if exceptions and asserts are disabled and it == end()
+			return it->second;
+		}
+
 		template <class K, class... Args>
 		insert_return_type try_emplace_forwarding(K&& k, Args&&... args)
 		{
@@ -419,6 +484,9 @@ namespace eastl
 		typedef typename base_type::iterator                                          iterator;
 
 		using base_type::insert;
+
+		static_assert(!is_const<value_type>::value, "hash_multimap<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "hash_multimap<T> value_type must be non-volatile.");
 
 	private:
 		using base_type::insert_or_assign;
@@ -553,6 +621,12 @@ namespace eastl
 		insert_return_type insert(key_type&& key)
 		{
 			return base_type::DoInsertKey(false_type(), eastl::move(key));
+		}
+
+		template <typename P, eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		insert_return_type insert(P&& otherValue)
+		{
+			return base_type::emplace(eastl::forward<P>(otherValue));
 		}
 
 	}; // hash_multimap

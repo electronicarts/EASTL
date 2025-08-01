@@ -218,11 +218,33 @@ int TestFixedVector()
 		// The variables used here are declared above in the global space.
 		vA64.insert(vA64.begin(), pA64, pA64 + 1);
 		EATEST_VERIFY(VerifySequence(vA64.begin(), vA64.end(), int(), "fixed_vector", 5, -1));
-		EATEST_VERIFY(((uintptr_t)&a64 % kEASTLTestAlign64) == 0);
-		EATEST_VERIFY(((uintptr_t)vA64.data() % kEASTLTestAlign64) == 0);
-		EATEST_VERIFY(((uintptr_t)&vA64[0] % kEASTLTestAlign64) == 0);
+		EATEST_VERIFY(((uintptr_t)&a64 % alignof(Align64)) == 0);
+		EATEST_VERIFY(((uintptr_t)vA64.data() % alignof(Align64)) == 0);
+		EATEST_VERIFY(((uintptr_t)&vA64[0] % alignof(Align64)) == 0);
 		EATEST_VERIFY(vA64.max_size() == 3);
 		EATEST_VERIFY(vA64.validate());
+	}
+
+	{
+		// push_back()
+
+		{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT)
+			typedef eastl::fixed_vector<int, 128, false> FixedVector;
+			FixedVector v;
+			v.push_back(); // value initialized.
+			EATEST_VERIFY(v.back() == 0);
+#endif
+		}
+
+		{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT)
+			typedef eastl::fixed_vector<int, 128, true> FixedVector;
+			FixedVector v;
+			v.push_back(); // value initialized.
+			EATEST_VERIFY(v.back() == 0);
+#endif
+		}
 	}
 
 
@@ -498,7 +520,7 @@ int TestFixedVector()
 		EATEST_VERIFY(test.validate());
 
 		test.set_capacity(0);    // "Does nothing currently."
-		EATEST_VERIFY(test.capacity() == 0);
+		EATEST_VERIFY(test.capacity() == 1);
 		EATEST_VERIFY(test.validate());
 
 	}   // "Crash here."

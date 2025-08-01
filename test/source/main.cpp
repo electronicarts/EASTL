@@ -91,15 +91,20 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("AllocatorPropagate",		TestAllocatorPropagate);
 	testSuite.AddTest("Any",				    TestAny);
 	testSuite.AddTest("Array",					TestArray);
-#if defined(EA_COMPILER_CPP20_ENABLED)
 	testSuite.AddTest("Bit",					TestBit);
+#if EA_COMPILER_CPP17_ENABLED
+	testSuite.AddTest("BadExpectedAccess",  	TestBadExpectedAccess);
 #endif
 	testSuite.AddTest("BitVector",				TestBitVector);
 	testSuite.AddTest("Bitset",					TestBitset);
 	testSuite.AddTest("CharTraits",			    TestCharTraits);
 	testSuite.AddTest("Chrono",					TestChrono);
 	testSuite.AddTest("Concepts", 				TestConcepts);
+	testSuite.AddTest("ContainerBehaviour",		TestContainerBehaviour);
 	testSuite.AddTest("Deque",					TestDeque);
+#if EA_COMPILER_CPP17_ENABLED
+	testSuite.AddTest("Expected",				TestExpected);
+#endif
 	testSuite.AddTest("Extra",					TestExtra);
 	testSuite.AddTest("Finally",				TestFinally);
 	testSuite.AddTest("FixedFunction",			TestFixedFunction);
@@ -144,18 +149,22 @@ int EAMain(int argc, char* argv[])
 	testSuite.AddTest("Tuple",					TestTuple);
 	testSuite.AddTest("TupleVector",			TestTupleVector);
 	testSuite.AddTest("TypeTraits",				TestTypeTraits);
+#if EA_COMPILER_CPP17_ENABLED
+	testSuite.AddTest("Unexpected",				TestUnexpected);
+#endif
 	testSuite.AddTest("Utility",				TestUtility);
 	testSuite.AddTest("Variant",				TestVariant);
 	testSuite.AddTest("Vector",					TestVector);
 	testSuite.AddTest("VectorMap",				TestVectorMap);
 	testSuite.AddTest("VectorSet",				TestVectorSet);
 	testSuite.AddTest("AtomicBasic",			TestAtomicBasic);
+	testSuite.AddTest("AtomicRaw",			TestAtomicRaw);
 #if EASTL_THREAD_SUPPORT_AVAILABLE
 	testSuite.AddTest("AtomicMT",				TestAtomicMultiThreaded);
 #endif
 	testSuite.AddTest("AtomicAsm",				TestAtomicAsm);
 	testSuite.AddTest("Bitcast",				TestBitcast);
-
+	testSuite.AddTest("Flags",					TestFlags);
 
 
 	nErrorCount += testSuite.Run();
@@ -166,11 +175,3 @@ int EAMain(int argc, char* argv[])
 
 	return nErrorCount;
 }
-
-
-
-
-
-
-
-

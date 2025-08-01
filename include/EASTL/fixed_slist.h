@@ -109,7 +109,7 @@ namespace eastl
 		size_type max_size() const;         // Returns the max fixed size, which is the user-supplied nodeCount parameter.
 		bool      full() const;             // Returns true if the fixed space has been fully allocated. Note that if overflow is enabled, the container size can be greater than nodeCount but full() could return true because the fixed space may have a recently freed slot. 
 		bool      has_overflowed() const;   // Returns true if the allocations spilled over into the overflow allocator. Meaningful only if overflow is enabled.
-		bool      can_overflow() const;     // Returns the value of the bEnableOverflow template parameter.
+		static constexpr bool can_overflow() { return bEnableOverflow; } // Returns the value of the bEnableOverflow template parameter.
 
 		// OverflowAllocator
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
@@ -138,9 +138,6 @@ namespace eastl
 	inline fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_slist(const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
-		#endif
 	}
 
 
@@ -223,10 +220,6 @@ namespace eastl
 	inline fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::fixed_slist(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			internalAllocator().set_name(EASTL_FIXED_SLIST_DEFAULT_NAME);
-		#endif
-
 		assign(ilist.begin(), ilist.end());
 	}
 
@@ -322,13 +315,6 @@ namespace eastl
 		#else
 			return (size() > kMaxSize);
 		#endif
-	}
-
-
-	template <typename T, size_t nodeCount, bool bEnableOverflow, typename OverflowAllocator>
-	inline bool fixed_slist<T, nodeCount, bEnableOverflow, OverflowAllocator>::can_overflow() const
-	{
-		return bEnableOverflow;
 	}
 
 

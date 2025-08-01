@@ -73,6 +73,10 @@ static int TestUtilityPair()
 		pair<long, double> idPair2(ifPair2);
 		EATEST_VERIFY((idPair2.first == 0) && (idPair2.second == 1.0));
 
+		// invoke the explicit TestObject constructor:
+		// explicit TestObject(int x = 0, bool bThrowOnCopy = false)
+		pair<TestObject, int> tiPair1(0, 4);
+
 		// pair(pair&& p);
 
 		// template<typename U, typename V>
@@ -732,7 +736,7 @@ static int TestUtilityExchange()
 	return nErrorCount;
 }
 
-#if defined(EA_COMPILER_CPP20_ENABLED)
+#if defined(EA_COMPILER_CPP17_ENABLED)
 template <typename T>
 static int TestCmpCommon()
 {
@@ -1034,7 +1038,7 @@ static int TestUtilityIntegralComp()
 	EATEST_VERIFY(eastl::in_range<unsigned long>(eastl::numeric_limits<unsigned long>::min()));
 	EATEST_VERIFY(eastl::in_range<unsigned long>(eastl::numeric_limits<unsigned long>::max()));
 	EATEST_VERIFY(!eastl::in_range<unsigned long>(-1));
-	EATEST_VERIFY(!eastl::in_range<long>(eastl::numeric_limits<unsigned int>::max()));
+	EATEST_VERIFY(eastl::in_range<long>(eastl::numeric_limits<unsigned int>::max()) == (sizeof(unsigned int) < sizeof(long)));
 	EATEST_VERIFY(!eastl::in_range<unsigned long>(eastl::numeric_limits<int>::min()));
 
 	return nErrorCount;
@@ -1054,7 +1058,7 @@ int TestUtility()
 	nErrorCount += TestUtilityMove();
 	nErrorCount += TestUtilityIntegerSequence();
 	nErrorCount += TestUtilityExchange();
-#if defined(EA_COMPILER_CPP20_ENABLED)
+#if defined(EA_COMPILER_CPP17_ENABLED)
 	nErrorCount += TestUtilityIntegralComp();
 #endif
 	return nErrorCount;

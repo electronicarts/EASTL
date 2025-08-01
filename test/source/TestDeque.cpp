@@ -763,8 +763,8 @@ int TestDeque()
 			// destroying containers to invoke InstanceAllocator::deallocate() checks
 		}
 
-		EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
-		InstanceAllocator::reset_all();
+		EATEST_VERIFY_MSG(InstanceAllocator::reset_all(),
+		                  "Container elements should be deallocated by the allocator that allocated it.");
 	}
 
 
@@ -871,7 +871,7 @@ int TestDeque()
 
 	{
 	#ifndef EASTL_OPENSOURCE
-		auto prevAllocCount = gEASTLTest_AllocationCount;
+		auto prevAllocCount = gEASTLTest_AllocationCount.load(eastl::memory_order_relaxed);
 	#endif
 		{
 			EA_DISABLE_VC_WARNING(4625 4626)
@@ -884,9 +884,6 @@ int TestDeque()
 			};
 			EA_RESTORE_VC_WARNING()
 
-			EASTL_INTERNAL_DISABLE_DEPRECATED() // 'eastl::has_trivial_relocate<TestDeque::a>': was declared deprecated
-			static_assert(eastl::has_trivial_relocate<a>::value == false, "failure");
-			EASTL_INTERNAL_RESTORE_DEPRECATED()
 			static_assert(eastl::is_trivial<a>::value == false, "failure");
 			static_assert(eastl::is_trivially_constructible<a>::value == false, "failure");
 			static_assert(eastl::is_trivially_copyable<a>::value == false, "failure");
@@ -900,7 +897,7 @@ int TestDeque()
 			d.erase(d.begin() + 1);
 		}
 	#ifndef EASTL_OPENSOURCE
-		EATEST_VERIFY(gEASTLTest_AllocationCount == prevAllocCount);
+		EATEST_VERIFY(gEASTLTest_AllocationCount.load(eastl::memory_order_relaxed) == prevAllocCount);
 	#endif
 	}
 
@@ -1008,6 +1005,13 @@ int TestDeque()
 		// unusual type - not well supported: eastl containers implicitly assume that ctor and operator= are both defined.
 		eastl::deque<TriviallyCopyableWithMoveCtor> d1;
 		eastl::deque<TriviallyCopyableWithMoveCtor> d2{ eastl::move(d1) };
+	}
+
+	{
+		// our deque implementation always has allocations. this set_allocator() is unlike other container's set_allocator() member function in that it
+		// actually frees allocations when assigning the allocator. this lack of consistency is unfortunate.
+		eastl::deque<TestObject, InstanceAllocator, 16> d(0, TestObject(), InstanceAllocator(1));
+		d.set_allocator(InstanceAllocator(2));
 	}
 
 #if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)

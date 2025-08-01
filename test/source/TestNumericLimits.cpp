@@ -5,6 +5,7 @@
 
 #include "EASTLTest.h"
 #include <EASTL/numeric_limits.h>
+#include <EASTL/numeric.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -121,6 +122,9 @@ int TestNumericLimits()
 
 	EATEST_VERIFY(eastl::numeric_limits<int64_t>::is_bounded);
 	EATEST_VERIFY(eastl::numeric_limits<int64_t>::max() != 0);
+
+	EATEST_VERIFY(eastl::isnan(eastl::numeric_limits<float>::quiet_NaN()));
+	EATEST_VERIFY(eastl::isnan(eastl::numeric_limits<float>::signaling_NaN()));
 
 	return nErrorCount;
 }

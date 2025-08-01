@@ -3,19 +3,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// This file implements the following functions from the C++ standard that 
+// This file implements the following functions from the C++ standard that
 // are found in the <memory> header:
-//
-// Temporary memory:
-//    return_temporary_buffer
 //
 // Utility:
 //    late_constructed                  - Extention to standard functionality.
 //
 // Uninitialized operations:
-//    These are the same as the copy, fill, and fill_n algorithms, except that 
+//    These are the same as the copy, fill, and fill_n algorithms, except that
 //    they *construct* the destination with the source values rather than assign
-//    the destination with the source values. 
+//    the destination with the source values.
 //
 //    uninitialized_copy
 //    uninitialized_copy_n
@@ -50,23 +47,6 @@
 //
 // Pointers
 //    pointer_traits
-// 
-// Deprecations:
-// (EASTL_REMOVE_AT_2024_APRIL)
-//    uninitialized_relocate            - Use one of the other uninitialized_xxxx functions with move semantics.
-//    uninitialized_default_fill        - Use uninitialized_value_construct instead.
-//    uninitialized_default_fill_n      - Use uninitialized_value_construct_n instead.
-// 
-// (EASTL_REMOVE_AT_2024_SEPT)
-//    uninitialized_copy_ptr            - Use uninitialized_copy instead.
-//    uninitialized_move_ptr            - Use uninitialized_move instead.
-//    uninitialized_move_ptr_if_noexcept- Use uninitialized_move_if_noexcept instead.
-//    uninitialized_fill_ptr            - Use uninitialized_fill instead.
-//    uninitialized_fill_n_ptr          - Use uninitialized_fill_n instead.
-// 
-// Deprecated in C++17:
-//    get_temporary_buffer
-//
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -76,11 +56,11 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/memory_base.h>
+#include <EASTL/internal/memory_uses_allocator.h>
 #include <EASTL/internal/pair_fwd_decls.h>
 #include <EASTL/internal/functional_base.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/type_traits.h>
-#include <EASTL/allocator.h>
 #include <EASTL/iterator.h>
 #include <EASTL/utility.h>
 #include <EASTL/numeric_limits.h>
@@ -114,66 +94,18 @@ namespace eastl
 	#endif
 
 
-	/// get_temporary_buffer
-	///
-	/// From the C++ standard, section 20.4.3:
-	///    1 Effects: Obtains a pointer to storage sufficient to store up to n adjacent T objects.
-	///    2 Returns: A pair containing the buffer's address and capacity (in the units of sizeof(T)), 
-	///               or a pair of 0 values if no storage can be obtained.
-	///
-	/// Note: The return value is space to hold T elements, but no T elements are constructed.
-	///
-	/// Our implementation here differs slightly in that we have alignment, alignmentOffset, and pName arguments.
-	/// Note that you can use the EASTL_NAME_VAL macro to make names go away in release builds.
-	///
-	/// Example usage:
-	///    pair<int*, ptrdiff_t> pr = get_temporary_buffer<int>(100, 0, 0, EASTL_NAME_VAL("Temp int array"));
-	///    memset(pr.first, 0, 100 * sizeof(int));
-	///    return_temporary_buffer(pr.first);
-	/// 
-	template <typename T>
-	EASTL_REMOVE_AT_2024_APRIL
-	eastl::pair<T*, ptrdiff_t> get_temporary_buffer(ptrdiff_t n, size_t alignment = 1, size_t alignmentOffset = 0, const char* pName = EASTL_TEMP_DEFAULT_NAME)
-	{
-		EASTLAllocatorType allocator(*EASTLAllocatorDefault(), pName);
-		return eastl::pair<T*, ptrdiff_t>(static_cast<T*>(EASTLAllocAligned(allocator, n * sizeof(T), alignment, alignmentOffset)), n);
-	}
-
-
-	/// return_temporary_buffer
-	///
-	/// From the C++ standard, section 20.4.3:
-	///    3 Effects:  Deallocates the buffer to which p points.
-	///    4 Requires: The buffer shall have been previously allocated by get_temporary_buffer.
-	///
-	/// Note: This function merely frees space and does not destruct any T elements.
-	///
-	/// Example usage:
-	///    pair<int*, ptrdiff_t> pr = get_temporary_buffer<int>(300);
-	///    memset(pr.first, 0, 300 * sizeof(int));
-	///    return_temporary_buffer(pr.first, pr.second);
-	/// 
-	template <typename T>
-	void return_temporary_buffer(T* p, ptrdiff_t n = 0)
-	{
-		EASTLAllocatorType& allocator(*EASTLAllocatorDefault());
-		EASTLFree(allocator, p, n * sizeof(T));
-	}
-
-
-
 	/// late_constructed
 	///
-	/// Implements a smart pointer type which separates the memory allocation of an object from 
+	/// Implements a smart pointer type which separates the memory allocation of an object from
 	/// the object's construction. The primary use case is to declare a global variable of the
 	/// late_construction type, which allows the memory to be global but the constructor executes
 	/// at some point after main() begins as opposed to before main, which is often dangerous
 	/// for non-trivial types.
 	///
 	/// The autoConstruct template parameter controls whether the object is automatically default
-	/// constructed upon first reference or must be manually constructed upon the first use of 
+	/// constructed upon first reference or must be manually constructed upon the first use of
 	/// operator * or ->. autoConstruct is convenient but it causes * and -> to be slightly slower
-	/// and may result in construction at an inconvenient time. 
+	/// and may result in construction at an inconvenient time.
 	///
 	/// The autoDestruct template parameter controls whether the object, if constructed, is automatically
 	/// destructed when ~late_constructed() is called or must be manually destructed via a call to
@@ -181,13 +113,13 @@ namespace eastl
 	///
 	/// While construction can be automatic or manual, automatic destruction support is always present.
 	/// Thus you aren't required in any case to manually call destruct. However, you may safely manually
-	/// destruct the object at any time before the late_constructed destructor is executed. 
+	/// destruct the object at any time before the late_constructed destructor is executed.
 	///
 	/// You may still use late_constructed after calling destruct(), including calling construct()
-	/// again to reconstruct the instance. destruct returns the late_constructed instance to a 
+	/// again to reconstruct the instance. destruct returns the late_constructed instance to a
 	/// state equivalent to before construct was called.
 	///
-	/// Caveat: While late_constructed instances can be declared in global scope and initialize 
+	/// Caveat: While late_constructed instances can be declared in global scope and initialize
 	/// prior to main() executing, you cannot otherwise use such globally declared instances prior
 	/// to main with guaranteed behavior unless you can ensure that the late_constructed instance
 	/// is itself constructed prior to your use of it.
@@ -200,7 +132,7 @@ namespace eastl
 	///         gWidget->SetValue(15);
 	///         gWidget.destruct();
 	///     }
-	/// 
+	///
 	/// Example usage (demonstrating auto-construction):
 	///     late_constructed<Widget, true> gWidget;
 	///
@@ -208,7 +140,7 @@ namespace eastl
 	///         gWidget->SetValue(15);
 	///         // You may want to call destruct here, but aren't required to do so unless the Widget type requires it.
 	///     }
-	/// 
+	///
 	template <typename T, bool autoConstruct = true, bool autoDestruct = true>
 	class late_constructed
 	{
@@ -217,8 +149,8 @@ namespace eastl
 		using value_type   = T;
 		using storage_type = eastl::aligned_storage_t<sizeof(value_type), eastl::alignment_of_v<value_type>>;
 
-		late_constructed() EA_NOEXCEPT       // In the case of the late_constructed instance being at global scope, we rely on the 
-		  : mStorage(), mpValue(nullptr) {}  // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
+		constexpr late_constructed() noexcept  // In the case of the late_constructed instance being at global scope, we rely on the
+		  : mStorage(), mpValue(nullptr) {}    // compiler executing this constructor or placing the instance in auto-zeroed-at-startup memory.
 
 		~late_constructed()
 		{
@@ -233,7 +165,7 @@ namespace eastl
 				mpValue = new (&mStorage) value_type(eastl::forward<Args>(args)...);
 		}
 
-		bool is_constructed() const EA_NOEXCEPT
+		bool is_constructed() const noexcept
 			{ return mpValue != nullptr; }
 
 		void destruct()
@@ -245,7 +177,7 @@ namespace eastl
 			}
 		}
 
-		value_type& operator*() EA_NOEXCEPT
+		value_type& operator*() noexcept
 		{
 			if(!mpValue)
 				construct();
@@ -254,7 +186,7 @@ namespace eastl
 			return *mpValue;
 		}
 
-		const value_type& operator*() const EA_NOEXCEPT
+		const value_type& operator*() const noexcept
 		{
 			if(!mpValue)
 				construct();
@@ -263,31 +195,31 @@ namespace eastl
 			return *mpValue;
 		}
 
-		value_type* operator->() EA_NOEXCEPT
+		value_type* operator->() noexcept
 		{
 			if(!mpValue)
 				construct();
 			return mpValue;
 		}
 
-		const value_type* operator->() const EA_NOEXCEPT
+		const value_type* operator->() const noexcept
 		{
 			if(!mpValue)
 				construct();
 			return mpValue;
 		}
 
-		value_type* get() EA_NOEXCEPT
+		value_type* get() noexcept
 		{
 			if(!mpValue)
-				construct(); 
+				construct();
 			return mpValue;
 		}
 
-		const value_type* get() const EA_NOEXCEPT
+		const value_type* get() const noexcept
 		{
 			if(!mpValue)
-				construct(); 
+				construct();
 			return mpValue;
 		}
 
@@ -304,269 +236,24 @@ namespace eastl
 	public:
 		typedef late_constructed<T, true, autoDestruct> base_type;
 
-		typename base_type::value_type& operator*() EA_NOEXCEPT
+		typename base_type::value_type& operator*() noexcept
 			{ EASTL_ASSERT(base_type::mpValue); return *base_type::mpValue; }
 
-		const typename base_type::value_type& operator*() const EA_NOEXCEPT
+		const typename base_type::value_type& operator*() const noexcept
 			{ EASTL_ASSERT(base_type::mpValue); return *base_type::mpValue; }
 
-		typename base_type::value_type* operator->() EA_NOEXCEPT
+		typename base_type::value_type* operator->() noexcept
 			{ EASTL_ASSERT(base_type::mpValue); return base_type::mpValue; }
 
-		const typename base_type::value_type* operator->() const EA_NOEXCEPT
+		const typename base_type::value_type* operator->() const noexcept
 			{ EASTL_ASSERT(base_type::mpValue); return base_type::mpValue; }
 
-		typename base_type::value_type* get() EA_NOEXCEPT
+		typename base_type::value_type* get() noexcept
 			{ return base_type::mpValue; }
 
-		const typename base_type::value_type* get() const EA_NOEXCEPT
+		const typename base_type::value_type* get() const noexcept
 			{ return base_type::mpValue; }
 	};
-
-
-
-	/// raw_storage_iterator
-	///
-	/// From the C++11 Standard, section 20.6.10 p1
-	/// raw_storage_iterator is provided to enable algorithms to store their results into uninitialized memory.
-	/// The formal template parameter OutputIterator is required to have its operator* return an object for
-	/// which operator& is defined and returns a pointer to T, and is also required to satisfy the requirements 
-	/// of an output iterator (24.2.4).
-
-	template <typename OutputIterator, typename T>
-	class EASTL_REMOVE_AT_2024_APRIL raw_storage_iterator
-	{
-	protected:
-		OutputIterator mIterator;
-
-	public:
-		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
-		typedef void								value_type;
-		typedef void								difference_type;
-		typedef void								pointer;
-		typedef void								reference;
-
-		explicit raw_storage_iterator(OutputIterator iterator)
-		  : mIterator(iterator) 
-		{
-		}
-
-		raw_storage_iterator& operator*() 
-		{
-			return *this;
-		}
-
-		raw_storage_iterator& operator=(const T& value)
-		{
-			::new(eastl::addressof(*mIterator)) T(value);
-			return *this;
-		}
-
-		raw_storage_iterator& operator++()
-		{
-			++mIterator;
-			return *this;
-		}
-
-		raw_storage_iterator operator++(int)
-		{
-			raw_storage_iterator tempIterator = *this;
-			++mIterator;
-			return tempIterator;
-		}
-	};
-
-
-	/// uninitialized_relocate (formerly named uninitialized_move prior to C++11)
-	///
-	/// This utility is deprecated in favor of C++11 rvalue move functionality.
-	///
-	/// uninitialized_relocate takes a constructed sequence of objects and an
-	/// uninitialized destination buffer. In the case of any exception thrown
-	/// while moving the objects, any newly constructed objects are guaranteed
-	/// to be destructed and the input left fully constructed.
-	///
-	/// In the case where you need to do multiple moves atomically, split the
-	/// calls into uninitialized_relocate_start/abort/commit.
-	///
-	/// uninitialized_relocate_start can possibly throw an exception. If it does,
-	/// you don't need to do anything. However, if it returns without throwing
-	/// an exception you need to guarantee that either uninitialized_relocate_abort
-	/// or uninitialized_relocate_commit is called.
-	///
-	/// Both uninitialized_relocate_abort and uninitialize_move_commit are
-	/// guaranteed to not throw C++ exceptions.
-	namespace Internal
-	{
-		template <bool hasTrivialMove, typename iteratorTag>
-		struct uninitialized_relocate_impl
-		{
-			template <typename ForwardIterator, typename ForwardIteratorDest>
-			static ForwardIteratorDest do_move_start(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-			{
-				typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-
-				#if EASTL_EXCEPTIONS_ENABLED
-					ForwardIteratorDest origDest(dest);
-					try
-					{
-				#endif
-						for(; first != last; ++first, ++dest)
-							::new((void*)eastl::addressof(*dest)) value_type(*first);
-				#if EASTL_EXCEPTIONS_ENABLED
-					}
-					catch(...)
-					{
-						for(; origDest < dest; ++origDest)
-							(*origDest).~value_type();
-						throw;
-					}
-				#endif
-
-				return dest;
-			}
-
-			template <typename ForwardIterator, typename ForwardIteratorDest>
-			static ForwardIteratorDest do_move_commit(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest) //throw()
-			{
-				typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-				for(; first != last; ++first, ++dest)
-					(*first).~value_type();
-
-				return dest;
-			}
-
-			template <typename ForwardIterator, typename ForwardIteratorDest>
-			static ForwardIteratorDest do_move_abort(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest) //throw()
-			{
-				typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-				for(; first != last; ++first, ++dest)
-					(*dest).~value_type();
-				return dest;
-			}
-		};
-
-		template <>
-		struct uninitialized_relocate_impl<true, EASTL_ITC_NS::random_access_iterator_tag>
-		{
-			template <typename T>
-			static T* do_move_start(T* first, T* last, T* dest)
-			{
-				if (first != last)
-					return (T*)memcpy(dest, first, (size_t)((uintptr_t)last - (uintptr_t)first)) + (last - first);
-				else
-					return dest;
-			}
-
-			template <typename T>
-			static T* do_move_commit(T* first, T* last, T* dest)
-			{
-				return dest + (last - first);
-			}
-
-			template <typename T>
-			static T* do_move_abort(T* first, T* last, T* dest)
-			{
-				return dest + (last - first);
-			}
-		};
-	}
-
-	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'has_trivial_relocate': was declared deprecated
-
-	/// uninitialized_relocate_start, uninitialized_relocate_commit, uninitialized_relocate_abort
-	///
-	/// This utility is deprecated in favor of C++11 rvalue move functionality.
-	///
-	/// After calling uninitialized_relocate_start, if it doesn't throw an exception,
-	/// both the source and destination iterators point to undefined data. If it
-	/// does throw an exception, the destination remains uninitialized and the source
-	/// is as it was before.
-	///
-	/// In order to make the iterators valid again you need to call either uninitialized_relocate_abort
-	/// or uninitialized_relocate_commit. The abort call makes the original source
-	/// iterator valid again, and commit makes the destination valid. Both abort
-	/// and commit are guaranteed to not throw C++ exceptions.
-	///
-	/// Example usage:
-	///     iterator dest2 = uninitialized_relocate_start(first, last, dest);
-	///     try {
-	///         // some code here that might throw an exception
-	///     }
-	///     catch(...)
-	///     {
-	///         uninitialized_relocate_abort(first, last, dest);
-	///         throw;
-	///     }
-	///     uninitialized_relocate_commit(first, last, dest);
-	///
-	template <typename ForwardIterator, typename ForwardIteratorDest>
-	EASTL_REMOVE_AT_2024_APRIL inline ForwardIteratorDest uninitialized_relocate_start(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-	{
-		typedef typename eastl::iterator_traits<ForwardIterator>::iterator_category IC;
-		typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type_input;
-		typedef typename eastl::iterator_traits<ForwardIteratorDest>::value_type value_type_output;
-
-		EASTL_INTERNAL_DISABLE_DEPRECATED()
-		const bool bHasTrivialMove = type_and<has_trivial_relocate<value_type_input>::value,
-												is_pointer<ForwardIterator>::value,
-												is_pointer<ForwardIteratorDest>::value,
-												is_same<value_type_input, value_type_output>::value>::value;
-		EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-		return Internal::uninitialized_relocate_impl<bHasTrivialMove, IC>::do_move_start(first, last, dest);
-	}
-
-	template <typename ForwardIterator, typename ForwardIteratorDest>
-	EASTL_REMOVE_AT_2024_APRIL inline ForwardIteratorDest uninitialized_relocate_commit(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-	{
-		typedef typename eastl::iterator_traits<ForwardIterator>::iterator_category IC;
-		typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type_input;
-		typedef typename eastl::iterator_traits<ForwardIteratorDest>::value_type value_type_output;
-
-		EASTL_INTERNAL_DISABLE_DEPRECATED()
-		const bool bHasTrivialMove = type_and<has_trivial_relocate<value_type_input>::value,
-												is_pointer<ForwardIterator>::value,
-												is_pointer<ForwardIteratorDest>::value,
-												is_same<value_type_input, value_type_output>::value>::value;
-		EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-		return Internal::uninitialized_relocate_impl<bHasTrivialMove, IC>::do_move_commit(first, last, dest);
-	}
-
-	template <typename ForwardIterator, typename ForwardIteratorDest>
-	EASTL_REMOVE_AT_2024_APRIL inline ForwardIteratorDest uninitialized_relocate_abort(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-	{
-		typedef typename eastl::iterator_traits<ForwardIterator>::iterator_category IC;
-		typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type_input;
-		typedef typename eastl::iterator_traits<ForwardIteratorDest>::value_type value_type_output;
-
-		EASTL_INTERNAL_DISABLE_DEPRECATED()
-		const bool bHasTrivialMove = type_and<has_trivial_relocate<value_type_input>::value,
-												is_pointer<ForwardIterator>::value,
-												is_pointer<ForwardIteratorDest>::value,
-												is_same<value_type_input, value_type_output>::value>::value;
-		EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-		return Internal::uninitialized_relocate_impl<bHasTrivialMove, IC>::do_move_abort(first, last, dest);
-	}
-
-	/// uninitialized_relocate
-	///
-	/// See above for documentation.
-	///
-	template <typename ForwardIterator, typename ForwardIteratorDest>
-	EASTL_REMOVE_AT_2024_APRIL inline ForwardIteratorDest uninitialized_relocate(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-	{
-		ForwardIteratorDest result = uninitialized_relocate_start(first, last, dest);
-		eastl::uninitialized_relocate_commit(first, last, dest);
-
-		return result;
-	}
-
-	EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
 
 
 	// uninitialized_copy
@@ -644,7 +331,7 @@ namespace eastl
 	/// Declaration:
 	///    template <typename InputIterator, typename ForwardIterator>
 	///    ForwardIterator uninitialized_copy(InputIterator sourceFirst, InputIterator sourceLast, ForwardIterator destination);
-	/// 
+	///
 	/// Example usage:
 	///    SomeClass* pArray = malloc(10 * sizeof(SomeClass));
 	///    uninitialized_copy(pSourceDataBegin, pSourceDataBegin + 10, pArray);
@@ -671,9 +358,9 @@ namespace eastl
 
 	/// uninitialized_copy_n
 	///
-	/// Copies count elements from a range beginning at first to an uninitialized memory area 
+	/// Copies count elements from a range beginning at first to an uninitialized memory area
 	/// beginning at dest. The elements in the uninitialized area are constructed using copy constructor.
-	/// If an exception is thrown during the initialization, the function has no final effects. 
+	/// If an exception is thrown during the initialization, the function has no final effects.
 	///
 	/// first:        Beginning of the range of the elements to copy.
 	/// dest:         Beginning of the destination range.
@@ -710,7 +397,7 @@ namespace eastl
 		};
 
 		template <typename InputIterator, typename Count, typename ForwardIterator>
-		struct uninitialized_copy_n_impl<InputIterator, Count, ForwardIterator, EASTL_ITC_NS::random_access_iterator_tag>
+		struct uninitialized_copy_n_impl<InputIterator, Count, ForwardIterator, eastl::random_access_iterator_tag>
 		{
 			static inline ForwardIterator impl(InputIterator first, Count n, ForwardIterator dest)
 			{
@@ -730,9 +417,9 @@ namespace eastl
 
 	/// uninitialized_copy_ptr
 	///
-	/// This is a specialization of uninitialized_copy for iterators that are pointers. We use it because 
+	/// This is a specialization of uninitialized_copy for iterators that are pointers. We use it because
 	/// internally it uses generic_iterator to make pointers act like regular eastl::iterator.
-	/// 
+	///
 	template <typename First, typename Last, typename Result>
 	EASTL_REMOVE_AT_2024_SEPT inline Result uninitialized_copy_ptr(First first, Last last, Result result)
 	{
@@ -743,9 +430,9 @@ namespace eastl
 
 	/// uninitialized_move_ptr
 	///
-	/// This is a specialization of uninitialized_move for iterators that are pointers. We use it because 
+	/// This is a specialization of uninitialized_move for iterators that are pointers. We use it because
 	/// internally it uses generic_iterator to make pointers act like regular eastl::iterator.
-	/// 
+	///
 	template <typename First, typename Last, typename Result>
 	EASTL_REMOVE_AT_2024_SEPT inline Result uninitialized_move_ptr(First first, Last last, Result dest)
 	{
@@ -761,12 +448,6 @@ namespace eastl
 	/// the source values (and not *assigning* the destination with the source values).
 	/// Returns the end of the destination range (i.e. dest + (last - first)).
 	///
-	/// uninitialized_move is not part of any current C++ Standard, up to C++14.
-	///
-	/// Declaration:
-	///    template <typename InputIterator, typename ForwardIterator>
-	///    ForwardIterator uninitialized_move(InputIterator sourceFirst, InputIterator sourceLast, ForwardIterator destination);
-	/// 
 	/// Example usage:
 	///    SomeClass* pArray = malloc(10 * sizeof(SomeClass));
 	///    uninitialized_move(pSourceDataBegin, pSourceDataBegin + 10, pArray);
@@ -781,7 +462,7 @@ namespace eastl
 	/// uninitialized_move_if_noexcept
 	///
 	/// If the iterated type can be moved without exceptions, move construct the dest with the input. Else copy-construct
-	/// the dest witih the input. If move isn't supported by the compiler, do regular copy. 
+	/// the dest witih the input. If move isn't supported by the compiler, do regular copy.
 	///
 	template <typename InputIterator, typename ForwardIterator>
 	inline ForwardIterator uninitialized_move_if_noexcept(InputIterator first, InputIterator last, ForwardIterator dest)
@@ -805,9 +486,9 @@ namespace eastl
 
 	/// uninitialized_move_n
 	///
-	/// Moves count elements from a range beginning at first to an uninitialized memory area 
+	/// Moves count elements from a range beginning at first to an uninitialized memory area
 	/// beginning at dest. The elements in the uninitialized area are constructed using copy constructor.
-	/// If an exception is thrown during the initialization, the function has no final effects. 
+	/// If an exception is thrown during the initialization, the function has no final effects.
 	///
 	/// first:        Beginning of the range of the elements to move.
 	/// dest:         Beginning of the destination range.
@@ -819,98 +500,6 @@ namespace eastl
 		return eastl::uninitialized_copy_n(eastl::make_move_iterator(first), n, dest);
 	}
 
-	// Disable warning C4345 - behavior change: an object of POD type constructed with an initializer of the form ()
-	// will be default-initialized.
-	// This is the behavior we intend below.
-	EA_DISABLE_VC_WARNING(4345)
-	/// uninitialized_default_fill
-	/// 
-	/// Deprecated. Use uninitialized_value_construct for the std conforming alternative.
-	///
-	/// Default-constructs the elements in the destination range.
-	/// Returns void. It wouldn't be useful to return the end of the destination range,
-	/// as that is the same as the 'last' input parameter.
-	///
-	/// Declaration:
-	///    template <typename ForwardIterator, typename T>
-	///    void uninitialized_default_fill(ForwardIterator destinationFirst, ForwardIterator destinationLast);
-	///
-	template <typename ForwardIterator>
-	EASTL_REMOVE_AT_2024_APRIL inline void uninitialized_default_fill(ForwardIterator first, ForwardIterator last)
-	{
-		typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-		ForwardIterator currentDest(first);
-
-	#if EASTL_EXCEPTIONS_ENABLED
-		try
-		{
-	#endif
-			for (; currentDest != last; ++currentDest)
-				::new (eastl::addressof(*currentDest)) value_type();
-	#if EASTL_EXCEPTIONS_ENABLED
-		}
-		catch (...)
-		{
-			for (; first < currentDest; ++first)
-				(*first).~value_type();
-			throw;
-		}
-	#endif
-	}
-
-	/// uninitialized_default_fill_n
-	///
-	/// Deprecated. Use uninitialized_value_construct_n for the std conforming alternative.
-	/// 
-	/// Default-constructs the range of [first, first + n).
-	/// Returns void as per the C++ standard, though returning the end input iterator
-	/// value may be of use.
-	///
-	/// Declaration:
-	///    template <typename ForwardIterator, typename Count, typename T>
-	///    void uninitialized_default_fill_n(ForwardIterator destination, Count n);
-	///
-	namespace Internal
-	{
-		template <typename ForwardIterator, typename Count>
-		inline void uninitialized_default_fill_n_impl(ForwardIterator first, Count n, false_type)
-		{
-			typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-			ForwardIterator currentDest(first);
-
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-				for (; n > 0; --n, ++currentDest)
-					::new (eastl::addressof(*currentDest)) value_type();
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch (...)
-			{
-				for (; first < currentDest; ++first)
-					(*first).~value_type();
-				throw;
-			}
-		#endif
-		}
-
-		template <typename ForwardIterator, typename Count>
-		inline void uninitialized_default_fill_n_impl(ForwardIterator first, Count n, true_type)
-		{
-			typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-			memset(first, 0, sizeof(value_type) * n);
-		}
-	}
-
-	template <typename ForwardIterator, typename Count>
-	EASTL_REMOVE_AT_2024_APRIL inline void uninitialized_default_fill_n(ForwardIterator first, Count n)
-	{
-		typedef typename eastl::iterator_traits<ForwardIterator>::value_type value_type;
-		Internal::uninitialized_default_fill_n_impl(first, n, is_scalar<value_type>());
-	}
-	EA_RESTORE_VC_WARNING()
-
 	/// uninitialized_default_construct
 	///
 	/// Constructs objects in the uninitialized storage designated by the range [first, last) by default-initialization.
@@ -918,7 +507,7 @@ namespace eastl
 	/// Default-initialization:
 	///  If T is a class, the default constructor is called; otherwise, no initialization is done, resulting in
 	///  indeterminate values.
-	/// 
+	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct
 	///
 	template <typename ForwardIterator>
@@ -947,7 +536,7 @@ namespace eastl
 	/// uninitialized_default_construct_n
 	///
 	/// Constructs n objects in the uninitialized storage starting at first by default-initialization.
-	/// 
+	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct_n
 	///
 	template <typename ForwardIterator, typename Count>
@@ -977,7 +566,7 @@ namespace eastl
 	/// uninitialized_fill
 	///
 	/// Copy-constructs the elements in the destination range with the given input value.
-	/// Returns void. It wouldn't be useful to return the end of the destination range, 
+	/// Returns void. It wouldn't be useful to return the end of the destination range,
 	/// as that is the same as the 'last' input parameter.
 	///
 	/// Declaration:
@@ -1028,7 +617,7 @@ namespace eastl
 	/// Constructs objects in the uninitialized storage range [first, last) by value-initialization.
 	///
 	/// Value-Initialization:
-	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default 
+	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default
 	/// constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct
@@ -1061,7 +650,7 @@ namespace eastl
 	/// Constructs n objects in the uninitialized storage starting at first by value-initialization.
 	///
 	/// Value-Initialization:
-	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default 
+	/// If T is a class, the object is default-initialized (after being zero-initialized if T's default
 	/// constructor is not user-provided/deleted); otherwise, the object is zero-initialized.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct_n
@@ -1093,7 +682,7 @@ namespace eastl
 	/// uninitialized_fill_ptr
 	///
 	/// This is a specialization of uninitialized_fill for iterators that are pointers.
-	/// It exists so that we can declare a value_type for the iterator, which you 
+	/// It exists so that we can declare a value_type for the iterator, which you
 	/// can't do with a pointer by itself.
 	///
 	template <typename T>
@@ -1157,7 +746,7 @@ namespace eastl
 	/// uninitialized_fill_n_ptr
 	///
 	/// This is a specialization of uninitialized_fill_n for iterators that are pointers.
-	/// It exists so that we can declare a value_type for the iterator, which you 
+	/// It exists so that we can declare a value_type for the iterator, which you
 	/// can't do with a pointer by itself.
 	///
 	template <typename T, typename Count>
@@ -1323,11 +912,11 @@ namespace eastl
 	///
 	/// Calls the destructor of a given object.
 	///
-	/// Note that we don't have a specialized version of this for objects 
-	/// with trivial destructors, such as integers. This is because the 
+	/// Note that we don't have a specialized version of this for objects
+	/// with trivial destructors, such as integers. This is because the
 	/// compiler can already see in our version here that the destructor
 	/// is a no-op.
-	/// 
+	///
 	template <typename T>
 	inline void destruct(T* p)
 	{
@@ -1376,15 +965,15 @@ namespace eastl
 	///
 	/// Calls the destructor of a given object.
 	///
-	/// Note that we don't have a specialized version of this for objects 
-	/// with trivial destructors, such as integers. This is because the 
+	/// Note that we don't have a specialized version of this for objects
+	/// with trivial destructors, such as integers. This is because the
 	/// compiler can already see in our version here that the destructor
 	/// is a no-op.
 	///
 	/// This is the same as eastl::destruct but we included for C++17 compliance.
 	///
 	/// http://en.cppreference.com/w/cpp/memory/destroy_at
-	/// 
+	///
 	template <typename T>
 	inline void destroy_at(T* p)
 	{
@@ -1393,7 +982,7 @@ namespace eastl
 	}
 
 
-	/// destroy 
+	/// destroy
 	///
 	/// Calls the destructor on a range of objects.
 	///
@@ -1428,8 +1017,8 @@ namespace eastl
 	/// Same as C++11 std::align. http://en.cppreference.com/w/cpp/memory/align
 	/// If it is possible to fit size bytes of storage aligned by alignment into the buffer pointed to by
 	/// ptr with length space, the function updates ptr to point to the first possible address of such storage,
-	/// decreases space by the number of bytes used for alignment, and returns the new ptr value. Otherwise, 
-	/// the function returns NULL and leaves ptr and space unmodified. 
+	/// decreases space by the number of bytes used for alignment, and returns the new ptr value. Otherwise,
+	/// the function returns NULL and leaves ptr and space unmodified.
 	///
 	/// Example usage:
 	///     char   buffer[512];
@@ -1460,7 +1049,7 @@ namespace eastl
 
 
 	/// align_advance
-	/// 
+	///
 	/// Same as align except ptr and space can be adjusted to reflect remaining space.
 	/// Not present in the C++ Standard.
 	/// Note that the example code here is similar to align but simpler.
@@ -1495,72 +1084,12 @@ namespace eastl
 		return NULL;
 	}
 
-
-	///////////////////////////////////////////////////////////////////////
-	// uses_allocator
-	// 
-	// Determines if the class T has an allocator_type member typedef
-	// which Allocator is convertible to. 
-	//
-	// http://en.cppreference.com/w/cpp/memory/uses_allocator
-	//
-	// A program may specialize this template to derive from true_type for a 
-	// user-defined type T that does not have a nested allocator_type but 
-	// nonetheless can be constructed with an allocator where either:
-	//    - the first argument of a constructor has type allocator_arg_t and 
-	//      the second argument has type Allocator.
-	//    or
-	//    - the last argument of a constructor has type Allocator.
-	//
-	// Example behavilor:
-	//     uses_allocator<vector>::value => true
-	//     uses_allocator<int>::value    => false
-	//
-	// This is useful for writing generic code for containers when you can't
-	// know ahead of time that the container has an allocator_type. 
-	///////////////////////////////////////////////////////////////////////
-
-	template <typename T>
-	struct has_allocator_type_helper
-	{
-	private:
-		template <typename>
-		static eastl::no_type test(...);
-
-		template <typename U>
-		static eastl::yes_type test(typename U::allocator_type* = NULL);
-
-	public:
-		static const bool value = sizeof(test<T>(NULL)) == sizeof(eastl::yes_type);
-	};
-
-
-	template <typename T, typename Allocator, bool = has_allocator_type_helper<T>::value>
-	struct uses_allocator_impl
-		: public integral_constant<bool, eastl::is_convertible<Allocator, typename T::allocator_type>::value>
-	{
-	};
-
-	template <typename T, typename Allocator>
-	struct uses_allocator_impl<T, Allocator, false>
-		: public eastl::false_type
-	{
-	};
-
-	template <typename T, typename Allocator>
-	struct uses_allocator
-		: public uses_allocator_impl<T, Allocator>{ };
-
-
-
-
-
 	///////////////////////////////////////////////////////////////////////
 	// pointer_traits
-	// 
+	//
 	// C++11 Standard section 20.6.3
-	// Provides information about a pointer type, mostly for the purpose 
-	// of handling the case where the pointer type isn't a built-in T* but 
+	// Provides information about a pointer type, mostly for the purpose
+	// of handling the case where the pointer type isn't a built-in T* but
 	// rather is a class that acts like a pointer.
 	//
 	// A user-defined Pointer has the following properties, by example:
@@ -1573,10 +1102,10 @@ namespace eastl
 	//
 	//         template <class Other>
 	//         using rebind = typename Ptr<Other, MoreArgs...>; // optional for use by pointer_traits.
-	//     
+	//
 	//         static pointer pointer_to(element_type& obj);    // required for use by pointer_traits.
 	//     };
-	// 
+	//
 	//
 	// Example usage:
 	//     template <typename Pointer>
@@ -1599,7 +1128,7 @@ namespace eastl
 		};
 
 		template <typename Pointer, bool = has_element_type<Pointer>::value>
-		struct pointer_element_type 
+		struct pointer_element_type
 		{
 			using type = Pointer;
 		};
@@ -1634,8 +1163,8 @@ namespace eastl
 
 
 		// pointer_rebind
-		// The following isn't correct, as it is unilaterally requiring that Pointer typedef its 
-		// own rebind. We can fix this if needed to make it optional (in which case it would return 
+		// The following isn't correct, as it is unilaterally requiring that Pointer typedef its
+		// own rebind. We can fix this if needed to make it optional (in which case it would return
 		// its own type), but we don't currently use rebind in EASTL (as we have a different allocator
 		// system than the C++ Standard Library has) and this is currently moot.
 		template <typename Pointer, typename U>
@@ -1723,7 +1252,6 @@ namespace eastl
 	{
 		return to_address(ptr.operator->());
 	}
-
 } // namespace eastl
 
 

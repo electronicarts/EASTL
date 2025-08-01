@@ -112,7 +112,7 @@ EA_RESTORE_GCC_WARNING()
 #include <string.h> // strlen, etc.
 
 #if EASTL_EXCEPTIONS_ENABLED
-	#include <stdexcept> // std::out_of_range, std::length_error.
+	#include <stdexcept> // std::out_of_range, std::length_error, std::logic_error.
 #endif
 EA_RESTORE_ALL_VC_WARNINGS()
 
@@ -1011,6 +1011,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::set_allocator(const allocator_type& allocator)
 	{
+		if(internalLayout().IsHeap() && get_allocator() != allocator)
+			EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "basic_string::set_allocator -- cannot change allocator after allocations have been made.");
 		get_allocator() = allocator;
 	}
 
@@ -3855,10 +3857,10 @@ namespace eastl
 	///
 	template <typename T> struct hash;
 
-	template <>
-	struct hash<string>
+	template <typename Allocator>
+	struct hash<basic_string<char, Allocator>>
 	{
-		size_t operator()(const string& x) const
+		size_t operator()(const basic_string<char, Allocator>& x) const
 		{
 			const unsigned char* p = (const unsigned char*)x.c_str(); // To consider: limit p to at most 256 chars.
 			unsigned int c, result = 2166136261U; // We implement an FNV-like string hash.
@@ -3869,10 +3871,10 @@ namespace eastl
 	};
 
 	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
-		template <>
-		struct hash<u8string>
+		template <typename Allocator>
+		struct hash<basic_string<char8_t, Allocator>>
 		{
-			size_t operator()(const u8string& x) const
+			size_t operator()(const basic_string<char8_t, Allocator>& x) const
 			{
 				const char8_t* p = (const char8_t*)x.c_str();
 				unsigned int c, result = 2166136261U;
@@ -3883,10 +3885,10 @@ namespace eastl
 		};
 	#endif
 
-	template <>
-	struct hash<string16>
+	template <typename Allocator>
+	struct hash<basic_string<char16_t, Allocator>>
 	{
-		size_t operator()(const string16& x) const
+		size_t operator()(const basic_string<char16_t, Allocator>& x) const
 		{
 			const char16_t* p = x.c_str();
 			unsigned int c, result = 2166136261U;
@@ -3896,10 +3898,10 @@ namespace eastl
 		}
 	};
 
-	template <>
-	struct hash<string32>
+	template <typename Allocator>
+	struct hash<basic_string<char32_t, Allocator>>
 	{
-		size_t operator()(const string32& x) const
+		size_t operator()(const basic_string<char32_t, Allocator>& x) const
 		{
 			const char32_t* p = x.c_str();
 			unsigned int c, result = 2166136261U;
@@ -3910,10 +3912,10 @@ namespace eastl
 	};
 
 	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		template <>
-		struct hash<wstring>
+		template <typename Allocator>
+		struct hash<basic_string<wchar_t, Allocator>>
 		{
-			size_t operator()(const wstring& x) const
+			size_t operator()(const basic_string<wchar_t, Allocator>& x) const
 			{
 				const wchar_t* p = x.c_str();
 				unsigned int c, result = 2166136261U;
@@ -3924,6 +3926,81 @@ namespace eastl
 		};
 	#endif
 
+	namespace internal {
+	template<typename T>
+	struct transparent_string_hash {
+		size_t operator()(T* s) const { return hash<T*>()(s); }
+
+		size_t operator()(const T* s) const { return hash<const T*>()(s); }
+
+		template <typename Allocator>
+		size_t operator()(const basic_string<T, Allocator>& s) const { return hash<basic_string<T, Allocator>>()(s); }
+
+		size_t operator()(const basic_string_view<T>& s) const { return hash<basic_string_view<T>>()(s); }
+	};
+	} // namespace internal
+
+	// extension to the standard.
+	// transparent hash objects for string types.
+	struct transparent_string_hash
+		: public internal::transparent_string_hash<char>
+#if EA_CHAR8_UNIQUE
+		, public internal::transparent_string_hash<char8_t>
+#endif
+	{
+		using is_transparent = int;
+		using internal::transparent_string_hash<char>::operator();
+#if EA_CHAR8_UNIQUE
+		using internal::transparent_string_hash<char8_t>::operator();
+#endif
+	};
+
+	struct transparent_string16_hash
+		: public internal::transparent_string_hash<char16_t>
+#if EA_WCHAR_UNIQUE == 1 && EA_WCHAR_SIZE == 2
+		, public internal::transparent_string_hash<wchar_t>
+#endif
+	{
+		using is_transparent = int;
+		using internal::transparent_string_hash<char16_t>::operator();
+#if EA_WCHAR_UNIQUE == 1 && EA_WCHAR_SIZE == 2
+		using internal::transparent_string_hash<wchar_t>::operator();
+#endif
+	};
+
+	struct transparent_string32_hash
+		: public internal::transparent_string_hash<char32_t>
+#if EA_WCHAR_UNIQUE == 1 && EA_WCHAR_SIZE == 4
+		, public internal::transparent_string_hash<wchar_t>
+#endif
+	{
+		using is_transparent = int;
+		using internal::transparent_string_hash<char32_t>::operator();
+#if EA_WCHAR_UNIQUE == 1 && EA_WCHAR_SIZE == 4
+		using internal::transparent_string_hash<wchar_t>::operator();
+#endif
+	};
+
+	struct transparent_wstring_hash
+		: public internal::transparent_string_hash<wchar_t>
+#if EA_WCHAR_UNIQUE == 1
+#if EA_WCHAR_SIZE == 2
+		, public internal::transparent_string_hash<char16_t>
+#elif EA_WCHAR_SIZE == 4
+		, public internal::transparent_string_hash<char32_t>
+#endif
+#endif
+	{
+		using is_transparent = int;
+		using internal::transparent_string_hash<wchar_t>::operator();
+#if EA_WCHAR_UNIQUE == 1
+#if EA_WCHAR_SIZE == 2
+		using internal::transparent_string_hash<char16_t>::operator();
+#elif EA_WCHAR_SIZE == 4
+		using internal::transparent_string_hash<char32_t>::operator();
+#endif
+#endif
+	};
 
 	/// to_string
 	///

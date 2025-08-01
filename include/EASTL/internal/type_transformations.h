@@ -257,19 +257,6 @@ namespace eastl
 	#endif
 
 
-	///////////////////////////////////////////////////////////////////////
-	// add_signed
-	//
-	// Deprecated. This is not a C++11 type trait, and is here for backwards compatibility
-	// only. Use the C++11 make_unsigned type trait instead.
-	///////////////////////////////////////////////////////////////////////
-
-	template<class T>
-	struct EASTL_REMOVE_AT_2024_APRIL add_signed : public make_signed<T>
-	{ typedef typename eastl::make_signed<T>::type type; };
-
-
-
 
 	///////////////////////////////////////////////////////////////////////
 	// make_unsigned
@@ -425,25 +412,6 @@ namespace eastl
 		template <typename T>
 		using make_unsigned_t = typename make_unsigned<T>::type;
 	#endif
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// add_unsigned
-	//
-	// Deprecated. This is not a C++11 type trait, and is here for backwards compatibility
-	// only. Use the C++11 make_unsigned type trait instead.
-	// 
-	// Adds unsigned-ness to the given type. 
-	// Modifies only integral values; has no effect on others.
-	// add_unsigned<int>::type is unsigned int
-	// add_unsigned<unsigned int>::type is unsigned int
-	//
-	///////////////////////////////////////////////////////////////////////
-
-	template<class T>
-	struct EASTL_REMOVE_AT_2024_APRIL add_unsigned : public make_unsigned<T>
-	{ typedef typename eastl::make_signed<T>::type type; };
 
 
 

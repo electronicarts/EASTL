@@ -94,6 +94,7 @@ namespace eastl
 		typedef typename base_type::const_reverse_iterator                              const_reverse_iterator;
 		typedef typename base_type::allocator_type                                      allocator_type;
 		typedef Compare                                                                 value_compare;
+		typedef typename base_type::insert_return_type									insert_return_type;
 		// Other types are inherited from the base class.
 
 		using base_type::begin;
@@ -101,6 +102,10 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
+		using base_type::insert;
+
+		static_assert(!is_const<value_type>::value, "set<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "set<T> value_type must be non-volatile.");
 
 	protected:
 		using base_type::compare;
@@ -137,28 +142,63 @@ namespace eastl
 	public:
 		value_compare value_comp() const;
 
-		size_type erase(const Key& k);
+		size_type erase(const Key& k) { return DoErase(k); }
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, iterator> && !eastl::is_convertible_v<KX&&, const_iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type erase(KX&& k) { return DoErase(eastl::forward<KX>(k)); }
 		iterator  erase(const_iterator position);
 		iterator  erase(const_iterator first, const_iterator last);
 
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
+		// this function was incorrectly defined in the rbtree base type.
+		// this function implicitly converts to value_type, which it shouldn't. Additionally, it does not correctly support heterogeneous insertion (unconditionally creates a key_type).
+		template <typename P, typename Cmp = Compare, eastl::enable_if_t<!eastl::is_convertible_v<P&&, value_type> && !eastl::detail::is_transparent_comparison_v<Cmp> && eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		EA_REMOVE_AT_2025_OCT_MSG("Replace call with insert(value_type(...)) or emplace(...) or declare container with a transparent comparator.")
+		insert_return_type insert(P&& otherValue) { return base_type::emplace(eastl::forward<P>(otherValue)); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		insert_return_type insert(KX&& key)
+		{
+			// There's no function in the base type that we can re-use here. insert(value_type&&) is implemented in terms of DoInsertValue(), but that
+			// unconditionally creates a node and therefore the key_type. So we create our own appropriate implementation.
+
+			bool       canInsert;
+			rbtree_node_base* pPosition = base_type::DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
+
+			if (canInsert)
+			{
+				typename base_type::node_type* const pNodeNew = base_type::DoCreateNode(eastl::forward<KX>(key)); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+				iterator itResult = base_type::DoInsertValueImpl(pPosition, false, pNodeNew->mValue, pNodeNew);
+				return pair<iterator, bool>(itResult, true);
+			}
+
+			return pair<iterator, bool>(iterator(pPosition), false);
+		}
+
 		size_type count(const Key& k) const;
 
-		// missing transparent key support:
-		// template<typename K>
-		// size_type count(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& key) const { return (find(key) != end()) ? 1 : 0; }
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& k);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& k) const;
+		eastl::pair<iterator, iterator>             equal_range(const Key& key) { return DoEqualRange(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return DoEqualRange(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& key) { return DoEqualRange(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& key) const { return DoEqualRange(key); }
 
+	private:
+		template<typename KX>
+		size_type DoErase(KX&& k);
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& key) const;
 	}; // set
 
 
@@ -199,6 +239,7 @@ namespace eastl
 		typedef typename base_type::const_reverse_iterator                                  const_reverse_iterator;
 		typedef typename base_type::allocator_type                                          allocator_type;
 		typedef Compare                                                                     value_compare;
+		typedef typename base_type::insert_return_type										insert_return_type;
 		// Other types are inherited from the base class.
 
 		using base_type::begin;
@@ -206,6 +247,10 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
+		using base_type::insert;
+
+		static_assert(!is_const<value_type>::value, "multiset<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "multiset<T> value_type must be non-volatile.");
 
 	protected:
 		using base_type::compare;
@@ -241,40 +286,63 @@ namespace eastl
 	public:
 		value_compare value_comp() const;
 
-		size_type erase(const Key& k);
+		size_type erase(const Key& k) { return DoErase(k); }
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, iterator> && !eastl::is_convertible_v<KX&&, const_iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type erase(KX&& k) { return DoErase(eastl::forward<KX>(k)); }
 		iterator  erase(const_iterator position);
 		iterator  erase(const_iterator first, const_iterator last);
 
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
-		size_type count(const Key& k) const;
+		// this function was incorrectly defined in the rbtree base type.
+		// this function implicitly converts to value_type, which it shouldn't.
+		template <typename P, eastl::enable_if_t<!eastl::is_convertible_v<P&&, value_type> && eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		EA_REMOVE_AT_2025_OCT_MSG("Replace call with insert(value_type(...)) or emplace(...).")
+		insert_return_type insert(P&& otherValue) { return base_type::emplace(eastl::forward<P>(otherValue)); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// size_type count(const K& k) const;
+		size_type count(const Key& key) const { return DoCount(key); }
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& k);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& key) const { return DoCount(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
+		eastl::pair<iterator, iterator>             equal_range(const Key& key) { return DoEqualRange(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return DoEqualRange(key); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& key) { return DoEqualRange(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& key) const { return DoEqualRange(key); }
 
 		/// equal_range_small
 		/// This is a special version of equal_range which is optimized for the 
 		/// case of there being few or no duplicated keys in the tree.
-		eastl::pair<iterator, iterator>             equal_range_small(const Key& k);
-		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& k) const;
+		eastl::pair<iterator, iterator>             equal_range_small(const Key& key) { return DoEqualRangeSmall(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const { return DoEqualRangeSmall(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range_small(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range_small(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range_small(const KX& key) { return DoEqualRangeSmall(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range_small(const KX& key) const { return DoEqualRangeSmall(key); }
 
+	private:
+		template<typename KX>
+		size_type DoErase(KX&& k);
+
+		template<typename KX>
+		size_type									DoCount(const KX& key) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& key) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRangeSmall(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRangeSmall(const KX& key) const;
 	}; // multiset
 
 
@@ -350,8 +418,9 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template <typename KX>
 	inline typename set<Key, Compare, Allocator>::size_type
-	set<Key, Compare, Allocator>::erase(const Key& k)
+	set<Key, Compare, Allocator>::DoErase(KX&& k)
 	{
 		const iterator it(find(k));
 
@@ -417,9 +486,10 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename set<Key, Compare, Allocator>::iterator,
 					   typename set<Key, Compare, Allocator>::iterator>
-	set<Key, Compare, Allocator>::equal_range(const Key& k)
+	set<Key, Compare, Allocator>::DoEqualRange(const KX& k)
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 
@@ -436,9 +506,10 @@ namespace eastl
 	
 
 	template <typename Key, typename Compare, typename Allocator>
-	inline eastl::pair<typename set<Key, Compare, Allocator>::const_iterator, 
+	template<typename KX>
+	inline eastl::pair<typename set<Key, Compare, Allocator>::const_iterator,
 					   typename set<Key, Compare, Allocator>::const_iterator>
-	set<Key, Compare, Allocator>::equal_range(const Key& k) const
+	set<Key, Compare, Allocator>::DoEqualRange(const KX& k) const
 	{
 		// See equal_range above for comments.
 		const const_iterator itLower(lower_bound(k));
@@ -552,8 +623,9 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template <typename KX>
 	inline typename multiset<Key, Compare, Allocator>::size_type
-	multiset<Key, Compare, Allocator>::erase(const Key& k)
+	multiset<Key, Compare, Allocator>::DoErase(KX&& k)
 	{
 		const eastl::pair<iterator, iterator> range(equal_range(k));
 		const size_type n = (size_type)eastl::distance(range.first, range.second);
@@ -583,8 +655,9 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline typename multiset<Key, Compare, Allocator>::size_type
-	multiset<Key, Compare, Allocator>::count(const Key& k) const
+	multiset<Key, Compare, Allocator>::DoCount(const KX& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> range(equal_range(k));
 		return (size_type)eastl::distance(range.first, range.second);
@@ -615,9 +688,10 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multiset<Key, Compare, Allocator>::iterator,
 					   typename multiset<Key, Compare, Allocator>::iterator>
-	multiset<Key, Compare, Allocator>::equal_range(const Key& k)
+	multiset<Key, Compare, Allocator>::DoEqualRange(const KX& k)
 	{
 		// There are multiple ways to implement equal_range. The implementation mentioned
 		// in the C++ standard and which is used by most (all?) commercial STL implementations
@@ -635,9 +709,10 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multiset<Key, Compare, Allocator>::const_iterator, 
 					   typename multiset<Key, Compare, Allocator>::const_iterator>
-	multiset<Key, Compare, Allocator>::equal_range(const Key& k) const
+	multiset<Key, Compare, Allocator>::DoEqualRange(const KX& k) const
 	{
 		// See comments above in the non-const version of equal_range.
 		return eastl::pair<iterator, iterator>(lower_bound(k), upper_bound(k));
@@ -645,9 +720,10 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multiset<Key, Compare, Allocator>::iterator,
 					   typename multiset<Key, Compare, Allocator>::iterator>
-	multiset<Key, Compare, Allocator>::equal_range_small(const Key& k)
+	multiset<Key, Compare, Allocator>::DoEqualRangeSmall(const KX& k)
 	{
 		// We provide alternative version of equal_range here which works faster
 		// for the case where there are at most small number of potential duplicated keys.
@@ -662,9 +738,10 @@ namespace eastl
 
 
 	template <typename Key, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multiset<Key, Compare, Allocator>::const_iterator, 
 					   typename multiset<Key, Compare, Allocator>::const_iterator>
-	multiset<Key, Compare, Allocator>::equal_range_small(const Key& k) const
+	multiset<Key, Compare, Allocator>::DoEqualRangeSmall(const KX& k) const
 	{
 		// We provide alternative version of equal_range here which works faster
 		// for the case where there are at most small number of potential duplicated keys.

@@ -40,7 +40,7 @@ namespace eastl
 			return true; // Irrelevant flag for windows.
 #elif defined(EA_PLATFORM_SONY) && defined(EA_PLATFORM_POSIX) && defined(EA_PLATFORM_CONSOLE)
 			return true; // Sony consoles use short wchar_t disregarding the flag.
-#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_UNIX)
+#else
 			return sizeof(wchar_t) == 4;
 #endif
 		}

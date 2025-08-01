@@ -13,8 +13,6 @@
 
 using namespace eastl;
 
-EASTL_INTERNAL_DISABLE_DEPRECATED() // *: was declared deprecated
-
 
 bool GetType(const true_type&)
 {
@@ -98,10 +96,6 @@ class FinalClass final
 {
 };
 
-#if !EASTL_TYPE_TRAIT_is_union_CONFORMANCE
-	EASTL_DECLARE_UNION(Union) // We have to do this because is_union simply cannot work without user help.
-#endif
-
 
 
 // Used for union_cast tests below.
@@ -129,12 +123,6 @@ struct Pod1
 {
 	// Empty
 };
-#if !EASTL_TYPE_TRAIT_is_pod_CONFORMANCE
-	EASTL_DECLARE_POD(Pod1) // We have to do this because is_pod simply cannot work without user help.
-#endif
-#if !EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE
-	EASTL_DECLARE_STANDARD_LAYOUT(Pod1) // We have to do this because is_standard_layout simply cannot work without user help.
-#endif
 
 
 struct Pod2
@@ -142,12 +130,6 @@ struct Pod2
 	int  mX;
 	Pod1 mPod1;
 };
-#if !EASTL_TYPE_TRAIT_is_pod_CONFORMANCE
-	EASTL_DECLARE_POD(Pod2)
-#endif
-#if !EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE
-	EASTL_DECLARE_STANDARD_LAYOUT(Pod2)
-#endif
 
 struct Pod3
 {
@@ -155,12 +137,6 @@ struct Pod3
 	int  mX;
 	Pod1 mPod1;
 };
-#if !EASTL_TYPE_TRAIT_is_pod_CONFORMANCE
-	EASTL_DECLARE_POD(Pod3)
-#endif
-#if !EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE
-	EASTL_DECLARE_STANDARD_LAYOUT(Pod3)
-#endif
 
 
 struct NonPod1
@@ -257,12 +233,6 @@ struct HasTrivialConstructor
 {
 	int x;
 };
-#if !EASTL_TYPE_TRAIT_has_trivial_constructor_CONFORMANCE
-	EASTL_DECLARE_TRIVIAL_CONSTRUCTOR(HasTrivialConstructor) // We have to do this because has_trivial_constructor simply cannot work without user help.
-#endif
-#if !EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE
-	EASTL_DECLARE_STANDARD_LAYOUT(HasTrivialConstructor)
-#endif
 
 
 struct NoTrivialConstructor
@@ -271,9 +241,6 @@ struct NoTrivialConstructor
 	int  x;
 	int* px;
 };
-#if !EASTL_TYPE_TRAIT_is_standard_layout_CONFORMANCE
-	EASTL_DECLARE_STANDARD_LAYOUT(NoTrivialConstructor)
-#endif
 
 
 struct HasTrivialCopy
@@ -281,9 +248,6 @@ struct HasTrivialCopy
 	void Function(){}
 	int x;
 };
-#if !EASTL_TYPE_TRAIT_has_trivial_constructor_CONFORMANCE
-	EASTL_DECLARE_TRIVIAL_COPY(HasTrivialCopy) // We have to do this because has_trivial_copy simply cannot work without user help.
-#endif
 
 
 #if defined(EA_COMPILER_MSVC) && (_MSC_VER == 1900)
@@ -305,11 +269,6 @@ struct HasTrivialCopy
 	};
 #endif
 
-struct NoTrivialCopy2
-{
-	NoTrivialCopy1 ntv;
-};
-
 struct NonCopyable
 {
 	NonCopyable() : mX(0) {}
@@ -318,26 +277,6 @@ struct NonCopyable
 	int mX;
 
 	EA_NON_COPYABLE(NonCopyable)
-};
-
-struct HasTrivialAssign
-{
-	void Function(){}
-	int x;
-};
-#if !EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE
-	EASTL_DECLARE_TRIVIAL_ASSIGN(HasTrivialAssign) // We have to do this because has_trivial_assign simply cannot work without user help.
-#endif
-
-struct NoTrivialAssign1
-{
-	virtual ~NoTrivialAssign1(){}
-	virtual void Function(){}
-};
-
-struct NoTrivialAssign2
-{
-	NoTrivialAssign1 nta;
 };
 
 struct Polymorphic1
@@ -389,29 +328,11 @@ struct DeletedDtor
 	#endif
 };
 
-#if (EASTL_TYPE_TRAIT_is_destructible_CONFORMANCE == 0)
-	EASTL_DECLARE_IS_DESTRUCTIBLE(DeletedDtor, false)
-#endif
-
 struct Assignable
 {
 	void operator=(const Assignable&){}
 	void operator=(const Pod1&){}
 };
-
-class HiddenAssign
-{
-public:
-	HiddenAssign();
-
-private:
-	HiddenAssign(const HiddenAssign& x);
-	HiddenAssign& operator=(const HiddenAssign& x);
-};
-
-#if !EASTL_TYPE_TRAIT_has_trivial_assign_CONFORMANCE
-	EASTL_DECLARE_TRIVIAL_ASSIGN(HiddenAssign)
-#endif
 
 
 
@@ -438,14 +359,6 @@ typename eastl::enable_if<eastl::is_integral<T>::value, T>::type EnableIfTestFun
 template<typename T>
 typename eastl::disable_if<eastl::is_signed<T>::value, T>::type EnableIfTestFunction(T) 
 	{ return 777; }
- 
-
-
-// Test that EASTL_DECLARE_TRIVIAL_ASSIGN can be used to get around case whereby 
-// the copy constructor and operator= are private. Normally vector requires this.
-// ** This is disabled because it turns out that vector in fact requires the 
-// constructor for some uses. But we have code below which tests just part of vector.
-// template class eastl::vector<HiddenAssign>;
 
 
 typedef char Array[32];
@@ -507,11 +420,6 @@ int TestTypeTraits()
 	static_assert(bool_constant<is_same<int, short>::value>::value == false, "bool_constant failure");
 	static_assert(is_same<bool_constant<false>::type, integral_constant<bool, false>::type>::value, "bool_constant failure");
 
-
-
-	// identity
-	static_assert(sizeof(identity<int>::type) == sizeof(int), "identity failure");
-	static_assert((is_same<int, identity<int>::type >::value == true), "identity failure");
 
 	// type_identity
 	static_assert(sizeof(type_identity<int>::type) == sizeof(int), "type_identity failure");
@@ -633,6 +541,8 @@ int TestTypeTraits()
 	static_assert(is_bounded_array<ArrayConst>::value == true,   "is_bounded_array failure");
 	EATEST_VERIFY(GetType(is_bounded_array<ArrayConst>()) == true);
 
+	static_assert(is_bounded_array<void>::value == false,		"is_bounded_array failure");
+	static_assert(is_bounded_array<PodA>::value == false,		"is_bounded_array failure");
 	static_assert(is_bounded_array<int>::value == false,        "is_bounded_array failure");
 	static_assert(is_bounded_array<int[32]>::value == true,        "is_bounded_array failure");
 	static_assert(is_bounded_array<int[]>::value == false,        "is_bounded_array failure");
@@ -653,6 +563,8 @@ int TestTypeTraits()
 	static_assert(is_unbounded_array<ArrayConst>::value == false,   "is_unbounded_array failure");
 	EATEST_VERIFY(GetType(is_unbounded_array<ArrayConst>()) == false);
 
+	static_assert(is_unbounded_array<void>::value == false,			"is_unbounded_array failure");
+	static_assert(is_unbounded_array<PodA>::value == false,			"is_unbounded_array failure");
 	static_assert(is_unbounded_array<int>::value == false,        "is_unbounded_array failure");
 	static_assert(is_unbounded_array<int[32]>::value == false,        "is_unbounded_array failure");
 	static_assert(is_unbounded_array<int[]>::value == true,        "is_unbounded_array failure");
@@ -936,15 +848,6 @@ int TestTypeTraits()
 	#endif
 
 
-	// is_literal_type
-	static_assert((is_literal_type<int>::value == true),          "is_literal_type failure");
-	static_assert((is_literal_type<Enum>::value == true),         "is_literal_type failure");
-	#if EASTL_TYPE_TRAIT_is_literal_type_CONFORMANCE
-		static_assert((is_literal_type<PodA>::value == true),     "is_literal_type failure");
-		static_assert((is_literal_type<NonPod1>::value == false), "is_literal_type failure");
-	#endif
-
-
 	// is_trivial
 	// is_trivially_copyable
 	// is_trivially_default_constructible
@@ -1030,90 +933,23 @@ int TestTypeTraits()
 
 
 	// is_polymorphic
-	static_assert(is_polymorphic<Polymorphic1>::value == true,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<Polymorphic1>::value == true,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<Polymorphic1>()) == true);
 
-	static_assert(is_polymorphic<Polymorphic2>::value == true,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<Polymorphic2>::value == true,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<Polymorphic2>()) == true);
 
-	static_assert(is_polymorphic<Polymorphic3>::value == true,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<Polymorphic3>::value == true,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<Polymorphic3>()) == true);
 
-	static_assert(is_polymorphic<NonPolymorphic1>::value == false,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<NonPolymorphic1>::value == false,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<NonPolymorphic1>()) == false);
 
-	static_assert(is_polymorphic<int>::value == false,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<int>::value == false,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<int>()) == false);
 
-	static_assert(is_polymorphic<Polymorphic1*>::value == false,  "has_trivial_constructor failure");
+	static_assert(is_polymorphic<Polymorphic1*>::value == false,  "is_polymorphic failure");
 	EATEST_VERIFY(GetType(is_polymorphic<Polymorphic1*>()) == false);
-
-
-	// has_trivial_constructor
-	static_assert(has_trivial_constructor<int>::value == true,  "has_trivial_constructor failure");
-	EATEST_VERIFY(GetType(has_trivial_constructor<int>()) == true);
-
-	static_assert(has_trivial_constructor<int*>::value == true,  "has_trivial_constructor failure");
-	EATEST_VERIFY(GetType(has_trivial_constructor<int*>()) == true);
-
-	static_assert(has_trivial_constructor<HasTrivialConstructor>::value == true,  "has_trivial_constructor failure");
-	EATEST_VERIFY(GetType(has_trivial_constructor<HasTrivialConstructor>()) == true);
-
-	static_assert(has_trivial_constructor<NoTrivialConstructor>::value == false,  "has_trivial_constructor failure");
-	EATEST_VERIFY(GetType(has_trivial_constructor<NoTrivialConstructor>()) == false);
-
-	static_assert(has_trivial_constructor<int&>::value == false,  "has_trivial_constructor failure");
-	EATEST_VERIFY(GetType(has_trivial_constructor<int&>()) == false);
-
-
-	// has_trivial_copy
-	static_assert(has_trivial_copy<int>::value == true,             "has_trivial_copy failure");
-	EATEST_VERIFY(GetType(has_trivial_copy<int>()) == true);
-
-	static_assert(has_trivial_copy<int*>::value == true,            "has_trivial_copy failure");
-	EATEST_VERIFY(GetType(has_trivial_copy<int*>()) == true);
-
-	static_assert(has_trivial_copy<HasTrivialCopy>::value == true,   "has_trivial_copy failure");
-	EATEST_VERIFY(GetType(has_trivial_copy<HasTrivialCopy>()) == true);
-
-	static_assert(has_trivial_copy<NoTrivialCopy1>::value == false,  "has_trivial_copy failure");
-	EATEST_VERIFY(GetType(has_trivial_copy<NoTrivialCopy1>()) == false);
-
-	static_assert(has_trivial_copy<NoTrivialCopy2>::value == false,  "has_trivial_copy failure");
-	EATEST_VERIFY(GetType(has_trivial_copy<NoTrivialCopy2>()) == false);
-
-
-	// has_trivial_assign
-	static_assert(has_trivial_assign<int>::value == true,               "has_trivial_assign failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<int>()) == true);
-
-	static_assert(has_trivial_assign<int*>::value == true,              "has_trivial_assign failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<int*>()) == true);
-
-	static_assert(has_trivial_assign<HasTrivialAssign>::value == true,  "has_trivial_assign failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<HasTrivialAssign>()) == true);
-
-	static_assert(has_trivial_assign<NoTrivialAssign1>::value == false, "has_trivial_assign failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<NoTrivialAssign1>()) == false);
-
-	static_assert(has_trivial_assign<NoTrivialAssign2>::value == false, "has_trivial_assign failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<NoTrivialAssign2>()) == false);
-
-
-	// has_trivial_destructor
-	static_assert(has_trivial_assign<int>::value == true,  "has_trivial_relocate failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<int>()) == true);
-
-	static_assert(has_trivial_assign<int*>::value == true,  "has_trivial_relocate failure");
-	EATEST_VERIFY(GetType(has_trivial_assign<int*>()) == true);
-
-
-	// has_trivial_relocate
-	static_assert(has_trivial_relocate<int>::value == true,  "has_trivial_relocate failure");
-	EATEST_VERIFY(GetType(has_trivial_relocate<int>()) == true);
-
-	static_assert(has_trivial_relocate<int*>::value == true,  "has_trivial_relocate failure");
-	EATEST_VERIFY(GetType(has_trivial_relocate<int*>()) == true);
 
 
 	// is_signed
@@ -1265,37 +1101,6 @@ int TestTypeTraits()
 	#endif
 
 
-	// is_lvalue_assignable
-	static_assert((eastl::is_lvalue_assignable<int&, int>::value              == true),   "is_lvalue_assignable failure");
-	static_assert((eastl::is_lvalue_assignable<char*, int*>::value            == false),  "is_lvalue_assignable failure");
-	static_assert((eastl::is_lvalue_assignable<char*, const char*>::value     == false),  "is_lvalue_assignable failure");
-	static_assert((eastl::is_lvalue_assignable<PodA, PodB*>::value            == false),  "is_lvalue_assignable failure");
-	static_assert((eastl::is_lvalue_assignable<Assignable, Pod2>::value       == false),  "is_lvalue_assignable failure");
-
-	#if EASTL_TYPE_TRAIT_is_lvalue_assignable_CONFORMANCE
-		// These might not succeed unless the implementation is conforming.
-		static_assert((eastl::is_lvalue_assignable<Assignable, Assignable>::value == true),  "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<Assignable, Pod1>::value       == true),  "is_lvalue_assignable failure");
-
-		// These cannot succeed unless the implementation is conforming.
-		static_assert((eastl::is_lvalue_assignable<void, void>::value             == false),  "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int, int>::value               == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int, const int>::value         == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<const int, int>::value         == false),  "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int, int&>::value              == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int64_t, int8_t>::value        == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<bool, bool>::value             == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<char*, char*>::value           == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<const char*, char*>::value     == true),   "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int[], int[]>::value           == false),  "is_lvalue_assignable failure");
-		static_assert((eastl::is_lvalue_assignable<int[3], int[3]>::value         == false),  "is_lvalue_assignable failure"); // Despite that you can memcpy these, C++ syntax doesn't all =-based assignment.
-
-		#if !defined(EA_COMPILER_EDG) // EDG (and only EDG) is issuing int8_t->double conversion warnings from the decltype expression inside this trait. That's probably a compiler bug, though we need to verify.
-			static_assert((eastl::is_lvalue_assignable<double, int8_t>::value     == true),   "is_lvalue_assignable failure"); // Sure this might generate a warning, but it's valid syntax.
-		#endif
-	#endif
-
-
 	// is_copy_assignable
 	static_assert((eastl::is_copy_assignable<int&>::value              == true),   "is_copy_assignable failure");
 	static_assert((eastl::is_copy_assignable<char>::value              == true),   "is_copy_assignable failure");
@@ -1341,23 +1146,6 @@ int TestTypeTraits()
 		static_assert((is_nothrow_assignable<ThrowAssignableTest, NoThrowAssignable>::value   == true),  "is_nothrow_assignable failure");
 		static_assert((is_nothrow_assignable<ThrowAssignableTest, ThrowAssignableTest>::value == false), "is_nothrow_assignable failure");
 	#endif
-
-
-	// is_array_of_known_bounds
-	// is_array_of_unknown_bounds
-	static_assert(is_array_of_known_bounds<void>::value        == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_known_bounds<int>::value         == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_known_bounds<PodA>::value        == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_known_bounds<int[3]>::value      == true,   "is_array_of_known_bounds failure");
-	static_assert(is_array_of_known_bounds<int[]>::value       == false,  "is_array_of_known_bounds failure");
-	static_assert(is_array_of_known_bounds<int[0]>::value	   == false,  "is_array_of_known_bounds failure");
-
-	static_assert(is_array_of_unknown_bounds<void>::value      == false,  "is_array_of_unknown_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int>::value       == false,  "is_array_of_unknown_bounds failure");
-	static_assert(is_array_of_unknown_bounds<PodA>::value      == false,  "is_array_of_unknown_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int[3]>::value    == false,  "is_array_of_unknown_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int[]>::value     == true,   "is_array_of_unknown_bounds failure");
-	static_assert(is_array_of_unknown_bounds<int[0]>::value	   == false,  "is_array_of_unknown_bounds failure");
 
 
 	// is_trivially_copyable
@@ -1631,18 +1419,16 @@ int TestTypeTraits()
 	static_assert(is_aligned<uint64_t>::value == false,  "is_aligned failure");
 	EATEST_VERIFY(GetType(is_aligned<uint64_t>()) == false);
 
-	{
-		#if (kEASTLTestAlign16 == 16) // To do: Rename kEASTLTestAlign16, as what it really means is "is 16 byte alignment+ supported".
-			static_assert(is_aligned<Align16>::value,  "is_aligned failure");
-			EATEST_VERIFY(GetType(is_aligned<Align16>()));
+	{ // alignment tests
+		static_assert(is_aligned<Align16>::value, "is_aligned failure");
+		EATEST_VERIFY(GetType(is_aligned<Align16>()));
 
 
-			static_assert(is_aligned<Align32>::value,  "is_aligned failure");
-			EATEST_VERIFY(GetType(is_aligned<Align32>()));
+		static_assert(is_aligned<Align32>::value, "is_aligned failure");
+		EATEST_VERIFY(GetType(is_aligned<Align32>()));
 
-			static_assert(is_aligned<Align64>::value,  "is_aligned failure");
-			EATEST_VERIFY(GetType(is_aligned<Align64>()));
-		#endif
+		static_assert(is_aligned<Align64>::value, "is_aligned failure");
+		EATEST_VERIFY(GetType(is_aligned<Align64>()));
 	}
 
 
@@ -1677,10 +1463,6 @@ int TestTypeTraits()
 	#if EASTL_TYPE_TRAIT_is_convertible_CONFORMANCE // This causes compile failures.
 	static_assert((is_convertible<IsConvertibleTest1, IsConvertibleTest1>::value == false),    "is_convertible failure");
 	#endif
-
-	// Test EASTL_DECLARE_TRIVIAL_ASSIGN(HiddenAssign);
-	eastl::vector<HiddenAssign> v;
-	EATEST_VERIFY(v.empty());
 
 
 	// make_signed
@@ -1936,16 +1718,12 @@ int TestTypeTraits()
 
 
 	// remove_reference
-	// add_reference
 	// remove_pointer
 	// add_pointer
 	// remove_extent
 	// remove_all_extents
 	{
-		int x = 17;
-		eastl::add_reference<int>::type xRef = x;
-		x++;
-		EATEST_VERIFY(xRef == 18);
+		int x = 18;
 
 		eastl::remove_reference<int&>::type xValue;
 		xValue = 3;
@@ -2447,5 +2225,3 @@ int TestTypeTraits()
 
 	return nErrorCount;
 }
-
-EASTL_INTERNAL_RESTORE_DEPRECATED() // *: was declared deprecated

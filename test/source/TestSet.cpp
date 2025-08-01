@@ -10,6 +10,7 @@
 #include <EASTL/functional.h>
 #include <EASTL/internal/config.h>
 #include <EABase/eabase.h>
+#include "TestAssociativeContainers.h"
 
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -94,6 +95,15 @@ struct xvalue_test
 };
 
 
+struct EA_REMOVE_AT_2025_OCT LessNonTransparent
+{
+	template<typename A, typename B>
+	EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+	{
+		return eastl::forward<A>(a) < eastl::forward<B>(b);
+	}
+};
+
 
 int TestSet()
 {
@@ -103,18 +113,22 @@ int TestSet()
 		{   // Test construction
 			nErrorCount += TestSetConstruction<VS1, VS3, false>();
 			nErrorCount += TestSetConstruction<VS4, VS6, false>();
+			nErrorCount += TestSetConstruction<eastl::set<int, eastl::less<void>>, std::set<int, std::less<void>>, false>();
 
 			nErrorCount += TestSetConstruction<VMS1, VMS3, true>();
 			nErrorCount += TestSetConstruction<VMS4, VMS6, true>();
+			nErrorCount += TestSetConstruction<eastl::multiset<int, eastl::less<void>>, std::multiset<int, std::less<void>>, true>();
 		}
 
 
 		{   // Test mutating functionality.
 			nErrorCount += TestSetMutation<VS1, VS3, false>();
 			nErrorCount += TestSetMutation<VS4, VS6, false>();
+			nErrorCount += TestSetMutation<eastl::set<int, eastl::less<void>>, std::set<int, std::less<void>>, false>();
 
 			nErrorCount += TestSetMutation<VMS1, VMS3, true>();
 			nErrorCount += TestSetMutation<VMS4, VMS6, true>();
+			nErrorCount += TestSetMutation<eastl::multiset<int, eastl::less<void>>, std::multiset<int, std::less<void>>, true>();
 		}
 	#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
@@ -122,17 +136,21 @@ int TestSet()
 	{   // Test searching functionality.
 		nErrorCount += TestSetSearch<VS1, false>();
 		nErrorCount += TestSetSearch<VS4, false>();
+		nErrorCount += TestSetSearch<eastl::set<int, eastl::less<void>>, false>();
 
 		nErrorCount += TestSetSearch<VMS1, true>();
 		nErrorCount += TestSetSearch<VMS4, true>();
+		nErrorCount += TestSetSearch<eastl::multiset<int, eastl::less<void>>, true>();
 	}
 
 
 	{
 		// C++11 emplace and related functionality
 		nErrorCount += TestSetCpp11<eastl::set<TestObject> >();
+		nErrorCount += TestSetCpp11<eastl::set<TestObject, eastl::less<void>>>();
 
 		nErrorCount += TestMultisetCpp11<eastl::multiset<TestObject> >();
+		nErrorCount += TestMultisetCpp11<eastl::multiset<TestObject, eastl::less<void>>>();
 	}
 
 
@@ -238,6 +256,44 @@ int TestSet()
 				[&](auto& e) { return e.data == xvalue_test::MOVED_FROM; });
 
 		VERIFY(result);
+	}
+
+	{ // heterogenous functions - set
+		eastl::set<ExplicitString, eastl::less<void>> s = { ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestSetHeterogeneousInsertion<decltype(s)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+	{ // heterogenous functions - multiset
+		eastl::multiset<ExplicitString, eastl::less<void>> s = { ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+	{ // insert(P&&) was incorrectly defined in the rbtree base type.
+		// should never have been defined for set, multiset.
+		// it does not correctly support heterogeneous insertion (unconditionally creates a key_type).
+		// this test exists purely to check that the addition of insert(KX&&) for hterogeneous keys didn't break existing (unlikely) calls to insert(P&&) that
+		// shouldn't have been supported.
+		EASTL_INTERNAL_DISABLE_DEPRECATED()
+		eastl::set<ExplicitString, LessNonTransparent> s = { ExplicitString::Create("a") };
+		s.insert("a");
+
+		eastl::multiset<ExplicitString, LessNonTransparent> s2 = { ExplicitString::Create("a") };
+		s2.insert("a");
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
+
+		eastl::set<ExplicitString, eastl::less<void>> s3 = { ExplicitString::Create("a") };
+		s3.insert("a"); // shouldn't call the deprecated insert() overload
+
+		eastl::multiset<eastl::string, eastl::less<void>> s4 = { "a" };
+		s4.insert("a"); // shouldn't call the deprecated insert() overload
+
+		eastl::set<eastl::string> s5 = { "a" };
+		s5.insert("a"); // shouldn't call the deprecated insert() overload
 	}
 
 	return nErrorCount;

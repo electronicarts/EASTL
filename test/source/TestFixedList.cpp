@@ -5,6 +5,7 @@
 
 #include "EASTLTest.h"
 #include <EASTL/fixed_list.h>
+#include <EAStdC/EAString.h>
 
 
 using namespace eastl;
@@ -540,6 +541,14 @@ int TestFixedList()
 		VERIFY(c.get_overflow_allocator().mAllocCount == 2); // 1 for above, and 1 for overflowing from 64 to 65.
 		overflowAllocator.deallocate(p, 1);
 	}
+
+#if EASTL_NAME_ENABLED
+	// allocators
+	{
+		fixed_list<int, 64> c(EASTLAllocatorType("test"));
+		VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+	}
+#endif
 
 
 	// We can't do this, due to how Reset is used above:

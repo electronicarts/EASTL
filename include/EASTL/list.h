@@ -41,7 +41,11 @@
 #include <EASTL/iterator.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
+#include <EASTL/memory.h>
 #include <EASTL/bonus/compressed_pair.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <new>
@@ -130,7 +134,7 @@ namespace eastl
 		typedef ListNode<T>                                 node_type;
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
-		typedef EASTL_ITC_NS::bidirectional_iterator_tag    iterator_category;
+		typedef eastl::bidirectional_iterator_tag    iterator_category;
 
 	public:
 		base_node_type* mpNode;
@@ -271,6 +275,9 @@ namespace eastl
 		typedef typename base_type::base_node_type      base_node_type;
 
 		using base_type::get_allocator;
+
+		static_assert(!is_const<value_type>::value, "vector<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "vector<T> value_type must be non-volatile.");
 
 	public:
 		list();
@@ -720,7 +727,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void ListBase<T, Allocator>::set_allocator(const allocator_type& allocator)
 	{
-		EASTL_ASSERT((internalAllocator() == allocator) || (static_cast<node_type*>(internalNode().mpNext) == &internalNode())); // We can only assign a different allocator if we are empty of elements.
+		if((internalAllocator() != allocator) && (static_cast<node_type*>(internalNode().mpNext) != &internalNode()))
+			EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "list::set_allocator -- cannot change allocator after allocations have been made.");
 		internalAllocator() = allocator;
 	}
 
@@ -1568,6 +1576,8 @@ namespace eastl
 	}
 
 
+	// does not propagate allocators on swap.
+	// in addition, requires T be copy constructible and copy assignable, which isn't required by the standard.
 	template <typename T, typename Allocator>
 	inline void list<T, Allocator>::swap(this_type& x)
 	{
@@ -1854,7 +1864,7 @@ namespace eastl
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
 			{
-				::new((void*)&pNode->mValue) value_type(eastl::forward<Args>(args)...);
+				detail::allocator_construct(internalAllocator(), &pNode->mValue, eastl::forward<Args>(args)...);
 			}
 			catch(...)
 			{
@@ -1862,7 +1872,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			::new((void*)&pNode->mValue) value_type(eastl::forward<Args>(args)...);
+			detail::allocator_construct(internalAllocator(), &pNode->mValue, eastl::forward<Args>(args)...);
 		#endif
 
 		return pNode;
@@ -1878,7 +1888,7 @@ namespace eastl
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
 			{
-				::new((void*)&pNode->mValue) value_type();
+				detail::allocator_construct(internalAllocator(), &pNode->mValue);
 			}
 			catch(...)
 			{
@@ -1886,7 +1896,12 @@ namespace eastl
 				throw;
 			}
 		#else
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT)
+			detail::allocator_construct(internalAllocator(), &pNode->mValue);
+#else
+			// deprecated: this is default initialization, but should be value initialization.
 			::new((void*)&pNode->mValue) value_type;
+#endif
 		#endif
 
 		return pNode;

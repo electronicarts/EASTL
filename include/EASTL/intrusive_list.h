@@ -141,14 +141,9 @@ namespace eastl
 		typedef ptrdiff_t                                        difference_type;
 		typedef Pointer                                          pointer;
 		typedef Reference                                        reference;
-		typedef EASTL_ITC_NS::bidirectional_iterator_tag         iterator_category;
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
+		typedef eastl::bidirectional_iterator_tag         iterator_category;
 	private:
 		base_node_type* mpNode;
-#else
-	public:
-		pointer mpNode;
-#endif
 
 	public:
 		intrusive_list_iterator();
@@ -196,14 +191,6 @@ namespace eastl
 		inline bool operator!=(const intrusive_list_iterator other) const { return mpNode != other.mpNode; }
 
 	private:
-
-		// This is a temp helper function for the deprecation.
-		// It should be removed when the deprecation window ends.
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
-		base_node_type* toInternalNodeType(base_node_type* node) { return node; }
-#else
-		pointer toInternalNodeType(base_node_type* node) { return static_cast<pointer>(node); }
-#endif
 
 		// for the "copy" constructor, which uses non-const iterator even in the
 		// const_iterator case.  Also, some of the internal member functions in
@@ -369,17 +356,6 @@ namespace eastl
 		// bool validate() const; // Inherited from parent.
 		int     validate_iterator(const_iterator i) const;
 
-	private:
-		// This is a helper function to assist with the deprecation,
-		// it should be removed after the deprecation window ends.
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
-		intrusive_list_node* toListNode(intrusive_list_node* node) { return node; }
-#else
-		intrusive_list_node* toListNode(const node_type* node)
-		{
-			return static_cast<intrusive_list_node*>(const_cast<node_type*>(node));
-		}
-#endif
 	}; // intrusive_list
 
 
@@ -424,7 +400,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline intrusive_list_iterator<T, Pointer, Reference>::intrusive_list_iterator(const base_node_type* pNode)
-		: mpNode(toInternalNodeType(const_cast<base_node_type*>(pNode)))
+		: mpNode(const_cast<base_node_type*>(pNode))
 	{
 		// Empty
 	}
@@ -472,7 +448,7 @@ namespace eastl
 	inline typename intrusive_list_iterator<T, Pointer, Reference>::this_type&
 	intrusive_list_iterator<T, Pointer, Reference>::operator++()
 	{
-		mpNode = toInternalNodeType(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return *this;
 	}
 
@@ -482,7 +458,7 @@ namespace eastl
 	intrusive_list_iterator<T, Pointer, Reference>::operator++(int)
 	{
 		intrusive_list_iterator it(*this);
-		mpNode = toInternalNodeType(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return it;
 	}
 
@@ -491,7 +467,7 @@ namespace eastl
 	inline typename intrusive_list_iterator<T, Pointer, Reference>::this_type&
 	intrusive_list_iterator<T, Pointer, Reference>::operator--()
 	{
-		mpNode = toInternalNodeType(mpNode->mpPrev);
+		mpNode = mpNode->mpPrev;
 		return *this;
 	}
 
@@ -501,7 +477,7 @@ namespace eastl
 	intrusive_list_iterator<T, Pointer, Reference>::operator--(int)
 	{
 		intrusive_list_iterator it(*this);
-		mpNode = toInternalNodeType(mpNode->mpPrev);
+		mpNode = mpNode->mpPrev;
 		return it;
 	}
 
@@ -842,7 +818,7 @@ namespace eastl
 				EASTL_FAIL_MSG("intrusive_list::insert(): element already on a list.");
 		#endif
 
-		intrusive_list_node& next = *toListNode(pos.mpNode);
+		intrusive_list_node& next = *pos.mpNode;
 		intrusive_list_node& prev = *next.mpPrev;
 
 		prev.mpNext = next.mpPrev = &x;
@@ -876,14 +852,14 @@ namespace eastl
 	intrusive_list<T>::erase(const_iterator first, const_iterator last)
 	{
 		intrusive_list_node& prev = *(first.mpNode->mpPrev);
-		intrusive_list_node& next = *toListNode(last.mpNode);
+		intrusive_list_node& next = *last.mpNode;
 
 		#if EASTL_VALIDATE_INTRUSIVE_LIST
 			// need to clear out all the next/prev pointers in the elements;
 			// this makes this operation O(n) instead of O(1), sadly, although
 			// it's technically amortized O(1) since you could count yourself
 			// as paying this cost with each insert.
-			intrusive_list_node* pCur = toListNode(first.mpNode);
+			intrusive_list_node* pCur = first.mpNode;
 
 			while(pCur != &next)
 			{
@@ -964,7 +940,7 @@ namespace eastl
 			oldPrev.mpNext = &oldNext;
 
 			// Relink item into new list.
-			intrusive_list_node& newNext = *toListNode(pos.mpNode);
+			intrusive_list_node& newNext = *pos.mpNode;
 			intrusive_list_node& newPrev = *newNext.mpPrev;
 
 			newPrev.mpNext = &value;
@@ -981,7 +957,7 @@ namespace eastl
 		// Note: &x == this is prohibited, so self-insertion is not a problem.
 		if(x.mAnchor.mpNext != &x.mAnchor) // If the list 'x' isn't empty...
 		{
-			intrusive_list_node& next       = *toListNode(pos.mpNode);
+			intrusive_list_node& next       = *pos.mpNode;
 			intrusive_list_node& prev       = *next.mpPrev;
 			intrusive_list_node& insertPrev = *x.mAnchor.mpNext;
 			intrusive_list_node& insertNext = *x.mAnchor.mpPrev;
@@ -1018,7 +994,7 @@ namespace eastl
 			oldPrev.mpNext = &oldNext;
 
 			// Relink item into new list.
-			intrusive_list_node& newNext = *toListNode(pos.mpNode);
+			intrusive_list_node& newNext = *pos.mpNode;
 			intrusive_list_node& newPrev = *newNext.mpPrev;
 
 			newPrev.mpNext = ii.mpNode;
@@ -1035,7 +1011,7 @@ namespace eastl
 		// Note: &x == this is prohibited, so self-insertion is not a problem.
 		if(first != last)
 		{
-			intrusive_list_node& insertPrev = *toListNode(first.mpNode);
+			intrusive_list_node& insertPrev = *first.mpNode;
 			intrusive_list_node& insertNext = *last.mpNode->mpPrev;
 
 			// remove from old list
@@ -1043,7 +1019,7 @@ namespace eastl
 			insertPrev.mpPrev->mpNext = insertNext.mpNext;
 
 			// insert into this list
-			intrusive_list_node& next = *toListNode(pos.mpNode);
+			intrusive_list_node& next = *pos.mpNode;
 			intrusive_list_node& prev = *next.mpPrev;
 
 			prev.mpNext       = &insertPrev;

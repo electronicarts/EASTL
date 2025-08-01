@@ -84,20 +84,16 @@ namespace eastl
 		// iterator_traits<T>::iterator_category as random_access_iterator_tag and thus users must
 		// explicitly check both the iterator_category and the type.
 		struct contiguous_iterator_tag    : public random_access_iterator_tag { };
+	#else
+		using input_iterator_tag = std::input_iterator_tag;
+		using output_iterator_tag = std::output_iterator_tag;
+		using forward_iterator_tag = std::forward_iterator_tag;
+		using bidirectional_iterator_tag = std::bidirectional_iterator_tag;
+		using random_access_iterator_tag = std::random_access_iterator_tag;
+	#if defined(EA_COMPILER_CPP20_ENABLED)
+		using contiguous_iterator_tag = std::contiguous_iterator_tag;
 	#endif
-
-
-	// struct iterator
-	template <typename Category, typename T, typename Distance = ptrdiff_t,
-			  typename Pointer = T*, typename Reference = T&>
-	struct EASTL_REMOVE_AT_2024_APRIL iterator
-	{
-		typedef Category  iterator_category;
-		typedef T         value_type;
-		typedef Distance  difference_type;
-		typedef Pointer   pointer;
-		typedef Reference reference;
-	};
+	#endif
 
 
 	// struct iterator_traits
@@ -133,7 +129,7 @@ namespace eastl
 	template <typename T>
 	struct iterator_traits<T*>
 	{
-		typedef EASTL_ITC_NS::random_access_iterator_tag iterator_category;     // To consider: Change this to contiguous_iterator_tag for the case that
+		typedef eastl::random_access_iterator_tag iterator_category;     // To consider: Change this to contiguous_iterator_tag for the case that
 		typedef T                                        value_type;            //              EASTL_ITC_NS is "eastl" instead of "std".
 		typedef ptrdiff_t                                difference_type;
 		typedef T*                                       pointer;
@@ -143,7 +139,7 @@ namespace eastl
 	template <typename T>
 	struct iterator_traits<const T*>
 	{
-		typedef EASTL_ITC_NS::random_access_iterator_tag iterator_category;
+		typedef eastl::random_access_iterator_tag iterator_category;
 		typedef T                                        value_type;
 		typedef ptrdiff_t                                difference_type;
 		typedef const T*                                 pointer;
@@ -461,7 +457,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 	/// replace copying with moving.
 
 	template<typename Iterator>
-	class move_iterator // Don't inherit from iterator.
+	class move_iterator
 	{
 	private:
 		using WrappedIteratorReference = typename iterator_traits<Iterator>::reference;
@@ -696,7 +692,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 		typedef back_insert_iterator<Container>     this_type;
 		typedef Container                           container_type;
 		typedef typename Container::const_reference const_reference;
-		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef eastl::output_iterator_tag	iterator_category;
 		typedef void								value_type;
 		typedef void								difference_type;
 		typedef void								pointer;
@@ -753,7 +749,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 		typedef front_insert_iterator<Container>    this_type;
 		typedef Container                           container_type;
 		typedef typename Container::const_reference const_reference;
-		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef eastl::output_iterator_tag	iterator_category;
 		typedef void								value_type;
 		typedef void								difference_type;
 		typedef void								pointer;
@@ -817,7 +813,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 		typedef Container                           container_type;
 		typedef typename Container::iterator        iterator_type;
 		typedef typename Container::const_reference const_reference;
-		typedef EASTL_ITC_NS::output_iterator_tag	iterator_category;
+		typedef eastl::output_iterator_tag	iterator_category;
 		typedef void								value_type;
 		typedef void								difference_type;
 		typedef void								pointer;
@@ -899,7 +895,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 	template <typename InputIterator>
 	EA_CONSTEXPR
 	inline typename eastl::iterator_traits<InputIterator>::difference_type
-	distance_impl(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
+	distance_impl(InputIterator first, InputIterator last, eastl::input_iterator_tag)
 	{
 		typename eastl::iterator_traits<InputIterator>::difference_type n = 0;
 
@@ -914,7 +910,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 	template <typename RandomAccessIterator>
 	EA_CONSTEXPR
 	inline typename eastl::iterator_traits<RandomAccessIterator>::difference_type
-	distance_impl(RandomAccessIterator first, RandomAccessIterator last, EASTL_ITC_NS::random_access_iterator_tag)
+	distance_impl(RandomAccessIterator first, RandomAccessIterator last, eastl::random_access_iterator_tag)
 	{
 		return last - first;
 	}
@@ -959,7 +955,7 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 	///
 	template <typename InputIterator, typename Distance>
 	inline void
-	advance_impl(InputIterator& i, Distance n, EASTL_ITC_NS::input_iterator_tag)
+	advance_impl(InputIterator& i, Distance n, eastl::input_iterator_tag)
 	{
 		while(n--)
 			++i;
@@ -997,14 +993,14 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 	template <typename BidirectionalIterator, typename Distance>
 	inline void
-	advance_impl(BidirectionalIterator& i, Distance n, EASTL_ITC_NS::bidirectional_iterator_tag)
+	advance_impl(BidirectionalIterator& i, Distance n, eastl::bidirectional_iterator_tag)
 	{
 		advance_bi_impl<eastl::is_signed<Distance>::value>::advance_impl(i, n);
 	}
 
 	template <typename RandomAccessIterator, typename Distance>
 	inline void
-	advance_impl(RandomAccessIterator& i, Distance n, EASTL_ITC_NS::random_access_iterator_tag)
+	advance_impl(RandomAccessIterator& i, Distance n, eastl::random_access_iterator_tag)
 	{
 		i += n;
 	}

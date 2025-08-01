@@ -88,17 +88,13 @@ int TestGetLastBit()
 	int nErrorCount = 0;
 
 	EATEST_VERIFY(GetLastBit((UInt) 0) == sizeof(UInt) * CHAR_BIT);
-#if defined(EA_COMPILER_CPP20_ENABLED)
 	EATEST_VERIFY(bit_width((UInt) 0) == 0);
-#endif
 
 	for (uint32_t i = 0; i < sizeof(UInt) * CHAR_BIT; ++i)
 	{
 		UInt x = ((UInt)1 << i) | UInt(1);
 		EATEST_VERIFY(GetLastBit(x) == i);
-#if defined(EA_COMPILER_CPP20_ENABLED)
 		EATEST_VERIFY(GetLastBit(x) == ((uint32_t) bit_width(x) - 1));
-#endif
 	}
 
 	return nErrorCount;
@@ -1386,27 +1382,8 @@ int TestBitsetWithWord()
 		verifyToUlongThrowsIf32bit(b99, static_cast<unsigned long>(0x8000000000000000ul));
 	}
 
-	// GetFirstBit
-	{
-		nErrorCount += TestGetFirstBit<uint8_t>();
-		nErrorCount += TestGetFirstBit<uint16_t>();
-		nErrorCount += TestGetFirstBit<uint32_t>();
-		nErrorCount += TestGetFirstBit<uint64_t>();
-#if EASTL_INT128_SUPPORTED
-		nErrorCount += TestGetFirstBit<eastl_uint128_t>();
-#endif
-	}
-
-	// GetLastBit
-	{
-		nErrorCount += TestGetLastBit<uint8_t>();
-		nErrorCount += TestGetLastBit<uint16_t>();
-		nErrorCount += TestGetLastBit<uint32_t>();
-		nErrorCount += TestGetLastBit<uint64_t>();
-#if EASTL_INT128_SUPPORTED
-		nErrorCount += TestGetLastBit<eastl_uint128_t>();
-#endif
-	}
+	nErrorCount += TestGetFirstBit<WordType>();
+	nErrorCount += TestGetLastBit<WordType>();
 
 	return nErrorCount;
 }
@@ -1421,6 +1398,9 @@ int TestBitset()
 	nErrorCount += TestBitsetWithWord<uint16_t>();
 	nErrorCount += TestBitsetWithWord<uint32_t>();
 	nErrorCount += TestBitsetWithWord<uint64_t>();
+#if EASTL_INT128_SUPPORTED
+	nErrorCount += TestBitsetWithWord<eastl_uint128_t>();
+#endif
 
 	nErrorCount += TestBitsetWithWord<unsigned char>();
 	nErrorCount += TestBitsetWithWord<unsigned short>();

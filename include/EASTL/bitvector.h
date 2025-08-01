@@ -19,6 +19,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/vector.h>
+#include <EASTL/fixed_vector.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/bitset.h>
 #if EASTL_EXCEPTIONS_ENABLED
@@ -91,7 +92,7 @@ namespace eastl
 	class bitvector_const_iterator
 	{
 	public:
-		typedef EASTL_ITC_NS::random_access_iterator_tag iterator_category;
+		typedef eastl::random_access_iterator_tag iterator_category;
 		typedef bitvector_const_iterator<Element>        this_type;
 		typedef bool                                     value_type;
 		typedef bitvector_reference<Element>             reference_type;
@@ -155,7 +156,7 @@ namespace eastl
 	class bitvector_iterator : public bitvector_const_iterator<Element>
 	{
 	public:
-		typedef EASTL_ITC_NS::random_access_iterator_tag iterator_category;
+		typedef eastl::random_access_iterator_tag iterator_category;
 		typedef bitvector_iterator                       this_type;
 		typedef bitvector_const_iterator<Element>        base_type;
 		typedef bool                                     value_type;
@@ -207,7 +208,7 @@ namespace eastl
 	class bitvector
 	{
 	public:
-		typedef bitvector<Allocator, Element>               this_type;
+		typedef bitvector<Allocator, Element, Container>    this_type;
 		typedef bool                                        value_type;
 		typedef bitvector_reference<Element>                reference;
 		typedef bool                                        const_reference;
@@ -333,6 +334,9 @@ namespace eastl
 
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
+
+		bool any() const;
+		bool all() const;
 	};
 
 
@@ -1401,6 +1405,38 @@ namespace eastl
 		assign(first, last);
 	}
 
+	template <typename Allocator, typename Element, typename Container>
+	bool bitvector<Allocator, Element, Container>::any() const
+	{
+		if (mContainer.size() == 0) 
+			return false;
+
+		for (eastl_size_t i = 0, count = mContainer.size() - 1; i < count; ++i)
+		{
+			if (mContainer[i] != 0)
+				return true;
+		}
+		Element mask = mFreeBitCount == 0 ? (Element)-1 : ((Element(1) << Element(kBitCount - mFreeBitCount)) - 1);
+		return (mContainer.back() & mask);
+	}
+
+	template <typename Allocator, typename Element, typename Container>
+	bool bitvector<Allocator, Element, Container>::all() const
+	{
+		if (mContainer.size() == 0) 
+			return true;
+
+		for (eastl_size_t i = 0, count = mContainer.size() - 1; i < count; ++i)
+		{
+			if (mContainer[i] != (~(Element)0))
+			{
+				return false;
+			}
+		}
+
+		Element mask = mFreeBitCount == 0 ? (Element)-1 : ((Element(1) << Element(kBitCount - mFreeBitCount)) - 1);
+		return (mContainer.back() & mask) == mask;
+	}
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1463,6 +1499,11 @@ namespace eastl
 		a.swap(b);
 	}
 
+	template <size_t nodeCount,
+              typename Allocator = EASTLAllocatorType, 
+              typename Element   = BitvectorWordType, 
+              typename Container = eastl::fixed_vector<Element, ((nodeCount + (sizeof(Element) << 3ULL)  - 1ULL) / (sizeof(Element) << 3ULL)), true, Allocator>>
+	using fixed_bitvector = eastl::bitvector<Allocator, Element, Container>;
 
 } // namespace eastl
 

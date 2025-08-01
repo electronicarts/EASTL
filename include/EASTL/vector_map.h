@@ -74,6 +74,7 @@ namespace eastl
 	///
 	/// Our adapter for the comparison function in the template parameters.
 	///
+	/// todo: deprecate this. shouldn't have all these member functions available (including constructor) and shouldn't be a public type.
 	template <typename Key, typename Value, typename Compare>
 	class map_value_compare : public Compare
 	{
@@ -225,14 +226,26 @@ namespace eastl
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
 
+		template <typename Iter = iterator, typename eastl::enable_if<!eastl::is_same_v<Iter, const_iterator>, int>::type = 0>
+		iterator         erase(iterator position) { return erase(const_iterator(position)); }
 		iterator         erase(const_iterator position);
 		iterator         erase(const_iterator first, const_iterator last);
-		size_type        erase(const key_type& k);
+		size_type        erase(const key_type& k) { return DoErase(k); }
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
-		iterator       find(const key_type& k);
-		const_iterator find(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!(eastl::is_convertible_v<KX&&, iterator> || eastl::is_convertible_v<KX&&, const_iterator>)
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type        erase(KX&& k) { return DoErase(eastl::forward<KX>(k)); }
+
+		iterator       find(const key_type& k) { return DoFind(k); }
+		const_iterator find(const key_type& k) const { return DoFind(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       find(const KX& k) { return DoFind(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator find(const KX& k) const { return DoFind(k); }
 
 		template <typename U, typename BinaryPredicate>
 		iterator       find_as(const U& u, BinaryPredicate predicate);
@@ -240,21 +253,44 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k) const;
+		bool contains(const key_type& key) const { return DoFind(key) != end(); }
 
-		iterator       lower_bound(const key_type& k);
-		const_iterator lower_bound(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		bool contains(const KX& key) const { return DoFind(key) != end(); }
 
-		iterator       upper_bound(const key_type& k);
-		const_iterator upper_bound(const key_type& k) const;
+		size_type count(const key_type& k) const { return DoCount(k); }
 
-		eastl::pair<iterator, iterator>             equal_range(const key_type& k);
-		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& k) const { return DoCount(k); }
 
-		template <typename U, typename BinaryPredicate> 
+		iterator       lower_bound(const key_type& k) { return DoLowerBound(k); }
+		const_iterator lower_bound(const key_type& k) const { return DoLowerBound(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       lower_bound(const KX& k) { return DoLowerBound(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator lower_bound(const KX& k) const { return DoLowerBound(k); }
+
+		iterator       upper_bound(const key_type& k) { return DoUpperBound(k); }
+		const_iterator upper_bound(const key_type& k) const { return DoUpperBound(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       upper_bound(const KX& k) { return DoUpperBound(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator upper_bound(const KX& k) const { return DoUpperBound(k); }
+
+		eastl::pair<iterator, iterator>             equal_range(const key_type& k) { return DoEqualRange(k); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const { return DoEqualRange(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& k) { return DoEqualRange(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& k) const { return DoEqualRange(k); }
+
+		template <typename U, typename BinaryPredicate>
 		eastl::pair<iterator, iterator>             equal_range(const U& u, BinaryPredicate predicate);
 
-		template <typename U, typename BinaryPredicate> 
+		template <typename U, typename BinaryPredicate>
 		eastl::pair<const_iterator, const_iterator> equal_range(const U& u, BinaryPredicate) const;
 
 		// Note: vector_map operator[] returns a reference to the mapped_type, same as map does.
@@ -265,8 +301,11 @@ namespace eastl
 		// the following code that is safe for map is unsafe for vector_map for the case that 
 		// the vMap[100] doesn't already exist in the vector_map:
 		//     vMap[100] = vMap[0]
-		mapped_type& operator[](const key_type& k);
-		mapped_type& operator[](key_type&& k);
+		mapped_type& operator[](const key_type& k) { return DoGetElement(k); }
+		mapped_type& operator[](key_type&& k) { return DoGetElement(eastl::move(k)); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		mapped_type& operator[](KX&& k) { return DoGetElement(eastl::forward<KX>(k)); }
 
 		// non-standard! this was originally inherited from vector with incorrect semantics.
 		// this is only defined so that we can deprecate it.
@@ -278,8 +317,13 @@ namespace eastl
 		// const mapped_type& at(const key_type& k) const { return at_key(k); }
 
 		// aka. the standard's at() member function.
-		mapped_type& at_key(const key_type& k);
-		const mapped_type& at_key(const key_type& k) const;
+		mapped_type& at_key(const key_type& k) { return DoAtKey(k); }
+		const mapped_type& at_key(const key_type& k) const { return DoAtKey(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		mapped_type& at_key(const KX& k) { return DoAtKey(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const mapped_type& at_key(const KX& k) const { return DoAtKey(k); }
 
 		// Functions which are disallowed due to being unsafe. 
 		void      push_back(const value_type& value) = delete;
@@ -302,6 +346,41 @@ namespace eastl
 			{ return base_type::push_back(eastl::forward<Args>(args)...); }
 		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
 			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
+
+	private:
+		template<typename KX>
+		size_type        DoErase(KX&& k);
+
+		template<typename KX>
+		iterator DoFind(const KX& k);
+		template<typename KX>
+		const_iterator DoFind(const KX& k) const;
+
+		template<typename KX>
+		size_type DoCount(const KX& k) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& k);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& k) const;
+
+		template<typename KX>
+		iterator       DoLowerBound(const KX& k);
+		template<typename KX>
+		const_iterator DoLowerBound(const KX& k) const;
+
+		template<typename KX>
+		iterator       DoUpperBound(const KX& k);
+		template<typename KX>
+		const_iterator DoUpperBound(const KX& k) const;
+
+		template<typename KX>
+		mapped_type& DoGetElement(KX&& k);
+
+		template<typename KX>
+		mapped_type& DoAtKey(const KX& k);
+		template<typename KX>
+		const mapped_type& DoAtKey(const KX& k) const;
 
 	}; // vector_map
 
@@ -629,10 +708,11 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::size_type
-	vector_map<K, T, C, A, RAC>::erase(const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoErase(KX&& k)
 	{
-		const iterator it(find(k));
+		const iterator it(find(eastl::forward<KX>(k)));
 
 		if(it != end()) // If it exists...
 		{
@@ -660,8 +740,9 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::iterator
-	vector_map<K, T, C, A, RAC>::find(const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoFind(const KX& k)
 	{
 		const eastl::pair<iterator, iterator> pairIts(equal_range(k));
 		return (pairIts.first != pairIts.second) ? pairIts.first : end();
@@ -669,8 +750,9 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::const_iterator
-	vector_map<K, T, C, A, RAC>::find(const key_type& k) const
+	vector_map<K, T, C, A, RAC>::DoFind(const KX& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (pairIts.first != pairIts.second) ? pairIts.first : end();
@@ -698,8 +780,9 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::size_type
-	vector_map<K, T, C, A, RAC>::count(const key_type& k) const
+	vector_map<K, T, C, A, RAC>::DoCount(const KX& k) const
 	{
 		const const_iterator it(find(k));
 		return (it != end()) ? (size_type)1 : (size_type)0;
@@ -707,40 +790,49 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::iterator
-	vector_map<K, T, C, A, RAC>::lower_bound(const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoLowerBound(const KX& k)
 	{
-		return eastl::lower_bound(begin(), end(), k, static_cast<value_compare&>(*this));
+		auto comp = [this](const value_type& value, const KX& key) { return static_cast<const key_compare&>(*this)(value.first, key); };
+		return eastl::lower_bound(begin(), end(), k, comp);
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::const_iterator
-	vector_map<K, T, C, A, RAC>::lower_bound(const key_type& k) const
+	vector_map<K, T, C, A, RAC>::DoLowerBound(const KX& k) const
 	{
-		return eastl::lower_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
+		auto comp = [this](const value_type& value, const KX& key) { return static_cast<const key_compare&>(*this)(value.first, key); };
+		return eastl::lower_bound(begin(), end(), k, comp);
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::iterator 
-	vector_map<K, T, C, A, RAC>::upper_bound(const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoUpperBound(const KX& k)
 	{
-		return eastl::upper_bound(begin(), end(), k, static_cast<value_compare&>(*this));
+		auto comp = [this](const KX& key, const value_type& value) { return static_cast<const key_compare&>(*this)(key, value.first); };
+		return eastl::upper_bound(begin(), end(), k, comp);
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::const_iterator
-	vector_map<K, T, C, A, RAC>::upper_bound(const key_type& k) const
+	vector_map<K, T, C, A, RAC>::DoUpperBound(const KX& k) const
 	{
-		return eastl::upper_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
+		auto comp = [this](const KX& key, const value_type& value) { return static_cast<const key_compare&>(*this)(key, value.first); };
+		return eastl::upper_bound(begin(), end(), k, comp);
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, typename vector_map<K, T, C, A, RAC>::iterator>
-	vector_map<K, T, C, A, RAC>::equal_range(const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoEqualRange(const KX& k)
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 
@@ -748,7 +840,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || value_compare::operator()(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || static_cast<key_compare&>(*this)(k, itLower->first)) // If at the end or if (k is < itLower)...
 			return eastl::pair<iterator, iterator>(itLower, itLower);
 
 		iterator itUpper(itLower);
@@ -757,8 +849,9 @@ namespace eastl
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::const_iterator, typename vector_map<K, T, C, A, RAC>::const_iterator>
-	vector_map<K, T, C, A, RAC>::equal_range(const key_type& k) const
+	vector_map<K, T, C, A, RAC>::DoEqualRange(const KX& k) const
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 
@@ -766,7 +859,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const const_iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || value_compare::operator()(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || static_cast<const key_compare&>(*this)(k, itLower->first)) // If at the end or if (k is < itLower)...
 			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
 
 		const_iterator itUpper(itLower);
@@ -815,27 +908,15 @@ namespace eastl
 	}
 
 
-
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::mapped_type&
-	vector_map<K, T, C, A, RAC>::operator[](const key_type& k)
+	vector_map<K, T, C, A, RAC>::DoGetElement(KX&& k)
 	{
 		iterator itLB(lower_bound(k));
 
 		if((itLB == end()) || key_comp()(k, (*itLB).first))
-			itLB = insert(itLB, value_type(k, mapped_type()));
-		return (*itLB).second;
-	}
-
-
-	template <typename K, typename T, typename C, typename A, typename RAC>
-	inline typename vector_map<K, T, C, A, RAC>::mapped_type&
-	vector_map<K, T, C, A, RAC>::operator[](key_type&& k)
-	{
-		iterator itLB(lower_bound(k));
-
-		if((itLB == end()) || key_comp()(k, (*itLB).first))
-			itLB = insert(itLB, value_type(eastl::move(k), mapped_type()));
+			itLB = insert(itLB, value_type(eastl::forward<KX>(k), mapped_type()));
 		return (*itLB).second;
 	}
 
@@ -854,16 +935,18 @@ namespace eastl
 	}
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_map<K, T, C, A, RAC>::mapped_type&
-		vector_map<K, T, C, A, RAC>::at_key(const key_type& k)
+		vector_map<K, T, C, A, RAC>::DoAtKey(const KX& k)
 	{
 		// use the use const version of ::at to remove duplication
 		return const_cast<mapped_type&>(const_cast<vector_map<K, T, C, A, RAC> const*>(this)->at_key(k));
 	}
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline const typename vector_map<K, T, C, A, RAC>::mapped_type&
-		vector_map<K, T, C, A, RAC>::at_key(const key_type& k) const
+		vector_map<K, T, C, A, RAC>::DoAtKey(const KX& k) const
 	{
 		const_iterator itLB(lower_bound(k));
 

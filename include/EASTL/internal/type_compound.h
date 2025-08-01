@@ -86,38 +86,6 @@ namespace eastl
 
 
 	///////////////////////////////////////////////////////////////////////
-	// is_array_of_known_bounds
-	//
-	// Deprecated in C++20. Use is_bounded_array<T>.
-	// 
-	// is_array_of_known_bounds<T>::value is true if T is an array and is 
-	// of known bounds. is_array_of_unknown_bounds<int[3]>::value == true,
-	// while is_array_of_unknown_bounds<int[]>::value = false.
-	// 
-	///////////////////////////////////////////////////////////////////////
-
-	template<typename T>
-	struct EASTL_REMOVE_AT_2024_APRIL is_array_of_known_bounds
-		: public eastl::integral_constant<bool, eastl::extent<T>::value != 0> {};
-
-
-	///////////////////////////////////////////////////////////////////////
-	// is_array_of_unknown_bounds
-	//
-	// Deprecated in C++20. Use is_unbounded_array<T>.
-	// 
-	// is_array_of_unknown_bounds<T>::value is true if T is an array but is 
-	// of unknown bounds. is_array_of_unknown_bounds<int[3]>::value == false,
-	// while is_array_of_unknown_bounds<int[]>::value = true.
-	// 
-	///////////////////////////////////////////////////////////////////////
-
-	template<typename T>
-	struct EASTL_REMOVE_AT_2024_APRIL is_array_of_unknown_bounds
-		: public eastl::integral_constant<bool, eastl::is_array<T>::value && (eastl::extent<T>::value == 0)> {};
-
-
-	///////////////////////////////////////////////////////////////////////
 	// is_member_function_pointer
 	//
 	// is_member_function_pointer<T>::value == true if and only if T is a 
@@ -336,8 +304,7 @@ namespace eastl
 	//
 	// There is no way to tell if a type is a union without compiler help.
 	// As of this writing, only Metrowerks v8+ supports such functionality
-	// via 'msl::is_union<T>::value'. The user can force something to be 
-	// evaluated as a union via EASTL_DECLARE_UNION.
+	// via 'msl::is_union<T>::value'.
 	///////////////////////////////////////////////////////////////////////
 	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_union)))
 		#define EASTL_TYPE_TRAIT_is_union_CONFORMANCE 1    // is_union is conforming.
@@ -349,8 +316,6 @@ namespace eastl
 
 		template <typename T> struct is_union : public false_type{};
 	#endif
-
-	#define EASTL_DECLARE_UNION(T) namespace eastl{ template <> struct EASTL_REMOVE_AT_2024_APRIL is_union<T> : public true_type{}; template <> struct is_union<const T> : public true_type{}; }
 
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>

@@ -10,6 +10,33 @@
 	#pragma once
 #endif
 
+#if EA_TSAN_ENABLED
+#include <sanitizer/tsan_interface_atomic.h>
+#endif
+
+// EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION(bits, ptr)
+//
+// We use this to communicate to TSAN that our read_depends loads are intended to
+// synchronize. Note: memory_order_consume is intended to track the dependencies on the loads
+// but in practice these operations are always upgraded to have acquire semantics, this might
+// cause TSAN to miss some potential races, specifically non-address dependent reads after a
+// read_depends load might be considered synchronized after this call but they shouldn't. We
+// provide the EASTL_ATOMIC_READ_DEPENDS_IS_ACQUIRE macro as a means to diagnose issues related
+// to misuse of the read_depends memory order.
+#if EA_TSAN_ENABLED
+	#define EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION_64(ptr)			\
+		__tsan_atomic64_load(EASTL_ATOMIC_VOLATILE_INTEGRAL_CAST(int64_t, ptr), __tsan_memory_order_consume);
+
+	// TSAN does not work on 32-bit platforms so this does nothing for now.
+	#define EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION_32(ptr)
+
+	#define EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION(bits, ptr)			\
+		EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION_, bits)(ptr)
+#else
+	#define EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION(bits, ptr)
+#endif
+
+
 
 namespace eastl
 {
@@ -128,13 +155,13 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 	template <typename T, unsigned width = sizeof(T)>
 	struct atomic_pointer_width;
 
-#define EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits)						\
+#define EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits, ptr)					\
 	T* retVal;															\
 	{																	\
 		ptr_integral_type retType;										\
 		ptr_integral_type addend = static_cast<ptr_integral_type>(arg) * static_cast<ptr_integral_type>(sizeof(T)); \
 																		\
-		EA_PREPROCESSOR_JOIN(op, bits)(ptr_integral_type, retType, EASTL_ATOMIC_INTEGRAL_CAST(ptr_integral_type, this->GetAtomicAddress()), addend); \
+		EA_PREPROCESSOR_JOIN(op, bits)(ptr_integral_type, retType, EASTL_ATOMIC_INTEGRAL_CAST(ptr_integral_type, ptr), addend); \
 																		\
 		retVal = reinterpret_cast<T*>(retType);							\
 	}																	\
@@ -144,14 +171,14 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 	T* funcName(ptrdiff_t arg) EA_NOEXCEPT						\
 	{															\
 		EASTL_ATOMIC_STATIC_ASSERT_TYPE_IS_OBJECT(T);			\
-		EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits);				\
+		EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits, this->GetAtomicAddress());  \
 	}
 
 #define EASTL_ATOMIC_POINTER_FETCH_ORDER_IMPL(funcName, orderType, op, bits) \
 	T* funcName(ptrdiff_t arg, orderType) EA_NOEXCEPT					\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_TYPE_IS_OBJECT(T);					\
-		EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits);						\
+		EASTL_ATOMIC_POINTER_FUNC_IMPL(op, bits, this->GetAtomicAddress());	 \
 	}
 
 #define EASTL_ATOMIC_POINTER_FETCH_OP_JOIN(fetchOp, Order)				\
@@ -198,6 +225,11 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 		return funcName(arg, eastl::memory_order_seq_cst);				\
 	}
 
+#define EASTL_ATOMIC_POINTER_READ_DEPENDS_LOAD_IMPL(bits, ptr)                        \
+	T* retPointer;                                                                    \
+	EASTL_ATOMIC_READ_DEPENDS_TSAN_INSTRUMENTATION(bits, ptr)                         \
+	EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_LOAD_READ_DEPENDS_, bits)(T*, retPointer, ptr); \
+	return retPointer;
 
 #define EASTL_ATOMIC_POINTER_WIDTH_SPECIALIZE(bytes, bits)				\
 	template <typename T>												\
@@ -261,9 +293,7 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 																		\
 		T* load(eastl::internal::memory_order_read_depends_s) EA_NOEXCEPT \
 		{																\
-			T* retPointer;												\
-			EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_LOAD_READ_DEPENDS_, bits)(T*, retPointer, this->GetAtomicAddress()); \
-			return retPointer;											\
+			EASTL_ATOMIC_POINTER_READ_DEPENDS_LOAD_IMPL(bits, this->GetAtomicAddress()) \
 		}																\
 	};
 

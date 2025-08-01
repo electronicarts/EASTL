@@ -1287,6 +1287,9 @@ static int TestMidpoint()
 	return nErrorCount;
 }
 
+EA_RESTORE_VC_WARNING(); // warning C4756: overflow in constant arithmetic
+
+#endif
 
 template <typename T>
 static constexpr int FloatLerp()
@@ -1334,10 +1337,6 @@ static int TestLerp()
 
 	return nErrorCount;
 }
-
-EA_RESTORE_VC_WARNING(); // warning C4756: overflow in constant arithmetic
-
-#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1407,8 +1406,8 @@ int TestExtra()
 	nErrorCount += TestAdaptors();
 #if defined(EA_COMPILER_CPP20_ENABLED)
 	nErrorCount += TestMidpoint();
-	nErrorCount += TestLerp();
 #endif
+	nErrorCount += TestLerp();
 
 	return nErrorCount;
 }

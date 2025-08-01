@@ -210,6 +210,8 @@
 //      unique<Compare>
 //      upper_bound
 //      upper_bound<Compare>
+//      includes
+//      includes<Compare>
 //      is_permutation
 //      is_permutation<Predicate>
 //      next_permutation
@@ -222,8 +224,6 @@
 // They also happen to be the more complicated than other algorithms.
 // However, we can implement any of these functions for users that might
 // need them.
-//      includes
-//      includes<Compare>
 //      inplace_merge
 //      inplace_merge<Compare>
 //      partial_sort_copy
@@ -1058,8 +1058,7 @@ namespace eastl
 	///
 	/// Example usage:
 	///     eastl_size_t Rand(eastl_size_t n) { return (eastl_size_t)(rand() % n); } // Note: The C rand function is poor and slow.
-	///     pointer_to_unary_function<eastl_size_t, eastl_size_t> randInstance(Rand);
-	///     random_shuffle(pArrayBegin, pArrayEnd, randInstance);
+	///     random_shuffle(pArrayBegin, pArrayEnd, Rand);
 	///
 	/// Example usage:
 	///     struct Rand{ eastl_size_t operator()(eastl_size_t n) { return (eastl_size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
@@ -1117,7 +1116,7 @@ namespace eastl
 	///
 	template <typename InputIterator, typename Size, typename OutputIterator>
 	inline OutputIterator
-	move_n_impl(InputIterator first, Size n, OutputIterator result, EASTL_ITC_NS::input_iterator_tag)
+	move_n_impl(InputIterator first, Size n, OutputIterator result, eastl::input_iterator_tag)
 	{
 		for(; n > 0; --n)
 			*result++ = eastl::move(*first++);
@@ -1126,7 +1125,7 @@ namespace eastl
 
 	template <typename RandomAccessIterator, typename Size, typename OutputIterator>
 	inline OutputIterator
-	move_n_impl(RandomAccessIterator first, Size n, OutputIterator result, EASTL_ITC_NS::random_access_iterator_tag)
+	move_n_impl(RandomAccessIterator first, Size n, OutputIterator result, eastl::random_access_iterator_tag)
 	{
 		return eastl::move(first, first + n, result); // Take advantage of the optimizations present in the move algorithm.
 	}
@@ -1151,7 +1150,7 @@ namespace eastl
 	///
 	template <typename InputIterator, typename Size, typename OutputIterator>
 	inline OutputIterator
-	copy_n_impl(InputIterator first, Size n, OutputIterator result, EASTL_ITC_NS::input_iterator_tag)
+	copy_n_impl(InputIterator first, Size n, OutputIterator result, eastl::input_iterator_tag)
 	{
 		for(; n > 0; --n)
 			*result++ = *first++;
@@ -1160,7 +1159,7 @@ namespace eastl
 
 	template <typename RandomAccessIterator, typename Size, typename OutputIterator>
 	inline OutputIterator
-	copy_n_impl(RandomAccessIterator first, Size n, OutputIterator result, EASTL_ITC_NS::random_access_iterator_tag)
+	copy_n_impl(RandomAccessIterator first, Size n, OutputIterator result, eastl::random_access_iterator_tag)
 	{
 		return eastl::copy(first, first + n, result); // Take advantage of the optimizations present in the copy algorithm.
 	}
@@ -1224,7 +1223,7 @@ namespace eastl
 
 	// Specialization for moving non-trivial data via a random-access iterator. It's theoretically faster because the compiler can see the count when its a compile-time const.
 	template<>
-	struct move_and_copy_backward_helper<EASTL_ITC_NS::random_access_iterator_tag, true, false>
+	struct move_and_copy_backward_helper<eastl::random_access_iterator_tag, true, false>
 	{
 		template<typename BidirectionalIterator1, typename BidirectionalIterator2>
 		static BidirectionalIterator2 move_or_copy_backward(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
@@ -1241,7 +1240,7 @@ namespace eastl
 	// This specialization converts the random access BidirectionalIterator1 last-first to an integral type. There's simple way for us to take advantage of a random access output iterator,
 	// as the range is specified by the input instead of the output, and distance(first, last) for a non-random-access iterator is potentially slow.
 	template <>
-	struct move_and_copy_backward_helper<EASTL_ITC_NS::random_access_iterator_tag, false, false>
+	struct move_and_copy_backward_helper<eastl::random_access_iterator_tag, false, false>
 	{
 		template <typename BidirectionalIterator1, typename BidirectionalIterator2>
 		static BidirectionalIterator2 move_or_copy_backward(BidirectionalIterator1 first, BidirectionalIterator1 last, BidirectionalIterator2 resultEnd)
@@ -1256,7 +1255,7 @@ namespace eastl
 
 	// Specialization for when we can use memmove/memcpy. See the notes above for what conditions allow this.
 	template <bool isMove>
-	struct move_and_copy_backward_helper<EASTL_ITC_NS::random_access_iterator_tag, isMove, true>
+	struct move_and_copy_backward_helper<eastl::random_access_iterator_tag, isMove, true>
 	{
 		template <typename T>
 		static T* move_or_copy_backward(const T* first, const T* last, T* resultEnd)
@@ -2432,39 +2431,7 @@ namespace eastl
 	pair<ForwardIterator, ForwardIterator>
 	equal_range(ForwardIterator first, ForwardIterator last, const T& value)
 	{
-		typedef pair<ForwardIterator, ForwardIterator> ResultType;
-		typedef typename eastl::iterator_traits<ForwardIterator>::difference_type DifferenceType;
-
-		DifferenceType d = eastl::distance(first, last);
-
-		while(d > 0)
-		{
-			ForwardIterator i(first);
-			DifferenceType  d2 = d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-			eastl::advance(i, d2);
-
-			if(*i < value)
-			{
-				EASTL_VALIDATE_COMPARE(!(value < *i)); // Validate that the compare function is sane.
-				first = ++i;
-				d    -= d2 + 1;
-			}
-			else if(value < *i)
-			{
-				EASTL_VALIDATE_COMPARE(!(*i < value)); // Validate that the compare function is sane.
-				d    = d2;
-				last = i;
-			}
-			else
-			{
-				ForwardIterator j(i);
-
-				return ResultType(eastl::lower_bound(first, i, value),
-								  eastl::upper_bound(++j, last, value));
-			}
-		}
-		return ResultType(first, first);
+		return equal_range(first, last, value, eastl::less<>{});
 	}
 
 
@@ -2559,7 +2526,6 @@ namespace eastl
 		}
 	}
 
-
 	/// remove_copy
 	///
 	/// Effects: Copies all the elements referred to by the iterator i in the range
@@ -2580,13 +2546,12 @@ namespace eastl
 		{
 			if(!(*first == value)) // Note that we always express value comparisons in terms of < or ==.
 			{
-				*result = eastl::move(*first);
+				*result = *first;
 				++result;
 			}
 		}
 		return result;
 	}
-
 
 	/// remove_copy_if
 	///
@@ -2608,7 +2573,7 @@ namespace eastl
 		{
 			if(!predicate(*first))
 			{
-				*result = eastl::move(*first);
+				*result = *first;
 				++result;
 			}
 		}
@@ -2646,12 +2611,16 @@ namespace eastl
 		first = eastl::find(first, last, value);
 		if(first != last)
 		{
-			ForwardIterator i(first);
-			return eastl::remove_copy(++i, last, first, value);
+			for (ForwardIterator i = first; ++i != last;)
+			{
+				if (!(*i == value))
+				{
+					*first++ = eastl::move(*i);
+				}
+			}
 		}
 		return first;
 	}
-
 
 	/// remove_if
 	///
@@ -2674,7 +2643,7 @@ namespace eastl
 	/// Example usage:
 	///    vector<int> intArray;
 	///    ...
-	///    intArray.erase(remove(intArray.begin(), intArray.end(), bind2nd(less<int>(), (int)3)), intArray.end()); // Erase all elements less than 3.
+	///    intArray.erase(remove(intArray.begin(), intArray.end(), bind(less<int>(), (int)3)), intArray.end()); // Erase all elements less than 3.
 	///
 	template <typename ForwardIterator, typename Predicate>
 	inline ForwardIterator
@@ -2683,12 +2652,16 @@ namespace eastl
 		first = eastl::find_if(first, last, predicate);
 		if(first != last)
 		{
-			ForwardIterator i(first);
-			return eastl::remove_copy_if<ForwardIterator, ForwardIterator, Predicate>(++i, last, first, predicate);
+			for (ForwardIterator i = first; ++i != last;)
+			{
+				if (!predicate(*i))
+				{
+					*first++ = eastl::move(*i);
+				}
+			}
 		}
 		return first;
 	}
-
 
 	/// apply_and_remove_if
 	///
@@ -2836,14 +2809,14 @@ namespace eastl
 	// efficiently for some types of iterators and types.
 	//
 	template <typename BidirectionalIterator>
-	inline void reverse_impl(BidirectionalIterator first, BidirectionalIterator last, EASTL_ITC_NS::bidirectional_iterator_tag)
+	inline void reverse_impl(BidirectionalIterator first, BidirectionalIterator last, eastl::bidirectional_iterator_tag)
 	{
 		for(; (first != last) && (first != --last); ++first) // We are not allowed to use operator <, <=, >, >= with a
 			eastl::iter_swap(first, last);                   // generic (bidirectional or otherwise) iterator.
 	}
 
 	template <typename RandomAccessIterator>
-	inline void reverse_impl(RandomAccessIterator first, RandomAccessIterator last, EASTL_ITC_NS::random_access_iterator_tag)
+	inline void reverse_impl(RandomAccessIterator first, RandomAccessIterator last, eastl::random_access_iterator_tag)
 	{
 		if(first != last)
 		{
@@ -3043,7 +3016,7 @@ namespace eastl
 	//
 	template <typename ForwardIterator, typename Size, typename T>
 	ForwardIterator     // Generic implementation.
-	search_n_impl(ForwardIterator first, ForwardIterator last, Size count, const T& value, EASTL_ITC_NS::forward_iterator_tag)
+	search_n_impl(ForwardIterator first, ForwardIterator last, Size count, const T& value, eastl::forward_iterator_tag)
 	{
 		if(count <= 0)
 			return first;
@@ -3072,7 +3045,7 @@ namespace eastl
 
 	template <typename RandomAccessIterator, typename Size, typename T> inline
 	RandomAccessIterator    // Random access iterator implementation. Much faster than generic implementation.
-	search_n_impl(RandomAccessIterator first, RandomAccessIterator last, Size count, const T& value, EASTL_ITC_NS::random_access_iterator_tag)
+	search_n_impl(RandomAccessIterator first, RandomAccessIterator last, Size count, const T& value, eastl::random_access_iterator_tag)
 	{
 		if(count <= 0)
 			return first;
@@ -3325,7 +3298,7 @@ namespace eastl
 	ForwardIterator1
 	find_end_impl(ForwardIterator1 first1, ForwardIterator1 last1,
 				  ForwardIterator2 first2, ForwardIterator2 last2,
-				  EASTL_ITC_NS::forward_iterator_tag, EASTL_ITC_NS::forward_iterator_tag)
+				  eastl::forward_iterator_tag, eastl::forward_iterator_tag)
 	{
 		if(first2 != last2) // We have to do this check because the search algorithm below will return first1 (and not last1) if the first2/last2 range is empty.
 		{
@@ -3349,7 +3322,7 @@ namespace eastl
 	BidirectionalIterator1
 	find_end_impl(BidirectionalIterator1 first1, BidirectionalIterator1 last1,
 				  BidirectionalIterator2 first2, BidirectionalIterator2 last2,
-				  EASTL_ITC_NS::bidirectional_iterator_tag, EASTL_ITC_NS::bidirectional_iterator_tag)
+				  eastl::bidirectional_iterator_tag, eastl::bidirectional_iterator_tag)
 	{
 		typedef eastl::reverse_iterator<BidirectionalIterator1> reverse_iterator1;
 		typedef eastl::reverse_iterator<BidirectionalIterator2> reverse_iterator2;
@@ -3398,7 +3371,7 @@ namespace eastl
 	find_end_impl(ForwardIterator1 first1, ForwardIterator1 last1,
 				  ForwardIterator2 first2, ForwardIterator2 last2,
 				  BinaryPredicate predicate,
-				  EASTL_ITC_NS::forward_iterator_tag, EASTL_ITC_NS::forward_iterator_tag)
+				  eastl::forward_iterator_tag, eastl::forward_iterator_tag)
 	{
 		if(first2 != last2) // We have to do this check because the search algorithm below will return first1 (and not last1) if the first2/last2 range is empty.
 		{
@@ -3423,7 +3396,7 @@ namespace eastl
 	find_end_impl(BidirectionalIterator1 first1, BidirectionalIterator1 last1,
 				  BidirectionalIterator2 first2, BidirectionalIterator2 last2,
 				  BinaryPredicate predicate,
-				  EASTL_ITC_NS::bidirectional_iterator_tag, EASTL_ITC_NS::bidirectional_iterator_tag)
+				  eastl::bidirectional_iterator_tag, eastl::bidirectional_iterator_tag)
 	{
 		typedef eastl::reverse_iterator<BidirectionalIterator1> reverse_iterator1;
 		typedef eastl::reverse_iterator<BidirectionalIterator2> reverse_iterator2;
@@ -3893,6 +3866,40 @@ namespace eastl
 		return eastl::set_decomposition(first1, last1, first2, last2, result1, result2, result3, eastl::less<>{});
 	}
 
+	/// includes
+	///
+	/// Returns true if the sorted range [first2, last2) is a subsequence of the sorted range [first1, last1).
+	/// Note: a subsequence need not be contiguous!.
+	/// If [first1, last1) or [first2, last2) is not sorted with respect to comp, the behavior is undefined.
+	template<class InputIt1, class InputIt2, class Compare>
+	bool includes(InputIt1 first1, InputIt1 last1,
+				  InputIt2 first2, InputIt2 last2, Compare comp)
+	{
+		for (; first2 != last2; ++first1)
+		{
+			if (first1 == last1 || comp(*first2, *first1))
+			{
+				return false;
+			}
+			if (!comp(*first1, *first2))
+			{
+				++first2;
+			}
+		}
+		return true;
+	}
+
+	/// includes
+	///
+	/// Returns true if the sorted range [first2, last2) is a subsequence of the sorted range [first1, last1).
+	/// Note: a subsequence need not be contiguous!.
+	/// If [first1, last1) or [first2, last2) is not sorted with respect to eastl::less, the behavior is undefined.
+	template<class InputIt1, class InputIt2>
+	bool includes(InputIt1 first1, InputIt1 last1,
+				  InputIt2 first2, InputIt2 last2)
+	{
+		return eastl::includes(first1, last1, first2, last2, eastl::less<>{});
+	}
 
 	/// is_permutation
 	///
@@ -4140,7 +4147,7 @@ namespace eastl
 		};
 
 		template <>
-		struct rotate_helper<EASTL_ITC_NS::forward_iterator_tag, true>
+		struct rotate_helper<eastl::forward_iterator_tag, true>
 		{
 			template <typename ForwardIterator>
 			static ForwardIterator rotate_impl(ForwardIterator first, ForwardIterator middle, ForwardIterator last)
@@ -4152,7 +4159,7 @@ namespace eastl
 		};
 
 		template <>
-		struct rotate_helper<EASTL_ITC_NS::bidirectional_iterator_tag, false>
+		struct rotate_helper<eastl::bidirectional_iterator_tag, false>
 		{
 			template <typename BidirectionalIterator>
 			static BidirectionalIterator rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, BidirectionalIterator last)
@@ -4174,8 +4181,8 @@ namespace eastl
 			static BidirectionalIterator rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, BidirectionalIterator last)
 			{
 				// This is the "flipping hands" algorithm.
-				eastl::reverse_impl(first,  middle, EASTL_ITC_NS::bidirectional_iterator_tag()); // Reverse the left side.
-				eastl::reverse_impl(middle, last,   EASTL_ITC_NS::bidirectional_iterator_tag()); // Reverse the right side.
+				eastl::reverse_impl(first,  middle, eastl::bidirectional_iterator_tag()); // Reverse the left side.
+				eastl::reverse_impl(middle, last,   eastl::bidirectional_iterator_tag()); // Reverse the right side.
 
 				// Reverse the entire range.
 				while((first != middle) && (middle != last))
@@ -4199,7 +4206,7 @@ namespace eastl
 		};
 
 		template <>
-		struct rotate_helper<EASTL_ITC_NS::bidirectional_iterator_tag, true>
+		struct rotate_helper<eastl::bidirectional_iterator_tag, true>
 		{
 			template <typename BidirectionalIterator>
 			static BidirectionalIterator rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, BidirectionalIterator last)
@@ -4225,7 +4232,7 @@ namespace eastl
 		}
 
 		template <>
-		struct rotate_helper<EASTL_ITC_NS::random_access_iterator_tag, false>
+		struct rotate_helper<eastl::random_access_iterator_tag, false>
 		{
 			// This is the juggling algorithm, using move operations.
 			// In practice this implementation is about 25% faster than rotate_general_impl. We may want to
@@ -4266,7 +4273,7 @@ namespace eastl
 		};
 
 		template <>
-		struct rotate_helper<EASTL_ITC_NS::random_access_iterator_tag, true>
+		struct rotate_helper<eastl::random_access_iterator_tag, true>
 		{
 			// Experiments were done which tested the performance of using an intermediate buffer
 			// to do memcpy's to as opposed to executing a swapping algorithm. It turns out this is
@@ -4283,7 +4290,7 @@ namespace eastl
 					return Internal::move_rotate_right_by_one(first, last);
 				if((last - first) < 32) // For small ranges rotate_general_impl is faster.
 					return Internal::rotate_general_impl(first, middle, last);
-				return Internal::rotate_helper<EASTL_ITC_NS::random_access_iterator_tag, false>::rotate_impl(first, middle, last);
+				return Internal::rotate_helper<eastl::random_access_iterator_tag, false>::rotate_impl(first, middle, last);
 			}
 		};
 

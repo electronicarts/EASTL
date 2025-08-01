@@ -239,12 +239,156 @@ int TestSequentialConsistency()
 	return nErrorCount;
 }
 
+struct ReadDependsTestData
+{
+	eastl::atomic<int*> ptr{};
+	int a{10};
+	int errorCount{};
+};
+
+intptr_t Post(void* p)
+{
+	auto& data = *static_cast<ReadDependsTestData*>(p);
+	data.a = 5;
+	data.ptr.store(&data.a, eastl::memory_order_release);
+	return 0;
+}
+
+intptr_t Wait(void* p)
+{
+	auto& data = *static_cast<ReadDependsTestData*>(p);
+	int* ptr{};
+
+	// wait for the message to be posted
+	for (; ptr == nullptr; ptr = data.ptr.load(eastl::memory_order_read_depends)) {}
+
+	// ptr should point to a, which should have a value of 5 since it's a dependent load.
+	int x = *ptr;
+	if (x != 5)
+	{
+		++data.errorCount;
+	}
+
+	return 0;
+}
+
+int TestReadDepends()
+{
+	int nErrorCount{};
+
+	// Do this 100 times, why not, this test is "timing dependent".
+	for (auto i = 0; i < 100; ++i)
+	{
+		constexpr eastl_size_t kThreadCount = 4;
+		eastl::vector<EA::Thread::Thread> threads{kThreadCount};
+
+		ReadDependsTestData data;
+
+		// one "post" thread.
+		threads[0].Begin(Post, &data);
+
+		// N-1 "wait" threads
+		for (int k = 1; k < kThreadCount; ++k)
+			threads[k].Begin(Wait, &data);
+
+		// Wait for all threads to finish
+		for (int k = 0; k < kThreadCount; ++k)
+			threads[k].WaitForEnd();
+
+		nErrorCount += data.errorCount;
+	}
+	return nErrorCount;
+}
+
+struct RefCountingTestData
+{
+	inline static constexpr int kThreadCount = 4;
+	alignas(64) eastl::atomic<int> mThreadIndex;
+	alignas(64) eastl::atomic<int> mDecrementCount;
+	alignas(64) eastl::atomic<int> mRefCount;
+	alignas(64) eastl::atomic<int> mErrorCount;
+
+	void incrementRefCount()
+	{
+		mRefCount.fetch_add(1, eastl::memory_order_relaxed);
+	}
+
+	// returns true if the count is still >0
+	bool decrementRefCount()
+	{
+		// increment this so we can test the synchronization.
+		mDecrementCount.fetch_add(1, eastl::memory_order_relaxed);
+		if (mRefCount.fetch_sub(1, eastl::memory_order_release) == 1)
+		{
+			mRefCount.acquire_fence();
+			return false;
+		}
+		return true;
+	}
+};
+
+intptr_t IncrementDecrement(void* p)
+{
+	auto& data = *static_cast<RefCountingTestData*>(p);
+
+	// Do one here which we'll clear at the end so only the last thread exiting reaches zero.
+	data.incrementRefCount();
+
+	data.mThreadIndex.fetch_add(1, eastl::memory_order_relaxed);
+
+	// wait until all threads have started:
+	while(data.mThreadIndex.load(eastl::memory_order_relaxed) != data.kThreadCount) {}
+
+	const auto kLoopCount = 1024;
+	// increment and decrement the ref counts concurrently with the other threads a bit...
+	for (int i = 0; i < kLoopCount; ++i)
+	{
+		data.incrementRefCount();
+		data.decrementRefCount();
+	}
+
+	// check if we're the last thread to exit.
+	if (!data.decrementRefCount())
+	{
+		// check this won't be reordered.
+		const auto decrementCount = data.mDecrementCount.load(eastl::memory_order_relaxed);
+		data.mErrorCount += (decrementCount != data.kThreadCount * (kLoopCount + 1));
+	}
+
+	return 0;
+}
+
+
+int TestRefCounting()
+{
+	int nErrorCount{};
+
+	// Do this 10 times, why not, this test is "timing dependent".
+	for (auto i = 0; i < 10; ++i)
+	{
+		RefCountingTestData data;
+		eastl::vector<EA::Thread::Thread> threads{data.kThreadCount};
+
+		for (int k = 0; k < data.kThreadCount; ++k)
+			threads[k].Begin(IncrementDecrement, &data);
+
+		// Wait for all threads to finish
+		for (int k = 0; k < data.kThreadCount; ++k)
+			threads[k].WaitForEnd();
+
+		nErrorCount += data.mErrorCount;
+	}
+	return nErrorCount;
+}
+
 int TestAtomicMultiThreaded()
 {
 	int nErrorCount = 0;
 
 	nErrorCount += Test128BitLoadStoreMultiThreaded();
 	nErrorCount += TestSequentialConsistency();
+	nErrorCount += TestReadDepends();
+	nErrorCount += TestRefCounting();
 
 	return nErrorCount;
 }

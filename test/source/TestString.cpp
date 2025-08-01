@@ -7,6 +7,7 @@
 #include <EAStdC/EAMemory.h>
 #include <EAStdC/EAString.h>
 #include <EASTL/string.h>
+#include <EASTL/fixed_string.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/allocator_malloc.h>
 
@@ -134,6 +135,138 @@ int TestString()
 		const int expectedSize = sizeof(EboString::pointer) + (2 * sizeof(EboString::size_type));
 
 		static_assert(sizeof(EboString) == expectedSize, "unexpected layout size of basic_string");
+	}
+
+	// transparent_string_hash
+	{
+		EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
+
+		eastl::string str;
+
+		for (auto i = 0; i < 1000; ++i)
+		{
+			str.clear();
+			for (auto j = 0; j < 8; ++j)
+				str.push_back(static_cast<char>(rng.RandRange(1, eastl::numeric_limits<char>::max()))); // don't append null terminator.
+
+			// eastl::DecodePart() is not implemented for (un)signed char.
+			//eastl::basic_string<signed char> signed_str(eastl::basic_string<signed char>::CtorConvert{}, str.c_str());
+			//eastl::basic_string<unsigned char> unsigned_str(eastl::basic_string<unsigned char>::CtorConvert{}, str.c_str());
+#if EA_CHAR8_UNIQUE
+			eastl::basic_string<char8_t> str8(eastl::basic_string<char8_t>::CtorConvert{}, str.c_str());
+#endif
+			eastl::string_view view(str);
+			eastl::fixed_string<char, 16, false> fixed_str;
+			fixed_str.append_convert(str.c_str());
+
+			transparent_string_hash hash;
+
+			//EATEST_VERIFY(hash(str) == hash(signed_str));
+			//EATEST_VERIFY(hash(str) == hash(signed_str.c_str()));
+			//EATEST_VERIFY(hash(str) == hash(unsigned_str));
+			//EATEST_VERIFY(hash(str) == hash(unsigned_str.c_str()));
+#if EA_CHAR8_UNIQUE
+			EATEST_VERIFY(hash(str) == hash(str8));
+			EATEST_VERIFY(hash(str) == hash(str8.c_str()));
+#endif
+			EATEST_VERIFY(hash(str) == hash(view));
+			EATEST_VERIFY(hash(str) == hash(fixed_str));
+		}
+	}
+
+	// transparent_string16_hash
+	{
+		EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
+
+		eastl::string16 str;
+
+		for (auto i = 0; i < 1000; ++i)
+		{
+			str.clear();
+			for (auto j = 0; j < 8; ++j)
+				str.push_back(static_cast<char16_t>(rng.RandRange(1, eastl::numeric_limits<char16_t>::max()))); // don't append null terminator.
+
+#if (EA_WCHAR_SIZE == 2)
+			eastl::basic_string<wchar_t> wstr(eastl::basic_string<wchar_t>::CtorConvert{}, str.c_str());
+#endif
+			eastl::u16string_view view(str);
+			eastl::fixed_string<char16_t, 16, false> fixed_str;
+			fixed_str.append_convert(str.c_str());
+
+			transparent_string16_hash hash;
+
+#if (EA_WCHAR_SIZE == 2)
+			EATEST_VERIFY(hash(str) == hash(wstr));
+			EATEST_VERIFY(hash(str) == hash(wstr.c_str()));
+#endif
+			EATEST_VERIFY(hash(str) == hash(view));
+			EATEST_VERIFY(hash(str) == hash(fixed_str));
+		}
+	}
+
+	// transparent_string32_hash
+	{
+		EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
+
+		eastl::string32 str;
+
+		for (auto i = 0; i < 1000; ++i)
+		{
+			str.clear();
+			for (auto j = 0; j < 8; ++j)
+				str.push_back(static_cast<char32_t>(rng.RandRange(1, eastl::numeric_limits<char32_t>::max()))); // don't append null terminator.
+
+#if (EA_WCHAR_SIZE == 4)
+			eastl::basic_string<wchar_t> wstr(eastl::basic_string<wchar_t>::CtorConvert{}, str.c_str());
+#endif
+			eastl::u32string_view view(str);
+			eastl::fixed_string<char32_t, 16, false> fixed_str;
+			fixed_str.append_convert(str.c_str());
+
+			transparent_string32_hash hash;
+
+#if (EA_WCHAR_SIZE == 4)
+			EATEST_VERIFY(hash(str) == hash(wstr));
+			EATEST_VERIFY(hash(str) == hash(wstr.c_str()));
+#endif
+			EATEST_VERIFY(hash(str) == hash(view));
+			EATEST_VERIFY(hash(str) == hash(fixed_str));
+		}
+	}
+
+	// transparent_wstring_hash
+	{
+		EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
+
+		eastl::wstring str;
+
+		for (auto i = 0; i < 1000; ++i)
+		{
+			str.clear();
+			for (auto j = 0; j < 8; ++j)
+				str.push_back(static_cast<wchar_t>(rng.RandRange(1, eastl::numeric_limits<wchar_t>::max()))); // don't append null terminator.
+
+#if (EA_WCHAR_SIZE == 2)
+			eastl::basic_string<char16_t> str16(eastl::basic_string<char16_t>::CtorConvert{}, str.c_str());
+#elif (EA_WCHAR_SIZE == 4)
+			eastl::basic_string<char32_t> str32(eastl::basic_string<char32_t>::CtorConvert{}, str.c_str());
+#endif
+			eastl::wstring_view view(str);
+			eastl::fixed_string<wchar_t, 16, false> fixed_str;
+			fixed_str.append_convert(str.c_str());
+
+			transparent_wstring_hash hash;
+
+#if (EA_WCHAR_SIZE == 2)
+			EATEST_VERIFY(hash(str) == hash(str16));
+			EATEST_VERIFY(hash(str) == hash(str16.c_str()));
+#elif (EA_WCHAR_SIZE == 4)
+			EATEST_VERIFY(hash(str) == hash(str32));
+			EATEST_VERIFY(hash(str) == hash(str32.c_str()));
+#endif
+			EATEST_VERIFY(hash(str) == hash(view));
+			EATEST_VERIFY(hash(str) == hash(fixed_str));
+		}
 	}
 
 	return nErrorCount;

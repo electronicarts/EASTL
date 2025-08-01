@@ -589,6 +589,222 @@ int TestFixedFunctionBasic()
 		}
 	}
 
+	{
+		
+		{
+			TestObject::Reset();
+			TestObject theOriginal;
+
+			eastl::fixed_function<8, void(void)> ff8_ref = [&theOriginal]() { EA_UNUSED(theOriginal); };
+			eastl::fixed_function<16, void(void)> ff16_ref(ff8_ref);
+			eastl::fixed_function<32, void(void)> ff32_ref(ff16_ref);
+		
+			VERIFY(TestObject::sTOCtorCount == 1);
+			VERIFY(TestObject::sTODtorCount == 0);
+
+			VERIFY(TestObject::sTOMoveAssignCount == 0);
+			VERIFY(TestObject::sTOCopyAssignCount == 0);
+		
+			VERIFY(TestObject::sTOMoveCtorCount == 0);
+			VERIFY(TestObject::sTOCopyCtorCount == 0);
+		}
+		
+		{
+			TestObject::Reset();
+			TestObject theOriginal; 
+
+			eastl::fixed_function<32, void(void)> ff32_val = [theOriginal]() { EA_UNUSED(theOriginal); }; 
+			
+			// When passing by value the lambda creation/assigment will also do some operations which we dont want to
+			// track, so we instead capture the state here and check the difference
+
+			int64_t ctorDiff = TestObject::sTOCtorCount;
+			int64_t copyCtorCount = TestObject::sTOCopyCtorCount;
+			int64_t moveCtorCount = TestObject::sTOMoveCtorCount;
+
+			eastl::fixed_function<64, void(void)> ff64_val(ff32_val);
+			eastl::fixed_function<128, void(void)> ff128_val(ff64_val);
+		
+			VERIFY(TestObject::sTOCount == 4);
+			VERIFY((TestObject::sTOCtorCount - ctorDiff) == 2);
+			VERIFY((TestObject::sTOCopyCtorCount - copyCtorCount) == 2);
+			VERIFY((TestObject::sTOMoveCtorCount - moveCtorCount) == 0);
+		}
+
+		{
+			TestObject::Reset();
+			TestObject theOriginal;
+
+			eastl::fixed_function<32, void(void)> ff32_ref = [&theOriginal]() { EA_UNUSED(theOriginal); }; 
+			eastl::fixed_function<64, void(void)> ff64_ref;
+			eastl::fixed_function<128, void(void)> ff128_ref;
+
+			ff64_ref = ff32_ref;
+			ff128_ref = ff64_ref;
+
+			VERIFY(TestObject::sTOCtorCount == 1);
+			VERIFY(TestObject::sTODtorCount == 0);
+
+			VERIFY(TestObject::sTOMoveAssignCount == 0);
+			VERIFY(TestObject::sTOCopyAssignCount == 0);
+
+			VERIFY(TestObject::sTOMoveCtorCount == 0);
+			VERIFY(TestObject::sTOCopyCtorCount == 0);
+
+		}
+
+		{
+			TestObject::Reset();
+			TestObject theOriginal;
+
+			eastl::fixed_function<32, void(void)> ff32_val = [theOriginal]() { EA_UNUSED(theOriginal); };
+
+			// When passing by value the lambda creation/assigment will also do some operations which we dont want to
+			// track, so we instead capture the state here and check the difference
+
+			int64_t ctorDiff = TestObject::sTOCtorCount;
+			int64_t copyCtorCount = TestObject::sTOCopyCtorCount;
+			int64_t moveCtorCount = TestObject::sTOMoveCtorCount;
+
+			eastl::fixed_function<64, void(void)> ff64_val;
+			eastl::fixed_function<128, void(void)> ff128_val;
+
+			ff64_val = ff32_val;
+			ff128_val = ff64_val;
+
+			VERIFY(TestObject::sTOCount == 4);
+			VERIFY((TestObject::sTOCtorCount - ctorDiff) == 2);
+			VERIFY((TestObject::sTOCopyCtorCount - copyCtorCount) == 2);
+			VERIFY((TestObject::sTOMoveCtorCount - moveCtorCount) == 0);
+		}
+
+		{
+			TestObject::Reset();
+			TestObject theOriginal;
+
+			eastl::fixed_function<32, void(void)> ff32_val = [theOriginal]() { EA_UNUSED(theOriginal); };
+
+			// When passing by value the lambda creation/assigment will also do some operations which we dont want to
+			// track, so we instead capture the state here and check the difference
+
+			int64_t ctorDiff = TestObject::sTOCtorCount;
+			int64_t copyCtorCount = TestObject::sTOCopyCtorCount;
+			int64_t moveCtorCount = TestObject::sTOMoveCtorCount;
+
+			eastl::fixed_function<64, void(void)> ff64_val;
+			eastl::fixed_function<128, void(void)> ff128_val;
+
+			ff64_val = eastl::move(ff32_val);
+			ff128_val = eastl::move(ff64_val);
+
+			VERIFY(TestObject::sTOCount == 2);
+			VERIFY((TestObject::sTOCtorCount - ctorDiff) == 2);
+			VERIFY((TestObject::sTOMoveCtorCount - moveCtorCount) == 2);
+			VERIFY((TestObject::sTOCopyCtorCount - copyCtorCount) == 0);
+		}
+
+		{
+			TestObject::Reset();
+			TestObject theOriginal;
+
+			eastl::fixed_function<32, void(void)> ff32 = [theOriginal]() {EA_UNUSED(theOriginal); };
+
+			int64_t ctorDiff = TestObject::sTOCtorCount;
+			int64_t copyCtorCount = TestObject::sTOCopyCtorCount;
+			int64_t moveCtorCount = TestObject::sTOMoveCtorCount;
+
+			eastl::fixed_function<64, void(void)> ff64(eastl::move(ff32));
+			eastl::fixed_function<128, void(void)> ff128(eastl::move(ff64));
+
+			VERIFY(TestObject::sTOCount == 2);
+			VERIFY((TestObject::sTOCtorCount - ctorDiff) == 2);         
+			VERIFY((TestObject::sTOMoveCtorCount - moveCtorCount) == 2);
+			VERIFY((TestObject::sTOCopyCtorCount - copyCtorCount) == 0);
+		
+		}
+
+	}
+
+	return nErrorCount;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// TestFixedFunctionAllocations
+//
+int TestFixedFunctionAllocations()
+{
+	int nErrorCount = 0;
+#if !EASTL_OPENSOURCE
+	int allocationsBefore = gEASTLTest_TotalAllocationCount.load();
+
+	{
+		int i = 0;
+		eastl::fixed_function<4, int(int)> ff4 = [i](int in) mutable { return ++i + in; };
+		eastl::fixed_function<8, int(int)> ff8;
+		eastl::fixed_function<16, int(int)> ff16;
+		eastl::fixed_function<24, int(int)> ff24;
+
+		VERIFY(ff4(1) == 2);
+		ff8 = ff4;
+		VERIFY(ff8(1) == 3);
+		ff16 = ff8;
+		VERIFY(ff16(1) == 4);
+		ff24 = ff16;
+		VERIFY(ff24(1) == 5);
+	}
+
+	{
+		int i = 0;
+		eastl::fixed_function<4, int(void)> ff4 = [i]() mutable { return ++i; };
+		VERIFY(ff4() == 1);
+		eastl::fixed_function<8, int(void)> ff8(ff4);
+		VERIFY(ff8() == 2);
+		eastl::fixed_function<16, int(void)> ff16(ff8);
+		VERIFY(ff16() == 3);
+		eastl::fixed_function<24, int(void)> ff24(ff16);
+		VERIFY(ff24() == 4);
+	}
+
+	{
+		int i = 0;
+		eastl::fixed_function<4, int(int)> ff4 = [i](int in) mutable { return ++i + in; };
+		VERIFY(ff4(1) == 2);
+		eastl::fixed_function<8, int(int)> ff8(eastl::move(ff4));
+		VERIFY(ff8(1) == 3);
+		eastl::fixed_function<16, int(int)> ff16(eastl::move(ff8));
+		VERIFY(ff16(1) == 4);
+		eastl::fixed_function<24, int(int)> ff24(eastl::move(ff16));
+		VERIFY(ff24(1) == 5);		
+	}
+
+	{
+		int i = 0;
+		eastl::fixed_function<4, int(void)> ff4 = [i]() mutable { return ++i; };
+		eastl::fixed_function<8, int(void)> ff8;
+		eastl::fixed_function<16, int(void)> ff16;
+		eastl::fixed_function<24, int(void)> ff24;
+
+		VERIFY(ff4() == 1);
+		ff8 = eastl::move(ff4);
+		VERIFY(ff8() == 2);
+		ff16 = eastl::move(ff8);
+		VERIFY(ff16() == 3);
+		ff24 = eastl::move(ff16);
+		VERIFY(ff24() == 4);
+	}
+
+	{
+		TestObject to;
+		eastl::fixed_function<64, void(void)> ff = [to] {};
+		ff();	
+	}
+
+	int allocationsAfter = gEASTLTest_TotalAllocationCount.load();
+
+	// If this triggeres the easiest method to track it down is to place a break point at the start of this test, 
+	// then enable break when gEASTLTest_TotalAllocationCount's value change s
+	VERIFY(allocationsBefore == allocationsAfter);
+#endif
 	return nErrorCount;
 }
 
@@ -609,6 +825,7 @@ int TestFixedFunction()
 	nErrorCount += TestFixedFunctionPointerToMemberFunction();
 	nErrorCount += TestFixedFunctionPointerToMemberData();
 	nErrorCount += TestFixedFunctionStdBind();
+	nErrorCount += TestFixedFunctionAllocations();
 
 	return nErrorCount;
 }

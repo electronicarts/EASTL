@@ -105,12 +105,43 @@ int TestVariantSize()
 	return nErrorCount;
 }
 
+template<class T>
+constexpr bool has_default_hash_v = eastl::internal::is_hasher_for_v<eastl::hash<T>, T>;
+
 int TestVariantHash()
 {
 	using namespace eastl;
 	int nErrorCount = 0;
 
 	{ hash<monostate> h; EA_UNUSED(h); }
+
+	// basic hash example - discriminates between values.
+	{
+		using variant_type = variant<int, unsigned int>;
+		hash<variant_type> hasher;
+		VERIFY(hasher(variant_type{ in_place_index<0>, 10 }) != hasher(variant_type{ in_place_index<1>, 20 }));
+	}
+
+	// hash<variant> should hash the index so that it can distinguish between non-unique alternative types.
+	{
+		using variant_type = variant<int, int>;
+		hash<variant_type> hasher;
+		VERIFY(hasher(variant_type{ in_place_index<0>, 10 }) != hasher(variant_type{ in_place_index<1>, 10 }));
+	}
+
+	struct no_hash {};
+
+	static_assert(has_default_hash_v<monostate>, "hashable");
+	static_assert(!has_default_hash_v<no_hash>, "!hashable");
+
+	static_assert(has_default_hash_v<variant<monostate>>, "hashable");
+	static_assert(has_default_hash_v<variant<monostate, monostate>>, "hashable");
+	static_assert(has_default_hash_v<variant<const monostate, monostate>>, "hashable");
+	static_assert(has_default_hash_v<variant<monostate, const monostate>>, "hashable");
+
+	static_assert(!has_default_hash_v<variant<no_hash>>, "!hashable");
+	static_assert(!has_default_hash_v<variant<no_hash, monostate>>, "!hashable");
+	static_assert(!has_default_hash_v<variant<monostate, no_hash>>, "!hashable");
 
 	return nErrorCount;
 }
@@ -121,6 +152,12 @@ int TestVariantBasic()
 	int nErrorCount = 0;
 
 	{ VERIFY(variant_npos == size_t(-1)); }
+
+	// variant used to:
+	//  - internally store a pointer.
+	//  - use a minimum of 16 bytes for its internal buffer for the alternative storage.
+	// both of these overheads have been removed.
+	static_assert(sizeof(variant<int>) <= 2 * sizeof(size_t), "size");
 
 	{ variant<int> v;                                                         EA_UNUSED(v); }
 	{ variant<int, short> v;                                                  EA_UNUSED(v); }
@@ -155,6 +192,10 @@ int TestVariantBasic()
 
 		static_assert(!eastl::is_trivially_destructible_v<MyObj>, "MyObj can't be trivially destructible");
 		static_assert(!eastl::is_trivially_destructible_v<MyObj2>, "MyObj2 can't be trivially destructible");
+		static_assert(eastl::is_copy_constructible_v<MyObj>, "MyObj can be copy constructed");
+		static_assert(eastl::is_copy_constructible_v<MyObj2>, "MyObj2 can't be copy constructed");
+		static_assert(eastl::is_copy_assignable_v<MyObj>, "MyObj can be copy assigned");
+		static_assert(!eastl::is_copy_assignable_v<MyObj2>, "MyObj2 can't be copy assigned");
 
 		{
 			eastl::variant<MyObj, MyObj2> myVar;
@@ -267,6 +308,16 @@ int TestVariantGet()
 		{
 			 VERIFY(get_if<0>((v_t*)nullptr) == nullptr);
 			 VERIFY(get_if<1>((v_t*)nullptr) == nullptr);
+		}
+		{
+#if EASTL_EXCEPTIONS_ENABLED
+			v_t v;
+			v = strValue;
+			EATEST_VERIFY_THROW(get<0>(v));
+			EATEST_VERIFY_THROW(get<int>(v));
+			auto* str = get_if<1>(&v);
+			VERIFY(str && *str == strValue);
+#endif
 		}
 	}
 
@@ -383,6 +434,20 @@ int TestVariantValuelessByException()
 			VERIFY(!v.valueless_by_exception());
 		}
 
+		{
+			struct NotDefaultConstructible
+			{
+				NotDefaultConstructible() = delete;
+				explicit NotDefaultConstructible(int) {}
+			};
+			static_assert(!eastl::is_default_constructible<NotDefaultConstructible>::value, "is_default_constructible");
+
+			using v_t = variant<float, NotDefaultConstructible>;
+			v_t v;
+			static_assert(eastl::is_default_constructible_v<v_t>, "is_default_constructible");
+			VERIFY(!v.valueless_by_exception());
+		}
+
 		// TODO(rparolin):  review exception safety for variant types 
 		//
 		// {
@@ -424,15 +489,12 @@ int TestVariantCopyAndMove()
 	int nErrorCount = 0;
 
 	{
-		{
-			using v_t = variant<int, short, char>;
+		using v_t = variant<int, short, char>;
 
-			v_t v1 = 42;
-			v_t v2 = v1;
+		v_t v1 = 42;
+		v_t v2 = v1;
 
-			VERIFY(get<int>(v2) == get<int>(v1));
-		}
-
+		VERIFY(get<int>(v2) == get<int>(v1));
 	}
 
 	return nErrorCount;
@@ -504,6 +566,18 @@ int TestVariantEmplace()
 		}
 		VERIFY(TestObject::IsClear());
 		TestObject::Reset();
+	}
+
+	// emplace<T>() is invalid if T matches more than one of the variant's alternative types,
+	// but emplace<I>() is fine.
+	{
+		variant<int, int> v;
+
+		v.emplace<0>(42);
+		VERIFY(get<0>(v) == 42);
+
+		v.emplace<1>(1337);
+		VERIFY(get<1>(v) == 1337);
 	}
 
 	{
@@ -591,6 +665,39 @@ int TestVariantSwap()
 		 VERIFY(get<string>(v2) == "Hello"); 
 	}
 
+	{
+		variant<TestObject> v1{ in_place_type<TestObject>, 1337 };
+		variant<TestObject> v2{ in_place_type<TestObject>, 9001 };
+
+		swap(v1, v2); // same alternative types; calls swap(TestObject&, TestObject&);
+
+		VERIFY(get<TestObject>(v1).mX == 9001);
+		VERIFY(get<TestObject>(v2).mX == 1337);
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT) // This test fails in previous EASTL versions.
+		VERIFY(TestObject::sTOSwapCount == 1);
+#endif
+		VERIFY(TestObject::sTODefaultCtorCount == 2);
+		VERIFY(TestObject::sTOCopyCtorCount == 0);
+	}
+	VERIFY(TestObject::Reset());
+
+	{
+		variant<int, TestObject> v1{ in_place_type<int>, 1337 };
+		variant<int, TestObject> v2{ in_place_type<TestObject>, 9001 };
+
+		swap(v1, v2); // differing alternative types; swaps by move construction (no assignments).
+
+		VERIFY(get<TestObject>(v1).mX == 9001);
+		VERIFY(get<int>(v2) == 1337);
+		VERIFY(TestObject::sTOSwapCount == 0);
+		VERIFY(TestObject::sTODefaultCtorCount == 1);
+		VERIFY(TestObject::sTOCopyCtorCount == 0);
+		VERIFY(TestObject::sTOMoveCtorCount >= 1);
+		VERIFY(TestObject::sTOCopyAssignCount == 0);
+		VERIFY(TestObject::sTOMoveAssignCount == 0);
+	}
+	VERIFY(TestObject::Reset());
+
 	return nErrorCount;
 }
 
@@ -626,25 +733,25 @@ int TestVariantInplaceCtors()
 	int nErrorCount = 0;
 
 	{
-		variant<int, int> v(in_place<0>, 42);
+		variant<int, int> v(in_place_index<0>, 42);
 		VERIFY(get<0>(v) == 42);
 		VERIFY(v.index() == 0);
 	}
 
 	{
-		variant<int, int> v(in_place<1>, 42);
+		variant<int, int> v(in_place_index<1>, 42);
 		VERIFY(get<1>(v) == 42);
 		VERIFY(v.index() == 1);
 	}
 
 	{
-		variant<int, string> v(in_place<int>, 42);
+		variant<int, string> v(in_place_type<int>, 42);
 		VERIFY(get<0>(v) == 42);
 		VERIFY(v.index() == 0);
 	}
 
 	{
-		variant<int, string> v(in_place<string>, "hello");
+		variant<int, string> v(in_place_type<string>, "hello");
 		VERIFY(get<1>(v) == "hello");
 		VERIFY(v.index() == 1);
 	}
@@ -1112,7 +1219,10 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
-		eastl::visit<void>(MyVisitor{}, v);
+		eastl::visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		bVisited = false;
+		eastl::visit<void>(MyVisitor{}, v); // using the C++20 overload with explicit return type
 		EATEST_VERIFY(bVisited);
 	}
 
@@ -1127,6 +1237,9 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
+		eastl::visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		bVisited = false;
 		eastl::visit<const void>(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 	}
@@ -1142,6 +1255,9 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
+		eastl::visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		bVisited = false;
 		eastl::visit<void>(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 	}
@@ -1157,6 +1273,9 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
+		eastl::visit(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		bVisited = false;
 		eastl::visit<const void>(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 	}
@@ -1172,9 +1291,13 @@ int TestVariantVisitorReturn()
 			bool operator()(bool) { return false; }
 		};
 
-		int ret = eastl::visit<int>(MyVisitor{}, v);
+		bool ret = eastl::visit(MyVisitor{}, v);
 		EATEST_VERIFY(bVisited);
 		EATEST_VERIFY(ret);
+		bVisited = false;
+		int int_ret = eastl::visit<int>(MyVisitor{}, v);
+		EATEST_VERIFY(bVisited);
+		EATEST_VERIFY(int_ret);
 	}
 
 	{
@@ -1192,6 +1315,7 @@ int TestVariantVisitorReturn()
 			C operator()(bool) { return C{}; }
 		};
 
+		// ambiguity requires specifying the visit return type:
 		A ret = eastl::visit<A>(MyVisitor{}, v);
 		EA_UNUSED(ret);
 		EATEST_VERIFY(bVisited);
@@ -1208,10 +1332,42 @@ int TestVariantVisitorReturn()
 			MyVisitor operator()(bool) { return MyVisitor{}; }
 		};
 
-		MyVisitor ret = eastl::visit<MyVisitor>(MyVisitor{}, v);
+		// specifying the return type with visit<MyVisitor>() would result in overload ambiguity. could be either:
+		// visit<MyVisitor, variant<int, bool>>()					[ie. Visitor, Variants...]
+		// visit<MyVisitor, MyVisitor, variant<int, bool>>()		[ie. Return, Visitor, Variants...]
+		// calling without explicit template parameters uses the first overload.
+		MyVisitor ret = eastl::visit(MyVisitor{}, v);
 		EA_UNUSED(ret);
 		EATEST_VERIFY(bVisited);
 	}
+
+	return nErrorCount;
+}
+
+int TestVariantVisitBase()
+{
+	int nErrorCount = 0;
+
+	struct Base { virtual ~Base() = default; };
+	struct Derived : public Base {};
+
+	struct MyVisitor
+	{
+		int operator()(const Base&) { return 1; }
+		int operator()(int) { return 2; }
+		int operator()(const eastl::string&) { return 3; }
+	};
+
+	eastl::variant<Derived, int, eastl::string> v;
+
+	v.emplace<Derived>();
+	EATEST_VERIFY(eastl::visit(MyVisitor{}, v) == 1);
+
+	v.emplace<int>();
+	EATEST_VERIFY(eastl::visit(MyVisitor{}, v) == 2);
+
+	v.emplace<eastl::string>("my string");
+	EATEST_VERIFY(eastl::visit(MyVisitor{}, v) == 3);
 
 	return nErrorCount;
 }
@@ -1230,6 +1386,30 @@ int TestVariantAssignment()
 		VERIFY(TestObject::sTODtorCount == 1);   // verify TestObject dtor is called.
 		VERIFY(get<int>(v) == 42);
 		TestObject::Reset();
+	}
+
+	{
+		variant<int, ImplicitlyConvertible> v(ImplicitlyConvertible{});
+		v = ImplicitlyConvertible::implicit; // converting assignment; calls ImplicitlyConvertible move assignment
+		VERIFY(v.index() == 1);
+		VERIFY(ImplicitlyConvertible::sDefaultCtorCount == 1);
+		VERIFY(ImplicitlyConvertible::sConvertCtorCount == 1);
+		VERIFY(ImplicitlyConvertible::sCopyAssignCount == 0);
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT) // This test fails in previous EASTL versions.
+		VERIFY(ImplicitlyConvertible::sMoveAssignCount == 1);
+#endif
+		ImplicitlyConvertible::Reset();
+	}
+
+	{
+		variant<int, ImplicitlyConvertible> v(0); // starts as an int
+		v = ImplicitlyConvertible::implicit; // converting assignment; calls ImplicitlyConvertible converting constructor
+		VERIFY(v.index() == 1);
+		VERIFY(ImplicitlyConvertible::sDefaultCtorCount == 0);
+		VERIFY(ImplicitlyConvertible::sConvertCtorCount == 1);
+		VERIFY(ImplicitlyConvertible::sCopyAssignCount == 0); // should be emplaced
+		VERIFY(ImplicitlyConvertible::sMoveAssignCount == 0); // should be emplaced
+		ImplicitlyConvertible::Reset();
 	}
 
 	return nErrorCount;
@@ -1269,6 +1449,9 @@ int TestVariantUserRegressionCopyMoveAssignmentOperatorLeak()
 			v.operator=(v2);
 			VERIFY(eastl::get<TestObject>(v).mX == 1338);
 			VERIFY(eastl::get<TestObject>(v2).mX == 1338);
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT) // This test fails in previous EASTL versions.
+			VERIFY(TestObject::sTOCopyAssignCount == 1);
+#endif
 		}
 		VERIFY(TestObject::IsClear());
 		TestObject::Reset();
@@ -1616,6 +1799,15 @@ int TestVariantRelationalOperators()
 		}
 	}
 
+	// get()
+	{
+		VariantThrow v1{ (int)1 };
+		EATEST_VERIFY_THROW(eastl::get<bool>(v1));
+
+		VariantThrow v2{ (int)1 };
+		EATEST_VERIFY_THROW(eastl::get<1>(v2));
+	}
+
 #endif
 
 	return nErrorCount;
@@ -1795,6 +1987,139 @@ int TestBigVariantComparison()
 
 int TestVariantGeneratingComparisonOverloads();
 
+// test special member functions are enabled/disabled based on the contained types.
+int TestSpecialMembersDisabled()
+{
+	int nErrorCount = 0;
+
+	using namespace eastl;
+
+	// test copy construction
+	// copy constructor is not enabled unless Ts are copy constructible.
+	// copy constructor is trivial if Ts are trivially copy constructible.
+	{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(!is_copy_constructible_v<variant<NoCopyMove>>, "!copy constructible");
+		static_assert(!is_copy_constructible_v<variant<MoveOnlyType>>, "!copy constructible");
+		static_assert(!is_copy_constructible_v<variant<MoveOnlyTypeDefaultCtor>>, "!copy constructible");
+#endif
+
+		static_assert(is_copy_constructible_v<variant<NonTriviallyCopyable>>, "copy constructible");
+		static_assert(!is_trivially_copy_constructible_v<variant<NonTriviallyCopyable>>, "!trivially copy constructible");
+		static_assert(is_copy_constructible_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "copy constructible");
+		static_assert(!is_trivially_copy_constructible_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "!trivially copy constructible");
+
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopy>>, "trivially copy constructible");
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopy, TriviallyCopyableWithCopy>>, "trivially copy constructible");
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopyCtor>>, "trivially copy constructible");
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopyCtor, TriviallyCopyableWithCopyCtor>>, "trivially copy constructible");
+
+		// trivially copy constructible types, but with a copy constructor deleted
+		static_assert(!is_copy_constructible_v<variant<TriviallyCopyableWithMove>>, "!copy constructible");
+		static_assert(!is_copy_constructible_v<variant<TriviallyCopyableWithCopyAssign>>, "!copy constructible");
+		static_assert(!is_copy_constructible_v<variant<TriviallyCopyableWithMoveCtor>>, "!copy constructible");
+		static_assert(!is_copy_constructible_v<variant<TriviallyCopyableWithMoveAssign>>, "!copy constructible");
+#endif
+	}
+
+	// test move construction
+	// copy constructor is not enabled unless Ts are *nothrow* move constructible.
+	// move constructor is trivial if Ts are trivially move constructible.
+	{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(!is_move_constructible_v<variant<NoCopyMove>>, "!move constructible");
+#endif
+
+		static_assert(is_move_constructible_v<variant<MoveOnlyType>>, "move constructible");
+		static_assert(!is_trivially_move_constructible_v<variant<MoveOnlyType>>, "!trivially move constructible");
+		static_assert(is_move_constructible_v<variant<MoveOnlyTypeDefaultCtor>>, "move constructible");
+		static_assert(!is_trivially_move_constructible_v<variant<MoveOnlyTypeDefaultCtor>>, "!trivially move constructible");
+
+		static_assert(is_move_constructible_v<variant<NonTriviallyCopyable>>, "move constructible");
+		static_assert(!is_trivially_move_constructible_v<variant<NonTriviallyCopyable>>, "!trivially move constructible");
+		static_assert(is_move_constructible_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "move constructible");
+		static_assert(!is_trivially_move_constructible_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "!trivially move constructible");
+
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithMove>>, "trivially move constructible");
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithMove, TriviallyCopyableWithMove>>, "trivially move constructible");
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithMoveCtor>>, "trivially move constructible");
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithMoveCtor, TriviallyCopyableWithMoveCtor>>, "trivially move constructible");
+
+		// trivially move constructible types, but with a move constructor deleted
+		static_assert(!is_move_constructible_v<variant<TriviallyCopyableWithCopyAssign>>, "!move constructible");
+		static_assert(!is_move_constructible_v<variant<TriviallyCopyableWithMoveAssign>>, "!move constructible");
+
+		// move constructor is deleted, but type trait passes because copy constructor exists
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopy>>, "trivially copy constructible");
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithCopy>>, "trivially move constructible");
+		static_assert(is_trivially_copy_constructible_v<variant<TriviallyCopyableWithCopyCtor>>, "trivially copy constructible");
+		static_assert(is_trivially_move_constructible_v<variant<TriviallyCopyableWithCopyCtor>>, "trivially move constructible");
+#endif
+	}
+
+	// test copy assignment
+	// copy assignment is not enabled unless Ts are both copy constructible and assignable.
+	{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(!is_copy_assignable_v<variant<NoCopyMove>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<MoveOnlyType>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<MoveOnlyTypeDefaultCtor>>, "!copy assignable");
+#endif
+
+		static_assert(is_copy_assignable_v<variant<NonTriviallyCopyable>>, "copy assignable");
+		static_assert(!is_trivially_copy_assignable_v<variant<NonTriviallyCopyable>>, "!trivially copy assignable");
+		static_assert(is_copy_assignable_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "copy assignable");
+		static_assert(!is_trivially_copy_assignable_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "!trivially copy assignable");
+
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(is_trivially_copy_assignable_v<variant<TriviallyCopyableWithCopy>>, "trivially copy assignable");
+		static_assert(is_trivially_copy_assignable_v<variant<TriviallyCopyableWithCopy, TriviallyCopyableWithCopy>>, "trivially copy assignable");
+
+		// types that are missing either a copy constructor or copy assignment.
+		static_assert(!is_copy_assignable_v<variant<TriviallyCopyableWithCopyCtor>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<TriviallyCopyableWithCopyAssign>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<TriviallyCopyableWithMove>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<TriviallyCopyableWithMoveCtor>>, "!copy assignable");
+		static_assert(!is_copy_assignable_v<variant<TriviallyCopyableWithMoveAssign>>, "!copy assignable");
+#endif
+	}
+
+	// test move assignment
+	// move assignment is not enabled unless Ts are both move constructible and assignable.
+	{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(!is_move_assignable_v<variant<NoCopyMove>>, "!move assignable");
+#endif
+
+		static_assert(is_move_assignable_v<variant<MoveOnlyType>>, "move assignable");
+		static_assert(!is_trivially_move_assignable_v<variant<MoveOnlyType>>, "!trivially move assignable");
+		static_assert(is_move_assignable_v<variant<MoveOnlyTypeDefaultCtor>>, "move assignable");
+		static_assert(!is_trivially_move_assignable_v<variant<MoveOnlyTypeDefaultCtor>>, "!trivially move assignable");
+
+		static_assert(is_move_assignable_v<variant<NonTriviallyCopyable>>, "move assignable"); // invokes copy assignment. therefore true.
+		static_assert(!is_trivially_move_assignable_v<variant<NonTriviallyCopyable>>, "!trivially move assignable");
+		static_assert(is_move_assignable_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "move assignable");
+		static_assert(!is_trivially_move_assignable_v<variant<NonTriviallyCopyable, NonTriviallyCopyable>>, "!trivially move assignable");
+
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		static_assert(is_trivially_move_assignable_v<variant<TriviallyCopyableWithCopy>>, "trivially move assignable");
+		static_assert(is_trivially_move_assignable_v<variant<TriviallyCopyableWithCopy, TriviallyCopyableWithCopy>>, "trivially move assignable");
+		static_assert(is_trivially_move_assignable_v<variant<TriviallyCopyableWithMove>>, "move assignable");
+		static_assert(is_trivially_move_assignable_v<variant<TriviallyCopyableWithMove, TriviallyCopyableWithMove>>, "trivially move assignable");
+		
+		// types that are missing either a move constructor or move assignment.
+		static_assert(!is_move_assignable_v<variant<TriviallyCopyableWithCopyCtor>>, "!move assignable");
+		static_assert(!is_move_assignable_v<variant<TriviallyCopyableWithCopyAssign>>, "!move assignable");
+		static_assert(!is_move_assignable_v<variant<TriviallyCopyableWithMoveCtor>>, "!move assignable");
+		static_assert(!is_move_assignable_v<variant<TriviallyCopyableWithMoveAssign>>, "!move assignable");
+#endif
+	}
+
+	return nErrorCount;
+}
+
 int TestVariant()
 {
 	int nErrorCount = 0;
@@ -1813,6 +2138,8 @@ int TestVariant()
 	nErrorCount += TestVariantInplaceCtors();
 	nErrorCount += TestVariantVisitorOverloaded();
 	nErrorCount += TestVariantVisitor();
+	nErrorCount += TestVariantVisitorReturn();
+	nErrorCount += TestVariantVisitBase();
 	nErrorCount += TestVariantAssignment();
 	nErrorCount += TestVariantMoveOnly();
 	nErrorCount += TestVariantUserRegressionCopyMoveAssignmentOperatorLeak();
@@ -1820,6 +2147,7 @@ int TestVariant()
 	nErrorCount += TestVariantGeneratingComparisonOverloads();
 	nErrorCount += TestBigVariantComparison();
 	nErrorCount += TestVariantRelationalOperators();
+	nErrorCount += TestSpecialMembersDisabled();
 
 	return nErrorCount;
 }

@@ -611,28 +611,14 @@ int TestIntrusiveHash()
 
 		// iterator       find_as(const U& u);
 		// const_iterator find_as(const U& u) const;
-
-		itf = ihmMW1.find_as(7.f);
-		VERIFY(itf->mKey == 7);
-
-		itfc = ihmMW1Const.find_as(7.f);
-		VERIFY(itfc->mKey == 7);
-				
+		
+		EASTL_INTERNAL_DISABLE_DEPRECATED()
 		itf = ihmMW1.find_as(8);
 		VERIFY(itf->mKey == 8);
 
 		itfc = ihmMW1Const.find_as(8);
 		VERIFY(itfc->mKey == 8);
-
-
-		// iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
-		// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
-
-		itf = ihmMW1.find_as(7.f, eastl::hash<float>(), eastl::equal_to<>());
-		VERIFY(itf->mKey == 7);
-
-		itfc = ihmMW1Const.find_as(7.f, eastl::hash<float>(), eastl::equal_to<>());
-		VERIFY(itfc->mKey == 7);
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 		// iterator  erase(iterator);

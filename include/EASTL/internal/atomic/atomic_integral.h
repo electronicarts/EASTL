@@ -163,21 +163,21 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 	template <typename T, unsigned width = sizeof(T)>
 	struct atomic_integral_width;
 
-#define EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits)						\
-	EASTL_ATOMIC_DEFAULT_INIT(T, retVal);	             				\
-	EA_PREPROCESSOR_JOIN(op, bits)(T, retVal, this->GetAtomicAddress(), arg); \
+#define EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits, ptr, RetType)	\
+	EASTL_ATOMIC_DEFAULT_INIT(RetType, retVal);	                \
+	EA_PREPROCESSOR_JOIN(op, bits)(RetType, retVal, ptr, arg);  \
 	return retVal;
 
 #define EASTL_ATOMIC_INTEGRAL_FETCH_IMPL(funcName, op, bits)	\
 	T funcName(T arg) EA_NOEXCEPT								\
 	{															\
-		EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits);				\
+		EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits, this->GetAtomicAddress(), T); \
 	}
 
-#define EASTL_ATOMIC_INTEGRAL_FETCH_ORDER_IMPL(funcName, orderType, op, bits) \
-	T funcName(T arg, orderType) EA_NOEXCEPT							\
-	{																	\
-		EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits);						\
+#define EASTL_ATOMIC_INTEGRAL_FETCH_ORDER_IMPL(funcName, orderType, op, bits)   \
+	T funcName(T arg, orderType) EA_NOEXCEPT						            \
+	{																	        \
+		EASTL_ATOMIC_INTEGRAL_FUNC_IMPL(op, bits, this->GetAtomicAddress(), T); \
 	}
 
 #define EASTL_ATOMIC_INTEGRAL_FETCH_OP_JOIN(fetchOp, Order)				\
@@ -315,6 +315,12 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 																		\
 		EASTL_ATOMIC_INTEGRAL_FETCH_ASSIGNMENT_OPERATOR_IMPL(^=, xor_fetch) \
 																		\
+	public:                                                             \
+		void acquire_fence() const                                      \
+		{                                                               \
+			EASTL_INTERNAL_TSAN_ACQUIRE(this->GetAtomicAddress());      \
+			EASTL_ATOMIC_ACQUIRE_FENCE();                               \
+		}                                                               \
 	};
 
 

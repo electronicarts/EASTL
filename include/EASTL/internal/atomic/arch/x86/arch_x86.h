@@ -151,6 +151,8 @@
 
 #include "arch_x86_thread_fence.h"
 
+#include "arch_x86_acquire_fence.h"
+
 #include "arch_x86_load.h"
 #include "arch_x86_store.h"
 

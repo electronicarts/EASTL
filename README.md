@@ -48,12 +48,16 @@ EASTL was subsequently maintained by Roberto Parolin for more than 8 years.
 He was the driver and proponent for getting EASTL opensourced.
 Rob was a mentor to all members of the team and taught us everything we ever wanted to know about C++ spookyness.
 
-After Rob, maintenance of EASTL passed to Max Winkler for roughly a year, until landing with its current maintainer Liam Mitchell.
+After Rob, maintenance of EASTL passed to Max Winkler for roughly a year, then to Liam Mitchell for about another year. 
+
+The current maintainers (since circa 2022) are Galo Rojo and Jonathan Hopkins.
 
 Significant EASTL contributions were made by (in alphabetical order):
 
 * Avery Lee
 * Claire Andrews
+* Galo Rojo
+* Jonathan Hopkins
 * JP Flouret
 * Liam Mitchell
 * Matt Newport

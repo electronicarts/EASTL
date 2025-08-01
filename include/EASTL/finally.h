@@ -43,7 +43,7 @@ namespace eastl
 	// finally is the type that calls the users callback on scope exit.
 	//
 	template <typename Functor>
-	class finally
+	class EA_NODISCARD finally
 	{
 		static_assert(!eastl::is_lvalue_reference_v<Functor>, "eastl::finally requires the callable is passed as an rvalue reference.");
 

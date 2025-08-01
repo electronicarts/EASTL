@@ -89,7 +89,7 @@ namespace eastl
 		typedef ptrdiff_t                                                difference_type;
 		typedef typename conditional<bConst, const Value*, Value*>::type pointer;
 		typedef typename conditional<bConst, const Value&, Value&>::type reference;
-		typedef EASTL_ITC_NS::forward_iterator_tag                       iterator_category;
+		typedef eastl::forward_iterator_tag                       iterator_category;
 
 	public:
 		node_type* mpNode;
@@ -199,7 +199,7 @@ namespace eastl
 		typedef typename conditional<bConst, const Value*, Value*>::type    pointer;
 		typedef typename conditional<bConst, const Value&, Value&>::type    reference;
 		typedef ptrdiff_t                                                   difference_type;
-		typedef EASTL_ITC_NS::forward_iterator_tag                          iterator_category;
+		typedef eastl::forward_iterator_tag                          iterator_category;
 
 	public:
 		intrusive_hashtable_iterator()
@@ -294,17 +294,33 @@ namespace eastl
 
 		iterator begin() EA_NOEXCEPT
 		{
+			// Early out if the table is empty, increment_bucket() below will loop over the
+			// entire bucket array, which is undesirable if we know there aren't any elements.
+			if (mnElementCount == 0)
+			{
+				return end();
+			}
 			iterator i(mBucketArray);
-			if(!i.mpNode)
+			if (!i.mpNode)
+			{
 				i.increment_bucket();
+			}
 			return i;
 		}
 
 		const_iterator begin() const EA_NOEXCEPT
 		{
+			// Early out if the table is empty, increment_bucket() below will loop over the
+			// entire bucket array, which is undesirable if we know there aren't any elements.
+			if (mnElementCount == 0)
+			{
+				return end();
+			}
 			const_iterator i(const_cast<node_type**>(mBucketArray));
-			if(!i.mpNode)
+			if (!i.mpNode)
+			{
 				i.increment_bucket();
+			}
 			return i;
 		}
 
@@ -402,10 +418,18 @@ namespace eastl
 		template <typename U, typename UHash, typename BinaryPredicate>
 		const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
 
+		// Using default hash and equality objects may result in incorrect semantics (undefined behaviour).
+		// Use find() with heterogenous lookup (ie. function objects with a is_transparent type member) or explicitly specify hash and equality objects.
+		// See doc\BestPractices.md#search-hash_mapstring-using-heterogeneous-lookup
 		template <typename U>
+		EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 		iterator       find_as(const U& u);
 
+		// Using default hash and equality objects may result in incorrect semantics (undefined behaviour).
+		// Use find() with heterogenous lookup (ie. function objects with a is_transparent type member) or explicitly specify hash and equality objects.
+		// See doc\BestPractices.md#search-hash_mapstring-using-heterogeneous-lookup
 		template <typename U>
+		EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 		const_iterator find_as(const U& u) const;
 
 		size_type      count(const key_type& k) const;
@@ -415,6 +439,12 @@ namespace eastl
 		eastl::pair<iterator, iterator>             equal_range(const key_type& k);
 		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
+		// todo: add heterogenous lookup support (using a heterogeneous comparator - a type 'Comp' where 'Comp::is_transparent' is valid and denotes a type):
+		// template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		// iterator        find(const KX& key);
+		//
+		// ... also for count() and more ...
+
 	public:
 		bool validate() const;
 		int  validate_iterator(const_iterator i) const;
@@ -422,9 +452,6 @@ namespace eastl
 	public:
 		Hash hash_function() const
 			{ return mHash; }
-
-		EASTL_REMOVE_AT_2024_APRIL Equal equal_function() const    // Deprecated. Use key_eq() instead, as key_eq is what the new C++ standard 
-			{ return mEqual; }									  // has specified in its hashtable (unordered_*).
 
 		const key_equal& key_eq() const 
 			{ return mEqual; }
@@ -553,6 +580,12 @@ namespace eastl
 
 	/// intrusive_hashtable_find
 	///
+	/// Deprecated: Using default hash and equality objects may result in
+	/// incorrect semantics (undefined behaviour).
+	/// Use find() with heterogenous lookup (ie. function objects with a
+	/// is_transparent type member) or explicitly specify hash and equality
+	/// objects.
+	/// 
 	/// Helper function that defaults to using hash<U> and equal_to<>.
 	/// This makes it so that by default you don't need to provide these.
 	/// Note that the default hash functions may not be what you want, though.
@@ -566,10 +599,12 @@ namespace eastl
 	///     hashtable_find(hashSet, "hello");
 	///
 	template <typename H, typename U>
+	EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 	inline typename H::iterator intrusive_hashtable_find(H& hashTable, const U& u)
 		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to<>()); }
 
 	template <typename H, typename U>
+	EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 	inline typename H::const_iterator intrusive_hashtable_find(const H& hashTable, const U& u)
 		{ return hashTable.find_as(u, eastl::hash<U>(), eastl::equal_to<>()); }
 
@@ -577,9 +612,14 @@ namespace eastl
 
 	template <typename K, typename V, typename H, typename Eq, size_t bC, bool bM, bool bU>
 	template <typename U>
+	EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 	inline typename intrusive_hashtable<K, V, H, Eq, bC, bM, bU>::iterator
 	intrusive_hashtable<K, V, H, Eq, bC, bM, bU>::find_as(const U& other)
-		{ return eastl::intrusive_hashtable_find(*this, other); }
+	{
+		EASTL_INTERNAL_DISABLE_DEPRECATED()
+		return eastl::intrusive_hashtable_find(*this, other);
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
+	}
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
 		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to<>()); }
@@ -587,9 +627,14 @@ namespace eastl
 
 	template <typename K, typename V, typename H, typename Eq, size_t bC, bool bM, bool bU>
 	template <typename U>
+	EA_REMOVE_AT_2025_OCT_MSG("Use heterogeneous lookup instead (see EASTL Best Practices page) or explicitly specify hash and equality objects.")
 	inline typename intrusive_hashtable<K, V, H, Eq, bC, bM, bU>::const_iterator
 	intrusive_hashtable<K, V, H, Eq, bC, bM, bU>::find_as(const U& other) const
-		{ return eastl::intrusive_hashtable_find(*this, other); }
+	{
+		EASTL_INTERNAL_DISABLE_DEPRECATED()
+		return eastl::intrusive_hashtable_find(*this, other);
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
+	}
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
 		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to<>()); }

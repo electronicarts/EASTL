@@ -67,14 +67,14 @@ public:
 		: base_type(fixed_allocator_type(mBuffer.buffer), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{ 
 		base_type::get_allocator().copy_overflow_allocator(x.get_allocator());
-		base_type::DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		base_type::DoInitFromIterator(eastl::make_move_iterator(x.begin()), eastl::make_move_iterator(x.end()));
 		x.clear();
 	}
 
 	fixed_tuple_vector(this_type&& x, const overflow_allocator_type& allocator)
 		: base_type(fixed_allocator_type(mBuffer.buffer, allocator), mBuffer.buffer, nodeCount, fixed_allocator_type::kNodeSize)
 	{
-		base_type::DoInitFromIterator(make_move_iterator(x.begin()), make_move_iterator(x.end()));
+		base_type::DoInitFromIterator(eastl::make_move_iterator(x.begin()), eastl::make_move_iterator(x.end()));
 		x.clear();
 	}
 
@@ -155,7 +155,7 @@ public:
 	{
 		base_type::clear();
 		// OK to call DoInitFromIterator in a non-ctor scenario because clear() reset everything, more-or-less
-		base_type::DoInitFromIterator(make_move_iterator(other.begin()), make_move_iterator(other.end()));
+		base_type::DoInitFromIterator(eastl::make_move_iterator(other.begin()), eastl::make_move_iterator(other.end()));
 		other.clear();
 		return *this;
 	}
@@ -191,7 +191,7 @@ public:
 	// only if overflow is enabled.
 	bool has_overflowed() const { return ((void*)base_type::mpData != (void*)mBuffer.buffer); }
 	// Returns the value of the bEnableOverflow template parameter.
-	bool can_overflow() const { return bEnableOverflow; }
+	static constexpr bool can_overflow() { return bEnableOverflow; }
 
 	const overflow_allocator_type& get_overflow_allocator() const { return base_type::get_allocator().get_overflow_allocator(); }
 };

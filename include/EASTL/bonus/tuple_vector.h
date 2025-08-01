@@ -357,7 +357,7 @@ private:
 	template<typename U>
 	friend class move_iterator;
 public:
-	typedef EASTL_ITC_NS::random_access_iterator_tag iterator_category;
+	typedef eastl::random_access_iterator_tag iterator_category;
 	typedef tuple<Ts...> value_type;
 	typedef eastl_size_t difference_type;
 	typedef tuple<Ts*...> pointer;
@@ -679,7 +679,7 @@ public:
 		size_type oldNumCapacity = mNumCapacity;
 		mNumElements = newNumElements;
 		DoGrow(oldNumElements, oldNumCapacity, newNumElements);
-		swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements) Ts()...);
+		swallow((detail::allocator_construct(get_allocator(), TupleVecLeaf<Indices, Ts>::mpData + oldNumElements), 0)...);
 		return back();
 	}
 
@@ -690,7 +690,7 @@ public:
 		size_type oldNumCapacity = mNumCapacity;
 		mNumElements = newNumElements;
 		DoGrow(oldNumElements, oldNumCapacity, newNumElements);
-		swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements) Ts(args)...);
+		swallow((detail::allocator_construct(get_allocator(), TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, args), 0)...);
 	}
 
 	void push_back_uninitialized()
@@ -709,7 +709,7 @@ public:
 		size_type oldNumCapacity = mNumCapacity;
 		mNumElements = newNumElements;
 		DoGrow(oldNumElements, oldNumCapacity, newNumElements);
-		swallow(::new(TupleVecLeaf<Indices, Ts>::mpData + oldNumElements) Ts(eastl::forward<Ts>(args))...);
+		swallow((detail::allocator_construct(get_allocator(), TupleVecLeaf<Indices, Ts>::mpData + oldNumElements, eastl::forward<Ts>(args)), 0)...);
 		return back();
 	}
 
@@ -1265,7 +1265,12 @@ public:
 	allocator_type& get_allocator() EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
 	const allocator_type& get_allocator() const EA_NOEXCEPT { return mDataSizeAndAllocator.second(); }
 
-	void set_allocator(const allocator_type& alloc) { mDataSizeAndAllocator.second() = alloc; }
+	void set_allocator(const allocator_type& alloc)
+	{
+		if(mNumCapacity > 0 && mDataSizeAndAllocator.second() != alloc)
+			EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "tuple_vector::set_allocator -- cannot change allocator after allocations have been made.");
+		mDataSizeAndAllocator.second() = alloc;
+	}
 
 protected:
 
@@ -1361,7 +1366,7 @@ protected:
 		// placement-new/copy-ctor to unconstructed regions
 		while (destPos < destEnd)
 		{
-			swallow(::new(eastl::get<Indices>(destPos.MakePointer())) Ts(eastl::get<Indices>(*srcTuple))...);
+			swallow((detail::allocator_construct(get_allocator(), eastl::get<Indices>(destPos.MakePointer()), eastl::get<Indices>(*srcTuple)), 0)...);
 			++destPos;
 			++srcTuple;
 		}

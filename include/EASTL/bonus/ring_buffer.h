@@ -68,7 +68,7 @@ namespace eastl
 		typedef typename Container::const_iterator                       container_const_iterator;
 		typedef ring_buffer_iterator<T, T*, T&, Container>               iterator;
 		typedef ring_buffer_iterator<T, const T*, const T&, Container>   const_iterator;
-		typedef EASTL_ITC_NS::random_access_iterator_tag                 iterator_category;
+		typedef eastl::random_access_iterator_tag                 iterator_category;
 
 	public:
 		Container*         mpContainer;
@@ -97,8 +97,8 @@ namespace eastl
 		this_type operator-(difference_type n) const;
 
 	protected:
-		void increment(difference_type n, EASTL_ITC_NS::input_iterator_tag);
-		void increment(difference_type n, EASTL_ITC_NS::random_access_iterator_tag);
+		void increment(difference_type n, eastl::input_iterator_tag);
+		void increment(difference_type n, eastl::random_access_iterator_tag);
 
 	}; // struct ring_buffer_iterator
 
@@ -329,8 +329,8 @@ namespace eastl
 		int  validate_iterator(const_iterator i) const;
 
 	protected:
-		//size_type DoGetSize(EASTL_ITC_NS::input_iterator_tag) const;
-		//size_type DoGetSize(EASTL_ITC_NS::random_access_iterator_tag) const;
+		//size_type DoGetSize(eastl::input_iterator_tag) const;
+		//size_type DoGetSize(eastl::random_access_iterator_tag) const;
 
 	}; // class ring_buffer
 
@@ -468,7 +468,7 @@ namespace eastl
 
 
 	template <typename T, typename Pointer, typename Reference, typename Container>
-	void ring_buffer_iterator<T, Pointer, Reference, Container>::increment(difference_type n, EASTL_ITC_NS::input_iterator_tag)
+	void ring_buffer_iterator<T, Pointer, Reference, Container>::increment(difference_type n, eastl::input_iterator_tag)
 	{
 		// n cannot be negative, as input iterators don't support reverse iteration.
 		while(n-- > 0)
@@ -477,7 +477,7 @@ namespace eastl
 
 
 	template <typename T, typename Pointer, typename Reference, typename Container>
-	void ring_buffer_iterator<T, Pointer, Reference, Container>::increment(difference_type n, EASTL_ITC_NS::random_access_iterator_tag)
+	void ring_buffer_iterator<T, Pointer, Reference, Container>::increment(difference_type n, eastl::random_access_iterator_tag)
 	{
 		// We make the assumption here that the user is incrementing from a valid
 		// starting position to a valid ending position. Thus *this + n yields a 
@@ -903,7 +903,7 @@ namespace eastl
 	/*
 	template <typename T, typename Container, typename Allocator>
 	typename ring_buffer<T, Container, Allocator>::size_type
-	ring_buffer<T, Container, Allocator>::DoGetSize(EASTL_ITC_NS::input_iterator_tag) const
+	ring_buffer<T, Container, Allocator>::DoGetSize(eastl::input_iterator_tag) const
 	{
 		// We could alternatively just use eastl::distance() here, but we happen to
 		// know that such code would boil down to what we have here, and we might
@@ -920,7 +920,7 @@ namespace eastl
 	/*
 	template <typename T, typename Container, typename Allocator>
 	typename ring_buffer<T, Container, Allocator>::size_type
-	ring_buffer<T, Container, Allocator>::DoGetSize(EASTL_ITC_NS::random_access_iterator_tag) const
+	ring_buffer<T, Container, Allocator>::DoGetSize(eastl::random_access_iterator_tag) const
 	{
 		// A simpler but less efficient implementation fo this function would be:
 		//     return eastl::distance(mBegin, mEnd);

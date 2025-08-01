@@ -1599,16 +1599,16 @@ namespace eastl
 		static void swap(Container& a, Container& b)
 		{
 			EASTLAllocatorType allocator(*EASTLAllocatorDefault(), EASTL_TEMP_DEFAULT_NAME);
-			void* const pMemory = allocator.allocate(sizeof(a));
+			Container* const pTemp = static_cast<Container*>(allocator.allocate(sizeof(a)));
 
-			if(pMemory)
+			if(pTemp)
 			{
-				Container* pTemp = ::new(pMemory) Container(EASTL_MOVE(a));
+				detail::allocator_construct(allocator, pTemp, EASTL_MOVE(a));
 				a = EASTL_MOVE(b);
 				b = EASTL_MOVE(*pTemp);
 
 				pTemp->~Container();
-				allocator.deallocate(pMemory, sizeof(a));
+				allocator.deallocate(pTemp, sizeof(a));
 			}
 		}
 	};

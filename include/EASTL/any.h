@@ -649,13 +649,13 @@ namespace eastl
 		template <class T, class... Args>
 		inline any make_any(Args&&... args)
 		{
-			return any(eastl::in_place<T>, eastl::forward<Args>(args)...);
+			return any(eastl::in_place_type<T>, eastl::forward<Args>(args)...);
 		}
 
 		template <class T, class U, class... Args>
 		inline any make_any(std::initializer_list<U> il, Args&&... args)
 		{
-			return any(eastl::in_place<T>, il, eastl::forward<Args>(args)...);
+			return any(eastl::in_place_type<T>, il, eastl::forward<Args>(args)...);
 		}
     #endif
 

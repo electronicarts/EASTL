@@ -54,10 +54,6 @@ namespace eastl
 		void remove(safe_ptr_base* pBase) const;      /// Unlink pBase from my list of safe pointers.
 
 		mutable safe_ptr_base* mpSafePtrList;
-
-	public:
-		// Deprecated, as its name is misleading:
-		EASTL_REMOVE_AT_2024_APRIL bool has_references() const;	/// Returns true if there is at most one reference (by a smart_ptr) to us.
 	};
 
 
@@ -335,12 +331,6 @@ inline bool eastl::safe_ptr_base::unique() const
 // (GCC in particular) generate warnings about inline functions (e.g. unique below) 
 // being used before their inline implementations. 
 inline bool eastl::safe_object::has_unique_reference() const
-{
-	return mpSafePtrList ? mpSafePtrList->unique() : false;
-}
-
-// Deprecated:
-inline bool eastl::safe_object::has_references() const
 {
 	return mpSafePtrList ? mpSafePtrList->unique() : false;
 }

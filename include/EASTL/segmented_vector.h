@@ -128,6 +128,7 @@ namespace eastl
 
 		segmented_vector(std::initializer_list<value_type> ilist, const Allocator& allocator = Allocator());
 
+		const allocator_type& get_allocator() const noexcept;
 		allocator_type& get_allocator() noexcept;
 
 		// TODO: deprecate these? what's the point of having them in
@@ -472,6 +473,13 @@ namespace eastl
 	inline segmented_vector<T, Count, Allocator>::~segmented_vector()
 	{
 		Clear<true>();
+	}
+
+	template <typename T, size_t Count, typename Allocator>
+	inline const typename segmented_vector<T, Count, Allocator>::allocator_type&
+	segmented_vector<T, Count, Allocator>::get_allocator() const noexcept
+	{
+		return mAllocator;
 	}
 
 	template <typename T, size_t Count, typename Allocator>

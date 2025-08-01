@@ -48,7 +48,7 @@ namespace eastl
 		typedef T                                               node_type;
 		typedef Pointer                                         pointer;
 		typedef Reference                                       reference;
-		typedef EASTL_ITC_NS::forward_iterator_tag              iterator_category;
+		typedef eastl::forward_iterator_tag              iterator_category;
 
 	public:
 		node_type* mpNode;

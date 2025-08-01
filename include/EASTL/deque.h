@@ -86,7 +86,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 #if EASTL_EXCEPTIONS_ENABLED
 	EA_DISABLE_ALL_VC_WARNINGS()
-	#include <stdexcept> // std::out_of_range, std::length_error.
+	#include <stdexcept> // std::out_of_range, std::length_error, std::logic_error.
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
@@ -155,7 +155,7 @@ namespace eastl
 		typedef DequeIterator<T, T*, T&, kDequeSubarraySize>              iterator;
 		typedef DequeIterator<T, const T*, const T&, kDequeSubarraySize>  const_iterator;
 		typedef ptrdiff_t                                                 difference_type;
-		typedef EASTL_ITC_NS::random_access_iterator_tag                  iterator_category;
+		typedef eastl::random_access_iterator_tag                  iterator_category;
 		typedef T                                                         value_type;
 		typedef T*                                                        pointer;
 		typedef T&                                                        reference;
@@ -355,10 +355,8 @@ namespace eastl
 
 		using base_type::npos;
 
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
 		static_assert(!is_const<value_type>::value, "deque<T>::value_type must be non-const.");
 		static_assert(!is_volatile<value_type>::value, "deque<T>::value_type must be non-volatile.");
-#endif
 
 	protected:
 		using base_type::kSideFront;
@@ -493,10 +491,10 @@ namespace eastl
 		void DoInit(InputIterator first, InputIterator last, false_type);
 
 		template <typename InputIterator>
-		void DoInitFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag);
+		void DoInitFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag);
 
 		template <typename ForwardIterator>
-		void DoInitFromIterator(ForwardIterator first, ForwardIterator last, EASTL_ITC_NS::forward_iterator_tag);
+		void DoInitFromIterator(ForwardIterator first, ForwardIterator last, eastl::forward_iterator_tag);
 
 		void DoFillInit(const value_type& value);
 
@@ -515,10 +513,10 @@ namespace eastl
 		iterator DoInsert(const const_iterator& position, const InputIterator& first, const InputIterator& last, false_type);
 
 		template <typename InputIterator>
-		iterator DoInsertFromIterator(const_iterator position, const InputIterator& first, const InputIterator& last, EASTL_ITC_NS::input_iterator_tag);
+		iterator DoInsertFromIterator(const_iterator position, const InputIterator& first, const InputIterator& last, eastl::input_iterator_tag);
 
 		template <typename ForwardIterator>
-		iterator DoInsertFromIterator(const_iterator position, const ForwardIterator& first, const ForwardIterator& last, EASTL_ITC_NS::forward_iterator_tag);
+		iterator DoInsertFromIterator(const_iterator position, const ForwardIterator& first, const ForwardIterator& last, eastl::forward_iterator_tag);
 
 		iterator DoInsertValues(const_iterator position, size_type n, const value_type& value);
 
@@ -608,7 +606,9 @@ namespace eastl
 		// The only time you can set an allocator is with an empty unused container, such as right after construction.
 		if(EASTL_LIKELY(mAllocator != allocator))
 		{
-			if(EASTL_LIKELY(mpPtrArray && (mItBegin.mpCurrentArrayPtr == mItEnd.mpCurrentArrayPtr))) // If we are empty and so can safely deallocate the existing memory... We could also test for empty(), but that's a more expensive calculation and more involved clearing, though it would be more flexible.
+			// our deque implementation always has allocations for mpPtrArray. this set_allocator() is unlike other container's set_allocator() member function
+			// in that it actually frees allocations when assigning the allocator. this lack of consistency is unfortunate.
+			if(EASTL_LIKELY(mpPtrArray && (mItBegin.mpCurrent == mItEnd.mpCurrent))) // is the container empty?
 			{
 				DoFreeSubarrays(mItBegin.mpCurrentArrayPtr, mItEnd.mpCurrentArrayPtr + 1);
 				DoFreePtrArray(mpPtrArray, mnPtrArraySize);
@@ -618,7 +618,7 @@ namespace eastl
 			}
 			else
 			{
-				EASTL_FAIL_MSG("DequeBase::set_allocator -- atempt to change allocator after allocating elements.");
+				EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "deque::set_allocator -- attempt to change allocator after inserting elements.");
 			}
 		}
 	}
@@ -1843,7 +1843,7 @@ namespace eastl
 	typename deque<T, Allocator, kDequeSubarraySize>::reference deque<T, Allocator, kDequeSubarraySize>::emplace_front(Args&&... args)
 	{
 		if(mItBegin.mpCurrent != mItBegin.mpBegin)                                         // If we have room in the first subarray... we hope that usually this 'new' pathway gets executed, as it is slightly faster.
-			::new((void*)--mItBegin.mpCurrent) value_type(eastl::forward<Args>(args)...);  // Construct in place. If args is a single arg of type value_type&& then it this will be a move construction.
+			detail::allocator_construct(mAllocator, --mItBegin.mpCurrent, eastl::forward<Args>(args)...);
 		else
 		{
 			// To consider: Detect if value isn't coming from within this container and handle that efficiently.
@@ -1860,7 +1860,7 @@ namespace eastl
 			#endif
 					mItBegin.SetSubarray(mItBegin.mpCurrentArrayPtr - 1);
 					mItBegin.mpCurrent = mItBegin.mpEnd - 1;
-					::new((void*)mItBegin.mpCurrent) value_type(eastl::move(valueSaved));
+					detail::allocator_construct(mAllocator, mItBegin.mpCurrent, eastl::move(valueSaved));
 			#if EASTL_EXCEPTIONS_ENABLED
 				}
 				catch(...)
@@ -1882,7 +1882,7 @@ namespace eastl
 		if ((mItEnd.mpCurrent + 1) != mItEnd.mpEnd)                                       // If we have room in the last subarray... we hope that usually this 'new' pathway gets executed, as it is slightly faster.
 		{
 			reference back = *mItEnd.mpCurrent;
-			::new((void*)mItEnd.mpCurrent++) value_type(eastl::forward<Args>(args)...);  // Construct in place. If args is a single arg of type value_type&& then it this will be a move construction.
+			detail::allocator_construct(mAllocator, mItEnd.mpCurrent++, eastl::forward<Args>(args)...);
 			return back;
 		}
 		else
@@ -1898,7 +1898,7 @@ namespace eastl
 				try
 				{
 			#endif
-					::new((void*)mItEnd.mpCurrent) value_type(eastl::move(valueSaved)); // We can move valueSaved into position.
+					detail::allocator_construct(mAllocator, mItEnd.mpCurrent, eastl::move(valueSaved));
 					mItEnd.SetSubarray(mItEnd.mpCurrentArrayPtr + 1);
 					mItEnd.mpCurrent = mItEnd.mpBegin;
 			#if EASTL_EXCEPTIONS_ENABLED
@@ -2136,8 +2136,8 @@ namespace eastl
 		// usage of deque with non-copyable types (eg. eastl::deque<non_copyable> or eastl::deque<unique_ptr>). 
 		// 
 		// The previous implementation violated the following requirements of deque::swap so the fall-back code has
-		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = false' therefore the fall-back case is
-		// undefined behaviour.  We simply swap the contents and the allocator as that is the common expectation of
+		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = true' therefore the fall-back case is
+		// not required.  We simply swap the contents and the allocator as that is the common expectation of
 		// users and does not put the container into an invalid state since it can not free its memory via its current
 		// allocator instance.
 		//
@@ -2166,7 +2166,7 @@ namespace eastl
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	template <typename InputIterator>
-	void deque<T, Allocator, kDequeSubarraySize>::DoInitFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
+	void deque<T, Allocator, kDequeSubarraySize>::DoInitFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag)
 	{
 		base_type::DoInit(0); // Call the base uninitialized init function, but don't actually allocate any values.
 
@@ -2194,7 +2194,7 @@ namespace eastl
 
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	template <typename ForwardIterator>
-	void deque<T, Allocator, kDequeSubarraySize>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, EASTL_ITC_NS::forward_iterator_tag)
+	void deque<T, Allocator, kDequeSubarraySize>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, eastl::forward_iterator_tag)
 	{
 		typedef typename eastl::remove_const<ForwardIterator>::type non_const_iterator_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
 		typedef typename eastl::remove_const<value_type>::type      non_const_value_type;
@@ -2333,7 +2333,7 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	template <typename InputIterator>
 	typename deque<T, Allocator, kDequeSubarraySize>::iterator
-	deque<T, Allocator, kDequeSubarraySize>::DoInsertFromIterator(const_iterator position, const InputIterator& first, const InputIterator& last, EASTL_ITC_NS::input_iterator_tag)
+	deque<T, Allocator, kDequeSubarraySize>::DoInsertFromIterator(const_iterator position, const InputIterator& first, const InputIterator& last, eastl::input_iterator_tag)
 	{
 		const difference_type index = eastl::distance(cbegin(), position);
 #if EASTL_EXCEPTIONS_ENABLED
@@ -2367,7 +2367,7 @@ namespace eastl
 	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
 	template <typename ForwardIterator>
 	typename deque<T, Allocator, kDequeSubarraySize>::iterator
-	deque<T, Allocator, kDequeSubarraySize>::DoInsertFromIterator(const_iterator position, const ForwardIterator& first, const ForwardIterator& last, EASTL_ITC_NS::forward_iterator_tag)
+	deque<T, Allocator, kDequeSubarraySize>::DoInsertFromIterator(const_iterator position, const ForwardIterator& first, const ForwardIterator& last, eastl::forward_iterator_tag)
 	{
 		const size_type n = (size_type)eastl::distance(first, last);
 

@@ -8,6 +8,7 @@
 #include <EASTL/map.h>
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
+#include "TestAssociativeContainers.h"
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -47,8 +48,6 @@ typedef eastl::multimap<Align64, Align64> VMM7;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
-
 int TestMap()
 {
 	int nErrorCount = 0;
@@ -57,18 +56,22 @@ int TestMap()
 		{   // Test construction
 			nErrorCount += TestMapConstruction<VM1, VM3, false>();
 			nErrorCount += TestMapConstruction<VM4, VM6, false>();
+			nErrorCount += TestMapConstruction<eastl::map<int, int, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
 
 			nErrorCount += TestMapConstruction<VMM1, VMM3, true>();
 			nErrorCount += TestMapConstruction<VMM4, VMM6, true>();
+			nErrorCount += TestMapConstruction<eastl::multimap<int, int, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 		}
 
 
 		{   // Test mutating functionality.
 			nErrorCount += TestMapMutation<VM1, VM3, false>();
 			nErrorCount += TestMapMutation<VM4, VM6, false>();
+			nErrorCount += TestMapMutation<eastl::map<int, int, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
 
 			nErrorCount += TestMapMutation<VMM1, VMM3, true>();
 			nErrorCount += TestMapMutation<VMM4, VMM6, true>();
+			nErrorCount += TestMapMutation<eastl::multimap<int, int, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 		}
 
 		// Note: some std:: libraries throw UBSAN errors with Align64.
@@ -79,10 +82,14 @@ int TestMap()
 				// Construction
 				nErrorCount += TestMapConstruction<VM7, VM9, false>();
 				nErrorCount += TestMapConstruction<VMM7, VMM9, true>();
+				nErrorCount += TestMapConstruction<eastl::map<int, int, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
+				nErrorCount += TestMapConstruction<eastl::multimap<int, int, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 
 				// Mutation
 				nErrorCount += TestMapMutation<VMM7, VMM9, true>();
 				nErrorCount += TestMapMutation<VM7, VM9, false>();
+				nErrorCount += TestMapMutation<eastl::map<int, int, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
+				nErrorCount += TestMapMutation<eastl::multimap<int, int, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 			}
 		#endif // !EA_UBSAN_ENABLED
 
@@ -93,23 +100,29 @@ int TestMap()
 		nErrorCount += TestMapSearch<VM1, false>();
 		nErrorCount += TestMapSearch<VM4, false>();
 		nErrorCount += TestMapSearch<VM7, false>();
+		nErrorCount += TestMapSearch<eastl::map<int, int, eastl::less<void>>, false>();
 
 		nErrorCount += TestMapSearch<VMM1, true>();
 		nErrorCount += TestMapSearch<VMM4, true>();
 		nErrorCount += TestMapSearch<VMM7, true>();
+		nErrorCount += TestMapSearch<eastl::multimap<int, int, eastl::less<void>>, true>();
 	}
 
 
 	{
 		// C++11 emplace and related functionality
 		nErrorCount += TestMapCpp11<eastl::map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<eastl::map<int, TestObject, eastl::less<void>>>();
 		nErrorCount += TestMultimapCpp11<eastl::multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<eastl::multimap<int, TestObject, eastl::less<void>>>();
 		nErrorCount += TestMapCpp11NonCopyable<eastl::map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::map<int, NonCopyable, eastl::less<void>>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
 		nErrorCount += TestMapCpp17<eastl::map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<eastl::map<int, TestObject, eastl::less<void>>>();
 	}
 
 	{
@@ -117,6 +130,7 @@ int TestMap()
 		nErrorCount += TestMapAccess<VM1>();
 		nErrorCount += TestMapAccess<VM4>();
 		nErrorCount += TestMapAccess<VM7>();
+		nErrorCount += TestMapAccess<eastl::map<int, int, eastl::less<void>>>();
 	}
 
 
@@ -287,6 +301,25 @@ int TestMap()
 		VERIFY((m5 <=> m3) > 0);
 	}
 #endif
+
+	{ // heterogenous functions - map
+		eastl::map<ExplicitString, int, eastl::less<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestMapHeterogeneousInsertion<decltype(m)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - multimap
+		eastl::multimap<ExplicitString, int, eastl::less<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(m);
+
+		VERIFY(m.equal_range_small("not found") == eastl::make_pair(m.lower_bound("not found"), m.upper_bound("not found")));
+		VERIFY(m.equal_range_small("found") == eastl::make_pair(m.lower_bound("found"), m.upper_bound("found")));
+
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
 
 	return nErrorCount;
 }

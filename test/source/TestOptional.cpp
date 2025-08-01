@@ -10,7 +10,6 @@
 #include <EASTL/optional.h>
 #include <EASTL/unique_ptr.h>
 
-
 /////////////////////////////////////////////////////////////////////////////
 struct IntStruct
 {
@@ -531,11 +530,6 @@ int TestOptional()
 			VERIFY( (is_same<optional<const volatile short>::value_type, const volatile short>::value));
 
 			VERIFY(is_empty<nullopt_t>::value);
-			#if EASTL_TYPE_TRAIT_is_literal_type_CONFORMANCE
-			EASTL_INTERNAL_DISABLE_DEPRECATED() // 'is_literal_type<nullopt_t>': was declared deprecated
-				VERIFY(is_literal_type<nullopt_t>::value);
-			EASTL_INTERNAL_RESTORE_DEPRECATED()
-			#endif
 
 			#if EASTL_TYPE_TRAIT_is_trivially_destructible_CONFORMANCE
 				VERIFY(is_trivially_destructible<int>::value);
@@ -551,6 +545,68 @@ int TestOptional()
 				VERIFY(!is_trivially_destructible<Internal::optional_storage<NotTrivialDestructible>>::value);
 				VERIFY(is_trivially_destructible<optional<NotTrivialDestructible>>::value == is_trivially_destructible<NotTrivialDestructible>::value);
 			}
+
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			// test special member functions are enabled/disabled based on the contained type.
+			{
+				// copy / move constructor & assignment are deleted for this type.
+				static_assert(!is_copy_constructible_v<optional<NoCopyMove>>, "!copy constructible");
+				static_assert(!is_copy_assignable_v<optional<NoCopyMove>>, "!copy assignable");
+				static_assert(!is_move_constructible_v<optional<NoCopyMove>>, "!move constructible");
+				static_assert(!is_move_assignable_v<optional<NoCopyMove>>, "!move assignable");
+
+				// copy constructor is enabled and trivial if T is copy constructible.
+				static_assert(is_copy_constructible_v<optional<TriviallyCopyableWithCopyCtor>>, "copy constructible");
+				static_assert(is_trivially_copy_constructible_v<optional<TriviallyCopyableWithCopyCtor>>, "trivially copy constructible");
+				static_assert(!is_copy_assignable_v<optional<TriviallyCopyableWithCopyCtor>>, "!copy assignable");
+				static_assert(is_move_constructible_v<optional<TriviallyCopyableWithCopyCtor>>, "move constructible"); // invokes copy constructor. therefore true.
+				static_assert(is_trivially_move_constructible_v<optional<TriviallyCopyableWithCopyCtor>>, "trivially move constructible"); // invokes copy constructor. therefore true.
+				static_assert(!is_move_assignable_v<optional<TriviallyCopyableWithCopyCtor>>, "!move assignable");
+
+				// copy assignment is not enabled unless T is both copy constructible and assignable.
+				static_assert(!is_copy_constructible_v<optional<TriviallyCopyableWithCopyAssign>>, "!copy constructible");
+				static_assert(!is_copy_assignable_v<optional<TriviallyCopyableWithCopyAssign>>, "!copy assignable");
+				static_assert(!is_move_constructible_v<optional<TriviallyCopyableWithCopyAssign>>, "!move constructible");
+				static_assert(!is_move_assignable_v<optional<TriviallyCopyableWithCopyAssign>>, "!move assignable");
+
+				// move constructor is enabled and trivial if T is move constructible.
+				static_assert(!is_copy_constructible_v<optional<TriviallyCopyableWithMoveCtor>>, "!copy constructible");
+				static_assert(!is_copy_assignable_v<optional<TriviallyCopyableWithMoveCtor>>, "!copy assignable");
+				static_assert(is_move_constructible_v<optional<TriviallyCopyableWithMoveCtor>>, "move constructible");
+				static_assert(is_trivially_move_constructible_v<optional<TriviallyCopyableWithMoveCtor>>, "trivially move constructible");
+				static_assert(!is_move_assignable_v<optional<TriviallyCopyableWithMoveCtor>>, "!move assignable");
+
+				// move assignment is not enabled unless T is both move constructible and assignable.
+				static_assert(!is_copy_constructible_v<optional<TriviallyCopyableWithMoveAssign>>, "!copy constructible");
+				static_assert(!is_copy_assignable_v<optional<TriviallyCopyableWithMoveAssign>>, "!copy assignable");
+				static_assert(!is_move_constructible_v<optional<TriviallyCopyableWithMoveAssign>>, "!move constructible");
+				static_assert(!is_move_assignable_v<optional<TriviallyCopyableWithMoveAssign>>, "!move assignable");
+
+				// copy / move constructor & assignment are all defined for this type, but non-trivial.
+				static_assert(is_copy_constructible_v<optional<NonTriviallyCopyable>>, "copy constructible");
+				static_assert(!is_trivially_copy_constructible_v<optional<NonTriviallyCopyable>>, "!trivially copy constructible");
+				static_assert(is_copy_assignable_v<optional<NonTriviallyCopyable>>, "copy assignable");
+				static_assert(!is_trivially_copy_assignable_v<optional<NonTriviallyCopyable>>, "!trivially copy assignable");
+				static_assert(is_move_constructible_v<optional<NonTriviallyCopyable>>, "move constructible"); // invokes copy constructor. therefore true.
+				static_assert(!is_trivially_move_constructible_v<optional<NonTriviallyCopyable>>, "!trivially move constructible");
+				static_assert(is_move_assignable_v<optional<NonTriviallyCopyable>>, "move assignable"); // invokes copy assignment. therefore true.
+				static_assert(!is_trivially_move_assignable_v<optional<NonTriviallyCopyable>>, "!trivially move assignable");
+
+				// move constructor & assignment are all defined for this type, but non-trivial.
+				static_assert(!is_copy_constructible_v<optional<MoveOnlyType>>, "copy constructible");
+				static_assert(!is_copy_assignable_v<optional<MoveOnlyType>>, "copy assignable");
+				static_assert(is_move_constructible_v<optional<MoveOnlyType>>, "move constructible");
+				static_assert(!is_trivially_move_constructible_v<optional<MoveOnlyType>>, "!trivially move constructible");
+				static_assert(is_move_assignable_v<optional<MoveOnlyType>>, "move assignable");
+				static_assert(!is_trivially_move_assignable_v<optional<MoveOnlyType>>, "!trivially move assignable");
+			}
+
+			{
+				static_assert(is_convertible_v<optional<uint32_t>, optional<int32_t>>, "convertible");
+				static_assert(is_convertible_v<optional<char*>, optional<void*>>, "convertible");
+				static_assert(!is_convertible_v<optional<void*>, optional<char*>>, "!convertible");
+			}
+#endif
 		}
 
 		{
@@ -648,12 +704,25 @@ int TestOptional()
 
 		{
 			{
-				struct local { int payload1; };
+				struct local
+				{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+					/* implicit */ local(int p) : payload1(p) {}
+#endif
+					int payload1;
+				};
 				auto o = eastl::make_optional<local>(42);
 				VERIFY(o.value().payload1 == 42);
 			}
 			{
-				struct local { int payload1; int payload2; };
+				struct local
+				{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+					/* implicit */ local(int p1, int p2) : payload1(p1), payload2(p2) {}
+#endif
+					int payload1;
+					int payload2;
+				};
 				auto o = eastl::make_optional<local>(42, 43);
 				VERIFY(o.value().payload1 == 42);
 				VERIFY(o.value().payload2 == 43);
@@ -734,6 +803,7 @@ int TestOptional()
 
 		copy_test::was_copied = false;
 
+		static_assert(is_copy_constructible_v<copy_test>, "copy");
 		optional<copy_test> o2(o1);
 		VERIFY(copy_test::was_copied);
 		VERIFY(o2->value == 42);
@@ -956,6 +1026,9 @@ int TestOptional()
 		VERIFY(!(o < nullopt));
 		VERIFY(nullopt <= o);
 		VERIFY(o >= nullopt);
+
+		o = 90; // perfect-forwarded assignment.
+		VERIFY(o == IntStruct(90));
 	}
 
 	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
@@ -1122,6 +1195,7 @@ int TestOptional()
 			VERIFY(!!o1->ptr == false);
 			VERIFY(!!o2->ptr == true);
 			VERIFY(o2->ptr.get() != nullptr);
+			VERIFY(o1.has_value());
 		}
 		{
 			// user regression
@@ -1164,6 +1238,54 @@ int TestOptional()
 
 		auto o = testFn();
 		VERIFY(!!o == false);
+	}
+
+	{
+		struct convert_to_bool
+		{
+			convert_to_bool() = default;
+
+			constexpr explicit operator bool() const noexcept { return true; }
+		};
+
+		optional<bool> x{ convert_to_bool{} }; // optional<bool>(convert_to_bool), which converts to bool.
+		VERIFY(x.has_value());
+		VERIFY(x.value());
+	}
+
+	// enable/disable constructors & assignment based on bool type
+	{
+		optional<int> x{ 3 };
+		optional<bool> y{ x };
+		VERIFY(y.has_value());
+		VERIFY(y.value());
+
+		optional<bool> z{ move(y) };
+		VERIFY(z.has_value());
+		VERIFY(z.value());
+
+		bool a = true;
+		optional<bool> b{ a };
+		optional<bool> c{ move(a) };
+	}
+
+	// enable/disable constructor appropriately
+	{
+		static constexpr int sentinel_value = 8;
+
+		struct construct_from_optional
+		{
+			construct_from_optional() = default;
+			construct_from_optional(optional<int>) : m_value(sentinel_value) {}
+
+			int m_value{ 0 };
+		};
+
+		// optional<construct_from_optional>(construct_from_optional) which calls construct_from_optional(optional<int>), don't call converting copy constructor optional<construct_from_optional>(optional<int>). 
+		optional<int> x;
+		optional<construct_from_optional> y{ x };
+		VERIFY(y.has_value());
+		VERIFY(y.value().m_value == sentinel_value);
 	}
 
 	#endif // EASTL_OPTIONAL_ENABLED

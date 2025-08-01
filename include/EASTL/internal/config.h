@@ -67,6 +67,10 @@
 	#pragma once
 #endif
 
+#if EA_TSAN_ENABLED
+#include <sanitizer/tsan_interface.h>
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_VERSION
@@ -90,8 +94,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.21.23"
-	#define EASTL_VERSION_N  32123
+	#define EASTL_VERSION   "3.27.00"
+	#define EASTL_VERSION_N  32700
 #endif
 
 
@@ -283,19 +287,8 @@ namespace eastl
 
 #ifndef EASTL_API // If the build file hasn't already defined this to be dllexport...
 	#if EASTL_DLL
-		#if defined(_MSC_VER)
-			#define EASTL_API      __declspec(dllimport)
-			#define EASTL_LOCAL
-		#elif defined(__CYGWIN__)
-			#define EASTL_API      __attribute__((dllimport))
-			#define EASTL_LOCAL
-		#elif (defined(__GNUC__) && (__GNUC__ >= 4))
-			#define EASTL_API      __attribute__ ((visibility("default")))
-			#define EASTL_LOCAL    __attribute__ ((visibility("hidden")))
-		#else
-			#define EASTL_API
-			#define EASTL_LOCAL
-		#endif
+		#define EASTL_API      EA_IMPORT
+		#define EASTL_LOCAL    EA_LOCAL
 	#else
 		#define EASTL_API
 		#define EASTL_LOCAL
@@ -310,19 +303,8 @@ namespace eastl
 //
 #ifndef EASTL_EASTDC_API
 	#if EASTL_DLL
-		#if defined(_MSC_VER)
-			#define EASTL_EASTDC_API      __declspec(dllimport)
-			#define EASTL_EASTDC_LOCAL
-		#elif defined(__CYGWIN__)
-			#define EASTL_EASTDC_API      __attribute__((dllimport))
-			#define EASTL_EASTDC_LOCAL
-		#elif (defined(__GNUC__) && (__GNUC__ >= 4))
-			#define EASTL_EASTDC_API      __attribute__ ((visibility("default")))
-			#define EASTL_EASTDC_LOCAL    __attribute__ ((visibility("hidden")))
-		#else
-			#define EASTL_EASTDC_API
-			#define EASTL_EASTDC_LOCAL
-		#endif
+		#define EASTL_EASTDC_API		EA_IMPORT
+		#define EASTL_EASTDC_LOCAL		EA_LOCAL
 	#else
 		#define EASTL_EASTDC_API
 		#define EASTL_EASTDC_LOCAL
@@ -442,17 +424,17 @@ namespace eastl
 // Sometimes people like to be able to take a reference to the front of the
 // container, but won't use it if the container is empty. This may or may not
 // be undefined behaviour depending on the container.
-// 
+//
 // In practice, for expressions such as &vector[0] this is not an issue -
 // at least if the subscript operator is inlined because the expression will
 // be equivalent to &*(nullptr) and optimized ti nullptr. MSVC, Clang and GCC
 // all have this behaviour and UBSan & ASan report no issues with that code.
-// 
+//
 // Code that relies on this macro being disabled should instead use the
 // container's data() member function. The range [data(), data() + size())
 // is always valid, even when the container is empty (in which case data()
 // is not dereferencable).
-// 
+//
 // Enabling this macro adds asserts if the container is empty and the function
 // invocation is well defined. If the implementation may invoke UB, or the
 // container is non-empty, then the assert fires if EASTL_ASSERT_ENABLED is
@@ -497,12 +479,15 @@ namespace eastl
 
 	namespace eastl
 	{
-		typedef void (*EASTL_AssertionFailureFunction)(const char* pExpression, void* pContext);
+		using EASTL_AssertionFailureFunction = void (*)(const char* pExpression, void* pContext);
 		EASTL_API void SetAssertionFailureFunction(EASTL_AssertionFailureFunction pFunction, void* pContext);
+		using EASTL_AssertionFailureFunctionEx = void (*)(void*, const char* pExpression, void* pContext);
+		EASTL_API void SetAssertionFailureFunction(EASTL_AssertionFailureFunctionEx pFunction, void* pContext);
 
 		// These are the internal default functions that implement asserts.
 		EASTL_API void AssertionFailure(const char* pExpression);
 		EASTL_API void AssertionFailureFunctionDefault(const char* pExpression, void* pContext);
+		EASTL_API void AssertionFailure(void* instructionPointer, const char* pExpression);
 	}
 #endif
 
@@ -524,7 +509,7 @@ namespace eastl
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
 				EA_ANALYSIS_ASSUME(expression); \
-				(void)((expression) || (eastl::AssertionFailure(#expression), 0)); \
+				(void)((expression) || (eastl::AssertionFailure(EA_GET_INSTRUCTION_POINTER(), #expression), 0)); \
 			} while (0) \
 			EA_RESTORE_VC_WARNING()
 	#else
@@ -540,7 +525,7 @@ namespace eastl
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
 				EA_ANALYSIS_ASSUME(expression); \
-				(void)((expression) || (eastl::AssertionFailure(#expression), 0)); \
+				(void)((expression) || (eastl::AssertionFailure(EA_GET_INSTRUCTION_POINTER(), #expression), 0)); \
 			} while(0) \
 			EA_RESTORE_VC_WARNING()
 	#else
@@ -563,7 +548,7 @@ namespace eastl
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
 				EA_ANALYSIS_ASSUME(expression); \
-				(void)((expression) || (eastl::AssertionFailure(message), 0)); \
+				(void)((expression) || (eastl::AssertionFailure(EA_GET_INSTRUCTION_POINTER(), message), 0)); \
 			} while (0) \
 			EA_RESTORE_VC_WARNING()
 	#else
@@ -585,12 +570,11 @@ namespace eastl
 
 #ifndef EASTL_FAIL_MSG
 	#if EASTL_ASSERT_ENABLED
-		#define EASTL_FAIL_MSG(message) (eastl::AssertionFailure(message))
+#define EASTL_FAIL_MSG(message) (eastl::AssertionFailure(EA_GET_INSTRUCTION_POINTER(), message))
 	#else
 		#define EASTL_FAIL_MSG(message)
 	#endif
 #endif
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -691,7 +675,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 // EASTL_CRASH
 //
-// Executes an invalid memory write, which should result in an exception 
+// Executes an invalid memory write, which should result in an exception
 // on most platforms.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -781,8 +765,27 @@ namespace eastl
 	#define EASTL_EXCEPTIONS_ENABLED 0
 #endif
 
-
-
+///////////////////////////////////////////////////////////////////////////////
+/// EASTL_THROW_OR_ASSERT(exceptionType, message)
+//
+/// Throw an exception if exceptions enabled or assert if asserts are enabled,
+/// otherwise no-op.
+//
+///////////////////////////////////////////////////////////////////////////////
+#if EASTL_EXCEPTIONS_ENABLED
+	#define EASTL_THROW_OR_ASSERT(exceptionType, message) throw exceptionType()
+	#define EASTL_THROW_MSG_OR_ASSERT(exceptionType, message) throw exceptionType(message)
+#elif EASTL_ASSERT_ENABLED
+	#define EASTL_THROW_OR_ASSERT(exceptionType, message) EASTL_FAIL_MSG(message)
+	#define EASTL_THROW_MSG_OR_ASSERT(exceptionType, message) EASTL_FAIL_MSG(message)
+#else
+	// empty braces to prevent the following warning in the following context:
+	// if(expr)
+	//     EASTL_THROW_OR_ASSERT(exceptionType, message);
+	// warning C4390: ';': empty controlled statement found; is this the intent?
+	#define EASTL_THROW_OR_ASSERT(exceptionType, message) {}
+	#define EASTL_THROW_MSG_OR_ASSERT(exceptionType, message) {}
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1067,6 +1070,12 @@ namespace eastl
 	#define EASTL_STD_ITERATOR_CATEGORY_ENABLED 0
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_ITC_NS
+//
+// Deprecated. Was intended to be used as the namespace qualifier for iterator tags.
+// Can now always use eastl as the namespace, as eastl will alias the iterator tags
+// to the standard when EASTL_STD_ITERATOR_CATEGORY_ENABLED == 1.
 #if EASTL_STD_ITERATOR_CATEGORY_ENABLED
 	#define EASTL_ITC_NS std
 #else
@@ -1085,10 +1094,10 @@ namespace eastl
 // of the validity of containers and their iterators. Validation checking is
 // something that often involves significantly more than basic assertion
 // checking, and it may sometimes be desirable to disable it.
-// 
+//
 // Validation sub-features are supported and can be enabled / disabled
 // individually.
-// 
+//
 // This macro would generally be used internally by EASTL.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -1112,11 +1121,10 @@ namespace eastl
 #endif
 
 #if EASTL_VALIDATE_COMPARE_ENABLED
-	#define EASTL_VALIDATE_COMPARE EASTL_ASSERT
+	#define EASTL_VALIDATE_COMPARE(expression) EASTL_ASSERT_MSG(expression, "Make sure the comparator satisfies the Compare named requirement (https://en.cppreference.com/w/cpp/named_req/Compare)")
 #else
 	#define EASTL_VALIDATE_COMPARE(expression)
 #endif
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1586,6 +1594,10 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 //         void* allocate(size_t n, int flags = 0);
 //         void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0);
 //         void  deallocate(void* p, size_t n);
+// 
+//		   // optional:
+//		   template<typename T, typename... Args>
+//		   void construct(T* p, Args&&... args);
 //
 //         const char* get_name() const;
 //         void        set_name(const char* pName);
@@ -1785,26 +1797,6 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	#define EASTL_CONSTEXPR_BIT_CAST_SUPPORTED 0
 #endif
 
-// EASTL deprecation macros:
-// 
-// EASTL_DEPRECATIONS_FOR_2024_APRIL
-// This macro is provided as a means to disable warnings temporarily (in particular if a user is compiling with warnings as errors).
-// All deprecations raised by this macro (when it is EA_ENABLED) are scheduled for removal approximately April 2024.
-
-#ifndef EASTL_DEPRECATIONS_FOR_2024_APRIL
-	#if defined(EA_DEPRECATIONS_FOR_2024_APRIL)
-		#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_DEPRECATIONS_FOR_2024_APRIL
-	#else
-		#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
-	#endif
-#endif
-
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
-	#define EASTL_REMOVE_AT_2024_APRIL EA_DEPRECATED
-#else
-	#define EASTL_REMOVE_AT_2024_APRIL
-#endif
-
 // EASTL_DEPRECATIONS_FOR_2024_SEPT
 // This macro is provided as a means to disable warnings temporarily (in particular if a user is compiling with warnings
 // as errors). All deprecations raised by this macro (when it is EA_ENABLED) are scheduled for removal approximately
@@ -1835,5 +1827,21 @@ typedef EASTL_SSIZE_T eastl_ssize_t; // Signed version of eastl_size_t. Concept 
 	EA_RESTORE_CLANG_WARNING();				\
 	EA_RESTORE_VC_WARNING();				\
 	EA_RESTORE_GCC_WARNING();
+
+// EASTL_ATOMIC_READ_DEPENDS_IS_ACQUIRE, this determines if we want the semantics of EASTL's
+// read_depends memory order to be strengthened to acquire, the default is for read_depends to
+// do relaxed semantics since it's intended for performance sensitive code with very specific
+// semantics, see atomic.h for details.
+#ifndef EASTL_ATOMIC_READ_DEPENDS_IS_ACQUIRE
+	#define EASTL_ATOMIC_READ_DEPENDS_IS_ACQUIRE EA_DISABLED
+#endif
+
+// EASTL_INTERNAL_TSAN_ACQUIRE for EASTL internal use only. Instrument an acquire operation
+// on an addres for TSAN purposes
+#if EA_TSAN_ENABLED
+	#define EASTL_INTERNAL_TSAN_ACQUIRE(x) __tsan_acquire(x)
+#else
+	#define EASTL_INTERNAL_TSAN_ACQUIRE(x)
+#endif
 
 #endif // Header include guard

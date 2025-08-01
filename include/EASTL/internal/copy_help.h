@@ -61,7 +61,7 @@ namespace eastl
 	// This specialization converts the random access InputIterator last-first to an integral type. There's simple way for us to take advantage of a random access output iterator,
 	// as the range is specified by the input instead of the output, and distance(first, last) for a non-random-access iterator is potentially slow.
 	template <>
-	struct move_and_copy_helper<EASTL_ITC_NS::random_access_iterator_tag, false, false>
+	struct move_and_copy_helper<eastl::random_access_iterator_tag, false, false>
 	{
 		template <typename InputIterator, typename OutputIterator>
 		static OutputIterator move_or_copy(InputIterator first, InputIterator last, OutputIterator result)
@@ -90,7 +90,7 @@ namespace eastl
 
 	// Specialization for moving non-trivial data via a random-access iterator. It's theoretically faster because the compiler can see the count when its a compile-time const.
 	template <>
-	struct move_and_copy_helper<EASTL_ITC_NS::random_access_iterator_tag, true, false>
+	struct move_and_copy_helper<eastl::random_access_iterator_tag, true, false>
 	{
 		template <typename InputIterator, typename OutputIterator>
 		static OutputIterator move_or_copy(InputIterator first, InputIterator last, OutputIterator result)
@@ -106,7 +106,7 @@ namespace eastl
 
 	// Specialization for when we can use memmove/memcpy. See the notes above for what conditions allow this.
 	template <bool isMove>
-	struct move_and_copy_helper<EASTL_ITC_NS::random_access_iterator_tag, isMove, true>
+	struct move_and_copy_helper<eastl::random_access_iterator_tag, isMove, true>
 	{
 		template <typename T>
 		static T* move_or_copy(const T* first, const T* last, T* result)
@@ -127,7 +127,7 @@ namespace eastl
 		// is_same<> directly.
 	#if !EASTL_STD_ITERATOR_CATEGORY_ENABLED || defined(EA_COMPILER_CPP20_ENABLED)
 		template <typename IC>
-		using is_contiguous_iterator = eastl::is_same<IC, EASTL_ITC_NS::contiguous_iterator_tag>;
+		using is_contiguous_iterator = eastl::is_same<IC, eastl::contiguous_iterator_tag>;
 	#else
 		template <typename IC>
 		using is_contiguous_iterator = eastl::false_type;

@@ -6,6 +6,7 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
+#include "TestAssociativeContainers.h"
 #include <EASTL/hash_set.h>
 #include <EASTL/hash_map.h>
 #include <EASTL/unordered_set.h>
@@ -13,8 +14,11 @@
 #include <EASTL/map.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
+#include <EASTL/sort.h>
 #include <EASTL/vector.h>
 #include <EASTL/unique_ptr.h>
+
+#include <eathread/eathread_thread.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
@@ -100,6 +104,31 @@ struct HashtableValueHash
 		{ return static_cast<size_t>(htv.mData); }
 };
 
+struct EA_REMOVE_AT_2025_OCT ExplicitStringHashNonTransparent {
+	size_t operator()(const ExplicitString& str) const
+	{
+		return eastl::hash<char*>{}(str.mString.c_str());
+	}
+
+	size_t operator()(const char* p) const
+	{
+		return eastl::hash<char*>{}(p);
+	}
+};
+
+struct StringHash {
+	typedef int is_transparent;
+
+	size_t operator()(const eastl::string& str) const
+	{
+		return eastl::hash<char*>{}(str.c_str());
+	}
+
+	size_t operator()(const char* p) const
+	{
+		return eastl::hash<char*>{}(p);
+	}
+};
 
 
 
@@ -175,10 +204,23 @@ struct colliding_hash
 		{ return static_cast<size_t>(val % 3); }
 };
 
+struct TransparentHash {
+	using is_transparent = int;
 
+	template<typename T>
+	size_t operator()(T&& val) const
+	{
+		return eastl::hash<eastl::remove_cvref_t<T>>{}(eastl::forward<T>(val));
+	}
+};
+
+void TestHashTable_MT();
 
 int TestHash()
 {   
+
+	TestHashTable_MT();
+
 	int nErrorCount = 0;
 
 	{  // Test declarations
@@ -593,8 +635,8 @@ int TestHash()
 				// destroying containers to invoke InstanceAllocator::deallocate() checks
 			}
 
-			EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
-			InstanceAllocator::reset_all();
+			EATEST_VERIFY_MSG(InstanceAllocator::reset_all(),
+			                  "Container elements should be deallocated by the allocator that allocated it.");
 		}
 	}
 
@@ -696,24 +738,30 @@ int TestHash()
 		// C++11 emplace and related functionality
 		nErrorCount += TestMapCpp11<eastl::hash_map<int, TestObject>>();
 		nErrorCount += TestMapCpp11<eastl::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<eastl::unordered_map<int, TestObject, TransparentHash, eastl::equal_to<void>>>();
 
 		nErrorCount += TestSetCpp11<eastl::hash_set<TestObject>>();
 		nErrorCount += TestSetCpp11<eastl::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<eastl::unordered_set<TestObject, TransparentHash, eastl::equal_to<void>>>();
 
 		nErrorCount += TestMultimapCpp11<eastl::hash_multimap<int, TestObject>>();
 		nErrorCount += TestMultimapCpp11<eastl::unordered_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<eastl::unordered_multimap<int, TestObject, TransparentHash, eastl::equal_to<void>>>();
 
 		nErrorCount += TestMultisetCpp11<eastl::hash_multiset<TestObject>>();
 		nErrorCount += TestMultisetCpp11<eastl::unordered_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<eastl::unordered_multiset<TestObject, TransparentHash, eastl::equal_to<void>>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::hash_map<int, NonCopyable>>();
 		nErrorCount += TestMapCpp11NonCopyable<eastl::unordered_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::unordered_map<int, NonCopyable, TransparentHash, eastl::equal_to<void>>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
 		nErrorCount += TestMapCpp17<eastl::hash_map<int, TestObject>>();
 		nErrorCount += TestMapCpp17<eastl::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<eastl::unordered_map<int, TestObject, TransparentHash, eastl::equal_to<void>>>();
 	}
 
 
@@ -911,6 +959,32 @@ int TestHash()
 	}
 
 
+	{
+		// Test default hash function for floating-type types
+		vector<float> floatVals
+		{
+			-2.0f, -1.9f, -1.8f, -1.7f, -1.6f, -1.5f, -1.4f, -1.3f, -1.2f, -1.1f,
+			-1.0f, -0.9f, -0.8f, -0.7f, -0.6f, -0.5f, -0.4f, -0.3f, -0.2f, -0.1f,
+			0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f,
+			1.1f, 1.2f, 1.3f, 1.4f, 1.5f, 1.6f, 1.7f, 1.8f, 1.9f, 2.0f
+		};
+
+		vector<size_t> hashVec;
+		const eastl::hash<float> hashFunc;
+
+		eastl::for_each(floatVals.begin(), floatVals.end(), [&](float& val)
+		{
+			hashVec.push_back(hashFunc(val));
+		});
+
+		sort(floatVals.begin(), floatVals.end());
+		EATEST_VERIFY(eastl::adjacent_find(floatVals.begin(), floatVals.end()) == floatVals.end());
+
+		// Negative zero is hardcoded to have the same hash as positive zero
+		EATEST_VERIFY(hashFunc(-0.0) == hashFunc(0.0));
+	}
+
+
 	{   // Test hash_map
 
 		// Aligned objects should be CustomAllocator instead of the default, because the 
@@ -995,7 +1069,9 @@ int TestHash()
 			char pString[kBufferSize];
 			EA::StdC::Snprintf(pString, kBufferSize, "%d", i);
 
+			EASTL_INTERNAL_DISABLE_DEPRECATED()
 			HashSetString::iterator it = hashSet.find_as(pString);
+			EASTL_INTERNAL_RESTORE_DEPRECATED()
 			if(i < kCount)
 				EATEST_VERIFY(it != hashSet.end());
 			else
@@ -1010,7 +1086,9 @@ int TestHash()
 			string::CtorSprintf cs;
 		    string s(cs, "%d", i);
 
+			EASTL_INTERNAL_DISABLE_DEPRECATED()
 			it = hashSet.find_as(s);
+			EASTL_INTERNAL_RESTORE_DEPRECATED()
 		    if (i < kCount)
 			    EATEST_VERIFY(it != hashSet.end());
 		    else
@@ -1497,14 +1575,109 @@ int TestHash()
 	#endif
     }
 
+	{ // heterogenous functions - hash_map
+		eastl::hash_map<ExplicitString, int, ExplicitStringHash, eastl::equal_to<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestMapHeterogeneousInsertion<decltype(m)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - hash_multimap
+		eastl::hash_multimap<ExplicitString, int, ExplicitStringHash, eastl::equal_to<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - hash_set
+		eastl::hash_set<ExplicitString, ExplicitStringHash, eastl::equal_to<void>> s{ ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestSetHeterogeneousInsertion<decltype(s)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+	{ // heterogenous functions - hash_multiset
+		eastl::hash_multiset<ExplicitString, ExplicitStringHash, eastl::equal_to<void>> s{ ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+	{ // insert(P&&) was incorrectly defined in the hashtable base type.
+		// should never have been defined for hash_set, hash_multiset.
+		// it does not correctly support heterogeneous insertion (unconditionally creates a key_type).
+		// this test exists purely to check that the addition of insert(KX&&) for heterogeneous keys didn't break existing (unlikely) calls to insert(P&&) that
+		// shouldn't have been supported.
+		EASTL_INTERNAL_DISABLE_DEPRECATED()
+		eastl::hash_set<ExplicitString, ExplicitStringHashNonTransparent, eastl::equal_to<void>> s = { ExplicitString::Create("a") };
+		s.insert("a");
+
+		eastl::hash_multiset<ExplicitString, ExplicitStringHashNonTransparent, eastl::equal_to<void>> s2 = { ExplicitString::Create("a") };
+		s2.insert("a");
+		EASTL_INTERNAL_RESTORE_DEPRECATED()
+
+		eastl::hash_set<ExplicitString, ExplicitStringHash, eastl::equal_to<void>> s3 = { ExplicitString::Create("a") };
+		s3.insert("a"); // shouldn't call the deprecated insert() overload
+
+		eastl::hash_multiset<eastl::string, StringHash, eastl::equal_to<void>> s4 = { "a" };
+		s4.insert("a"); // shouldn't call the deprecated insert() overload
+	}
+
 	return nErrorCount;
 }
 
+struct TestHashTable_MT_Data
+{
+	EA::Thread::Semaphore mStartSema{0};
+	EA::Thread::Semaphore mEndSema{0};
+};
 
+static intptr_t useHashTableFn(void* x)
+{
+	int nErrorCount = 0;
+	auto& data = *static_cast<TestHashTable_MT_Data*>(x);
 
+	data.mStartSema.Wait();
+	for (int loops = 0; loops < 100; ++loops)
+	{
+		eastl::unordered_map<int, int> localMap;
 
+		// this is a silly test, but the goal is to exercise clearing an empty hashtable on
+		// different threads under TSAN.
 
+		// This call to clear used to trip TSAN in a previous version of EASTL.
+		localMap.clear();
 
+		constexpr int kEntries = 1000;
+		for (int i = 0; i < kEntries; ++i)
+		{
+			localMap[i] = i;
+		}
+		for (int i = 0; i < kEntries; ++i)
+		{
+			EATEST_VERIFY(localMap[i] == i);
+		}
 
+		localMap.clear();
+	}
 
+	data.mEndSema.Post();
 
+	// Needed by the Thread::Begin API.
+	return 0;
+}
+
+void TestHashTable_MT()
+{
+	// TSAN regression checking, using different hash tables on different threads should not
+	// trigger TSAN issues.
+
+	TestHashTable_MT_Data data;
+	EA::Thread::Thread threads[2];
+
+	threads[0].Begin(useHashTableFn, static_cast<void*>(&data));
+	threads[1].Begin(useHashTableFn, static_cast<void*>(&data));
+
+	data.mStartSema.Post(2);
+
+	data.mEndSema.Wait();
+	data.mEndSema.Wait();
+}

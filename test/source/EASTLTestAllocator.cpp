@@ -7,6 +7,7 @@
 #define EASTLTEST_ALLOCATOR_H
 
 #include <EABase/eabase.h>
+#include <EASTL/atomic.h>
 #include <EASTL/internal/config.h>
 #include <new>
 #include <stdio.h>
@@ -55,8 +56,8 @@
 	///////////////////////////////////////////////////////////////////////////////
 	// allocator counts for debugging purposes
 	//
-	int gEASTLTest_AllocationCount = 0;
-	int gEASTLTest_TotalAllocationCount = 0;
+	eastl::atomic<int> gEASTLTest_AllocationCount = 0;
+	eastl::atomic<int> gEASTLTest_TotalAllocationCount = 0;
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -272,7 +273,7 @@
 	{
 		if(p) // The standard specifies that 'delete NULL' is a valid operation.
 		{
-			gEASTLTest_AllocationCount--;
+			gEASTLTest_AllocationCount.fetch_add(-1, eastl::memory_order_relaxed);
 			InternalFree(p);
 		}
 	}
@@ -280,8 +281,8 @@
 
 	_Ret_maybenull_ _Post_writable_byte_size_(size) void* operator new[](size_t size, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		void* p = InternalMalloc(size);
 		return p;
@@ -292,7 +293,7 @@
 	{
 		if(p)
 		{
-			gEASTLTest_AllocationCount--;
+			gEASTLTest_AllocationCount.fetch_add(-1, eastl::memory_order_relaxed);
 			InternalFree(p);
 		}
 	}
@@ -300,8 +301,8 @@
 
 	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new(size_t size) 
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		void* mem = InternalMalloc(size);
 
@@ -318,8 +319,8 @@
 
 	_Ret_notnull_ _Post_writable_byte_size_(size) void* operator new[](size_t size) 
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		void* mem = InternalMalloc(size);
 
@@ -336,8 +337,8 @@
 
 	void* operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, name, flags, debugFlags, file, line);
 	}
@@ -345,8 +346,8 @@
 
 	void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, alignment, name, flags, debugFlags, file, line);
 	}
@@ -354,8 +355,8 @@
 	// Used by GCC when you make new objects of classes with >= N bit alignment (with N depending on the compiler).
 	void* operator new(size_t size, size_t alignment)
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, alignment);
 	}
@@ -363,8 +364,8 @@
 	// Used by GCC when you make new objects of classes with >= N bit alignment (with N depending on the compiler).
 	void* operator new(size_t size, size_t alignment, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, alignment);
 	}
@@ -372,8 +373,8 @@
 	// Used by GCC when you make new objects of classes with >= N bit alignment (with N depending on the compiler).
 	void* operator new[](size_t size, size_t alignment)
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, alignment);
 	}
@@ -381,8 +382,8 @@
 	// Used by GCC when you make new objects of classes with >= N bit alignment (with N depending on the compiler).
 	void* operator new[](size_t size, size_t alignment, const std::nothrow_t&) EA_THROW_SPEC_NEW_NONE()
 	{
-		gEASTLTest_AllocationCount++;
-		gEASTLTest_TotalAllocationCount++;
+		gEASTLTest_AllocationCount.fetch_add(1, eastl::memory_order_relaxed);
+		gEASTLTest_TotalAllocationCount.fetch_add(1, eastl::memory_order_relaxed);
 
 		return InternalMalloc(size, alignment);
 	}
@@ -391,7 +392,7 @@
 	{
 		if(p) // The standard specifies that 'delete NULL' is a valid operation.
 		{
-			gEASTLTest_AllocationCount--;
+			gEASTLTest_AllocationCount.fetch_add(-1, eastl::memory_order_relaxed);
 			InternalFree(p);
 		}
 	}
@@ -401,7 +402,7 @@
 	{
 		if(p)
 		{
-			gEASTLTest_AllocationCount--;
+			gEASTLTest_AllocationCount.fetch_add(-1, eastl::memory_order_relaxed);
 			InternalFree(p);
 		}
 	}

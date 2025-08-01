@@ -86,7 +86,7 @@ namespace eastl
 		/// Construct a scoped_ptr from a pointer allocated via new.
 		/// Example usage:
 		///    scoped_ptr<int> ptr(new int(3));
-		explicit scoped_ptr(T* pValue = NULL)
+		explicit scoped_ptr(T* pValue = NULL) noexcept
 			: mpValue(pValue) {}
 
 		/// ~scoped_ptr
@@ -106,7 +106,7 @@ namespace eastl
 		///    scoped_ptr<int> ptr(new int(3));
 		///    ptr.reset(new int(4));  // deletes int(3)
 		///    ptr.reset(NULL);        // deletes int(4)
-		void reset(T* pValue = NULL)
+		void reset(T* pValue = NULL) noexcept
 		{
 			if(pValue != mpValue)
 			{
@@ -123,7 +123,7 @@ namespace eastl
 		///    scoped_ptr<int> ptr(new int(3));
 		///    int* pInt = ptr.detach();
 		///    delete pInt;
-		T* detach()
+		T* detach() noexcept
 		{
 			T* const pTemp = mpValue;
 			mpValue = NULL;
@@ -132,7 +132,7 @@ namespace eastl
 
 		/// swap
 		/// Exchanges the owned pointer beween two scoped_ptr objects. 
-		void swap(this_type& scopedPtr)
+		void swap(this_type& scopedPtr) noexcept
 		{
 			// std::swap(mpValue, scopedPtr.mpValue); // Not used so that we can reduce a dependency.
 			T* const pValue   = scopedPtr.mpValue;
@@ -172,7 +172,7 @@ namespace eastl
 		///    scoped_ptr<int> ptr(new X);
 		///    X* pX = ptr.get();
 		///    pX->DoSomething();
-		T* get() const
+		T* get() const noexcept
 		{
 			return mpValue;
 		}
@@ -188,7 +188,7 @@ namespace eastl
 		/// is that booleans automatically convert up to short, int, float, etc.
 		/// The result is that this: if(scopedPtr == 1) would yield true (bad).
 		typedef T* (this_type::*bool_)() const;
-		operator bool_() const
+		operator bool_() const noexcept
 		{
 			if(mpValue)
 				return &this_type::get;
@@ -201,7 +201,7 @@ namespace eastl
 		///    scoped_ptr<int> ptr(new int(3));
 		///    if(!ptr)
 		///        assert(false);
-		bool operator!() const
+		bool operator!() const noexcept
 		{
 			return (mpValue == NULL);
 		}

@@ -598,7 +598,7 @@ static int Test_unique_ptr()
 			// Consider the following for standards compliance.
 			// eastl::shared_ptr<A, EASTLCoreDeleterAdapter> foo(pA, EASTLCoreDeleterAdapter());
 
-			const int cacheAllocationCount = gEASTLTest_AllocationCount;
+			const int cacheAllocationCount = gEASTLTest_AllocationCount.load(eastl::memory_order_relaxed);
 
 			using namespace EA::Allocator;
 
@@ -606,12 +606,12 @@ static int Test_unique_ptr()
 			void* pMem = ta.allocate(sizeof(A));
 
 			EATEST_VERIFY(pMem != nullptr);     
-			EATEST_VERIFY(gEASTLTest_AllocationCount > cacheAllocationCount);
+			EATEST_VERIFY(gEASTLTest_AllocationCount.load(eastl::memory_order_relaxed) > cacheAllocationCount);
 			{            
 				A* pA = new (pMem) A();
 				eastl::shared_ptr<A> foo(pA, EASTLCoreDeleterAdapter());  // Not standards complaint code.  Update EASTL implementation to provide the type of the deleter.
 			}
-			EATEST_VERIFY(gEASTLTest_AllocationCount == cacheAllocationCount);
+			EATEST_VERIFY(gEASTLTest_AllocationCount.load(eastl::memory_order_relaxed) == cacheAllocationCount);
 			EATEST_VERIFY(A::mCount == 0);
 		#endif
 	}
@@ -731,15 +731,11 @@ static int Test_unique_ptr()
 		pArray[0].mpName = "test";
 		EATEST_VERIFY(EA::StdC::Strcmp(p->mpName, "test") == 0);
 
-		#ifdef EASTL_TEST_DISABLED_PENDING_SUPPORT
-		{
-			const size_t kAlignedStructAlignment = 512;
-			struct AlignedStruct {} EA_ALIGN(kAlignedStructAlignment);
+		const size_t kAlignedStructAlignment = 512;
+		struct alignas(kAlignedStructAlignment) AlignedStruct {};
 
-			unique_ptr<AlignedStruct> pAlignedStruct = eastl::make_unique<AlignedStruct>();
-			EATEST_VERIFY_F(intptr_t(pAlignedStruct.get()) % kAlignedStructAlignment == 0, "pAlignedStruct didn't have proper alignment");
-		}
-		#endif
+		unique_ptr<AlignedStruct> pAlignedStruct = eastl::make_unique<AlignedStruct>();
+		EATEST_VERIFY_MSG(intptr_t(pAlignedStruct.get()) % kAlignedStructAlignment == 0, "pAlignedStruct didn't have proper alignment");
 
 		//Expected to not be valid:
 		//unique_ptr<NamedClass[4]> p2Array4 = eastl::make_unique<NamedClass[4]>();

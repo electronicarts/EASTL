@@ -562,6 +562,20 @@ int TestTuple()
 		}
 	}
 
+	// make_from_tuple
+	{
+		{
+			TestObject x = eastl::make_from_tuple<TestObject>(eastl::make_tuple(1, true));
+			EATEST_VERIFY(x.mX == 1);
+			EATEST_VERIFY(x.mbThrowOnCopy == true);
+		}
+
+		{
+			TestObject x = eastl::make_from_tuple<TestObject>(eastl::make_tuple(1, 2, 3));
+			EATEST_VERIFY(x.mX == 6);
+		}
+	}
+
 	// Compilation test to make sure that the conditionally-explicit cast works
 	{
 		eastl::tuple<int, float, TestObject> arrayTup[] = {
@@ -662,6 +676,82 @@ int TestTuple()
 
 		tuple<EmptyNoDefaultCtor> tupleWithEmptyMember5(EmptyNoDefaultCtor{3});
 		EA_UNUSED(tupleWithEmptyMember5);
+	}
+
+	// tests for an empty nested tuple element.
+	// Empty tuples as elements of a tuple caused compilation errors in get<I>(some-tuple) in an earlier version.
+	{
+		EATEST_VERIFY(get<0>(tuple<tuple<>>{}) == tuple<>{});
+		EATEST_VERIFY(get<0>(tuple<int, tuple<>>{}) == 0);
+		EATEST_VERIFY(get<1>(tuple<int, tuple<>>{}) == tuple<>{});
+		EATEST_VERIFY(get<0>(tuple<tuple<>, int>{}) == tuple<>{});
+		EATEST_VERIFY(get<1>(tuple<tuple<>, int>{}) == 0);
+
+		EATEST_VERIFY(get<tuple<>>(tuple<tuple<>>{}) == tuple<>{});
+		EATEST_VERIFY(get<int>(tuple<int, tuple<>>{}) == 0);
+		EATEST_VERIFY(get<tuple<>>(tuple<int, tuple<>>{}) == tuple<>{});
+		EATEST_VERIFY(get<tuple<>>(tuple<tuple<>, int>{}) == tuple<>{});
+		EATEST_VERIFY(get<int>(tuple<tuple<>, int>{}) == 0);
+
+		// test special member functions.
+		tuple<tuple<>, int> a;
+		tuple<tuple<>, int> b(a);
+		EATEST_VERIFY(b == a);
+		b = a;
+		EATEST_VERIFY(b == a);
+		b = eastl::move(a);
+		EATEST_VERIFY(b == a);
+	}
+
+	{
+
+		// check that we can assign from/to tuples of references.
+		int a{1};
+		int b{2};
+		tuple<int&> t1{a};
+		tuple<int&> t2{b};
+		EATEST_VERIFY(get<0>(t1) == 1);
+		EATEST_VERIFY(get<0>(t2) == 2);
+
+		t1 = eastl::move(t2);
+		EATEST_VERIFY(get<0>(t1) == 2);
+		EATEST_VERIFY(a == 2);
+
+		get<0>(t2) = 3;
+		t1 = t2;
+		EATEST_VERIFY(get<0>(t1) == 3);
+		EATEST_VERIFY(a == 3);
+		EATEST_VERIFY(b == 3);
+
+		a = 1;
+		EATEST_VERIFY(get<0>(t1) == 1);
+
+		const tuple<int&> t3{b};
+		t1 = t3;
+		EATEST_VERIFY(get<0>(t1) == 3);
+	}
+
+	{
+		tuple<NoCopyMove> t;
+		[[maybe_unused]] auto& x = get<0>(t);
+	}
+
+	{
+		tuple<NoCopyMoveNonEmpty> t;
+		[[maybe_unused]] auto& x = get<0>(t);
+	}
+
+	{
+		NoCopyMove x;
+		tuple<NoCopyMove&> t{x};
+		[[maybe_unused]] auto& y = get<0>(t);
+	}
+
+	{
+		// Check that this still compiles:
+		NoCopyMoveNonEmpty x;
+		tuple<NoCopyMoveNonEmpty&> t{x};
+		[[maybe_unused]] auto& y = get<0>(t);
 	}
 
 	return nErrorCount;

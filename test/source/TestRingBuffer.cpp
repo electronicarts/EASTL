@@ -1164,7 +1164,7 @@ int TestRingBuffer()
 				intBuffer.push_back(i);
 
 		#if !EASTL_OPENSOURCE
-			const auto cacheAllocationCount = gEASTLTest_TotalAllocationCount;
+			const auto cacheAllocationCount = gEASTLTest_TotalAllocationCount.load(eastl::memory_order_relaxed);
 		#endif
 			const auto cacheMallocatorCount = MallocAllocator::mAllocCountAll;
 			const auto forceReAllocSize = intBuffer.size() * 2;
@@ -1172,7 +1172,7 @@ int TestRingBuffer()
 			intBuffer.resize(forceReAllocSize);
 
 		#if !EASTL_OPENSOURCE
-			VERIFY(cacheAllocationCount == gEASTLTest_TotalAllocationCount);
+			VERIFY(cacheAllocationCount == gEASTLTest_TotalAllocationCount.load(eastl::memory_order_relaxed));
 		#endif
 			VERIFY(cacheMallocatorCount <  MallocAllocator::mAllocCountAll);
 			VERIFY(CountingAllocator::neverUsed());

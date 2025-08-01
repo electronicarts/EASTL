@@ -54,8 +54,8 @@ namespace eastl
 		}
 
 		template <typename Functor, typename = EASTL_INTERNAL_FUNCTION_VALID_FUNCTION_ARGS(Functor, R, Args..., Base, function)>
-		function(Functor functor)
-			: Base(eastl::move(functor))
+		function(Functor&& functor)
+			: Base(eastl::forward<Functor>(functor))
 		{
 		}
 

@@ -111,6 +111,8 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
+
+		static constexpr bool can_overflow() { return bEnableOverflow; }
 	}; // fixed_map
 
 
@@ -177,6 +179,8 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
+
+		static constexpr bool can_overflow() { return bEnableOverflow; }
 	}; // fixed_multimap
 
 
@@ -201,9 +205,6 @@ namespace eastl
 	inline fixed_map<Key, T, nodeCount, bEnableOverflow, Compare, OverflowAllocator>::fixed_map(const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_MAP_DEFAULT_NAME);
-		#endif
 	}
 
 
@@ -263,10 +264,6 @@ namespace eastl
 	fixed_map<Key, T, nodeCount, bEnableOverflow, Compare, OverflowAllocator>::fixed_map(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_MAP_DEFAULT_NAME);
-		#endif
-
 		insert(ilist.begin(), ilist.end());
 	}
 
@@ -392,9 +389,6 @@ namespace eastl
 	inline fixed_multimap<Key, T, nodeCount, bEnableOverflow, Compare, OverflowAllocator>::fixed_multimap(const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_MULTIMAP_DEFAULT_NAME);
-		#endif
 	}
 
 
@@ -428,10 +422,6 @@ namespace eastl
 	{
 		mAllocator.copy_overflow_allocator(x.mAllocator);
 
-		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(x.mAllocator.get_name());
-		#endif
-
 		base_type::operator=(x);
 	}
 
@@ -454,10 +444,6 @@ namespace eastl
 	fixed_multimap<Key, T, nodeCount, bEnableOverflow, Compare, OverflowAllocator>::fixed_multimap(std::initializer_list<value_type> ilist, const overflow_allocator_type& overflowAllocator)
 		: base_type(fixed_allocator_type(mBuffer, overflowAllocator))
 	{
-		#if EASTL_NAME_ENABLED
-			mAllocator.set_name(EASTL_FIXED_MULTIMAP_DEFAULT_NAME);
-		#endif
-
 		insert(ilist.begin(), ilist.end());
 	}
 
