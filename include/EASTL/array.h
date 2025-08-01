@@ -58,7 +58,11 @@ namespace eastl
 	///    for(array<int, 5>::iterator i = a.begin(); i < a.end(); ++i)
 	///       *i = 0;
 	///
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT)
+	template <typename T, size_t N>
+#else
 	template <typename T, size_t N = 1>
+#endif
 	struct array
 	{
 	public:
@@ -72,11 +76,6 @@ namespace eastl
 		typedef eastl::reverse_iterator<const_iterator>       const_reverse_iterator;
 		typedef eastl_size_t                                  size_type;        // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                     difference_type;
-
-		enum
-		{
-			count EASTL_REMOVE_AT_2024_APRIL = N
-		};
 
 		// Note that the member data is intentionally public.
 		// This allows for aggregate initialization of the
@@ -147,11 +146,6 @@ namespace eastl
 		typedef eastl::reverse_iterator<const_iterator>       const_reverse_iterator;
 		typedef eastl_size_t                                  size_type;        // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef ptrdiff_t                                     difference_type;
-
-		enum
-		{
-			count EASTL_REMOVE_AT_2024_APRIL = 0
-		};
 
 		// We intentionally provide no constructor, destructor, or assignment operator.
 
@@ -637,7 +631,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	template<typename T, size_t N>
-	struct tuple_size<array<T, N>> : public integral_constant<size_t, N> {};
+	struct tuple_size<array<T, N>> : public eastl::integral_constant<size_t, N> {};
 
 	namespace internal {
 	template<size_t I, typename T, size_t N, typename = void>
@@ -668,7 +662,7 @@ namespace std
 {
 
 template<typename T, size_t N>
-struct tuple_size<eastl::array<T, N>> : public integral_constant<size_t, N> {};
+struct tuple_size<eastl::array<T, N>> : public eastl::integral_constant<size_t, N> {};
 
 template<size_t I, typename T, size_t N>
 struct tuple_element<I, eastl::array<T, N>> : public eastl::tuple_element<I, eastl::array<T, N>> {};

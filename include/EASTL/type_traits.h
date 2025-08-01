@@ -172,26 +172,6 @@
 //    is_detected_exact                     Check that the type we obtain after expanding some arguments (Args) over a constraint (Op) is equivalent to Expected.
 //    is_detected_convertible               Check that the type we obtain after expanding some arguments (Args) over a constraint (Op) is convertible to Expected.
 //
-// Deprecated pre-C++11 type traits
-//    add_reference							Deprecated in favor of add_lvalue_reference(_t).
-//    add_signed                            Deprecated in favor of make_signed.
-//    add_unsigned                          Deprecated in favor of make_unsigned.
-//    identity                              Simply sets T as type. Use type_identity(_t) instead.
-//    is_array_of_known_bounds				Deprecated in favor of is_bounded_array.
-//    is_array_of_unknown_bounds			Deprecated in favor of is_unbounded_array.
-//    has_trivial_constructor               The default constructor for T is trivial.
-//    has_trivial_copy                      The copy constructor for T is trivial.
-//    has_trivial_assign                    The assignment operator for T is trivial.
-//    has_trivial_destructor                The destructor for T is trivial.
-//    has_nothrow_constructor               The default constructor for T has an empty exception specification or can otherwise be deduced never to throw an exception.
-//    has_nothrow_copy                      The copy constructor for T has an empty exception specification or can otherwise be deduced never to throw an exception.
-//    has_nothrow_assign                    The assignment operator for T has an empty exception specification or can otherwise be deduced never to throw an exception.
-//   *has_trivial_relocate                  T can be moved to a new location via bitwise copy. Note that C++11 rvalue/move functionality supercedes this.
-//
-// Deprecated in C++17
-//    is_literal_type						Deprecated: use constexpr if to determine whether an expression is constant evaluated.
-//    result_of								Deprecated: use invoke_result instead.
-//
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -327,142 +307,14 @@ namespace eastl
 	};
 
 
-	///////////////////////////////////////////////////////////////////////
-	// type_select
-	//
-	// Deprecated in C++17. Use conditional<B, T, F>::type instead.
-	//
-	// This is used to declare a type from one of two type options.
-	// The result is based on the condition type. This has certain uses
-	// in template metaprogramming.
-	//
-	// Example usage:
-	//    typedef ChosenType = typename type_select<is_integral<SomeType>::value, ChoiceAType, ChoiceBType>::type;
-	//        or
-	//    using ChosenType = type_select_t<is_integral_v<SomeType>, ChoiceAType, ChoiceBType>;
-	//
-	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-	struct EASTL_REMOVE_AT_2024_APRIL type_select { typedef ConditionIsTrueType type; };
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
-	// specialization if the main template is derpecated, so turn the warning off here. If this
-	// specialization is used, the warning will still trigger in the user code, this just
-	// disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	template <typename ConditionIsTrueType, class ConditionIsFalseType>
-	struct EASTL_REMOVE_AT_2024_APRIL type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
-
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-		using type_select_t EASTL_REMOVE_AT_2024_APRIL = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
-	#endif
-EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
 
 	///////////////////////////////////////////////////////////////////////
 	// first_type_select
 	//
-	//  Similar to type_select but unilaterally selects the first type.
+	//  Similar to conditional<> but unilaterally selects the first type.
 	//
 	template <typename T, typename = eastl::unused, typename = eastl::unused>
 	struct first_type_select { typedef T type; };
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// type_or
-	//
-	// Deprecated in C++17. Use disjunction<B ...> instead.
-	// Note type_or<bool ...> has boolean non-type template parameters
-	// whereas disjunction<B ...> has type template parameters (most commonly bool_constant<bool>).
-	//
-	// This is a utility class for creating composite type traits.
-	//
-	template <bool b1, bool b2, bool b3 = false, bool b4 = false, bool b5 = false>
-	struct EASTL_REMOVE_AT_2024_APRIL type_or;
-
-	template <bool b1, bool b2, bool b3, bool b4, bool b5>
-	struct EASTL_REMOVE_AT_2024_APRIL type_or { static const bool value = true; };
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
-	// specialization if the main template is derpecated, so turn the warning off here. If this
-	// specialization is used, the warning will still trigger in the user code, this just
-	// disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	template <>
-	struct EASTL_REMOVE_AT_2024_APRIL type_or<false, false, false, false, false> { static const bool value = false; };
-EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// type_and
-	//
-	// Deprecated in C++17. Use conjunction<B ...> instead.
-	// Note type_and<bool ...> has boolean non-type template parameters
-	// whereas conjunction<B ...> has type template parameters (most commonly bool_constant<bool>).
-	//
-	// This is a utility class for creating composite type traits.
-	//
-	template <bool b1, bool b2, bool b3 = true, bool b4 = true, bool b5 = true>
-	struct EASTL_REMOVE_AT_2024_APRIL type_and;
-
-	template <bool b1, bool b2, bool b3, bool b4, bool b5>
-	struct EASTL_REMOVE_AT_2024_APRIL type_and{ static const bool value = false; };
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
-	// specialization if the main template is derpecated, so turn the warning off here. If this
-	// specialization is used, the warning will still trigger in the user code, this just
-	// disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	template <>
-	struct EASTL_REMOVE_AT_2024_APRIL type_and<true, true, true, true, true>{ static const bool value = true; };
-EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// type_equal
-	//
-	// This is a utility class for creating composite type traits.
-	//
-	template <int b1, int b2>
-	struct EASTL_REMOVE_AT_2024_APRIL type_equal{ static const bool value = (b1 == b2); };
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// type_not_equal
-	//
-	// This is a utility class for creating composite type traits.
-	//
-	template <int b1, int b2>
-	struct EASTL_REMOVE_AT_2024_APRIL type_not_equal{ static const bool value = (b1 != b2); };
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// type_not
-	//
-	// Deprecated in C++17. Use negation<B> instead.
-	// Note type_not<bool> has a boolean non-type template parameter
-	// whereas negation<B> has a type template parameter (most commonly bool_constant<bool>).
-	//
-	// This is a utility class for creating composite type traits.
-	//
-	template <bool b>
-	struct EASTL_REMOVE_AT_2024_APRIL type_not{ static const bool value = true; };
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
-	// specialization if the main template is derpecated, so turn the warning off here. If this
-	// specialization is used, the warning will still trigger in the user code, this just
-	// disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	template <>
-	struct EASTL_REMOVE_AT_2024_APRIL type_not<true>{ static const bool value = false; };
-EASTL_INTERNAL_RESTORE_DEPRECATED()
-
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -578,38 +430,6 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 		template <typename B>
 		EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR bool negation_v = negation<B>::value;
 	#endif
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// identity
-	//
-	// The purpose of this is typically to deal with non-deduced template
-	// contexts. See the C++11 Standard, 14.8.2.5 p5.
-	// Also: http://cppquiz.org/quiz/question/109?result=CE&answer=&did_answer=Answer
-	//
-	// Dinkumware has an identity, but adds a member function to it:
-	//     const T& operator()(const T& t) const{ return t; }
-	//
-	// NOTE(rparolin): Use 'eastl::type_identity' it was included in the C++20
-	// standard. This is a legacy EASTL type we continue to support for
-	// backwards compatibility. 
-	//
-	// todo: add identity function object on removal.
-	// https://en.cppreference.com/w/cpp/utility/functional/identity
-	template <typename T>
-	struct EASTL_REMOVE_AT_2024_APRIL identity { using type = T; };
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings in template variable
-	// declarations even if the variable is not insantiated here, so turn the warning off
-	// here. If this varialbe is used, the warning will still trigger in the user code, this
-	// just disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		template <typename T>
-		using identity_t EASTL_REMOVE_AT_2024_APRIL = typename identity<T>::type;
-	#endif
-EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -822,35 +642,6 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 		template<typename T>
 		using remove_cv_t = typename remove_cv<T>::type;
 	#endif
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// add_reference
-	// 
-	// Deprecated. Use add_lvalue_reference_t<T> instead.
-	//
-	// Add reference to a type.
-	//
-	// The add_reference transformation trait adds a level of indirection
-	// by reference to the type to which it is applied. For a given type T,
-	// add_reference<T>::type is equivalent to T& if is_lvalue_reference<T>::value == false,
-	// and T otherwise.
-	//
-	// Note: due to the reference collapsing rules, if you supply an r-value reference such as T&&, it will collapse to T&. 
-	//
-	///////////////////////////////////////////////////////////////////////
-
-	#define EASTL_TYPE_TRAIT_add_reference_CONFORMANCE 1    // add_reference is conforming.
-
-	template <typename T> struct add_reference_impl      { typedef T&   type; };
-	template <typename T> struct add_reference_impl<T&>  { typedef T&   type; };
-	template <>           struct add_reference_impl<void>{ typedef void type; };
-	#if defined(_MSC_VER) && (_MSC_VER <= 1600) // VS2010 and earlier mistakenly report: "cannot add a reference to a zero-sized array." Actually they are allowed, but there's nothing we can do about it under VS2010 and earlier.
-	template <typename T> struct add_reference_impl<T[0]>{ typedef T    type; };
-	#endif
-
-	template <typename T> struct EASTL_REMOVE_AT_2024_APRIL add_reference { typedef typename add_reference_impl<T>::type type; };
 
 
 
@@ -1070,6 +861,23 @@ EASTL_INTERNAL_RESTORE_DEPRECATED()
 #include <EASTL/internal/type_compound.h>
 #include <EASTL/internal/type_pod.h>
 #include <EASTL/internal/type_detected.h>
+
+namespace eastl
+{
+	namespace detail
+	{
+		template<typename, typename = void>
+		struct is_transparent_comparison : eastl::false_type {};
+
+		template<typename T>
+		struct is_transparent_comparison<T, eastl::void_t<typename T::is_transparent>> : eastl::true_type {};
+
+		template <typename T>
+		EA_CONSTEXPR bool is_transparent_comparison_v = is_transparent_comparison<T>::value;
+
+	} // namespace detail
+
+} // namespace eastl
 
 
 #endif // Header include guard

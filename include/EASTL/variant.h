@@ -59,6 +59,7 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/in_place_t.h>
 #include <EASTL/internal/integer_sequence.h>
+#include <EASTL/internal/special_member_functions_variant_optional.h>
 #include <EASTL/meta.h>
 #include <EASTL/utility.h>
 #include <EASTL/functional.h>
@@ -85,102 +86,6 @@ EA_DISABLE_VC_WARNING(4625) // copy constructor was implicitly defined as delete
 
 namespace eastl
 {
-	namespace internal
-	{
-		///////////////////////////////////////////////////////////////////////////
-		// default_construct_if_supported<T>
-		//
-		// Utility class to remove default constructor calls for types that
-		// do not support default construction.
-		//
-		// We can remove these utilities when C++17 'constexpr if' is available.
-		//
-		template<typename T, bool = eastl::is_default_constructible_v<T>>
-		struct default_construct_if_supported
-		{
-			static void call(T* pThis)
-			{
-				new (pThis) T();
-			}
-		};
-
-		template<typename T>
-		struct default_construct_if_supported<T, false>
-		{
-			static void call(T*) {} // intentionally blank
-		};
-
-		///////////////////////////////////////////////////////////////////////////
-		// destroy_if_supported<T>
-		//
-		// Utility class to remove default constructor calls for types that
-		// do not support default construction.
-		//
-		// We can remove these utilities when C++17 'constexpr if' is available.
-		//
-		template<typename T, bool = eastl::is_destructible_v<T>>
-		struct destroy_if_supported
-		{
-			static void call(T* pThis)
-			{
-				pThis->~T();
-			}
-		};
-
-		template<typename T>
-		struct destroy_if_supported<T, false>
-		{
-			static void call(T*) {} // intentionally blank
-		};
-
-		///////////////////////////////////////////////////////////////////////////
-		// copy_if_supported<T>
-		//
-		// Utility class to remove copy constructor calls for types that
-		// do not support copying.
-		//
-		// We can remove these utilities when C++17 'constexpr if' is available.
-		//
-		template<typename T, bool = eastl::is_copy_constructible_v<T>>
-		struct copy_if_supported
-		{
-			static void call(T* pThis, T* pOther)
-			{
-				new (pThis) T(*pOther);
-			}
-		};
-
-		template<typename T>
-		struct copy_if_supported<T, false>
-		{
-			static void call(T*, T*) {} // intentionally blank
-		};
-
-		///////////////////////////////////////////////////////////////////////////
-		// move_if_supported<T>
-		//
-		// Utility class to remove move constructor calls for types that
-		// do not support moves.
-		//
-		// We can remove these utilities when C++17 'constexpr if' is available.
-		//
-		template<typename T, bool = eastl::is_move_constructible_v<T>>
-		struct move_if_supported
-		{
-			static void call(T* pThis, T* pOther)
-			{
-				new (pThis) T(eastl::move(*pOther));
-			}
-		};
-
-		template<typename T>
-		struct move_if_supported<T, false>
-		{
-			static void call(T*, T*) {} // intentionally blank
-		};
-	} // namespace internal
-
-
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.3, variant_npos
 	//
@@ -197,23 +102,6 @@ namespace eastl
 			virtual ~bad_variant_access() EA_NOEXCEPT {}
 		};
 	#endif
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// TODO(rparolin): JUST COPY/PASTE THIS CODE
-	//
-	inline void CheckVariantCondition(bool b)
-	{
-		EA_UNUSED(b);
-	#if EASTL_EXCEPTIONS_ENABLED
-		if (!b)
-			throw bad_variant_access();
-	#elif EASTL_ASSERT_ENABLED
-		EASTL_ASSERT_MSG(b, "eastl::bad_variant_access assert");
-	#else
-		EA_UNUSED(b);
-	#endif
-	}
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -241,239 +129,6 @@ namespace eastl
 	template <class T> struct hash;
 	template <> struct hash<monostate>
 		{ size_t operator()(monostate) const { return static_cast<size_t>(-0x42); } };
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// variant_storage
-	//
-	// This is a utility class to simplify the implementation of a storage type
-	// for a distriminted union.  This utility handles the alignment, size
-	// requirements, and data access required by the variant type.
-	//
-	template<bool IsTriviallyDestructible, class... Types>
-	struct variant_storage;
-
-
-	// variant_storage
-	//
-	// specialization for non-trivial types (must call constructors and destructors)
-	//
-	template<class... Types>
-	struct variant_storage<false, Types...>
-	{
-		enum class StorageOp
-		{
-			DEFAULT_CONSTRUCT,
-			DESTROY,
-			COPY,
-			MOVE
-		};
-
-		// handler function
-		using storage_handler_ptr = void(*)(StorageOp, void*, void*);
-		using aligned_storage_impl_t = aligned_union_t<16, Types...>;
-
-		aligned_storage_impl_t mBuffer;
-		storage_handler_ptr mpHandler = nullptr;
-
-		template<typename VariantStorageT>
-		inline void DoOp(StorageOp op, VariantStorageT&& other)  // bind to both rvalue and lvalues
-		{
-			if(mpHandler)
-				DoOp(StorageOp::DESTROY);
-
-			if (other.mpHandler)
-				mpHandler = other.mpHandler;
-
-			if(mpHandler)
-				mpHandler(op, (void*)&mBuffer, (void*)&other.mBuffer);
-		}
-
-		inline void DoOp(StorageOp op)
-		{
-			if(mpHandler)
-				mpHandler(op, &mBuffer, nullptr);
-		}
-
-		template<typename T>
-		static void DoOpImpl(StorageOp op, T* pThis, T* pOther)
-		{
-			switch (op)
-			{
-				case StorageOp::DEFAULT_CONSTRUCT:
-				{
-					internal::default_construct_if_supported<T>::call(pThis);
-				}
-				break;
-
-				case StorageOp::DESTROY:
-				{
-					internal::destroy_if_supported<T>::call(pThis);
-				}
-				break;
-
-				case StorageOp::COPY:
-				{
-					internal::copy_if_supported<T>::call(pThis, pOther);
-				}
-				break;
-
-				case StorageOp::MOVE:
-				{
-					internal::move_if_supported<T>::call(pThis, pOther);
-				}
-				break;
-
-				default: {} break;
-			};
-		}
-
-	public:
-		variant_storage()
-		{
-			DoOp(StorageOp::DEFAULT_CONSTRUCT);
-		}
-
-		~variant_storage()
-		{
-			DoOp(StorageOp::DESTROY);
-		}
-
-		variant_storage(const variant_storage& other)
-		{
-			DoOp(StorageOp::COPY, other);
-		}
-
-		variant_storage(variant_storage&& other)
-		{
-			DoOp(StorageOp::MOVE, other);
-		}
-
-		variant_storage& operator=(const variant_storage& other)
-		{
-			DoOp(StorageOp::COPY, other);
-			return *this;
-		}
-
-		variant_storage& operator=(variant_storage&& other)
-		{
-			DoOp(StorageOp::MOVE, eastl::move(other));
-			return *this;
-		}
-
-		template <typename T, typename... Args>
-		void set_as(Args&&... args)
-		{
-			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
-			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
-			// the user provided variant type-list.
-			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(T), "T is larger than local buffer size");
-
-			using RT = remove_reference_t<T>;
-
-			new (&mBuffer) RT(eastl::forward<Args>(args)...);
-
-			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
-		}
-
-		template <typename T, typename U, typename... Args>
-		void set_as(std::initializer_list<U> il, Args&&... args)
-		{
-			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
-			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
-			// the user provided variant type-list.
-			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(T), "T is larger than local buffer size");
-
-			using RT = remove_reference_t<T>;
-
-			new (&mBuffer) RT(il, eastl::forward<Args>(args)...);
-
-			mpHandler = (storage_handler_ptr)&DoOpImpl<RT>;
-		}
-
-		template<typename T>
-		T get_as()
-		{
-			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
-			return reinterpret_cast<T>(&mBuffer);
-		}
-
-		template<typename T>
-		const T get_as() const
-		{
-			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
-			return reinterpret_cast<const T>(reinterpret_cast<uintptr_t>(&mBuffer));
-		}
-
-		void destroy()
-		{
-			DoOp(StorageOp::DESTROY);
-		}
-	};
-
-
-	// variant_storage
-	//
-	// specialization for trivial types
-	//
-	template<class... Types>
-	struct variant_storage<true, Types...>
-	{
-		using aligned_storage_impl_t = aligned_union_t<16, Types...>;
-		aligned_storage_impl_t mBuffer;
-
-	public:
-
-		// NOTE(rparolin): Since this is the specialization for trivial types can we potentially remove all the
-		// defaulted special constructors.  Consider removing this.
-		//
-		// variant_storage() = default;
-		// ~variant_storage() = default;
-		// variant_storage(const variant_storage& other) = default;
-		// variant_storage(variant_storage&& other) = default;
-		// variant_storage& operator=(const variant_storage& other) = default;
-		// variant_storage& operator=(variant_storage&& other) = default;
-
-		template <typename T, typename... Args>
-		void set_as(Args&&... args)
-		{
-			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
-			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
-			// the user provided variant type-list.
-			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(T), "T is larger than local buffer size");
-			new (&mBuffer) remove_reference_t<T>(eastl::forward<Args>(args)...);
-
-			// mpHandler = ...; // member does not exist in this template specialization
-		}
-
-		template <typename T, typename U, typename... Args>
-		void set_as(std::initializer_list<U> il, Args&&... args)
-		{
-			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
-			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
-			// the user provided variant type-list.
-			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(T), "T is larger than local buffer size");
-			new (&mBuffer) remove_reference_t<T>(il, eastl::forward<Args>(args)...);
-
-			// mpHandler = ...; // member does not exist in this template specialization
-		}
-
-		template<typename T>
-		T get_as()
-		{
-			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
-			return reinterpret_cast<T>(&mBuffer);
-		}
-
-		template<typename T>
-		const T get_as() const
-		{
-			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
-			return reinterpret_cast<const T>(reinterpret_cast<uintptr_t>(&mBuffer));
-		}
-
-		void destroy() {}
-	};
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -533,9 +188,49 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.11, hash support
 	//
+	namespace internal {
+	template<class Variant, bool enabled>
+	struct variant_hash {};
+
+	template<class Variant>
+	struct variant_hash<Variant, true>
+	{
+		size_t operator()(const Variant& obj) const
+		{
+			if (obj.valueless_by_exception())
+				return 0;
+
+			auto genericVisitor = [](const auto& thisAlternative)
+			{
+				using alternative_t = remove_const_t<remove_reference_t<decltype(thisAlternative)>>;
+				return hash<alternative_t>{}(thisAlternative);
+			};
+
+			const size_t alternativeHash = visit(genericVisitor, obj);
+
+			return (alternativeHash * 16777619) ^ obj.index();
+		}
+	};
+
+	template<class, class, class = void>
+	struct is_hasher_for : public false_type {};
+
+	template<class Hash, class Key>
+	struct is_hasher_for <Hash, Key, void_t<
+		decltype(Hash()) // default constructible
+		, decltype(Hash(declval<Hash>())) // copy constructible
+		, decltype(declval<Hash>() = declval<const Hash&>()) // copy assignable
+		, decltype(swap(declval<Hash>(), declval<Hash>())) // swappable
+		, decltype(size_t(declval<const Hash>()(declval<const Key&>()))) // function object
+		>> : public true_type {};
+
+	template <class Hash, class Key>
+	constexpr bool is_hasher_for_v = is_hasher_for<Hash, Key>::value;
+	} // namespace internal
+
 	template <class... Types>
-	struct hash<variant<Types...> >
-		{ size_t operator()(const variant<Types...>&) const { return static_cast<size_t>(-0x42); } };
+	struct hash<variant<Types...>>
+		: public internal::variant_hash<variant<Types...>, conjunction_v<internal::is_hasher_for<hash<remove_const_t<Types>>, Types>...>> {};
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -546,7 +241,7 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return (!pv || pv->index() != I) ? nullptr : pv->mStorage.template get_as<return_type>();
+		return (!pv || pv->index() != I) ? nullptr : pv->template get_as<return_type>();
 	}
 
 	template <size_t I, class... Types, enable_if_t<I < sizeof...(Types), bool> = true>
@@ -554,7 +249,7 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return (!pv || pv->index() != I) ? nullptr : pv->mStorage.template get_as<return_type>();
+		return (!pv || pv->index() != I) ? nullptr : pv->template get_as<return_type>();
 	}
 
 	template <class T, class... Types, size_t I = meta::get_type_index_v<T, Types...>, enable_if_t<I < sizeof...(Types) && meta::duplicate_type_check_v<T, Types...>, bool> = true>
@@ -578,7 +273,10 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return *v.mStorage.template get_as<return_type>();
+		if (v.index() != I)
+			EASTL_THROW_OR_ASSERT(bad_variant_access, "get -- bad_variant_access");
+
+		return *v.template get_as<return_type>();
 	}
 
 	template <size_t I, class... Types, enable_if_t<I < sizeof...(Types), bool> = true>
@@ -586,7 +284,10 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return eastl::move(*v.mStorage.template get_as<return_type>());
+		if (v.index() != I)
+			EASTL_THROW_OR_ASSERT(bad_variant_access, "get -- bad_variant_access");
+
+		return eastl::move(*v.template get_as<return_type>());
 	}
 
 	template <size_t I, class... Types, enable_if_t<I < sizeof...(Types), bool> = true>
@@ -594,7 +295,10 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return *v.mStorage.template get_as<return_type>();
+		if (v.index() != I)
+			EASTL_THROW_OR_ASSERT(bad_variant_access, "get -- bad_variant_access");
+
+		return *v.template get_as<return_type>();
 	}
 
 	template <size_t I, class... Types, enable_if_t<I < sizeof...(Types), bool> = true>
@@ -602,7 +306,10 @@ namespace eastl
 	{
 		using return_type = add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-		return eastl::move(*v.mStorage.template get_as<return_type>());
+		if (v.index() != I)
+			EASTL_THROW_OR_ASSERT(bad_variant_access, "get -- bad_variant_access");
+
+		return eastl::move(*v.template get_as<return_type>());
 	}
 
 	template <class T, class... Types, size_t I = meta::get_type_index_v<T, Types...>, enable_if_t<I < sizeof...(Types) && meta::duplicate_type_check_v<T, Types...>, bool> = true>
@@ -626,7 +333,7 @@ namespace eastl
 	template <class T, class... Types, size_t I = meta::get_type_index_v<T, Types...>, enable_if_t<I < sizeof...(Types) && meta::duplicate_type_check_v<T, Types...>, bool> = true>
 	EA_CONSTEXPR const T&& get(const variant<Types...>&& v)
 	{
-		return get<I>(v);
+		return get<I>(eastl::move(v));
 	}
 
 
@@ -640,76 +347,422 @@ namespace eastl
 	}
 
 
+	namespace internal {
+	template<typename T, bool = eastl::is_nothrow_copy_constructible_v<T> || !eastl::is_nothrow_move_constructible_v<T>>
+	struct emplace_or_move_assign
+	{
+		template<size_t I, typename... Types>
+		static void call(variant<Types...>& obj, const T& rhs)
+		{
+			obj.template emplace<I>(rhs);
+		}
+	};
+
+	template<typename T>
+	struct emplace_or_move_assign<T, false>
+	{
+		template<size_t I, typename... Types>
+		static void call(variant<Types...>& obj, const T& rhs)
+		{
+			obj = variant<Types...>(rhs);
+		}
+	};
+
+	template<typename T_j, typename T, bool = eastl::is_nothrow_constructible_v<T_j, T> || !eastl::is_nothrow_move_constructible_v<T_j>>
+	struct converting_emplace
+	{
+		template<size_t I, typename... Types>
+		static void call(variant<Types...>& obj, T&& rhs)
+		{
+			obj.template emplace<I>(eastl::forward<T>(rhs));
+		}
+	};
+
+	template<typename T_j, typename T>
+	struct converting_emplace<T_j, T, false>
+	{
+		template<size_t I, typename... Types>
+		static void call(variant<Types...>& obj, T&& rhs)
+		{
+			obj.template emplace<I>(T_j(eastl::forward<T>(rhs)));
+		}
+	};
+
+	template <typename Visitor, typename Variant>
+	EA_CPP14_CONSTEXPR decltype(auto) visit_with_index(Visitor&& visitor, Variant&& variant);
+
+	///////////////////////////////////////////////////////////////////////////
+	// variant_storage
+	//
+	// This is a utility class to simplify the implementation of a storage type
+	// for a distriminted union.  This utility handles the alignment, size
+	// requirements, and data access required by the variant type.
+	//
+	template<bool IsTriviallyDestructible, class... Types>
+	struct variant_storage;
+
+	// reinterpret_cast used between related classes: 'variant_storage' and 'variant'
+	// MSVC incorrectly raises this warning - the warning can be surpressed by using a static_cast, but Clang correctly catches this as an error;
+	// variant_storage is a *private* base class.
+	EA_DISABLE_VC_WARNING(4946)
+
+	// variant_storage
+	//
+	// specialization for non-trivially destructible types
+	//
+	template<class... Types>
+	struct variant_storage<false, Types...>
+	{
+		using aligned_storage_impl_t = aligned_union_t<1, Types...>;
+
+		size_t mIndex;
+		aligned_storage_impl_t mBuffer;
+
+		~variant_storage()
+		{
+			if (!this->valueless_by_exception())
+				destroy();
+		}
+
+		// precondition:
+		//	!this->valueless_by_exception()
+		void destroy()
+		{
+			auto genericVisitor = [](auto& thisAlternative)
+			{
+				using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+				thisAlternative.~alternative_t();
+			};
+
+			visit(genericVisitor, reinterpret_cast<variant<Types...>&>(*this));
+		}
+
+		EA_CONSTEXPR size_t index() const EA_NOEXCEPT
+		{
+			return this->mIndex;
+		}
+
+		EA_CONSTEXPR bool valueless_by_exception() const EA_NOEXCEPT
+		{
+#if EASTL_EXCEPTIONS_ENABLED
+			return this->mIndex == variant_npos;
+#else
+			return false;
+#endif
+		}
+	};
+
+
+	// variant_storage
+	//
+	// specialization for trivially destructible types
+	//
+	template<class... Types>
+	struct variant_storage<true, Types...>
+	{
+		using aligned_storage_impl_t = aligned_union_t<1, Types...>;
+
+		size_t mIndex;
+		aligned_storage_impl_t mBuffer;
+
+		void destroy()
+		{
+			// trivially destructible, no op.
+		}
+
+		EA_CONSTEXPR size_t index() const EA_NOEXCEPT
+		{
+			return this->mIndex;
+		}
+
+		EA_CONSTEXPR bool valueless_by_exception() const EA_NOEXCEPT
+		{
+#if EASTL_EXCEPTIONS_ENABLED
+			return this->mIndex == variant_npos;
+#else
+			return false;
+#endif
+		}
+	};
+
+	template<class... Types>
+	struct variant_base : protected variant_storage<conjunction_v<is_trivially_destructible<Types>...>, Types...>
+	{
+		using variant_storage_t = variant_storage<conjunction_v<is_trivially_destructible<Types>...>, Types...>;
+		using aligned_storage_impl_t = typename variant_storage_t::aligned_storage_impl_t;
+
+		EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because construct_as<I>() may always throw
+			                        // (because alternative_type(args...) throws).
+		template <size_t I, typename... Args>
+		void construct_as(Args&&... args)
+		{
+			using alternative_type = variant_alternative_t<I, variant<Types...>>;
+
+			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
+			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
+			// the user provided variant type-list.
+			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(alternative_type), "alternative_type is larger than local buffer size");
+
+			new (&this->mBuffer) alternative_type(eastl::forward<Args>(args)...);
+			this->mIndex = I;
+		}
+
+		template <size_t I, typename U, typename... Args>
+		void construct_as(std::initializer_list<U> il, Args&&... args)
+		{
+			using alternative_type = variant_alternative_t<I, variant<Types...>>;
+
+			// NOTE(rparolin): If this assert fires there is an EASTL problem picking the size of the local buffer which
+			// variant_storage used to store types. The size selected should be large enough to hold the largest type in
+			// the user provided variant type-list.
+			static_assert(sizeof(aligned_storage_impl_t) >= sizeof(alternative_type), "alternative_type is larger than local buffer size");
+
+			new (&this->mBuffer) alternative_type(il, eastl::forward<Args>(args)...);
+			this->mIndex = I;
+		}
+		EA_RESTORE_VC_WARNING()
+
+		template<typename T>
+		T get_as()
+		{
+			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
+			return reinterpret_cast<T>(&this->mBuffer);
+		}
+
+		template<typename T>
+		const T get_as() const
+		{
+			static_assert(eastl::is_pointer_v<T>, "T must be a pointer type");
+			return reinterpret_cast<const T>(reinterpret_cast<uintptr_t>(&this->mBuffer));
+		}
+
+#if !EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		variant_base() = default;
+#endif
+
+		// copy constructor
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		void ConstructFrom(const variant_base& rhs)
+#else
+		variant_base(const variant_base& rhs)
+#endif
+		{
+			this->mIndex = rhs.mIndex;
+
+			auto genericVisitor = [&rhs](auto& thisAlternative)
+			{
+				using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+				new (&thisAlternative) alternative_t(*rhs.template get_as<const alternative_t*>());
+			};
+
+			if(!rhs.valueless_by_exception())
+				visit(genericVisitor, reinterpret_cast<variant<Types...>&>(*this));
+		}
+
+		// move constructor
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		EA_CONSTEXPR void ConstructFrom(variant_base&& rhs) EA_NOEXCEPT(conjunction_v<is_nothrow_move_constructible<Types>...>)
+#else
+		variant_base(variant_base&& rhs)
+#endif
+		{
+			this->mIndex = rhs.mIndex;
+
+			auto genericVisitor = [&rhs](auto& thisAlternative)
+			{
+				using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+				new (&thisAlternative) alternative_t(eastl::move(*rhs.template get_as<alternative_t*>()));
+			};
+
+			if (!rhs.valueless_by_exception())
+				visit(genericVisitor, reinterpret_cast<variant<Types...>&>(*this));
+		}
+
+		// copy assignment
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		void AssignFrom(const variant_base& rhs)
+			EA_NOEXCEPT(conjunction_v<conjunction<is_nothrow_copy_constructible<Types>...>,
+				conjunction<is_nothrow_copy_assignable<Types>...>>)
+#else
+		variant_base& operator=(const variant_base& rhs)
+#endif
+		{
+			if (this->valueless_by_exception() && rhs.valueless_by_exception())
+			{
+				// no op
+			}
+			else if (!this->valueless_by_exception() && rhs.valueless_by_exception())
+			{
+				this->destroy();
+				this->mIndex = variant_npos;
+			}
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			else if (!this->valueless_by_exception() && this->mIndex == rhs.mIndex)
+			{
+				auto genericVisitor = [&rhs](auto& thisAlternative)
+				{
+					using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+					thisAlternative = *rhs.template get_as<alternative_t*>();
+				};
+
+				visit(genericVisitor, reinterpret_cast<variant<Types...>&>(*this));
+			}
+#endif
+			else
+			{
+				auto genericVisitor = [this](auto idxConstant, const auto& rhsAlternative)
+				{
+					constexpr size_t I = idxConstant();
+					using alternative_t = remove_cvref_t<decltype(rhsAlternative)>;
+					emplace_or_move_assign<alternative_t>::template call<I>(reinterpret_cast<variant<Types...>&>(*this), rhsAlternative);
+				};
+
+				visit_with_index(genericVisitor, reinterpret_cast<const variant<Types...>&>(rhs));
+			}
+
+#if !EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			return *this;
+#endif
+		}
+
+		// move assignment
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		void AssignFrom(variant_base&& rhs)
+			EA_NOEXCEPT(conjunction_v<conjunction<is_nothrow_move_constructible<Types>...>,
+				conjunction<is_nothrow_move_assignable<Types>...>>)
+#else
+		variant_base& operator=(variant_base&& rhs)
+#endif
+		{
+			if (this->valueless_by_exception() && rhs.valueless_by_exception())
+			{
+				// no op
+			}
+			else if (!this->valueless_by_exception() && rhs.valueless_by_exception())
+			{
+				this->destroy();
+				this->mIndex = variant_npos;
+			}
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			else if (!this->valueless_by_exception() && this->mIndex == rhs.mIndex)
+			{
+				auto genericVisitor = [&rhs](auto& thisAlternative)
+				{
+					using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+					thisAlternative = eastl::move(*rhs.template get_as<alternative_t*>());
+				};
+
+				visit(genericVisitor, reinterpret_cast<variant<Types...>&>(*this));
+			}
+#endif
+			else
+			{
+				auto genericVisitor = [this](auto idxConstant, auto& rhsAlternative)
+				{
+					constexpr size_t I = idxConstant();
+					reinterpret_cast<variant<Types...>&>(*this).template emplace<I>(eastl::move(rhsAlternative));
+				};
+
+				visit_with_index(genericVisitor, reinterpret_cast<variant<Types...>&>(rhs));
+			}
+
+#if !EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			return *this;
+#endif
+		}
+	};
+
+	EA_RESTORE_VC_WARNING() // 4946
+
+	template<typename>
+	constexpr bool is_in_place_type_specialization_v = false;
+
+	template<typename T>
+	constexpr bool is_in_place_type_specialization_v<in_place_type_t<T>> = true;
+
+	template<typename>
+	constexpr bool is_in_place_index_specialization_v = false;
+
+	template<size_t Idx>
+	constexpr bool is_in_place_index_specialization_v<in_place_index_t<Idx>> = true;
+
+	// this could be a generic lambda, except that MSVC and Clang disagree with whether constants need to be in the capture list and MSVC (circa 2024) doesn't
+	// recognize constants passed in the capture list as constant in the lambda body.
+	template<typename LhsAlternative, size_t LhsAlternativeIndex, typename... Types>
+	struct swap_visitor
+	{
+		variant<Types...>& lhs;
+		variant<Types...>& rhs;
+		LhsAlternative& lhsAlternative;
+
+		template<typename IntConstant, typename RhsAlternative>
+		void operator()(IntConstant rhsIdxConstant, RhsAlternative& rhsAlternative)
+		{
+			constexpr size_t RhsAlternativeIndex = rhsIdxConstant();
+
+			LhsAlternative temp(eastl::move(lhsAlternative));
+			lhs.template emplace<RhsAlternativeIndex>(eastl::move(rhsAlternative));
+			rhs.template emplace<LhsAlternativeIndex>(eastl::move(temp));
+		};
+	};
+	} // namespace internal
+
+
 	///////////////////////////////////////////////////////////////////////////
 	// 20.7.2, variant
 	//
 	template <class... Types>
 	class variant
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+		: private internal::EnableVariantOptionalSpecialMemberFunctions<internal::variant_base<Types...>, Types...>
 	{
+		using base_type = internal::EnableVariantOptionalSpecialMemberFunctions<internal::variant_base<Types...>, Types...>;
+#else
+		: private internal::variant_base<Types...>
+	{
+		using base_type = internal::variant_base<Types...>;
+#endif
+
+		using T_0 = variant_alternative_t<0, variant>;  // alias for the 1st type in the variadic pack
+
 		static_assert(sizeof...(Types) > 0,                           "variant must have at least 1 type (empty variants are ill-formed)");
-		static_assert(disjunction_v<is_void<Types>...> == false,      "variant does not allow void as an alternative type");
-		static_assert(disjunction_v<is_reference<Types>...> == false, "variant does not allow references as an alternative type");
-		static_assert(disjunction_v<is_array<Types>...> == false,     "variant does not allow arrays as an alternative type");
+		static_assert(disjunction_v<is_reference<Types>...> == false, "variant alternative types must be destructible (non-reference)");
+		static_assert(disjunction_v<is_array<Types>...> == false,     "variant alternative types must be destructible (non-array)");
+		static_assert(conjunction_v<is_destructible<Types>...>,		  "variant alternative types must be destructible");
 
-		using variant_index_t = size_t;
-		using variant_storage_t = variant_storage<conjunction_v<is_trivially_destructible<Types>...>, Types...>;
-		using T_0 = variant_alternative_t<0, variant<Types...>>;  // alias for the 1st type in the variadic pack
-
-		///////////////////////////////////////////////////////////////////////////
-		// variant data members
-		//
-		variant_index_t mIndex;
-		variant_storage_t mStorage;
+		using variant_storage_t = typename base_type::variant_storage_t;
 
 	public:
+
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.1, constructors
 		//
 
 		// Only participates in overload resolution when the first alternative is default constructible
-		template <typename TT0 = T_0, typename = enable_if_t<is_default_constructible_v<TT0>>>
-		EA_CONSTEXPR variant() EA_NOEXCEPT : mIndex(variant_npos), mStorage()
+		template <typename TT0 = T_0, enable_if_t<is_default_constructible_v<TT0>, bool> = true>
+		EA_CONSTEXPR variant() EA_NOEXCEPT(eastl::is_nothrow_default_constructible_v<TT0>)
 		{
-			mIndex = static_cast<variant_index_t>(0);
-			mStorage.template set_as<T_0>();
+			this->template construct_as<0>();
 		}
 
-		// Only participates in overload resolution if is_copy_constructible_v<T_i> is true for all T_i in Types....
-		template <bool enable = conjunction_v<is_copy_constructible<Types>...>,
-		          typename = enable_if_t<enable>> // add a dependent type to enable sfinae
-		variant(const variant& other)
-		{
-			if (this != &other)
-			{
-				mIndex = other.mIndex;
-				mStorage = other.mStorage;
-			}
-		}
-
-		// Only participates in overload resolution if is_move_constructible_v<T_i> is true for all T_i in Types...
-		template <bool enable = conjunction_v<is_move_constructible<Types>...>, typename = enable_if_t<enable>> // add a dependent type to enable sfinae
-		EA_CONSTEXPR variant(variant&& other) EA_NOEXCEPT(conjunction_v<is_move_constructible<Types>...>)
-		    : mIndex(variant_npos), mStorage()
-		{
-			if(this != &other)
-			{
-				mIndex = other.mIndex;
-				mStorage = eastl::move(other.mStorage);
-			}
-		}
+		// implemented by EnableVariantOptionalSpecialMemberFunctions<...>
+		variant(const variant&) = default;
+		variant(variant&&) = default;
 
 		// Conversion constructor
 		template <typename T,
-		          typename T_j = meta::overload_resolution_t<T, meta::overload_set<Types...>>,
-		          size_t I = meta::get_type_index_v<decay_t<T_j>, Types...>,
-				  enable_if_t<!is_same_v<decay_t<T>, variant> && I < sizeof...(Types) && meta::duplicate_type_check_v<T_j, Types...>, bool> = true>
-		EA_CONSTEXPR variant(T&& t) EA_NOEXCEPT(is_nothrow_constructible_v<T_j, T>)
-		   : mIndex(variant_npos), mStorage()
+			typename T_j = meta::overload_resolution_t<T, meta::overload_set<Types...>>,
+			size_t I = meta::get_type_index_v<remove_cvref_t<T_j>, Types...>,
+			enable_if_t<(sizeof...(Types) > 0) &&
+				I < sizeof...(Types) &&
+				!is_same_v<remove_cvref_t<T>, variant> &&
+				!internal::is_in_place_type_specialization_v<remove_cvref_t<T>> &&
+				!internal::is_in_place_index_specialization_v<remove_cvref_t<T>> &&
+				eastl::is_constructible_v<T_j, T>, bool> = true>
+			EA_CONSTEXPR variant(T&& t) EA_NOEXCEPT(is_nothrow_constructible_v<T_j, T>)
 		{
-			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T>(t));
+			this->template construct_as<I>(eastl::forward<T>(t));
 		}
-
 
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.1, in_place_t constructors
@@ -717,45 +770,43 @@ namespace eastl
 		template <
 			class T,
 			class... Args,
-			class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>>
-		EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, Args&&... args)
-			: variant(in_place<meta::get_type_index_v<T, Types...>>, eastl::forward<Args>(args)...)
+			enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, bool> = true>
+			EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, Args&&... args)
+			: variant(in_place_index<meta::get_type_index_v<T, Types...>>, eastl::forward<Args>(args)...)
 		{}
 
 		template <
-		    class T,
-		    class U,
-		    class... Args,
-		    class = enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, T>>
-		EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-		    : variant(in_place<meta::get_type_index_v<T, Types...>>, il, eastl::forward<Args>(args)...)
+			class T,
+			class U,
+			class... Args,
+			enable_if_t<conjunction_v<meta::duplicate_type_check<T, Types...>, is_constructible<T, Args...>>, bool> = true>
+			EA_CPP14_CONSTEXPR explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
+			: variant(in_place_index<meta::get_type_index_v<T, Types...>>, il, eastl::forward<Args>(args)...)
 		{}
 
 		template <size_t I,
-		          class... Args,
-		          class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
-		                                            is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>>
-		EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, Args&&... args)
-		    : mIndex(I)
+			class... Args,
+			enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
+			is_constructible<meta::get_type_at_t<I, Types...>, Args...>>, bool> = true>
+			EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, Args&&... args)
 		{
-			mStorage.template set_as<meta::get_type_at_t<I, Types...>>(eastl::forward<Args>(args)...);
+			this->template construct_as<I>(eastl::forward<Args>(args)...);
 		}
 
 		template <size_t I,
-		          class U,
-		          class... Args,
-		          class = enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
-		                                            is_constructible<meta::get_type_at_t<I, Types...>, Args...>>>>
-		EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-		    : mIndex(I)
+			class U,
+			class... Args,
+			enable_if_t<conjunction_v<integral_constant<bool, (I < sizeof...(Types))>,
+			is_constructible<meta::get_type_at_t<I, Types...>, Args...>>, bool> = true>
+			EA_CPP14_CONSTEXPR explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
 		{
-			mStorage.template set_as<meta::get_type_at_t<I, Types...>>(il, eastl::forward<Args>(args)...);
+			this->template construct_as<I>(il, eastl::forward<Args>(args)...);
 		}
-
 
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.2, destructor
 		//
+		// implemented by EnableVariantOptionalSpecialMemberFunctions<...>
 		~variant() = default;
 
 
@@ -770,8 +821,8 @@ namespace eastl
 		    class T,
 		    class... Args,
 		    size_t I = meta::get_type_index_v<T, Types...>,
-		    typename = enable_if_t<conjunction_v<is_constructible<T, Args...>, meta::duplicate_type_check<T, Types...>>>>
-		decltype(auto) emplace(Args&&... args)
+		    enable_if_t<conjunction_v<is_constructible<T, Args...>, meta::duplicate_type_check<T, Types...>>, bool> = true>
+		EA_CPP20_CONSTEXPR decltype(auto) emplace(Args&&... args)
 		{
 			return emplace<I>(eastl::forward<Args>(args)...);
 		}
@@ -783,9 +834,9 @@ namespace eastl
 		          class U,
 		          class... Args,
 		          size_t I = meta::get_type_index_v<T, Types...>,
-		          typename = enable_if_t<conjunction_v<is_constructible<T, std::initializer_list<U>&, Args...>,
-		                                               meta::duplicate_type_check<T, Types...>>>>
-		decltype(auto) emplace(std::initializer_list<U> il, Args&&... args)
+		          enable_if_t<conjunction_v<is_constructible<T, std::initializer_list<U>&, Args...>,
+		                                               meta::duplicate_type_check<T, Types...>>, bool> = true>
+		EA_CPP20_CONSTEXPR decltype(auto) emplace(std::initializer_list<U> il, Args&&... args)
 		{
 			return emplace<I>(il, eastl::forward<T>(args)...);
 		}
@@ -796,26 +847,24 @@ namespace eastl
 		// std::is_constructible_v<T_I, Args...> is true. The behavior is undefined if I is not less than
 		// sizeof...(Types).
 		//
-		EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because set_as<T>() may always throws (because T(args...) throws).
+		EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because construct_as<I>() may always throws (because T(args...) throws).
 		template <size_t I,
 		          class... Args,
 		          typename T = meta::get_type_at_t<I, Types...>,
-		          typename =
-		              enable_if_t<conjunction_v<is_constructible<T, Args...>, meta::duplicate_type_check<T, Types...>>>>
-		variant_alternative_t<I, variant>& emplace(Args&&... args)
+		          enable_if_t<is_constructible_v<T, Args...>, bool> = true>
+		EA_CPP20_CONSTEXPR variant_alternative_t<I, variant>& emplace(Args&&... args)
 		{
 			if (!valueless_by_exception())
 			{
-				mStorage.destroy();
+				this->destroy();
 
 				#if EASTL_EXCEPTIONS_ENABLED
-					mIndex = static_cast<variant_index_t>(variant_npos);
+					this->mIndex = static_cast<size_t>(variant_npos);
 				#endif
 			}
 
-			mStorage.template set_as<T>(eastl::forward<Args>(args)...);
-			mIndex = static_cast<variant_index_t>(I);
-			return *reinterpret_cast<T*>(&mStorage.mBuffer);
+			this->template construct_as<I>(eastl::forward<Args>(args)...);
+			return *reinterpret_cast<T*>(&this->mBuffer);
 		}
 		EA_RESTORE_VC_WARNING()
 
@@ -825,26 +874,25 @@ namespace eastl
 		// std::is_constructible_v<T_I, initializer_list<U>&, Args...> is true. The behavior is undefined if I is not
 		// less than sizeof...(Types).
 		//
-		EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because set_as<T>() may always throws (because T(args...) throws).
+		EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because construct_as<I>() may always throws (because T(args...) throws).
 		template <size_t I,
 		          class U,
 		          class... Args,
 		          typename T = meta::get_type_at_t<I, Types...>,
-		          typename = enable_if_t<conjunction_v<is_constructible<T, std::initializer_list<U>&, Args...>, meta::duplicate_type_check<T, Types...>>>>
-		variant_alternative_t<I, variant>& emplace(std::initializer_list<U> il, Args&&... args)
+		          enable_if_t<is_constructible_v<T, std::initializer_list<U>&, Args...>, bool> = true>
+		EA_CPP20_CONSTEXPR variant_alternative_t<I, variant>& emplace(std::initializer_list<U> il, Args&&... args)
 		{
 			if (!valueless_by_exception())
 			{
-				mStorage.destroy();
+				this->destroy();
 
 				#if EASTL_EXCEPTIONS_ENABLED
-					mIndex = static_cast<variant_index_t>(variant_npos);
+					this->mIndex = static_cast<size_t>(variant_npos);
 				#endif
 			}
 
-			mStorage.template set_as<T>(il, eastl::forward<Args>(args)...);
-			mIndex = static_cast<variant_index_t>(I);
-			return *reinterpret_cast<T*>(&mStorage.mBuffer);
+			this->template construct_as<I>(il, eastl::forward<Args>(args)...);
+			return *reinterpret_cast<T*>(&this->mBuffer);
 		}
 		EA_RESTORE_VC_WARNING()
 
@@ -852,51 +900,34 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.3, assignment
 		//
+
+		// implemented by EnableVariantOptionalSpecialMemberFunctions<...>
+		variant& operator=(const variant&) = default;
+		variant& operator=(variant&&) = default;
+
 		template <class T,
 		          typename T_j = meta::overload_resolution_t<T, meta::overload_set<Types...>>,
 		          size_t I = meta::get_type_index_v<decay_t<T_j>, Types...>,
-		          enable_if_t<!eastl::is_same_v<decay_t<T>, variant> && eastl::is_assignable_v<T_j&, T> &&
-		                                 eastl::is_constructible_v<T_j, T> && I < sizeof...(Types) && meta::duplicate_type_check_v<T_j, Types...>, bool> = true>
+		          enable_if_t<!eastl::is_same_v<eastl::remove_cvref_t<T>, variant> && eastl::is_assignable_v<T_j&, T> &&
+		              eastl::is_constructible_v<T_j, T>, bool> = true>
 		EA_CPP14_CONSTEXPR variant& operator=(T&& t)
 		    EA_NOEXCEPT(conjunction_v<is_nothrow_assignable<T_j&, T>, is_nothrow_constructible<T_j, T>>)
 		{
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			if (this->mIndex == I) // already holds a T_j
+			{
+				*this->template get_as<T_j*>() = eastl::forward<T>(t);
+			}
+			else
+			{
+				internal::converting_emplace<T_j, T>::template call<I>(*this, eastl::forward<T>(t));
+			}
+#else
 			if (!valueless_by_exception())
-				mStorage.destroy();
+				this->destroy();
 
-			mIndex = static_cast<variant_index_t>(I);
-			mStorage.template set_as<T_j>(eastl::forward<T>(t));
-			return *this;
-		}
-
-
-		// Only participates in overload resolution if is_copy_constructible_v<T_i> && is_copy_assignable_v<T_i> is true
-		// for all T_i in Types....
-		template <bool enable = conjunction_v<conjunction<is_copy_constructible<Types>...>,
-		                                      conjunction<is_copy_assignable<Types>...>>,
-		          typename = enable_if_t<enable>> // add a dependent type to enable sfinae
-		variant& operator=(const variant& other)
-		{
-			if (this != &other)
-			{
-				mIndex = other.mIndex;
-				mStorage = other.mStorage;
-			}
-			return *this;
-		}
-
-		// Only participates in overload resolution if is_move_constructible_v<T_i> && is_move_assignable_v<T_i> is true for all T_i in Types....
-		template <bool enable = conjunction_v<conjunction<is_move_constructible<Types>...>,
-		                                      conjunction<is_move_assignable<Types>...>>,
-		          typename = enable_if_t<enable>> // add a dependent type to enable sfinae
-		variant& operator=(variant&& other)
-		    EA_NOEXCEPT(conjunction_v<conjunction<is_nothrow_move_constructible<Types>...>,
-		                              conjunction<is_nothrow_move_assignable<Types>...>>)
-		{
-			if (this != &other)
-			{
-				mIndex = eastl::move(other.mIndex);
-				mStorage = eastl::move(other.mStorage);
-			}
+			this->template construct_as<I>(eastl::forward<T>(t));
+#endif
 			return *this;
 		}
 
@@ -904,23 +935,8 @@ namespace eastl
 		///////////////////////////////////////////////////////////////////////////
 		// 20.7.2.5, value status
 		//
-		EA_CONSTEXPR size_t index() const EA_NOEXCEPT
-		{
-			#if EASTL_EXCEPTIONS_ENABLED
-				return valueless_by_exception() ? variant_npos : mIndex;
-			#else
-				return mIndex;
-			#endif
-		}
-
-		EA_CONSTEXPR bool valueless_by_exception() const EA_NOEXCEPT
-		{
-			#if EASTL_EXCEPTIONS_ENABLED
-				return mIndex == variant_npos;
-			#else
-				return false;
-			#endif
-		}
+		using base_type::index;
+		using base_type::valueless_by_exception;
 
 
 		///////////////////////////////////////////////////////////////////////////
@@ -929,8 +945,64 @@ namespace eastl
 		void swap(variant& other)
 			EA_NOEXCEPT(conjunction_v<is_nothrow_move_constructible<Types>..., is_nothrow_swappable<Types>...>)
 		{
-			eastl::swap(mIndex, other.mIndex);
-			eastl::swap(mStorage, other.mStorage);
+			if (this->valueless_by_exception() && other.valueless_by_exception())
+			{
+				// no op
+			}
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_APRIL)
+			else if (this->mIndex == other.mIndex)
+			{
+				auto genericVisitor = [&other](auto& thisAlternative)
+				{
+					using alternative_t = remove_reference_t<decltype(thisAlternative)>;
+
+					using eastl::swap;
+					swap(thisAlternative, *other.template get_as<alternative_t*>());
+				};
+
+				visit(genericVisitor, *this);
+			}
+#endif
+			else if (this->valueless_by_exception() && !other.valueless_by_exception())
+			{
+				auto genericVisitor = [this](auto idxConstant, auto&& otherAlternative)
+				{
+					constexpr size_t I = idxConstant();
+					this->template construct_as<I>(eastl::move(otherAlternative));
+				};
+
+				internal::visit_with_index(genericVisitor, eastl::move(other));
+				other.destroy(); // moved variant still contains an object.
+				other.mIndex = variant_npos;
+			}
+			else if (!this->valueless_by_exception() && other.valueless_by_exception())
+			{
+				auto genericVisitor = [&other](auto idxConstant, auto&& thisAlternative)
+				{
+					constexpr size_t I = idxConstant();
+					other.template construct_as<I>(eastl::move(thisAlternative));
+				};
+
+				internal::visit_with_index(genericVisitor, eastl::move(*this));
+				this->destroy(); // moved variant still contains an object.
+				this->mIndex = variant_npos;
+			}
+			else // if (!this->valueless_by_exception() && !other.valueless_by_exception() && this->mIndex != other.mIndex)
+			{
+				// the standard specifies swap() only requires that alternative types are swappable and move constructible.
+				// therefore we can't use the assignment operator.
+
+				auto thisVisitor = [this, &other](auto thisIdxConstant, auto& thisAlternative)
+				{
+					constexpr size_t ThisAlternativeIndex = thisIdxConstant();
+					using this_alternative_t = remove_reference_t<decltype(thisAlternative)>;
+
+					internal::swap_visitor<this_alternative_t, ThisAlternativeIndex, Types...> swapVisitor{ *this, other, thisAlternative };
+					internal::visit_with_index(swapVisitor, other);
+				};
+
+				internal::visit_with_index(thisVisitor, *this);
+			}
 		}
 
 	private:
@@ -1364,9 +1436,58 @@ namespace eastl
 					  "`visit` all variants passed to eastl::visit() must have the same type");
 	}
 
+	namespace internal
+	{
+		// visit() overloads participate in overload resolution only if the visitor is callable with every combination of the variants' alternative types.
+		// informally, for a call to visit(visitor, variant1, variant2, ...):
+		//   visitor(Variant1Alt, Variant2Alt...) must be valid for every possible combination of variant alternatives, where Variant1Alt is an alternative type for Variant1, etc.
+		// see https://en.cppreference.com/w/cpp/utility/variant/visit for details.
+		template<typename ... Ts> variant<Ts...>& as_variant_impl(variant<Ts...>&);
+		template<typename ... Ts> const variant<Ts...>& as_variant_impl(const variant<Ts...>&);
+		template<typename ... Ts> variant<Ts...>&& as_variant_impl(variant<Ts...>&&);
+		template<typename ... Ts> const variant<Ts...>&& as_variant_impl(const variant<Ts...>&&);
+		template<typename T> using as_variant = decltype(as_variant_impl(declval<T>()));
+
+		struct visitor_caller_one_with_index
+		{
+			template <typename Visitor, typename Variant, size_t I>
+			static EA_CONSTEXPR decltype(auto) invoke_visitor(Visitor&& visitor, Variant&& variant)
+			{
+				return eastl::invoke(eastl::forward<Visitor>(visitor),
+					eastl::integral_constant<size_t, I>{},
+					eastl::get<I>(eastl::forward<Variant>(variant)));
+			}
+
+			template <typename Visitor, typename Variant, size_t... VariantArgIndices>
+			static EA_CPP14_CONSTEXPR decltype(auto) call_index(Visitor&& visitor, Variant&& variant, index_sequence<VariantArgIndices...>)
+			{
+				EA_CPP14_CONSTEXPR auto callers = make_visitor_array((&invoke_visitor<Visitor, Variant, VariantArgIndices>)...);
+
+				return call_visitor_at_index(eastl::move(callers), eastl::forward<Variant>(variant).index(),
+					eastl::forward<Visitor>(visitor), eastl::forward<Variant>(variant));
+			}
+
+			template <typename Visitor, typename Variant>
+			static EA_CONSTEXPR decltype(auto) call(Visitor&& visitor, Variant&& variant)
+			{
+				return call_index(eastl::forward<Visitor>(visitor),
+					eastl::forward<Variant>(variant),
+					make_index_sequence<variant_size_v<decay_t<Variant>>>{});
+			}
+
+		};
+
+		// internal only, so asserts & validation are omitted.
+		template <typename Visitor, typename Variant>
+		EA_CPP14_CONSTEXPR decltype(auto) visit_with_index(Visitor&& visitor, Variant&& variant)
+		{
+			return visitor_caller_one_with_index::call(eastl::forward<Visitor>(visitor), eastl::forward<Variant>(variant));
+		}
+	} // namespace internal
+
 	// visit
 	//
-	template <typename Visitor, typename Variant>
+	template <typename Visitor, typename Variant, typename = eastl::void_t<internal::as_variant<Variant>>>
 	EA_CPP14_CONSTEXPR decltype(auto) visit(Visitor&& visitor, Variant&& variant)
 	{
 		visit_static_assert_check(eastl::forward<Variant>(variant));
@@ -1377,7 +1498,7 @@ namespace eastl
 										eastl::forward<Variant>(variant));
 	}
 
-	template <typename Visitor, typename... Variants>
+	template <typename Visitor, typename... Variants, typename = eastl::void_t<internal::as_variant<Variants>...>>
 	EA_CPP14_CONSTEXPR decltype(auto) visit(Visitor&& visitor, Variants&&... variants)
 	{
 		visit_static_assert_check(eastl::forward<Variants>(variants)...);
@@ -1390,7 +1511,8 @@ namespace eastl
 
 	}
 
-	template <typename R, typename Visitor, typename Variant, eastl::enable_if_t<!eastl::is_same_v<R, Visitor>, int> = 0>
+	// C++20: overload with a user specifiable return type
+	template <typename R, typename Visitor, typename Variant, typename = eastl::void_t<internal::as_variant<Variant>>>
 	EA_CPP14_CONSTEXPR R visit(Visitor&& visitor, Variant&& variant)
 	{
 		visit_static_assert_check(eastl::forward<Variant>(variant));
@@ -1401,7 +1523,8 @@ namespace eastl
 											   eastl::forward<Variant>(variant));
 	}
 
-	template <typename R, typename Visitor, typename... Variants, eastl::enable_if_t<!eastl::is_same_v<R, Visitor>, int> = 0>
+	// C++20: overload with a user specifiable return type
+	template <typename R, typename Visitor, typename... Variants, typename = eastl::void_t<internal::as_variant<Variants>...>>
 	EA_CPP14_CONSTEXPR R visit(Visitor&& visitor, Variants&&... variants)
 	{
 		visit_static_assert_check(eastl::forward<Variants>(variants)...);

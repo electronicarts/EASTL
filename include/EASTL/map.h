@@ -101,6 +101,9 @@ namespace eastl
 		using base_type::insert;
 		using base_type::erase;
 
+		static_assert(!is_const<value_type>::value, "map<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "map<T> value_type must be non-volatile.");
+
 	protected:
 		using base_type::compare;
 		using base_type::get_compare;
@@ -114,10 +117,6 @@ namespace eastl
 			value_compare(Compare c) : compare(c) {}
 
 		public:
-			EASTL_REMOVE_AT_2024_APRIL typedef bool       result_type;
-			EASTL_REMOVE_AT_2024_APRIL typedef value_type first_argument_type;
-			EASTL_REMOVE_AT_2024_APRIL typedef value_type second_argument_type;
-
 			bool operator()(const value_type& x, const value_type& y) const 
 				{ return compare(x.first, y.first); }
 		};
@@ -156,41 +155,76 @@ namespace eastl
 		/// support make this extension mostly no longer necessary.
 		insert_return_type insert(const Key& key);
 
+		// Standard conversion overload to avoid the overhead of mismatched 'pair<const Key, Value>' types.
+		template <typename P, eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		insert_return_type insert(P&& otherValue) { return base_type::emplace(eastl::forward<P>(otherValue)); }
+
 		value_compare value_comp() const;
 
-		size_type erase(const Key& key);
+		size_type erase(const Key& key) { return DoErase(key); }
+
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, iterator> && !eastl::is_convertible_v<KX&&, const_iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type erase(KX&& key) { return DoErase(eastl::forward<KX>(key)); }
+
 		size_type count(const Key& key) const;
 
-		// missing transparent key support:
-		// template<typename K>
-		// size_type count(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& key) const { return (find(key) != end()) ? 1 : 0; }
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+		eastl::pair<iterator, iterator>             equal_range(const Key& key) { return DoEqualRange(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return DoEqualRange(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& key) { return DoEqualRange(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& key) const { return DoEqualRange(key); }
 
 		T& operator[](const Key& key); // Of map, multimap, set, and multimap, only map has operator[].
-		T& operator[](Key&& key); 
+		T& operator[](Key&& key);
 
-		T& at(const Key& key);
-		const T& at(const Key& key) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		T& operator[](KX&& key) { return try_emplace(eastl::forward<KX>(key)).first->second; }
+
+		T& at(const Key& key) { return DoAt(key); }
+		const T& at(const Key& key) const { return DoAt(key); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		T& at(const KX& key) { return DoAt(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const T& at(const KX& key) const { return DoAt(key); }
 
 		template <class... Args> eastl::pair<iterator, bool> try_emplace(const key_type& k, Args&&... args);
 		template <class... Args> eastl::pair<iterator, bool> try_emplace(key_type&& k, Args&&... args);
+		template <class KX, class... Args, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, const_iterator> && !eastl::is_convertible_v<KX&&, iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, bool> try_emplace(KX&& k, Args&&... args) { return try_emplace_forward(eastl::forward<KX>(k), eastl::forward<Args>(args)...); }
 		template <class... Args> iterator                    try_emplace(const_iterator position, const key_type& k, Args&&... args);
 		template <class... Args> iterator                    try_emplace(const_iterator position, key_type&& k, Args&&... args);
+		template <class KX, class... Args, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator                    try_emplace(const_iterator hint, KX&& k, Args&&... args) { return try_emplace_forward(hint, eastl::forward<KX>(k), eastl::forward<Args>(args)...); }
 
 	private:
+		template<typename KX>
+		size_type DoErase(KX&& key);
+
 		template <class KFwd, class... Args>
 		eastl::pair<iterator, bool> try_emplace_forward(KFwd&& k, Args&&... args);
 
 		template <class KFwd, class... Args>
 		iterator try_emplace_forward(const_iterator hint, KFwd&& key, Args&&... args);
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& key) const;
+
+		template<typename KX>
+		T& DoAt(const KX& key);
+		template<typename KX>
+		const T& DoAt(const KX& key) const;
 	}; // map
 
 
@@ -243,6 +277,9 @@ namespace eastl
 		using base_type::insert;
 		using base_type::erase;
 
+		static_assert(!is_const<value_type>::value, "multimap<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "multimap<T> value_type must be non-volatile.");
+
 	protected:
 		using base_type::compare;
 		using base_type::get_compare;
@@ -256,10 +293,6 @@ namespace eastl
 			value_compare(Compare c) : compare(c) {}
 
 		public:
-			EASTL_REMOVE_AT_2024_APRIL typedef bool       result_type;
-			EASTL_REMOVE_AT_2024_APRIL typedef value_type first_argument_type;
-			EASTL_REMOVE_AT_2024_APRIL typedef value_type second_argument_type;
-
 			bool operator()(const value_type& x, const value_type& y) const 
 				{ return compare(x.first, y.first); }
 		};
@@ -298,39 +331,62 @@ namespace eastl
 		/// support make this extension mostly no longer necessary.
 		insert_return_type insert(const Key& key);
 
+		// Standard conversion overload to avoid the overhead of mismatched 'pair<const Key, Value>' types.
+		template <typename P, eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		insert_return_type insert(P&& otherValue) { return base_type::emplace(eastl::forward<P>(otherValue)); }
+
 		value_compare value_comp() const;
 
-		size_type erase(const Key& key);
-		size_type count(const Key& key) const;
+		size_type erase(const Key& key) { return DoErase(key); }
+		
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, iterator> && !eastl::is_convertible_v<KX&&, const_iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type erase(KX&& key) { return DoErase(eastl::forward<KX>(key)); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// size_type count(const K& k) const;
+		size_type count(const Key& key) const { return DoCount(key); }
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& key) const { return DoCount(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range(const K& k) const;
+		eastl::pair<iterator, iterator>             equal_range(const Key& key) { return DoEqualRange(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return DoEqualRange(key); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& key) { return DoEqualRange(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& key) const { return DoEqualRange(key); }
 
 		/// equal_range_small
 		/// This is a special version of equal_range which is optimized for the 
 		/// case of there being few or no duplicated keys in the tree.
-		eastl::pair<iterator, iterator>             equal_range_small(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const;
+		eastl::pair<iterator, iterator>             equal_range_small(const Key& key) { return DoEqualRangeSmall(key); }
+		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const { return DoEqualRangeSmall(key); }
 
-		// missing transparent key support:
-		// template<typename K>
-		// eastl::pair<iterator, iterator>             equal_range_small(const K& k);
-		// template<typename K>
-		// eastl::pair<const_iterator, const_iterator> equal_range_small(const K& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range_small(const KX& key) { return DoEqualRangeSmall(key); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range_small(const KX& key) const { return DoEqualRangeSmall(key); }
 
 	private:
 		// these base member functions are not included in multimaps
 		using base_type::insert_or_assign;
+
+		template<typename KX>
+		size_type DoErase(KX&& key);
+
+		template<typename KX>
+		size_type DoCount(const KX& key) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& key) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRangeSmall(const KX& key);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRangeSmall(const KX& key) const;
 	}; // multimap
 
 
@@ -414,8 +470,9 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template <typename KX>
 	inline typename map<Key, T, Compare, Allocator>::size_type
-	map<Key, T, Compare, Allocator>::erase(const Key& key)
+	map<Key, T, Compare, Allocator>::DoErase(KX&& key)
 	{
 		const iterator it(find(key));
 
@@ -438,9 +495,10 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template <typename KX>
 	inline eastl::pair<typename map<Key, T, Compare, Allocator>::iterator,
 					   typename map<Key, T, Compare, Allocator>::iterator>
-	map<Key, T, Compare, Allocator>::equal_range(const Key& key)
+	map<Key, T, Compare, Allocator>::DoEqualRange(const KX& key)
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 
@@ -457,11 +515,12 @@ namespace eastl
 	
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template <typename KX>
 	inline eastl::pair<typename map<Key, T, Compare, Allocator>::const_iterator, 
 					   typename map<Key, T, Compare, Allocator>::const_iterator>
-	map<Key, T, Compare, Allocator>::equal_range(const Key& key) const
+	map<Key, T, Compare, Allocator>::DoEqualRange(const KX& key) const
 	{
-		// See equal_range above for comments.
+		// See DoEqualRange above for comments.
 		const const_iterator itLower(lower_bound(key));
 
 		if((itLower == end()) || compare(key, itLower->first)) // If at the end or if (key is < itLower)...
@@ -517,14 +576,16 @@ namespace eastl
 #endif
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline T& map<Key, T, Compare, Allocator>::at(const Key& key)
+	template <typename KX>
+	inline T& map<Key, T, Compare, Allocator>::DoAt(const KX& key)
 	{
-		// use the use const version of ::at to remove duplication
-		return const_cast<T&>(const_cast<map<Key, T, Compare, Allocator> const*>(this)->at(key));
+		// use the use const version of ::DoAt to remove duplication
+		return const_cast<T&>(const_cast<map<Key, T, Compare, Allocator> const*>(this)->DoAt(key));
 	}
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline const T& map<Key, T, Compare, Allocator>::at(const Key& key) const
+	template <typename KX>
+	inline const T& map<Key, T, Compare, Allocator>::DoAt(const KX& key) const
 	{
 		const_iterator candidate = this->find(key);
 
@@ -717,8 +778,9 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template <typename KX>
 	inline typename multimap<Key, T, Compare, Allocator>::size_type
-	multimap<Key, T, Compare, Allocator>::erase(const Key& key)
+	multimap<Key, T, Compare, Allocator>::DoErase(KX&& key)
 	{
 		const eastl::pair<iterator, iterator> range(equal_range(key));
 		const size_type n = (size_type)eastl::distance(range.first, range.second);
@@ -728,8 +790,9 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template<typename KX>
 	inline typename multimap<Key, T, Compare, Allocator>::size_type
-	multimap<Key, T, Compare, Allocator>::count(const Key& key) const
+	multimap<Key, T, Compare, Allocator>::DoCount(const KX& key) const
 	{
 		const eastl::pair<const_iterator, const_iterator> range(equal_range(key));
 		return (size_type)eastl::distance(range.first, range.second);
@@ -737,9 +800,10 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
 					   typename multimap<Key, T, Compare, Allocator>::iterator>
-	multimap<Key, T, Compare, Allocator>::equal_range(const Key& key)
+	multimap<Key, T, Compare, Allocator>::DoEqualRange(const KX& key)
 	{
 		// There are multiple ways to implement equal_range. The implementation mentioned
 		// in the C++ standard and which is used by most (all?) commercial STL implementations
@@ -757,9 +821,10 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
+	template<typename KX>
+	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator,
 					   typename multimap<Key, T, Compare, Allocator>::const_iterator>
-	multimap<Key, T, Compare, Allocator>::equal_range(const Key& key) const
+	multimap<Key, T, Compare, Allocator>::DoEqualRange(const KX& key) const
 	{
 		// See comments above in the non-const version of equal_range.
 		return eastl::pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key));
@@ -767,9 +832,10 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
+	template<typename KX>
 	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
 					   typename multimap<Key, T, Compare, Allocator>::iterator>
-	multimap<Key, T, Compare, Allocator>::equal_range_small(const Key& key)
+	multimap<Key, T, Compare, Allocator>::DoEqualRangeSmall(const KX& key)
 	{
 		// We provide alternative version of equal_range here which works faster
 		// for the case where there are at most small number of potential duplicated keys.
@@ -784,9 +850,10 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
+	template<typename KX>
+	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator,
 					   typename multimap<Key, T, Compare, Allocator>::const_iterator>
-	multimap<Key, T, Compare, Allocator>::equal_range_small(const Key& key) const
+	multimap<Key, T, Compare, Allocator>::DoEqualRangeSmall(const KX& key) const
 	{
 		// We provide alternative version of equal_range here which works faster
 		// for the case where there are at most small number of potential duplicated keys.

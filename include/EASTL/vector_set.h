@@ -181,8 +181,15 @@ namespace eastl
 		iterator emplace_hint(const_iterator position, Args&&... args);
 
 		eastl::pair<iterator, bool> insert(const value_type& value);
-		template <typename P>
+		eastl::pair<iterator, bool> insert(value_type&& value);
+
+		// this function implicitly converts to value_type, which it shouldn't. Additionally, it does not correctly support heterogeneous insertion (unconditionally creates a key_type).
+		template <typename P, typename Cmp = Compare, eastl::enable_if_t<!eastl::is_convertible_v<P&&, value_type> && !eastl::detail::is_transparent_comparison_v<Cmp> && eastl::is_constructible_v<value_type, P&&>, bool> = true>
+		EA_REMOVE_AT_2025_OCT_MSG("Replace call with insert(value_type(...)) or emplace(...) or declare container with a transparent comparator.")
 		pair<iterator, bool> insert(P&& otherValue);
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		pair<iterator, bool> insert(KX&& key);
 
 		iterator insert(const_iterator position, const value_type& value);
 		iterator insert(const_iterator position, value_type&& value);
@@ -192,15 +199,27 @@ namespace eastl
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
 
+		template <typename Iter = iterator, typename eastl::enable_if<!eastl::is_same_v<Iter, const_iterator>, int>::type = 0>
+		iterator  erase(iterator position) { return erase(const_iterator(position)); }
 		iterator  erase(const_iterator position);
 		iterator  erase(const_iterator first, const_iterator last);
-		size_type erase(const key_type& k);
+		size_type erase(const key_type& k) { return DoErase(k); }
 
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
-		iterator       find(const key_type& k);
-		const_iterator find(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare,
+			eastl::enable_if_t<!eastl::is_convertible_v<KX&&, iterator> && !eastl::is_convertible_v<KX&&, const_iterator>
+			&& eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type erase(KX&& k) { return DoErase(eastl::forward<KX>(k)); }
+
+		iterator       find(const key_type& k) { return DoFind(k); }
+		const_iterator find(const key_type& k) const { return DoFind(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       find(const KX& k) { return DoFind(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator find(const KX& k) const { return DoFind(k); }
 
 		template <typename U, typename BinaryPredicate>
 		iterator       find_as(const U& u, BinaryPredicate predicate);
@@ -208,16 +227,39 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k) const;
+		bool contains(const key_type& key) const { return DoFind(key) != end(); }
 
-		iterator       lower_bound(const key_type& k);
-		const_iterator lower_bound(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		bool contains(const KX& key) const { return DoFind(key) != end(); }
 
-		iterator       upper_bound(const key_type& k);
-		const_iterator upper_bound(const key_type& k) const;
+		size_type count(const key_type& k) const { return DoCount(k); }
 
-		eastl::pair<iterator, iterator>             equal_range(const key_type& k);
-		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		size_type count(const KX& k) const { return DoCount(k); }
+
+		iterator       lower_bound(const key_type& k) { return DoLowerBound(k); }
+		const_iterator lower_bound(const key_type& k) const { return DoLowerBound(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       lower_bound(const KX& k) { return DoLowerBound(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator lower_bound(const KX& k) const { return DoLowerBound(k); }
+
+		iterator       upper_bound(const key_type& k) { return DoUpperBound(k); }
+		const_iterator upper_bound(const key_type& k) const { return DoUpperBound(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		iterator       upper_bound(const KX& k) { return DoUpperBound(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		const_iterator upper_bound(const KX& k) const { return DoUpperBound(k); }
+
+		eastl::pair<iterator, iterator>             equal_range(const key_type& k) { return DoEqualRange(k); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const { return DoEqualRange(k); }
+
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<iterator, iterator>             equal_range(const KX& k) { return DoEqualRange(k); }
+		template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		eastl::pair<const_iterator, const_iterator> equal_range(const KX& k) const { return DoEqualRange(k); }
 
 		template <typename U, typename BinaryPredicate> 
 		eastl::pair<iterator, iterator>             equal_range(const U& u, BinaryPredicate predicate);
@@ -247,6 +289,32 @@ namespace eastl
 		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
 			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
 
+	private:
+		template<typename KX>
+		size_type        DoErase(KX&& k);
+
+		template<typename KX>
+		iterator DoFind(const KX& k);
+		template<typename KX>
+		const_iterator DoFind(const KX& k) const;
+
+		template<typename KX>
+		size_type DoCount(const KX& k) const;
+
+		template<typename KX>
+		eastl::pair<iterator, iterator>             DoEqualRange(const KX& k);
+		template<typename KX>
+		eastl::pair<const_iterator, const_iterator> DoEqualRange(const KX& k) const;
+
+		template<typename KX>
+		iterator       DoLowerBound(const KX& k);
+		template<typename KX>
+		const_iterator DoLowerBound(const KX& k) const;
+
+		template<typename KX>
+		iterator       DoUpperBound(const KX& k);
+		template<typename KX>
+		const_iterator DoUpperBound(const KX& k) const;
 	}; // vector_set
 
 
@@ -447,16 +515,41 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
-	template <typename P>
+	inline eastl::pair<typename vector_set<K, C, A, RAC>::iterator, bool>
+	vector_set<K, C, A, RAC>::insert(value_type&& value)
+	{
+		const iterator itLB(lower_bound(value));
+
+		if((itLB != end()) && !value_compare::operator()(value, *itLB))
+			return eastl::pair<iterator, bool>(itLB, false);
+		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+	}
+
+
+	template <typename K, typename C, typename A, typename RAC>
+	template <typename P, typename Cmp, eastl::enable_if_t<!eastl::is_convertible_v<P&&, K> && !eastl::detail::is_transparent_comparison_v<Cmp>&& eastl::is_constructible_v<K, P&&>, bool>>
 	inline eastl::pair<typename vector_set<K, C, A, RAC>::iterator, bool>
 	vector_set<K, C, A, RAC>::insert(P&& otherValue)
 	{
 		value_type value(eastl::forward<P>(otherValue));
 		const iterator itLB(lower_bound(value));
 
-		if((itLB != end()) && !value_compare::operator()(value, *itLB))
+		if ((itLB != end()) && !value_compare::operator()(value, *itLB))
 			return eastl::pair<iterator, bool>(itLB, false);
 		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+	}
+
+
+	template <typename K, typename C, typename A, typename RAC>
+	template<typename KX, typename Cmp, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool>>
+	inline eastl::pair<typename vector_set<K, C, A, RAC>::iterator, bool>
+	vector_set<K, C, A, RAC>::insert(KX&& key)
+	{
+		const iterator itLB(lower_bound(key));
+
+		if ((itLB != end()) && !value_compare::operator()(key, *itLB))
+			return eastl::pair<iterator, bool>(itLB, false);
+		return eastl::pair<iterator, bool>(base_type::insert(itLB, value_type(eastl::forward<KX>(key))), true);
 	}
 
 
@@ -545,10 +638,11 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::size_type
-	vector_set<K, C, A, RAC>::erase(const key_type& k)
+	vector_set<K, C, A, RAC>::DoErase(KX&& k)
 	{
-		const iterator it(find(k));
+		const iterator it(find(eastl::forward<KX>(k)));
 
 		if(it != end()) // If it exists...
 		{
@@ -576,8 +670,9 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::iterator
-	vector_set<K, C, A, RAC>::find(const key_type& k)
+	vector_set<K, C, A, RAC>::DoFind(const KX& k)
 	{
 		const eastl::pair<iterator, iterator> pairIts(equal_range(k));
 		return (pairIts.first != pairIts.second) ? pairIts.first : end();
@@ -585,8 +680,9 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::const_iterator
-	vector_set<K, C, A, RAC>::find(const key_type& k) const
+	vector_set<K, C, A, RAC>::DoFind(const KX& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (pairIts.first != pairIts.second) ? pairIts.first : end();
@@ -614,8 +710,9 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::size_type
-	vector_set<K, C, A, RAC>::count(const key_type& k) const
+	vector_set<K, C, A, RAC>::DoCount(const KX& k) const
 	{
 		const const_iterator it(find(k));
 		return (it != end()) ? (size_type)1 : (size_type)0;
@@ -623,40 +720,45 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::iterator
-	vector_set<K, C, A, RAC>::lower_bound(const key_type& k)
+	vector_set<K, C, A, RAC>::DoLowerBound(const KX& k)
 	{
 		return eastl::lower_bound(begin(), end(), k, static_cast<value_compare&>(*this));
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::const_iterator
-	vector_set<K, C, A, RAC>::lower_bound(const key_type& k) const
+	vector_set<K, C, A, RAC>::DoLowerBound(const KX& k) const
 	{
 		return eastl::lower_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::iterator
-	vector_set<K, C, A, RAC>::upper_bound(const key_type& k)
+	vector_set<K, C, A, RAC>::DoUpperBound(const KX& k)
 	{
 		return eastl::upper_bound(begin(), end(), k, static_cast<value_compare&>(*this));
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline typename vector_set<K, C, A, RAC>::const_iterator
-	vector_set<K, C, A, RAC>::upper_bound(const key_type& k) const
+	vector_set<K, C, A, RAC>::DoUpperBound(const KX& k) const
 	{
 		return eastl::upper_bound(begin(), end(), k, static_cast<const value_compare&>(*this));
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline eastl::pair<typename vector_set<K, C, A, RAC>::iterator, typename vector_set<K, C, A, RAC>::iterator>
-	vector_set<K, C, A, RAC>::equal_range(const key_type& k)
+	vector_set<K, C, A, RAC>::DoEqualRange(const KX& k)
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 
@@ -673,8 +775,9 @@ namespace eastl
 
 
 	template <typename K, typename C, typename A, typename RAC>
+	template <typename KX>
 	inline eastl::pair<typename vector_set<K, C, A, RAC>::const_iterator, typename vector_set<K, C, A, RAC>::const_iterator>
-	vector_set<K, C, A, RAC>::equal_range(const key_type& k) const
+	vector_set<K, C, A, RAC>::DoEqualRange(const KX& k) const
 	{
 		// The resulting range will either be empty or have one element,
 		// so instead of doing two tree searches (one for lower_bound and 

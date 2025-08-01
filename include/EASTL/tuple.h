@@ -7,7 +7,6 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/compare.h>
-#include <EASTL/functional.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/utility.h>
 
@@ -82,22 +81,22 @@ public:
 	typedef tuple_element_t<I, TupleTypes<Ts...>> type;
 };
 
-template <size_t I, typename... Ts>
-struct tuple_element<I, const tuple<Ts...>>
+template <size_t I, typename T>
+struct tuple_element<I, const T>
 {
 public:
-	typedef typename add_const<tuple_element_t<I, TupleTypes<Ts...>>>::type type;
+	typedef add_const_t<tuple_element_t<I, T>> type;
 };
 
 template <size_t I, typename... Ts>
-struct tuple_element<I, volatile tuple<Ts...>>
+struct EA_REMOVE_AT_2026_APRIL tuple_element<I, volatile tuple<Ts...>>
 {
 public:
 	typedef typename add_volatile<tuple_element_t<I, TupleTypes<Ts...>>>::type type;
 };
 
 template <size_t I, typename... Ts>
-struct tuple_element<I, const volatile tuple<Ts...>>
+struct EA_REMOVE_AT_2026_APRIL tuple_element<I, const volatile tuple<Ts...>>
 {
 public:
 	typedef typename add_cv<tuple_element_t<I, TupleTypes<Ts...>>>::type type;
@@ -190,7 +189,6 @@ namespace Internal
 	{
 	public:
 		TupleLeaf() : mValue() {}
-		TupleLeaf& operator=(const TupleLeaf&) = delete;
 
 		// We shouldn't need this explicit constructor as it should be handled by the template below but OSX clang
 		// is_constructible type trait incorrectly gives false for is_constructible<T&&, T&&>::value
@@ -201,11 +199,25 @@ namespace Internal
 			: mValue(eastl::forward<T>(t))
 		{
 		}
+		
+		TupleLeaf(const TupleLeaf&) = default;
+		TupleLeaf(TupleLeaf&&) noexcept = default;
 
-		template <typename T>
-		explicit TupleLeaf(const TupleLeaf& t)
-			: mValue(t.getInternal())
+		// The standard requires the assignment for tuples to assign each element of the tuple,
+		// in particular this should work for tuple<T&>. If we default the assignment(s) here,
+		// TupleLeaf would have its assignment deleted when ValueType is a reference type
+		// because it has a member of that type, then TupleImpl has the assignment deleted due
+		// to the inheritance and then so does tuple<T&> because it has a member of type
+		// TupleImpl. So we explicitly implement the assignment so it isn't deleted in tuple<T&>.
+		TupleLeaf& operator=(const TupleLeaf& t)
 		{
+			mValue = t.getInternal();
+			return *this;
+		}
+		TupleLeaf& operator=(TupleLeaf&& t) noexcept
+		{
+			mValue = eastl::move(t.getInternal());
+			return *this;
 		}
 
 		template <typename T>
@@ -234,7 +246,6 @@ namespace Internal
 	{
 	public:
 		TupleLeaf() = default;
-		TupleLeaf& operator=(const TupleLeaf&) = delete;
 
 		// We shouldn't need this explicit constructor as it should be handled by the template below but OSX clang
 		// is_constructible type trait incorrectly gives false for is_constructible<T&&, T&&>::value
@@ -246,11 +257,10 @@ namespace Internal
 		{
 		}
 
-		template <typename T>
-		explicit TupleLeaf(const TupleLeaf& t)
-			: ValueType(t.getInternal())
-		{
-		}
+		TupleLeaf(const TupleLeaf&) = default;
+		TupleLeaf(TupleLeaf&&) noexcept = default;
+		TupleLeaf& operator=(const TupleLeaf&) = default;
+		TupleLeaf& operator=(TupleLeaf&&) noexcept = default;
 
 		template <typename T>
 		TupleLeaf& operator=(T&& t)
@@ -304,23 +314,6 @@ namespace Internal
 	// TupleImpl
 	//
 	//
-	template <size_t I, typename Indices, typename... Ts>
-	tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(TupleImpl<Indices, Ts...>& t);
-
-	template <size_t I, typename Indices, typename... Ts>
-	const_tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(const TupleImpl<Indices, Ts...>& t);
-
-	template <size_t I, typename Indices, typename... Ts>
-	tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& t);
-
-	template <typename T, typename Indices, typename... Ts>
-	T& get(TupleImpl<Indices, Ts...>& t);
-
-	template <typename T, typename Indices, typename... Ts>
-	const T& get(const TupleImpl<Indices, Ts...>& t);
-
-	template <typename T, typename Indices, typename... Ts>
-	T&& get(TupleImpl<Indices, Ts...>&& t);
 
 	template <size_t... Indices, typename... Ts>
 	struct TupleImpl<integer_sequence<size_t, Indices...>, Ts...> : public TupleLeaf<Indices, Ts>...
@@ -336,6 +329,11 @@ namespace Internal
 		{
 		}
 
+		TupleImpl(const TupleImpl&) = default;
+		TupleImpl(TupleImpl&&) noexcept = default;
+		TupleImpl& operator=(const TupleImpl&) = default;
+		TupleImpl& operator=(TupleImpl&&) noexcept = default;
+
 		template <typename OtherTuple>
 		TupleImpl(OtherTuple&& t)
 			: TupleLeaf<Indices, Ts>(eastl::forward<tuple_element_t<Indices, MakeTupleTypes_t<OtherTuple>>>(get<Indices>(t)))...
@@ -350,55 +348,49 @@ namespace Internal
 			return *this;
 		}
 
-		TupleImpl& operator=(const TupleImpl& t)
-		{
-			swallow(TupleLeaf<Indices, Ts>::operator=(static_cast<const TupleLeaf<Indices, Ts>&>(t).getInternal())...);
-			return *this;
-		}
-
 		void swap(TupleImpl& t) { swallow(TupleLeaf<Indices, Ts>::swap(static_cast<TupleLeaf<Indices, Ts>&>(t))...); }
 	};
 
 	template <size_t I, typename Indices, typename... Ts>
-	inline tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(TupleImpl<Indices, Ts...>& t)
+	inline tuple_element_t<I, TupleImpl<Indices, Ts...>>& getImpl(TupleImpl<Indices, Ts...>& t)
 	{
 		typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
-		return static_cast<Internal::TupleLeaf<I, Type>&>(t).getInternal();
+		return static_cast<TupleLeaf<I, Type>&>(t).getInternal();
 	}
 
 	template <size_t I, typename Indices, typename... Ts>
-	inline const_tuple_element_t<I, TupleImpl<Indices, Ts...>>& get(const TupleImpl<Indices, Ts...>& t)
+	inline const_tuple_element_t<I, TupleImpl<Indices, Ts...>>& getImpl(const TupleImpl<Indices, Ts...>& t)
 	{
 		typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
-		return static_cast<const Internal::TupleLeaf<I, Type>&>(t).getInternal();
+		return static_cast<const TupleLeaf<I, Type>&>(t).getInternal();
 	}
 
 	template <size_t I, typename Indices, typename... Ts>
-	inline tuple_element_t<I, TupleImpl<Indices, Ts...>>&& get(TupleImpl<Indices, Ts...>&& t)
+	inline tuple_element_t<I, TupleImpl<Indices, Ts...>>&& getImpl(TupleImpl<Indices, Ts...>&& t)
 	{
 		typedef tuple_element_t<I, TupleImpl<Indices, Ts...>> Type;
-		return static_cast<Type&&>(static_cast<Internal::TupleLeaf<I, Type>&>(t).getInternal());
+		return static_cast<Type&&>(static_cast<TupleLeaf<I, Type>&>(t).getInternal());
 	}
 
 	template <typename T, typename Indices, typename... Ts>
-	inline T& get(TupleImpl<Indices, Ts...>& t)
+	inline T& getImpl(TupleImpl<Indices, Ts...>& t)
 	{
 		typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
-		return static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
+		return static_cast<TupleLeaf<Index::index, T>&>(t).getInternal();
 	}
 
 	template <typename T, typename Indices, typename... Ts>
-	inline const T& get(const TupleImpl<Indices, Ts...>& t)
+	inline const T& getImpl(const TupleImpl<Indices, Ts...>& t)
 	{
 		typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
-		return static_cast<const Internal::TupleLeaf<Index::index, T>&>(t).getInternal();
+		return static_cast<const TupleLeaf<Index::index, T>&>(t).getInternal();
 	}
 
 	template <typename T, typename Indices, typename... Ts>
-	inline T&& get(TupleImpl<Indices, Ts...>&& t)
+	inline T&& getImpl(TupleImpl<Indices, Ts...>&& t)
 	{
 		typedef tuple_index<T, TupleImpl<Indices, Ts...>> Index;
-		return static_cast<T&&>(static_cast<Internal::TupleLeaf<Index::index, T>&>(t).getInternal());
+		return static_cast<T&&>(static_cast<TupleLeaf<Index::index, T>&>(t).getInternal());
 	}
 
 
@@ -706,37 +698,37 @@ public:
 template <size_t I, typename... Ts>
 inline tuple_element_t<I, tuple<Ts...>>& get(tuple<Ts...>& t)
 {
-	return get<I>(t.mImpl);
+	return Internal::getImpl<I>(t.mImpl);
 }
 
 template <size_t I, typename... Ts>
 inline const_tuple_element_t<I, tuple<Ts...>>& get(const tuple<Ts...>& t)
 {
-	return get<I>(t.mImpl);
+	return Internal::getImpl<I>(t.mImpl);
 }
 
 template <size_t I, typename... Ts>
 inline tuple_element_t<I, tuple<Ts...>>&& get(tuple<Ts...>&& t)
 {
-	return get<I>(eastl::move(t.mImpl));
+	return Internal::getImpl<I>(eastl::move(t.mImpl));
 }
 
 template <typename T, typename... Ts>
 inline T& get(tuple<Ts...>& t)
 {
-	return get<T>(t.mImpl);
+	return Internal::getImpl<T>(t.mImpl);
 }
 
 template <typename T, typename... Ts>
 inline const T& get(const tuple<Ts...>& t)
 {
-	return get<T>(t.mImpl);
+	return Internal::getImpl<T>(t.mImpl);
 }
 
 template <typename T, typename... Ts>
 inline T&& get(tuple<Ts...>&& t)
 {
-	return get<T>(eastl::move(t.mImpl));
+	return Internal::getImpl<T>(eastl::move(t.mImpl));
 }
 
 template <typename... Ts>
@@ -961,8 +953,29 @@ EA_CONSTEXPR decltype(auto) apply(F&& f, Tuple&& t)
 		                      make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>{});
 }
 
-}  // namespace eastl
 
+// make_from_tuple
+//
+// Construct an object of type T, using the elements of the tuple as the arguments to the constructor.
+//
+// https://en.cppreference.com/w/cpp/utility/make_from_tuple
+//
+namespace detail
+{
+template <typename T, typename Tuple, size_t... I>
+constexpr eastl::enable_if_t<eastl::is_constructible_v<T, decltype(eastl::get<I>(eastl::declval<Tuple>()))...>, T> make_from_tuple_impl(Tuple&& t, eastl::index_sequence<I...>)
+{
+	return T(eastl::get<I>(eastl::forward<Tuple>(t))...);
+}
+}  // namespace detail
+
+template <typename T, typename Tuple>
+constexpr T make_from_tuple(Tuple&& t)
+{
+	return detail::make_from_tuple_impl<T>(eastl::forward<Tuple>(t), eastl::make_index_sequence<eastl::tuple_size_v<eastl::remove_reference_t<Tuple>>>{});
+}
+
+}  // namespace eastl
 
 ///////////////////////////////////////////////////////////////
 // C++17 structured bindings support for eastl::tuple

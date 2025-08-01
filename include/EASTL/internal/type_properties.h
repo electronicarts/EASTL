@@ -47,13 +47,13 @@ namespace eastl
 	#endif
 
 	///////////////////////////////////////////////////////////////////////
-	// to_underlying 
+	// to_underlying
 	//
 	// Cast a enum value to its underlying type.
 	// For example:
-	// 
+	//
 	// enum class MyEnum : uint8_t { Value = 0; }
-	// auto x = MyEnum::Value; 
+	// auto x = MyEnum::Value;
 	// std::cout << to_underlying(x); // equivalent to  sts::cout << static_cast<uint8_t>(x);
 	///////////////////////////////////////////////////////////////////////
 
@@ -110,7 +110,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_signed_CONFORMANCE 1    // is_signed is conforming.
-		
+
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable: 4296)  // '<': expression is always false
@@ -132,14 +132,6 @@ namespace eastl
 		EA_CONSTEXPR bool is_signed_v = is_signed<T>::value;
 	#endif
 
-	#define EASTL_DECLARE_SIGNED(T)                                             \
-	namespace eastl{                                                            \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<T>                : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<const T>          : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<volatile T>       : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_signed<const volatile T> : public true_type{};    \
-	}
-
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -151,7 +143,7 @@ namespace eastl
 	///////////////////////////////////////////////////////////////////////
 
 	#define EASTL_TYPE_TRAIT_is_unsigned_CONFORMANCE 1    // is_unsigned is conforming.
-		
+
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable: 4296)  // '<': expression is always false
@@ -172,14 +164,6 @@ namespace eastl
 		template <class T>
 		EA_CONSTEXPR bool is_unsigned_v = is_unsigned<T>::value;
 	#endif
-
-	#define EASTL_DECLARE_UNSIGNED(T)                                             \
-	namespace eastl{                                                              \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<T>                : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<const T>          : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<volatile T>       : public true_type{};    \
-		template <> struct EASTL_REMOVE_AT_2024_APRIL is_unsigned<const volatile T> : public true_type{};    \
-	}
 
 	///////////////////////////////////////////////////////////////////////
 	// is_bounded_array
@@ -255,7 +239,7 @@ namespace eastl
 
     ///////////////////////////////////////////////////////////////////////
 	// is_aligned
-	// 
+	//
 	// Defined as true if the type has alignment requirements greater
 	// than default alignment, which is taken to be 8. This allows for
 	// doing specialized object allocation and placement for such types.
@@ -361,46 +345,6 @@ namespace eastl
 	#if EASTL_VARIABLE_TEMPLATES_ENABLED
 		template<typename T>
 		EA_CONSTEXPR bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
-	#endif
-
-
-	///////////////////////////////////////////////////////////////////////
-	// result_of
-	//
-	// Deprecated in C++17.
-	// 
-	// Use invoke_result instead.
-	// See https://en.cppreference.com/w/cpp/types/result_of#Notes for an explanation of issues with result_of.
-	///////////////////////////////////////////////////////////////////////
-	#define EASTL_TYPE_TRAIT_result_of_CONFORMANCE 1    // result_of is conforming.
-
-	template<typename> struct EASTL_REMOVE_AT_2024_APRIL result_of;
-
-	// Note: some compilers (notably GCC) trigger deprecation warnings when doing template
-	// specialization if the main template is derpecated, so turn the warning off here. If this
-	// specialization is used, the warning will still trigger in the user code, this just
-	// disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-	template<typename F, typename... ArgTypes>
-	struct EASTL_REMOVE_AT_2024_APRIL result_of<F(ArgTypes...)>
-		{ typedef decltype(eastl::declval<F>()(eastl::declval<ArgTypes>()...)) type; };
-EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
-	// result_of_t is the C++14 using typedef for typename result_of<T>::type.
-	// We provide a backwards-compatible means to access it through a macro for pre-C++11 compilers.
-	#if defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-		#define EASTL_RESULT_OF_T(T) typename result_of<T>::type
-	#else
-	// Note: some compilers (notably GCC) trigger deprecation warnings in template variable
-	// declarations even if the variable is not insantiated here, so turn the warning off
-	// here. If this varialbe is used, the warning will still trigger in the user code, this
-	// just disables the warning in this declaration.
-EASTL_INTERNAL_DISABLE_DEPRECATED()
-		template <typename T>
-		using result_of_t EASTL_REMOVE_AT_2024_APRIL = typename result_of<T>::type;
-		#define EASTL_RESULT_OF_T(T) result_of_t<T>
-EASTL_INTERNAL_RESTORE_DEPRECATED()
 	#endif
 
 

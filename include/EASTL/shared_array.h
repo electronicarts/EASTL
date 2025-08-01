@@ -60,6 +60,10 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/smart_ptr.h>   // Defines smart_array_deleter
+#include <EASTL/memory.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 
 EA_DISABLE_ALL_VC_WARNINGS();
@@ -136,9 +140,9 @@ namespace eastl
 			  mAllocator(allocator)
 		{
 			// Allocate memory for the reference count.
-			void* const pMemory = EASTLAlloc(mAllocator, sizeof(ref_count));
-			if(pMemory)
-				mpRefCount = ::new(pMemory) ref_count(1);
+			mpRefCount = (ref_count*) EASTLAlloc(mAllocator, sizeof(ref_count));
+			if(mpRefCount)
+				detail::allocator_construct(mAllocator, mpRefCount, 1);
 		}
 
 
@@ -355,6 +359,8 @@ namespace eastl
 		/// Sets the memory allocator associated with this class.
 		void set_allocator(const allocator_type& allocator)
 		{
+			if(mpRefCount && mAllocator != allocator)
+				EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "shared_array::set_allocator -- cannot change allocator after allocations have been made.");
 			mAllocator = allocator;
 		}
 

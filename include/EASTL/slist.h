@@ -30,9 +30,13 @@
 #include <EASTL/iterator.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
+#include <EASTL/memory.h>
 #include <EASTL/sort.h>
 #include <EASTL/bonus/compressed_pair.h>
 #include <stddef.h>
+#if EASTL_EXCEPTIONS_ENABLED
+#include <stdexcept>
+#endif
 
 EA_DISABLE_ALL_VC_WARNINGS();
 
@@ -108,7 +112,7 @@ namespace eastl
 		typedef SListNode<T>                           node_type;
 		typedef Pointer                                pointer;
 		typedef Reference                              reference;
-		typedef EASTL_ITC_NS::forward_iterator_tag     iterator_category;
+		typedef eastl::forward_iterator_tag     iterator_category;
 
 	public:
 		base_node_type* mpNode;
@@ -237,6 +241,9 @@ namespace eastl
 		typedef typename base_type::node_type        node_type;
 		typedef typename base_type::base_node_type   base_node_type;
 
+		static_assert(!is_const<value_type>::value, "slist<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "slist<T> value_type must be non-volatile.");
+
 	public:
 		slist();
 		slist(const allocator_type& allocator);
@@ -347,12 +354,6 @@ namespace eastl
 		void splice_after(const_iterator position, this_type&& x);
 		void splice_after(const_iterator position, this_type&& x, const_iterator i);
 		void splice_after(const_iterator position, this_type&& x, const_iterator first, const_iterator last);
-
-		// The following splice_after funcions are deprecated, as they don't allow for recognizing 
-		// the allocator, cannot maintain the source mSize, and are not in the C++11 Standard definition 
-		// of std::forward_list (which is the equivalent of this class).
-		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator before_first, const_iterator before_last);  // before_first and before_last come from a source container.
-		EASTL_REMOVE_AT_2024_APRIL void splice_after(const_iterator position, const_iterator previous);                                  // previous comes from a source container.
 
 		size_type unique();
 
@@ -639,7 +640,8 @@ namespace eastl
 	void
 	SListBase<T, Allocator>::set_allocator(const allocator_type& allocator)
 	{
-		EASTL_ASSERT((internalAllocator() == allocator) || (static_cast<node_type*>(internalNode().mpNext) == NULL)); // We can only assign a different allocator if we are empty of elements.
+		if((internalAllocator() != allocator) && (static_cast<node_type*>(internalNode().mpNext) != NULL))
+			EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "slist::set_allocator -- cannot change allocator after allocations have been made.");
 		internalAllocator() = allocator;
 	}
 
@@ -1022,7 +1024,9 @@ namespace eastl
 		DoAssignValues(n, value);
 	}
 
-
+	
+	// does not propagate allocators on swap.
+	// in addition, requires T be copy constructible and copy assignable, which isn't required by the standard.
 	template <typename T, typename Allocator>
 	inline void slist<T, Allocator>::swap(this_type& x)
 	{
@@ -1444,71 +1448,6 @@ namespace eastl
 	}
 
 
-	// This function is deprecated.
-	// We have no way of knowing what the container or allocator for before_first/before_last is. 
-	// Thus this function requires that the iterators come from equivalent allocators.
-	template <typename T, typename Allocator>
-	inline void slist<T, Allocator>::splice_after(const_iterator position, const_iterator before_first, const_iterator before_last)
-	{
-		if(before_first != before_last) // If there is anything to splice...
-		{
-			#if EASTL_SLIST_SIZE_CACHE
-				// We have a problem here because the inserted range may come from *this or 
-				// it may come from some other list. We have no choice but to implement an O(n)
-				// brute-force search in our list for 'previous'.
-
-				iterator i(&internalNode());
-				iterator iEnd(NULL);
-
-				for( ; i != iEnd; ++i)
-				{
-					if(i == before_first)
-						break;
-				}
-	 
-				if(i == iEnd) // If the input came from an external range...
-					mSize += (size_type)eastl::distance(before_first, before_last); // Note that we have no way of knowing how to decrementing the size from the external container, assuming it came from one.
-				else
-					{ EASTL_FAIL_MSG("slist::splice_after: Impossible to decrement source mSize. Use the other splice_after function instead."); }
-			#endif
-
-			// Insert the range of [before_first + 1, before_last + 1) after position.
-			SListNodeSpliceAfter(position.mpNode, before_first.mpNode, before_last.mpNode);
-		}
-	}
-
-
-	// This function is deprecated.
-	// We have no way of knowing what the container or allocator for previous is. 
-	// Thus this function requires that the iterators come from equivalent allocators.
-	template <typename T, typename Allocator>
-	inline void slist<T, Allocator>::splice_after(const_iterator position, const_iterator previous)
-	{
-		#if EASTL_SLIST_SIZE_CACHE
-			// We have a problem here because the inserted range may come from *this or 
-			// it may come from some other list. We have no choice but to implement an O(n)
-			// brute-force search in our list for 'previous'.
-
-			iterator i(&internalNode());
-			iterator iEnd(NULL);
-
-			for( ; i != iEnd; ++i)
-			{
-				if(i == previous)
-					break;
-			}
- 
-			if(i == iEnd) // If the input came from an external range...
-				++mSize;  // Note that we have no way of knowing how to decrementing the size from the external container, assuming it came from one.
-			else
-				{ EASTL_FAIL_MSG("slist::splice_after: Impossible to decrement source mSize. Use the other splice_after function instead."); }
-		#endif
-
-		// Insert the element at previous + 1 after position.
-		SListNodeSpliceAfter(position.mpNode, previous.mpNode, previous.mpNode->mpNext);
-	}
-
-
 	template <typename T, typename Allocator>
 	typename slist<T, Allocator>::size_type slist<T, Allocator>::unique()
 	{
@@ -1606,7 +1545,7 @@ namespace eastl
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
 			{
-				::new((void*)&pNode->mValue) value_type(eastl::forward<Args>(args)...);
+				detail::allocator_construct(internalAllocator(), &pNode->mValue, eastl::forward<Args>(args)...);
 			}
 			catch(...)
 			{
@@ -1614,7 +1553,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			::new((void*)&pNode->mValue) value_type(eastl::forward<Args>(args)...);
+			detail::allocator_construct(internalAllocator(), &pNode->mValue, eastl::forward<Args>(args)...);
 		#endif
 
 		return pNode;
@@ -1629,7 +1568,7 @@ namespace eastl
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
 			{
-				::new((void*)&pNode->mValue) value_type();
+				detail::allocator_construct(internalAllocator(), &pNode->mValue);
 			}
 			catch(...)
 			{
@@ -1637,7 +1576,7 @@ namespace eastl
 				throw;
 			}
 		#else
-			::new((void*)&pNode->mValue) value_type();
+			detail::allocator_construct(internalAllocator(), &pNode->mValue);
 		#endif
 		return pNode;
 	}
@@ -1931,7 +1870,7 @@ namespace eastl
 		typedef slist<T, Allocator>                 Container;
 		typedef typename Container::const_reference const_reference;
 		typedef typename Container::iterator        iterator_type;
-		typedef EASTL_ITC_NS::output_iterator_tag   iterator_category;
+		typedef eastl::output_iterator_tag   iterator_category;
 		typedef void                                value_type;
 		typedef void                                difference_type;
 		typedef void                                pointer;

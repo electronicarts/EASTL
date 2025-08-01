@@ -162,24 +162,6 @@ int TestMemory()
 
 	TestObject::Reset();
 
-	EASTL_INTERNAL_DISABLE_DEPRECATED() // 'eastl::get_temporary_buffer': was declared deprecated
-	{
-		// get_temporary_buffer(ptrdiff_t n, size_t alignment, size_t alignmentOffset, char* pName);
-
-		pair<int*, ptrdiff_t> pr1 = get_temporary_buffer<int>(100, 1, 0, EASTL_NAME_VAL("Temp int array"));
-		memset(pr1.first, 0, 100 * sizeof(int));
-		return_temporary_buffer(pr1.first);
-
-		// Note that 
-		pair<TestObject*, ptrdiff_t> pr2 = get_temporary_buffer<TestObject>(300);
-		memset(pr2.first, 0, 300 * sizeof(TestObject));
-		return_temporary_buffer(pr2.first, pr2.second);
-	}
-	EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-	EATEST_VERIFY(TestObject::IsClear());
-	TestObject::Reset();
-
 
 	{
 		LCTestObject* pLCTO;
@@ -381,34 +363,7 @@ int TestMemory()
 	// eastl::list<int>    intList;
 	// eastl::slist<int>   intSlist;
 
-	// template <typename ForwardIterator, typename ForwardIteratorDest>
-	// inline ForwardIteratorDest uninitialized_relocate_start(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-
-	// template <typename ForwardIterator, typename ForwardIteratorDest>
-	// inline ForwardIteratorDest uninitialized_relocate_commit(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-
-	// template <typename ForwardIterator, typename ForwardIteratorDest>
-	// inline ForwardIteratorDest uninitialized_relocate_abort(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-
-	// template <typename ForwardIterator, typename ForwardIteratorDest>
-	// inline ForwardIteratorDest uninitialized_relocate(ForwardIterator first, ForwardIterator last, ForwardIteratorDest dest)
-
-	// This test does little more than verify that the code compiles.
-	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
-	int* pEnd = eastl::uninitialized_relocate_start<int*, int*>((int*)NULL, (int*)NULL, (int*)NULL);
-	EATEST_VERIFY(pEnd == NULL);
-
-	pEnd = eastl::uninitialized_relocate_commit<int*, int*>((int*)NULL, (int*)NULL, (int*)NULL);
-	EATEST_VERIFY(pEnd == NULL);
-
-	pEnd = eastl::uninitialized_relocate_abort<int*, int*>((int*)NULL, (int*)NULL, (int*)NULL);
-	EATEST_VERIFY(pEnd == NULL);
-
-	pEnd = eastl::uninitialized_relocate<int*, int*>((int*)NULL, (int*)NULL, (int*)NULL);
-	EATEST_VERIFY(pEnd == NULL);
-	EASTL_INTERNAL_RESTORE_DEPRECATED()
-
-
+	int* pEnd;
 
 	{
 		// template <typename InputIterator, typename ForwardIterator>

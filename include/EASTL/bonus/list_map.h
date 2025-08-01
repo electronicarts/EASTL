@@ -75,15 +75,10 @@ namespace eastl
 		typedef list_map_data<T>                            node_type;
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
-		typedef EASTL_ITC_NS::bidirectional_iterator_tag    iterator_category;
+		typedef eastl::bidirectional_iterator_tag    iterator_category;
 
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
 	private:
 		base_node_type* mpNode;
-#else
-	public:
-		node_type* mpNode;
-#endif
 
 	public:
 		list_map_iterator();
@@ -108,14 +103,6 @@ namespace eastl
 		this_type  operator--(int);
 
 	private:
-		// This is a temp helper function for the deprecation.
-		// It should be removed when the deprecation window ends.
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
-		base_node_type* toInternalNodeType(base_node_type* node) { return node; }
-#else
-		node_type* toInternalNodeType(base_node_type* node) { return static_cast<node_type*>(node); }
-#endif
-
 		template<class U, class PtrA, class RefA, class PtrB, class RefB>
 		friend bool operator==(const list_map_iterator<U, PtrA, RefA>&, const list_map_iterator<U, PtrB, RefB>&);
 
@@ -316,6 +303,13 @@ namespace eastl
 		size_type count(const key_type& key) const;
 		size_type erase(const key_type& key);
 
+		// todo: add heterogenous lookup support (using a heterogeneous comparator - a type 'Comp' where 'Comp::is_transparent' is valid and denotes a type):
+		// template<typename KX, typename Cmp = Compare, eastl::enable_if_t<eastl::detail::is_transparent_comparison_v<Cmp>, bool> = true>
+		// iterator        find(const KX& key);
+		//
+		// ... also for count() ...
+		// ... also for erase() ...
+
 	public:
 		// Shared methods which are common to list and map
 		iterator erase(const_iterator position);
@@ -437,7 +431,7 @@ namespace eastl
 
 	template <typename T, typename Pointer, typename Reference>
 	inline list_map_iterator<T, Pointer, Reference>::list_map_iterator(const base_node_type* pNode)
-		: mpNode(toInternalNodeType(const_cast<base_node_type*>(pNode)))
+		: mpNode(const_cast<base_node_type*>(pNode))
 	{
 		// Empty
 	}
@@ -463,7 +457,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::this_type&
 	list_map_iterator<T, Pointer, Reference>::operator++()
 	{
-		mpNode = toInternalNodeType(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return *this;
 	}
 
@@ -473,7 +467,7 @@ namespace eastl
 	list_map_iterator<T, Pointer, Reference>::operator++(int)
 	{
 		this_type temp(*this);
-		mpNode = toInternalNodeType(mpNode->mpNext);
+		mpNode = mpNode->mpNext;
 		return temp;
 	}
 
@@ -482,7 +476,7 @@ namespace eastl
 	inline typename list_map_iterator<T, Pointer, Reference>::this_type&
 	list_map_iterator<T, Pointer, Reference>::operator--()
 	{
-		mpNode = toInternalNodeType(mpNode->mpPrev);
+		mpNode = mpNode->mpPrev;
 		return *this;
 	}
 
@@ -492,7 +486,7 @@ namespace eastl
 	list_map_iterator<T, Pointer, Reference>::operator--(int)
 	{
 		this_type temp(*this);
-		mpNode = toInternalNodeType(mpNode->mpPrev);
+		mpNode = mpNode->mpPrev;
 		return temp;
 	}
 

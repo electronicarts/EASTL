@@ -12,6 +12,7 @@
 #include <EASTL/type_traits.h>
 #include <EASTL/internal/functional_base.h>
 #include <EASTL/internal/mem_fn.h>
+#include <EASTL/bit.h>
 
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -227,6 +228,7 @@ namespace eastl
 	template <>
 	struct greater<void>
 	{
+		typedef int is_transparent;
 		template<typename A, typename B>
 		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
 			-> decltype(eastl::forward<A>(a) > eastl::forward<B>(b))
@@ -299,6 +301,7 @@ namespace eastl
 	template <>
 	struct greater_equal<void>
 	{
+		typedef int is_transparent;
 		template<typename A, typename B>
 		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
 			-> decltype(eastl::forward<A>(a) >= eastl::forward<B>(b))
@@ -322,6 +325,7 @@ namespace eastl
 	template <>
 	struct less_equal<void>
 	{
+		typedef int is_transparent;
 		template<typename A, typename B>
 		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
 			-> decltype(eastl::forward<A>(a) <= eastl::forward<B>(b))
@@ -347,6 +351,7 @@ namespace eastl
 	template <>
 	struct logical_and<void>
 	{
+		typedef int is_transparent;
 		template<typename A, typename B>
 		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
 			-> decltype(eastl::forward<A>(a) && eastl::forward<B>(b))
@@ -364,6 +369,7 @@ namespace eastl
 	template <>
 	struct logical_or<void>
 	{
+		typedef int is_transparent;
 		template<typename A, typename B>
 		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
 			-> decltype(eastl::forward<A>(a) || eastl::forward<B>(b))
@@ -381,6 +387,7 @@ namespace eastl
 	template <>
 	struct logical_not<void>
 	{
+		typedef int is_transparent;
 		template<typename T>
 		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
 			-> decltype(!eastl::forward<T>(t))
@@ -483,569 +490,7 @@ namespace eastl
 		}
 	};
 
-	// todo: add identity function object after removal of non-standard identity (renamed to type_identity).
-
-
-	///////////////////////////////////////////////////////////////////////
-	// Dual type functions
-	///////////////////////////////////////////////////////////////////////
-
-
-	// deprecated. consider using the specialization equal_to<> instead.
-	template <typename T, typename U>
-	struct EASTL_REMOVE_AT_2024_APRIL equal_to_2
-	{
-		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
-			{ return a == b; }
-
-		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
-		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
-			{ return b == a; }
-	};
-
-	template <typename T, typename U>
-	struct EASTL_REMOVE_AT_2024_APRIL not_equal_to_2
-	{
-		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
-			{ return a != b; }
-
-		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
-		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
-			{ return b != a; }
-	};
-
-
-	template <typename T, typename U>
-	struct EASTL_REMOVE_AT_2024_APRIL less_2
-	{
-		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
-			{ return a < b; }
-
-		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
-		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
-			{ return b < a; }
-	};
-
-	EASTL_INTERNAL_DISABLE_DEPRECATED() // '*': was declared deprecated
-
-	/// unary_negate
-	///
-	template <typename Predicate>
-	class EASTL_REMOVE_AT_2024_APRIL unary_negate
-	{
-		protected:
-			Predicate mPredicate;
-		public:
-			explicit unary_negate(const Predicate& a)
-				: mPredicate(a) {}
-			EA_CPP14_CONSTEXPR bool operator()(const typename Predicate::argument_type& a) const
-				{ return !mPredicate(a); }
-	};
-
-	template <typename Predicate>
-	EASTL_REMOVE_AT_2024_APRIL inline EA_CPP14_CONSTEXPR unary_negate<Predicate> not1(const Predicate& predicate)
-		{ return unary_negate<Predicate>(predicate); }
-
-
-
-	/// binary_negate
-	///
-	template <typename Predicate>
-	class EASTL_REMOVE_AT_2024_APRIL binary_negate
-	{
-		protected:
-			Predicate mPredicate;
-		public:
-			explicit binary_negate(const Predicate& a)
-				: mPredicate(a) { }
-			EA_CPP14_CONSTEXPR bool operator()(const typename Predicate::first_argument_type& a, const typename Predicate::second_argument_type& b) const
-				{ return !mPredicate(a, b); }
-	};
-
-	template <typename Predicate>
-	EASTL_REMOVE_AT_2024_APRIL inline EA_CPP14_CONSTEXPR binary_negate<Predicate> not2(const Predicate& predicate)
-		{ return binary_negate<Predicate>(predicate); }
-
-
-
-	/// unary_compose
-	///
-	template<typename Operation1, typename Operation2>
-	struct EASTL_REMOVE_AT_2024_APRIL unary_compose
-	{
-	protected:
-		Operation1 op1;
-		Operation2 op2;
-
-	public:
-		unary_compose(const Operation1& x, const Operation2& y)
-			: op1(x), op2(y) {}
-
-		typename Operation1::result_type operator()(const typename Operation2::argument_type& x) const
-			{ return op1(op2(x)); }
-
-		typename Operation1::result_type operator()(typename Operation2::argument_type& x) const
-			{ return op1(op2(x)); }
-	};
-
-	template<typename Operation1,typename Operation2>
-	EASTL_REMOVE_AT_2024_APRIL inline unary_compose<Operation1,Operation2>
-	compose1(const Operation1& op1, const Operation2& op2)
-	{
-		return unary_compose<Operation1, Operation2>(op1,op2);
-	}
-
-	/// binary_compose
-	///
-	template <class Operation1, class Operation2, class Operation3>
-	class EASTL_REMOVE_AT_2024_APRIL binary_compose
-	{
-	protected:
-		Operation1 op1;
-		Operation2 op2;
-		Operation3 op3;
-
-	public:
-		// Support binary functors too.
-		typedef typename Operation2::argument_type first_argument_type;
-		typedef typename Operation3::argument_type second_argument_type;
-
-		binary_compose(const Operation1& x, const Operation2& y, const Operation3& z) 
-			: op1(x), op2(y), op3(z) { }
-
-		typename Operation1::result_type operator()(const typename Operation2::argument_type& x) const 
-			{ return op1(op2(x),op3(x)); }
-
-		typename Operation1::result_type operator()(typename Operation2::argument_type& x) const 
-			{ return op1(op2(x),op3(x)); }
-
-		typename Operation1::result_type operator()(const typename Operation2::argument_type& x,const typename Operation3::argument_type& y) const 
-			{ return op1(op2(x),op3(y)); }
-
-		typename Operation1::result_type operator()(typename Operation2::argument_type& x, typename Operation3::argument_type& y) const 
-			{ return op1(op2(x),op3(y)); }
-	};
-
-
-	template <class Operation1, class Operation2, class Operation3>
-	EASTL_REMOVE_AT_2024_APRIL inline binary_compose<Operation1, Operation2, Operation3>
-	compose2(const Operation1& op1, const Operation2& op2, const Operation3& op3)
-	{
-		return binary_compose<Operation1, Operation2, Operation3>(op1, op2, op3);
-	}
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// pointer_to_unary_function
-	///////////////////////////////////////////////////////////////////////
-
-	/// pointer_to_unary_function
-	///
-	/// This is an adapter template which converts a pointer to a standalone
-	/// function to a function object. This allows standalone functions to 
-	/// work in many cases where the system requires a function object.
-	///
-	/// Example usage:
-	///     ptrdiff_t Rand(ptrdiff_t n) { return rand() % n; } // Note: The C rand function is poor and slow.
-	///     pointer_to_unary_function<ptrdiff_t, ptrdiff_t> randInstance(Rand);
-	///     random_shuffle(pArrayBegin, pArrayEnd, randInstance);
-	///
-	template <typename Arg, typename Result>
-	class EASTL_REMOVE_AT_2024_APRIL pointer_to_unary_function
-		: public unary_function<Arg, Result>
-	{
-	protected:
-		Result (*mpFunction)(Arg);
-
-	public:
-		pointer_to_unary_function()
-			{ }
-
-		explicit pointer_to_unary_function(Result (*pFunction)(Arg))
-			: mpFunction(pFunction) { }
-
-		Result operator()(Arg x) const
-			{ return mpFunction(x); } 
-	};
-
-
-	/// ptr_fun
-	///
-	/// This ptr_fun is simply shorthand for usage of pointer_to_unary_function.
-	///
-	/// Example usage (actually, you don't need to use ptr_fun here, but it works anyway):
-	///    int factorial(int x) { return (x > 1) ? (x * factorial(x - 1)) : x; }
-	///    transform(pIntArrayBegin, pIntArrayEnd, pIntArrayBegin, ptr_fun(factorial));
-	///
-	template <typename Arg, typename Result>
-	EASTL_REMOVE_AT_2024_APRIL inline pointer_to_unary_function<Arg, Result>
-		ptr_fun(Result (*pFunction)(Arg))
-		{ return pointer_to_unary_function<Arg, Result>(pFunction); }
-
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// pointer_to_binary_function
-	///////////////////////////////////////////////////////////////////////
-
-	/// pointer_to_binary_function
-	///
-	/// This is an adapter template which converts a pointer to a standalone
-	/// function to a function object. This allows standalone functions to 
-	/// work in many cases where the system requires a function object.
-	///
-	template <typename Arg1, typename Arg2, typename Result>
-	class EASTL_REMOVE_AT_2024_APRIL pointer_to_binary_function
-		: public binary_function<Arg1, Arg2, Result>
-	{
-	protected:
-		Result (*mpFunction)(Arg1, Arg2);
-
-	public:
-		pointer_to_binary_function()
-			{ }
-
-		explicit pointer_to_binary_function(Result (*pFunction)(Arg1, Arg2))
-			: mpFunction(pFunction) {}
-
-		Result operator()(Arg1 x, Arg2 y) const
-			{ return mpFunction(x, y); }
-	};
-
-
-	/// This ptr_fun is simply shorthand for usage of pointer_to_binary_function.
-	///
-	/// Example usage (actually, you don't need to use ptr_fun here, but it works anyway):
-	///    int multiply(int x, int y) { return x * y; }
-	///    transform(pIntArray1Begin, pIntArray1End, pIntArray2Begin, pIntArray1Begin, ptr_fun(multiply));
-	///
-	template <typename Arg1, typename Arg2, typename Result>
-	EASTL_REMOVE_AT_2024_APRIL inline pointer_to_binary_function<Arg1, Arg2, Result>
-	ptr_fun(Result (*pFunction)(Arg1, Arg2))
-		{ return pointer_to_binary_function<Arg1, Arg2, Result>(pFunction); }
-
-
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// mem_fun
-	// mem_fun1
-	//
-	// Note that mem_fun calls member functions via *pointers* to classes 
-	// and not instances of classes. mem_fun_ref is for calling functions
-	// via instances of classes or references to classes.
-	//
-	// NOTE:
-	// mem_fun was deprecated in C++11 and removed in C++17, in favor 
-	// of the more general mem_fn and bind.
-	//
-	///////////////////////////////////////////////////////////////////////
-
-	/// mem_fun_t
-	///
-	/// Member function with no arguments.
-	///
-	template <typename Result, typename T> 
-	class EASTL_REMOVE_AT_2024_APRIL mem_fun_t
-		: public unary_function<T*, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)();
-
-		inline explicit mem_fun_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(T* pT) const
-		{
-			return (pT->*mpMemberFunction)();
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// mem_fun1_t
-	///
-	/// Member function with one argument.
-	///
-	template <typename Result, typename T, typename Argument>
-	class EASTL_REMOVE_AT_2024_APRIL mem_fun1_t
-		: public binary_function<T*, Argument, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)(Argument);
-
-		inline explicit mem_fun1_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(T* pT, Argument arg) const
-		{
-			return (pT->*mpMemberFunction)(arg);
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// const_mem_fun_t
-	///
-	/// Const member function with no arguments.
-	/// Note that we inherit from unary_function<const T*, Result>
-	/// instead of what the C++ standard specifies: unary_function<T*, Result>.
-	/// The C++ standard is in error and this has been recognized by the defect group.
-	///
-	template <typename Result, typename T>
-	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun_t
-		: public unary_function<const T*, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)() const;
-
-		inline explicit const_mem_fun_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(const T* pT) const
-		{
-			return (pT->*mpMemberFunction)();
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// const_mem_fun1_t
-	///
-	/// Const member function with one argument.
-	/// Note that we inherit from unary_function<const T*, Result>
-	/// instead of what the C++ standard specifies: unary_function<T*, Result>.
-	/// The C++ standard is in error and this has been recognized by the defect group.
-	///
-	template <typename Result, typename T, typename Argument>
-	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun1_t
-		: public binary_function<const T*, Argument, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)(Argument) const;
-
-		inline explicit const_mem_fun1_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(const T* pT, Argument arg) const
-		{
-			return (pT->*mpMemberFunction)(arg);
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// mem_fun
-	///
-	/// This is the high level interface to the mem_fun_t family.
-	///
-	/// Example usage:
-	///    struct TestClass { void print() { puts("hello"); } }
-	///    TestClass* pTestClassArray[3] = { ... };
-	///    for_each(pTestClassArray, pTestClassArray + 3, &TestClass::print);
-	///
-	/// Note: using conventional inlining here to avoid issues on GCC/Linux
-	///
-	template <typename Result, typename T>
-	EASTL_REMOVE_AT_2024_APRIL inline mem_fun_t<Result, T>
-	mem_fun(Result (T::*MemberFunction)())
-	{
-		return eastl::mem_fun_t<Result, T>(MemberFunction);
-	}
-
-	template <typename Result, typename T, typename Argument>
-	EASTL_REMOVE_AT_2024_APRIL inline mem_fun1_t<Result, T, Argument>
-	mem_fun(Result (T::*MemberFunction)(Argument))
-	{
-		return eastl::mem_fun1_t<Result, T, Argument>(MemberFunction);
-	}
-
-	template <typename Result, typename T>
-	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun_t<Result, T>
-	mem_fun(Result (T::*MemberFunction)() const)
-	{
-		return eastl::const_mem_fun_t<Result, T>(MemberFunction);
-	}
-
-	template <typename Result, typename T, typename Argument>
-	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun1_t<Result, T, Argument>
-	mem_fun(Result (T::*MemberFunction)(Argument) const)
-	{
-		return eastl::const_mem_fun1_t<Result, T, Argument>(MemberFunction);
-	}
-
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// mem_fun_ref
-	// mem_fun1_ref
-	//
-	///////////////////////////////////////////////////////////////////////
-
-	/// mem_fun_ref_t
-	///
-	template <typename Result, typename T>
-	class EASTL_REMOVE_AT_2024_APRIL mem_fun_ref_t
-		: public unary_function<T, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)();
-
-		inline explicit mem_fun_ref_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(T& t) const
-		{
-			return (t.*mpMemberFunction)();
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// mem_fun1_ref_t
-	///
-	template <typename Result, typename T, typename Argument>
-	class EASTL_REMOVE_AT_2024_APRIL mem_fun1_ref_t
-		: public binary_function<T, Argument, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)(Argument);
-
-		inline explicit mem_fun1_ref_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(T& t, Argument arg) const
-		{
-			return (t.*mpMemberFunction)(arg);
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// const_mem_fun_ref_t
-	///
-	template <typename Result, typename T>
-	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun_ref_t
-		: public unary_function<T, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)() const;
-
-		inline explicit const_mem_fun_ref_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(const T& t) const
-		{
-			return (t.*mpMemberFunction)();
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// const_mem_fun1_ref_t
-	///
-	template <typename Result, typename T, typename Argument>
-	class EASTL_REMOVE_AT_2024_APRIL const_mem_fun1_ref_t
-		: public binary_function<T, Argument, Result>
-	{
-	public:
-		typedef Result (T::*MemberFunction)(Argument) const;
-
-		inline explicit const_mem_fun1_ref_t(MemberFunction pMemberFunction)
-			: mpMemberFunction(pMemberFunction)
-		{
-			// Empty
-		}
-
-		inline Result operator()(const T& t, Argument arg) const
-		{
-			return (t.*mpMemberFunction)(arg);
-		}
-
-	protected:
-		MemberFunction mpMemberFunction;
-	};
-
-
-	/// mem_fun_ref
-	/// Example usage:
-	///    struct TestClass { void print() { puts("hello"); } }
-	///    TestClass testClassArray[3];
-	///    for_each(testClassArray, testClassArray + 3, &TestClass::print);
-	///
-	/// Note: using conventional inlining here to avoid issues on GCC/Linux
-	///
-	template <typename Result, typename T>
-	EASTL_REMOVE_AT_2024_APRIL inline mem_fun_ref_t<Result, T>
-	mem_fun_ref(Result (T::*MemberFunction)())
-	{
-		return eastl::mem_fun_ref_t<Result, T>(MemberFunction);
-	}
-
-	template <typename Result, typename T, typename Argument>
-	EASTL_REMOVE_AT_2024_APRIL inline mem_fun1_ref_t<Result, T, Argument>
-	mem_fun_ref(Result (T::*MemberFunction)(Argument))
-	{
-		return eastl::mem_fun1_ref_t<Result, T, Argument>(MemberFunction);
-	}
-
-	template <typename Result, typename T>
-	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun_ref_t<Result, T>
-	mem_fun_ref(Result (T::*MemberFunction)() const)
-	{
-		return eastl::const_mem_fun_ref_t<Result, T>(MemberFunction);
-	}
-
-	template <typename Result, typename T, typename Argument>
-	EASTL_REMOVE_AT_2024_APRIL inline const_mem_fun1_ref_t<Result, T, Argument>
-	mem_fun_ref(Result (T::*MemberFunction)(Argument) const)
-	{
-		return eastl::const_mem_fun1_ref_t<Result, T, Argument>(MemberFunction);
-	}
-
-	EASTL_INTERNAL_RESTORE_DEPRECATED()
+	// todo: add identity function object
 
 	// not_fn_ret
 	// not_fn_ret is a implementation specified return type of eastl::not_fn.
@@ -1187,14 +632,30 @@ namespace eastl
 	template <> struct hash<unsigned long long>
 		{ size_t operator()(unsigned long long val) const { return static_cast<size_t>(val); } };
 
+	namespace internal
+	{
+		using size_t_sized_floating_point_type = eastl::conditional_t<sizeof(size_t) == sizeof(double), double, float>;
+
+		template <typename T>
+		size_t floating_point_hash(T val)
+		{
+			if (val == -0.0)
+			{
+				return eastl::bit_cast<size_t>(static_cast<internal::size_t_sized_floating_point_type>(0.0));
+			}
+
+			return eastl::bit_cast<size_t>(static_cast<internal::size_t_sized_floating_point_type>(val));
+		}
+	}
+
 	template <> struct hash<float>
-		{ size_t operator()(float val) const { return static_cast<size_t>(val); } };
+		{ size_t operator()(float val) const { return internal::floating_point_hash(val); } };
 
 	template <> struct hash<double>
-		{ size_t operator()(double val) const { return static_cast<size_t>(val); } };
+		{ size_t operator()(double val) const { return internal::floating_point_hash(val); } };
 
 	template <> struct hash<long double>
-		{ size_t operator()(long double val) const { return static_cast<size_t>(val); } };
+		{ size_t operator()(long double val) const { return internal::floating_point_hash(val); } };
 
 	#if defined(EA_HAVE_INT128) && EA_HAVE_INT128
 	template <> struct hash<uint128_t>

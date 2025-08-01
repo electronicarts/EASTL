@@ -6,6 +6,7 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include <EASTL/fixed_map.h>
+#include "TestAssociativeContainers.h"
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
@@ -58,18 +59,22 @@ int TestFixedMap()
 		{   // Test construction
 			nErrorCount += TestMapConstruction<VM1, VM3, false>();
 			nErrorCount += TestMapConstruction<VM4, VM6, false>();
+			nErrorCount += TestMapConstruction<eastl::fixed_map<int, int, kContainerSize, true, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
 
 			nErrorCount += TestMapConstruction<VMM1, VMM3, true>();
 			nErrorCount += TestMapConstruction<VMM4, VMM6, true>();
+			nErrorCount += TestMapConstruction<eastl::fixed_multimap<int, int, kContainerSize, true, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 		}
 
 
 		{   // Test mutating functionality.
 			nErrorCount += TestMapMutation<VM1, VM3, false>();
 			nErrorCount += TestMapMutation<VM4, VM6, false>();
+			nErrorCount += TestMapMutation<eastl::fixed_map<int, int, kContainerSize, true, eastl::less<void>>, std::map<int, int, std::less<void>>, false>();
 
 			nErrorCount += TestMapMutation<VMM1, VMM3, true>();
 			nErrorCount += TestMapMutation<VMM4, VMM6, true>();
+			nErrorCount += TestMapMutation<eastl::fixed_multimap<int, int, kContainerSize, true, eastl::less<void>>, std::multimap<int, int, std::less<void>>, true>();
 		}
 	#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
@@ -77,24 +82,30 @@ int TestFixedMap()
 	{   // Test searching functionality.
 		nErrorCount += TestMapSearch<VM1, false>();
 		nErrorCount += TestMapSearch<VM4, false>();
+		nErrorCount += TestMapSearch<eastl::fixed_map<int, int, kContainerSize, true, eastl::less<void>>, false>();
 
 		nErrorCount += TestMapSearch<VMM1, true>();
 		nErrorCount += TestMapSearch<VMM4, true>();
+		nErrorCount += TestMapSearch<eastl::fixed_multimap<int, int, kContainerSize, true, eastl::less<void>>, true>();
 	}
 
 
 	{
 		// C++11 emplace and related functionality
 		nErrorCount += TestMapCpp11<eastl::fixed_map<int, TestObject, 32> >();
+		nErrorCount += TestMapCpp11<eastl::fixed_map<int, TestObject, 32, true, eastl::less<void>>>();
 
 		nErrorCount += TestMultimapCpp11<eastl::fixed_multimap<int, TestObject, 32> >();
+		nErrorCount += TestMultimapCpp11<eastl::fixed_multimap<int, TestObject, 32, true, eastl::less<void>>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::fixed_map<int, NonCopyable, 32>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::fixed_map<int, NonCopyable, 32, true, eastl::less<void>>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
 		nErrorCount += TestMapCpp17<eastl::fixed_map<int, TestObject, 32>>();
+		nErrorCount += TestMapCpp17<eastl::fixed_map<int, TestObject, 32, true, eastl::less<void>>>();
 	}
 
 
@@ -165,6 +176,25 @@ int TestFixedMap()
 			const Align64* ptr = &((*it).first);
 			EATEST_VERIFY((uint64_t)ptr % EASTL_ALIGN_OF(Align64) == 0);
 		}
+	}
+
+	{ // heterogenous functions - fixed_map
+		fixed_map<ExplicitString, int, 1, true, eastl::less<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestMapHeterogeneousInsertion<decltype(m)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - fixed_multimap
+		fixed_multimap<ExplicitString, int, 1, true, eastl::less<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestOrderedAssociativeContainerHeterogeneousLookup(m);
+
+		VERIFY(m.equal_range_small("not found") == eastl::make_pair(m.lower_bound("not found"), m.upper_bound("not found")));
+		VERIFY(m.equal_range_small("found") == eastl::make_pair(m.lower_bound("found"), m.upper_bound("found")));
+
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
 	}
 
 

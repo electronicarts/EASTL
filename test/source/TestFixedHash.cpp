@@ -7,9 +7,12 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
+#include "TestAssociativeContainers.h"
 #include <EASTL/fixed_hash_set.h>
 #include <EASTL/fixed_hash_map.h>
 #include <EASTL/fixed_vector.h>
+#include <EAStdC/EAString.h>
+#include <EASTL/functional.h>
 
 
 
@@ -136,7 +139,15 @@ template class eastl::fixed_hash_map<A, A, 1, 2, true, eastl::hash<A>, eastl::eq
 template class eastl::fixed_hash_multiset<A, 1, 2, true, eastl::hash<A>, eastl::equal_to<A>, false, MallocAllocator>;
 template class eastl::fixed_hash_multimap<A, A, 1, 2, true, eastl::hash<A>, eastl::equal_to<A>, false, MallocAllocator>;
 
+struct TransparentHash {
+	using is_transparent = int;
 
+	template<typename T>
+	size_t operator()(T&& val) const
+	{
+		return eastl::hash<eastl::remove_cvref_t<T>>{}(eastl::forward<T>(val));
+	}
+};
 
 template<typename FixedHashMap, int ELEMENT_MAX, int ITERATION_MAX>
 int TestFixedHashMapClearBuckets()
@@ -594,23 +605,29 @@ int TestFixedHash()
 		// C++11 emplace and related functionality
 		nErrorCount += TestMapCpp11<eastl::fixed_hash_map<int, TestObject,  2, 7, true> >();  // Exercize a low-capacity fixed-size container.
 		nErrorCount += TestMapCpp11<eastl::fixed_hash_map<int, TestObject, 32, 7, true> >();
+		nErrorCount += TestMapCpp11<eastl::fixed_hash_map<int, TestObject, 32, 7, true, TransparentHash, eastl::equal_to<void>> >();
 
 		nErrorCount += TestMapCpp11NonCopyable<eastl::fixed_hash_map<int, NonCopyable, 2, 7, true>>();
+		nErrorCount += TestMapCpp11NonCopyable<eastl::fixed_hash_map<int, NonCopyable, 2, 7, true, TransparentHash, eastl::equal_to<void>>>();
 
 		nErrorCount += TestSetCpp11<eastl::fixed_hash_set<TestObject,  2, 7, true> >();
 		nErrorCount += TestSetCpp11<eastl::fixed_hash_set<TestObject, 32, 7, true> >();
+		nErrorCount += TestSetCpp11<eastl::fixed_hash_set<TestObject, 32, 7, true, TransparentHash, eastl::equal_to<void>> >();
 
 		nErrorCount += TestMultimapCpp11<eastl::fixed_hash_multimap<int, TestObject,  2, 7, true> >();
 		nErrorCount += TestMultimapCpp11<eastl::fixed_hash_multimap<int, TestObject, 32, 7, true> >();
+		nErrorCount += TestMultimapCpp11<eastl::fixed_hash_multimap<int, TestObject, 32, 7, true, TransparentHash, eastl::equal_to<void>> >();
 
 		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject,  2, 7, true> >();
 		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject, 32, 7, true> >();
+		nErrorCount += TestMultisetCpp11<eastl::fixed_hash_multiset<TestObject, 32, 7, true, TransparentHash, eastl::equal_to<void>> >();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
 		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject,  2, 7, true>>();
 		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject, 32, 7, true> >();
+		nErrorCount += TestMapCpp17<eastl::fixed_hash_map<int, TestObject, 32, 7, true, TransparentHash, eastl::equal_to<void>> >();
 	}
 
 	{
@@ -618,9 +635,13 @@ int TestFixedHash()
 
 		// test with overflow enabled.
 		nErrorCount += HashContainerReserveTest<fixed_hash_set<int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_set<int, 16, 17, true, TransparentHash, eastl::equal_to<void>>>()();
 		nErrorCount += HashContainerReserveTest<fixed_hash_multiset<int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_multiset<int, 16, 17, true, TransparentHash, eastl::equal_to<void>>>()();
 		nErrorCount += HashContainerReserveTest<fixed_hash_map<int, int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_map<int, int, 16, 17, true, TransparentHash, eastl::equal_to<void>>>()();
 		nErrorCount += HashContainerReserveTest<fixed_hash_multimap<int, int, 16>>()();
+		nErrorCount += HashContainerReserveTest<fixed_hash_multimap<int, int, 16, 17, true, TransparentHash, eastl::equal_to<void>>>()();
 
 		// API prevents testing fixed size hash container reservation without overflow enabled. 
 		//
@@ -719,7 +740,10 @@ int TestFixedHash()
 		}
 
 		{
-			auto result = fixedHashMap.insert(eastl::make_pair(0, 0));
+			// emplace may allocate a node, even if there is already an element with the key in the container, but
+			// we ensure that emplace(value_type) (regardless of const qualifier and value category) doesn't allocate a node if it already exists.
+			FixedHashMapFalse::value_type value(0, 0);
+			auto result = fixedHashMap.emplace(value);
 			VERIFY(result.second == false);
 		}
 
@@ -728,7 +752,91 @@ int TestFixedHash()
 			// auto result = fixedHashMap.emplace(0, 0);  
 			// VERIFY(result.second == false);
 		}
+
+		{
+			// matches insert(P&&) rather than insert(const value_type&) or insert(value_type&&)
+			// (note that value_type is pair<const int, int>, not pair<int, int>)
+			// which is equivalent to emplace<pair<int, int>>() and will cause a node construction, OOM.
+			// auto result = fixedHashMap.insert(eastl::make_pair(0, 0));
+			// VERIFY(result.second == false);
+		}
 	}
+
+	{ // heterogenous functions - fixed_hash_map
+		eastl::fixed_hash_map<ExplicitString, int, 1, 2, true, ExplicitStringHash, eastl::equal_to<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestMapHeterogeneousInsertion<decltype(m)>();
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - fixed_hash_multimap
+		eastl::fixed_hash_multimap<ExplicitString, int, 1, 2, true, ExplicitStringHash, eastl::equal_to<void>> m{ { ExplicitString::Create("found"), 1 } };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(m);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(m);
+	}
+
+	{ // heterogenous functions - hash_set
+		eastl::fixed_hash_set<ExplicitString, 1, 2, true, ExplicitStringHash, eastl::equal_to<void>> s{ ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+	{ // heterogenous functions - hash_multiset
+		eastl::fixed_hash_multiset<ExplicitString, 1, 2, true, ExplicitStringHash, eastl::equal_to<void>> s{ ExplicitString::Create("found") };
+		nErrorCount += TestAssociativeContainerHeterogeneousLookup(s);
+		nErrorCount += TestAssociativeContainerHeterogeneousErasure(s);
+	}
+
+#if EASTL_NAME_ENABLED
+	// allocators
+	{
+		{
+			eastl::fixed_hash_map<int, int, 64> c(EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_map<int, int, 64> c(eastl::hash<int>(), eastl::equal_to<int>(), EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_map<int, int, 64> c({ { 1, 2 }, { 3, 4 } }, EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_map<int, int, 64> c(EASTLAllocatorType("test"));
+			EA_DISABLE_CLANG_WARNING(-Wself-assign-overloaded);
+			c = c;
+			EA_RESTORE_CLANG_WARNING();
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_multimap<int, int, 64> c(EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_multimap<int, int, 64> c(eastl::hash<int>(), eastl::equal_to<int>(), EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_multimap<int, int, 64> c({ { 1, 2 }, { 3, 4 } }, EASTLAllocatorType("test"));
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+
+		{
+			eastl::fixed_hash_multimap<int, int, 64> c(EASTLAllocatorType("test"));
+			EA_DISABLE_CLANG_WARNING(-Wself-assign-overloaded);
+			c = c;
+			EA_RESTORE_CLANG_WARNING();
+			VERIFY(EA::StdC::Strcmp(c.get_allocator().get_name(), "test") == 0);
+		}
+	}
+#endif
 
 	return nErrorCount;
 }

@@ -30,13 +30,15 @@ namespace eastl
 		EA_CONSTEXPR bool is_fixed_function_v = is_fixed_function<T>::value;
 	}
 
-	#define EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(TYPE)                    \
-		static_assert(sizeof(TYPE) <= sizeof(typename Base::FunctorStorageType), \
-					  "fixed_function local buffer is not large enough to hold the callable object.")
+	#define EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(TYPE)											\
+		static_assert(sizeof(eastl::decay_t<TYPE>) <= sizeof(typename Base::FunctorStorageType),		\
+					"fixed_function local buffer is not large enough to hold the callable object.");	\
+		static_assert(alignof(eastl::internal::functor_storage_alignment) % alignof(eastl::decay_t<TYPE>) == 0,	\
+					"object alignment too large to fit into fixed_function alignment");
 
-    #define EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES) \
-		static_assert(SIZE_IN_BYTES >= NEW_SIZE_IN_BYTES,                           \
-					  "fixed_function local buffer is not large enough to hold the new fixed_function type.")
+    #define EASTL_INTERNAL_FIXED_FUNCTION_OTHER_SIZE_STATIC_ASSERT(OTHER_SIZE_IN_BYTES) \
+		static_assert(SIZE_IN_BYTES >= OTHER_SIZE_IN_BYTES,								\
+					 "fixed_function local buffer is not large enough to hold the new fixed_function type.")
 
 	template <typename Functor>
 	using EASTL_DISABLE_OVERLOAD_IF_FIXED_FUNCTION =
@@ -72,24 +74,24 @@ namespace eastl
 		template <typename Functor,
 		          typename = EASTL_INTERNAL_FUNCTION_VALID_FUNCTION_ARGS(Functor, R, Args..., Base, fixed_function),
 		          typename = EASTL_DISABLE_OVERLOAD_IF_FIXED_FUNCTION<Functor>>
-		fixed_function(Functor functor)
-		    : Base(eastl::move(functor))
+		fixed_function(Functor&& functor)
+		    : Base(eastl::forward<Functor>(functor))
 		{
 			EASTL_INTERNAL_FIXED_FUNCTION_STATIC_ASSERT(Functor);
 		}
 
-		template<int NEW_SIZE_IN_BYTES>
-		fixed_function(const fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>& other)
-			: Base(other)
+		template<int OTHER_SIZE_IN_BYTES>
+		fixed_function(const fixed_function<OTHER_SIZE_IN_BYTES, R(Args...)>& other)
+		    : Base(static_cast<const internal::function_detail<OTHER_SIZE_IN_BYTES, R(Args...)>&>(other))
 		{
-			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+			EASTL_INTERNAL_FIXED_FUNCTION_OTHER_SIZE_STATIC_ASSERT(OTHER_SIZE_IN_BYTES);
 		}
 
-		template<int NEW_SIZE_IN_BYTES>
-		fixed_function(fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>&& other)
-			: Base(eastl::move(other))
+		template<int OTHER_SIZE_IN_BYTES>
+		fixed_function(fixed_function<OTHER_SIZE_IN_BYTES, R(Args...)>&& other)
+		    : Base(static_cast<internal::function_detail<OTHER_SIZE_IN_BYTES, R(Args...)>&&>(other))
 		{
-			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+			EASTL_INTERNAL_FIXED_FUNCTION_OTHER_SIZE_STATIC_ASSERT(OTHER_SIZE_IN_BYTES);
 		}
 
 		~fixed_function() EA_NOEXCEPT = default;
@@ -112,21 +114,21 @@ namespace eastl
 			return *this;
 		}
 
-		template<int NEW_SIZE_IN_BYTES>
-		fixed_function& operator=(const fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>& other)
+		template<int OTHER_SIZE_IN_BYTES>
+		fixed_function& operator=(const fixed_function<OTHER_SIZE_IN_BYTES, R(Args...)>& other)
 		{
-			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+			EASTL_INTERNAL_FIXED_FUNCTION_OTHER_SIZE_STATIC_ASSERT(OTHER_SIZE_IN_BYTES);
 
-			Base::operator=(other);
+			Base::operator=(static_cast<const internal::function_detail<OTHER_SIZE_IN_BYTES, R(Args...)>&>(other));
 			return *this;
 		}
 
-		template<int NEW_SIZE_IN_BYTES>
-		fixed_function& operator=(fixed_function<NEW_SIZE_IN_BYTES, R(Args...)>&& other)
+		template<int OTHER_SIZE_IN_BYTES>
+		fixed_function& operator=(fixed_function<OTHER_SIZE_IN_BYTES, R(Args...)>&& other)
 		{
-			EASTL_INTERNAL_FIXED_FUNCTION_NEW_SIZE_STATIC_ASSERT(NEW_SIZE_IN_BYTES);
+			EASTL_INTERNAL_FIXED_FUNCTION_OTHER_SIZE_STATIC_ASSERT(OTHER_SIZE_IN_BYTES);
 
-			Base::operator=(eastl::move(other));
+			Base::operator=(static_cast<internal::function_detail<OTHER_SIZE_IN_BYTES, R(Args...)>&&>(other));
 			return *this;
 		}
 

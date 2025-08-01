@@ -6,6 +6,7 @@
 #define EASTL_INTERNAL_MEMORY_BASE_H
 
 #include <EASTL/internal/config.h>
+#include <EASTL/internal/move_help.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -29,6 +30,12 @@ namespace eastl
 	T* addressof(T& value) EA_NOEXCEPT
 	{
 		return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char&>(value)));
+	}
+
+	template<class T, class... Args>
+	EA_CPP14_CONSTEXPR T* construct_at(T* p, Args&&... args)
+	{
+		return ::new (static_cast<void*>(p)) T(eastl::forward<Args>(args)...);
 	}
 
 } // namespace eastl

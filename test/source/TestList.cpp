@@ -504,7 +504,10 @@ int TestList()
 
 		{
 			eastl::list<int> a;
-			auto& front_ref = a.push_front();
+			auto& front_ref = a.push_front(); // value initialized.
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT) // value initialization is not guaranteed before this.
+			VERIFY(a.front() == 0);
+#endif
 			front_ref = 42;
 			VERIFY(a.front() == 42);
 		}
@@ -544,7 +547,10 @@ int TestList()
 	// reference push_back();
 	{
 		eastl::list<int> a;
-		auto& back_ref = a.push_back();
+		auto& back_ref = a.push_back(); // value initialized.
+#if EA_IS_ENABLED(EA_DEPRECATIONS_FOR_2025_OCT) // value initialization is not guaranteed before this.
+		VERIFY(a.back() == 0);
+#endif
 		back_ref = 42;
 		VERIFY(a.back() == 42);
 	}

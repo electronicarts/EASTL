@@ -38,7 +38,7 @@ public:
 	typedef Integer								value_type;
 	typedef Integer* pointer;
 	typedef Integer& reference;
-	typedef EASTL_ITC_NS::input_iterator_tag	iterator_category;
+	typedef eastl::input_iterator_tag	iterator_category;
 
 	explicit InputIterator(Integer* i) noexcept
 		: mInt(i), mEnd(0) { }

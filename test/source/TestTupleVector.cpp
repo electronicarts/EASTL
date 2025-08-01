@@ -955,6 +955,24 @@ int TestTupleVector()
 		TestObject::Reset();
 	}
 
+	{
+		// Regression test, make sure we can sort tuple_vectors
+		tuple_vector<int> testVec;
+		for (int i = 0; i < 10; ++i)
+		{
+			testVec.push_back(i);
+		}
+
+		eastl::sort(testVec.begin(), testVec.end(),
+		            [](auto&& l, auto&& r) { return get<0>(l) > get<0>(r); });
+
+		for (int i = 0; i < 10; ++i)
+		{
+			int val = 9 - i;
+			EATEST_VERIFY(testVec[i] == make_tuple(val));
+		}
+	}
+
 	// Test multitude of constructors
 	{
 		MallocAllocator ma;

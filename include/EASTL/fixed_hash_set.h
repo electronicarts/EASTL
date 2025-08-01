@@ -135,6 +135,8 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
+
+		static constexpr bool can_overflow() { return bEnableOverflow; }
 	}; // fixed_hash_set
 
 
@@ -222,6 +224,8 @@ namespace eastl
 		const overflow_allocator_type& get_overflow_allocator() const EA_NOEXCEPT;
 		overflow_allocator_type&       get_overflow_allocator() EA_NOEXCEPT;
 		void                           set_overflow_allocator(const overflow_allocator_type& allocator);
+
+		static constexpr bool can_overflow() { return bEnableOverflow; }
 	}; // fixed_hash_multiset
 
 
@@ -243,11 +247,7 @@ namespace eastl
 		if (!bEnableOverflow)
 		{
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
-		}	
-
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_SET_DEFAULT_NAME);
-		#endif
+		}
 
 		mAllocator.reset(mNodeBuffer);
 	}
@@ -287,10 +287,6 @@ namespace eastl
 		{
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 		}
-
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_SET_DEFAULT_NAME);
-		#endif
 
 		mAllocator.reset(mNodeBuffer);
 	}
@@ -397,10 +393,6 @@ namespace eastl
 
 		if(!bEnableOverflow)
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
-
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_SET_DEFAULT_NAME);
-		#endif
 
 		mAllocator.reset(mNodeBuffer);
 		base_type::insert(ilist.begin(), ilist.end());
@@ -522,10 +514,6 @@ namespace eastl
 		if(!bEnableOverflow)
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
 
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_MULTISET_DEFAULT_NAME);
-		#endif
-
 		mAllocator.reset(mNodeBuffer);
 	}
 
@@ -562,10 +550,6 @@ namespace eastl
 
 		if(!bEnableOverflow)
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
-
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_MULTISET_DEFAULT_NAME);
-		#endif
 
 		mAllocator.reset(mNodeBuffer);
 	}
@@ -670,10 +654,6 @@ namespace eastl
 
 		if(!bEnableOverflow)
 			base_type::set_max_load_factor(10000.f); // Set it so that we will never resize.
-
-		#if EASTL_NAME_ENABLED
-		mAllocator.set_name(EASTL_FIXED_HASH_MULTISET_DEFAULT_NAME);
-		#endif
 
 		mAllocator.reset(mNodeBuffer);
 		base_type::insert(ilist.begin(), ilist.end());

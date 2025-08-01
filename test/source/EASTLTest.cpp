@@ -80,9 +80,23 @@ int64_t TestObject::sTODefaultCtorCount = 0;
 int64_t TestObject::sTOArgCtorCount     = 0;
 int64_t TestObject::sTOCopyCtorCount    = 0;
 int64_t TestObject::sTOMoveCtorCount    = 0;
+int64_t TestObject::sTOAssignCount      = 0;
 int64_t TestObject::sTOCopyAssignCount  = 0;
 int64_t TestObject::sTOMoveAssignCount  = 0;
+int64_t TestObject::sTOSwapCount		= 0;
 int     TestObject::sMagicErrorCount    = 0;
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ImplicitlyConvertible
+//
+size_t ImplicitlyConvertible::sDefaultCtorCount = 0;
+size_t ImplicitlyConvertible::sConvertCtorCount = 0;
+size_t ImplicitlyConvertible::sCopyCtorCount = 0;
+size_t ImplicitlyConvertible::sMoveCtorCount = 0;
+size_t ImplicitlyConvertible::sCopyAssignCount = 0;
+size_t ImplicitlyConvertible::sMoveAssignCount = 0;
+const ImplicitlyConvertible::ImplicitType ImplicitlyConvertible::implicit{};
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -268,6 +282,6 @@ void  CustomAllocator::deallocate(void* p, size_t /*n*/)
 
 
 
-
+unsigned int ExplicitString::sCtorFromStrCount = 0;
 
 

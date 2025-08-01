@@ -13,7 +13,12 @@ using namespace eastl;
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
 template class eastl::string_hash_map<int>;
+
+// To silence the following GCC note (not a warning, but noisy in the compile output):
+// "the ABI for passing parameters with 32-byte alignment has changed in GCC 4.6"
+EA_DISABLE_GCC_WARNING(-Wpsabi);
 template class eastl::string_hash_map<Align32>;
+EA_RESTORE_GCC_WARNING();
 
 static const char* strings[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"};
 static const size_t kStringCount = 10; // This is intentionally half the length of strings, so that we can test with strings that are not inserted to the map. 

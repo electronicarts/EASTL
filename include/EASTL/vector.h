@@ -40,13 +40,14 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
 #include <EASTL/memory.h>
+#include <EASTL/numeric_limits.h>
 #include <EASTL/bonus/compressed_pair.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <new>
 #include <stddef.h>
 #if EASTL_EXCEPTIONS_ENABLED
-	#include <stdexcept> // std::out_of_range, std::length_error.
+	#include <stdexcept> // std::out_of_range, std::length_error, std::logic_error.
 #endif
 EA_RESTORE_ALL_VC_WARNINGS()
 
@@ -92,6 +93,25 @@ namespace eastl
 		#define EASTL_VECTOR_DEFAULT_ALLOCATOR allocator_type(EASTL_VECTOR_DEFAULT_NAME)
 	#endif
 
+	namespace internal
+	{
+		template <class SizeType, class IntSourceType>
+		inline void AssertValueFitsInType(IntSourceType n, const char* assertMessage)
+		{
+			EA_UNUSED(n);
+			EA_UNUSED(assertMessage);
+
+			if constexpr (eastl::is_signed_v<IntSourceType>)
+				EASTL_ASSERT_MSG(n >= 0, "Attempting to initialize/insert a vector with a negative number of elements!");
+
+			[[maybe_unused]] constexpr bool kSizeTypeMaxIsEnough =
+			    static_cast<uintmax_t>(eastl::numeric_limits<IntSourceType>::max()) <=
+			    static_cast<uintmax_t>(eastl::numeric_limits<SizeType>::max());
+			EASTL_ASSERT_MSG(
+			    kSizeTypeMaxIsEnough || static_cast<IntSourceType>(eastl::numeric_limits<SizeType>::max()) >= n,
+			    assertMessage);
+		}
+	} // namespace internal
 
 
 	/// VectorBase
@@ -138,7 +158,7 @@ namespace eastl
 			static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
 		#endif
 
-		size_type GetNewCapacity(size_type currentCapacity);
+		size_type GetNewCapacity(size_type currentSize);
 
 	protected:
 		T*                                          mpBegin;
@@ -212,10 +232,8 @@ namespace eastl
 		using base_type::npos;
 		using base_type::GetNewCapacity;
 
-#if EA_IS_ENABLED(EASTL_DEPRECATIONS_FOR_2024_APRIL)
 		static_assert(!is_const<value_type>::value, "vector<T> value_type must be non-const.");
 		static_assert(!is_volatile<value_type>::value, "vector<T> value_type must be non-volatile.");
-#endif
 
 	public:
 		vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR));
@@ -342,10 +360,10 @@ namespace eastl
 		using should_move_tag = should_move_or_copy_tag<true>;
 
 		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		pointer DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
+		pointer DoRealloc(size_type newCapacity, ForwardIterator first, ForwardIterator last, should_copy_tag);
 
 		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		pointer DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag);
+		pointer DoRealloc(size_type newCapacity, ForwardIterator first, ForwardIterator last, should_move_tag);
 
 		template <typename Integer>
 		void DoInit(Integer n, Integer value, true_type);
@@ -354,10 +372,10 @@ namespace eastl
 		void DoInit(InputIterator first, InputIterator last, false_type);
 
 		template <typename InputIterator>
-		void DoInitFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag);
+		void DoInitFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag);
 
 		template <typename ForwardIterator>
-		void DoInitFromIterator(ForwardIterator first, ForwardIterator last, EASTL_ITC_NS::forward_iterator_tag);
+		void DoInitFromIterator(ForwardIterator first, ForwardIterator last, eastl::forward_iterator_tag);
 
 		template <typename Integer, bool bMove>
 		void DoAssign(Integer n, Integer value, true_type);
@@ -368,10 +386,10 @@ namespace eastl
 		void DoAssignValues(size_type n, const value_type& value);
 
 		template <typename InputIterator, bool bMove>
-		void DoAssignFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag);
+		void DoAssignFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag);
 
 		template <typename RandomAccessIterator, bool bMove>
-		void DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, EASTL_ITC_NS::random_access_iterator_tag);
+		void DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, eastl::random_access_iterator_tag);
 
 		template <typename Integer>
 		void DoInsert(const_iterator position, Integer n, Integer value, true_type);
@@ -380,10 +398,10 @@ namespace eastl
 		void DoInsert(const_iterator position, InputIterator first, InputIterator last, false_type);
 
 		template <typename InputIterator>
-		void DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag);
+		void DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, eastl::input_iterator_tag);
 
 		template <typename BidirectionalIterator>
-		void DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, EASTL_ITC_NS::bidirectional_iterator_tag);
+		void DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, eastl::bidirectional_iterator_tag);
 
 		void DoInsertValues(const_iterator position, size_type n, const value_type& value);
 
@@ -398,7 +416,7 @@ namespace eastl
 
 		void DoClearCapacity();
 
-		void DoGrow(size_type n);
+		void DoGrow(size_type newCapacity);
 
 		void DoSwap(this_type& x);
 
@@ -468,6 +486,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void VectorBase<T, Allocator>::set_allocator(const allocator_type& allocator)
 	{
+		if(mpBegin != internalCapacityPtr() && internalAllocator() != allocator)
+			EASTL_THROW_MSG_OR_ASSERT(std::logic_error, "vector::set_allocator -- cannot change allocator after allocations have been made.");
 		internalAllocator() = allocator;
 	}
 
@@ -475,11 +495,6 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline T* VectorBase<T, Allocator>::DoAllocate(size_type n)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= 0x80000000))
-				EASTL_FAIL_MSG("vector::DoAllocate -- improbably large request.");
-		#endif
-
 		// If n is zero, then we allocate no memory and just return nullptr. 
 		// This is fine, as our default ctor initializes with NULL pointers. 
 		if(EASTL_LIKELY(n))
@@ -505,10 +520,25 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	inline typename VectorBase<T, Allocator>::size_type
-	VectorBase<T, Allocator>::GetNewCapacity(size_type currentCapacity)
+	VectorBase<T, Allocator>::GetNewCapacity(size_type currentSize)
 	{
-		// This needs to return a value of at least currentCapacity and at least 1.
-		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
+		// This function must return a value larger than currentSize.
+		if (currentSize > 0)
+		{
+			if (currentSize < (numeric_limits<size_type>::max() / 2))
+			{
+				return 2 * currentSize;
+			}
+			else
+			{
+				EASTL_ASSERT_MSG(currentSize < numeric_limits<size_type>::max(), "Vector growth will overflow the value of the capacity! This is extremely bad!");
+				return numeric_limits<size_type>::max();
+			}
+		}
+		else
+		{
+			return 1;
+		}
 	}
 
 
@@ -1042,8 +1072,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::push_back(const value_type& value)
 	{
-		if(mpEnd < internalCapacityPtr())
-			::new((void*)mpEnd++) value_type(value);
+		if (mpEnd < internalCapacityPtr())
+			detail::allocator_construct(internalAllocator(), mpEnd++, value);
 		else
 			DoInsertValueEnd(value);
 	}
@@ -1053,7 +1083,7 @@ namespace eastl
 	inline void vector<T, Allocator>::push_back(value_type&& value)
 	{
 		if (mpEnd < internalCapacityPtr())
-			::new((void*)mpEnd++) value_type(eastl::move(value));
+			detail::allocator_construct(internalAllocator(), mpEnd++, eastl::move(value));
 		else
 			DoInsertValueEnd(eastl::move(value));
 	}
@@ -1064,9 +1094,9 @@ namespace eastl
 	vector<T, Allocator>::push_back()
 	{
 		if(mpEnd < internalCapacityPtr())
-			::new((void*)mpEnd++) value_type();
-		else // Note that in this case we create a temporary, which is less desirable.
-			DoInsertValueEnd(value_type());
+			detail::allocator_construct(internalAllocator(), mpEnd++);
+		else
+			DoInsertValueEnd();
 
 		return *(mpEnd - 1); // Same as return back();
 	}
@@ -1078,8 +1108,8 @@ namespace eastl
 		if(mpEnd == internalCapacityPtr())
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nNewSize  = GetNewCapacity(nPrevSize);
-			DoGrow(nNewSize);
+			const size_type nNewCapacity  = GetNewCapacity(nPrevSize);
+			DoGrow(nNewCapacity);
 		}
  
 		return mpEnd++;
@@ -1098,7 +1128,7 @@ namespace eastl
 		mpEnd->~value_type();
 	}
 
-
+	EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because allocator_construct may always throw.
 	template <typename T, typename Allocator>
 	template<class... Args>
 	inline typename vector<T, Allocator>::iterator 
@@ -1110,13 +1140,15 @@ namespace eastl
 			DoInsertValue(position, eastl::forward<Args>(args)...);
 		else
 		{
-			::new((void*)mpEnd) value_type(eastl::forward<Args>(args)...);
+			detail::allocator_construct(internalAllocator(), mpEnd, eastl::forward<Args>(args)...);
 			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
 		}
 
 		return mpBegin + n;
 	}
+	EA_RESTORE_VC_WARNING()
 
+	EA_DISABLE_VC_WARNING(4702) // unreachable code: suppress warning because allocator_construct may always throw.
 	template <typename T, typename Allocator>
 	template<class... Args>
 	inline typename vector<T, Allocator>::reference
@@ -1124,7 +1156,7 @@ namespace eastl
 	{
 		if(mpEnd < internalCapacityPtr())
 		{
-			::new((void*)mpEnd) value_type(eastl::forward<Args>(args)...);  // If value_type has a move constructor, it will use it and this operation may be faster than otherwise.
+			detail::allocator_construct(internalAllocator(), mpEnd, eastl::forward<Args>(args)...);
 			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
 		}
 		else
@@ -1132,6 +1164,7 @@ namespace eastl
 
 		return back();
 	}
+	EA_RESTORE_VC_WARNING()
 
 	template <typename T, typename Allocator>
 	inline typename vector<T, Allocator>::iterator
@@ -1149,7 +1182,7 @@ namespace eastl
 			DoInsertValue(position, value);
 		else
 		{
-			::new((void*)mpEnd) value_type(value);
+			detail::allocator_construct(internalAllocator(), mpEnd, value);
 			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
 		}
 
@@ -1366,7 +1399,7 @@ namespace eastl
 	// is undefined unless the objects being swapped have allocators that compare equal or 
 	// allocator_traits<allocator_type>::propagate_on_container_swap::value is true (propagate_on_container_swap
 	// is false by default). EASTL doesn't have allocator_traits and so this doesn't directly apply,
-	// but EASTL has the effective behavior of propagate_on_container_swap = false for all allocators. 
+	// but EASTL has the effective behavior of propagate_on_container_swap = true for all allocators. 
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::swap(this_type& x)
 	{
@@ -1385,8 +1418,8 @@ namespace eastl
 		// usage of vector with non-copyable types (eg. eastl::vector<non_copyable> or eastl::vector<unique_ptr>). 
 		// 
 		// The previous implementation violated the following requirements of vector::swap so the fall-back code has
-		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = false' therefore the fall-back case is
-		// undefined behaviour.  We simply swap the contents and the allocator as that is the common expectation of
+		// been removed.  EASTL implicitly defines 'propagate_on_container_swap = true' therefore the fall-back case is
+		// not required.  We simply swap the contents and the allocator as that is the common expectation of
 		// users and does not put the container into an invalid state since it can not free its memory via its current
 		// allocator instance.
 		//
@@ -1406,9 +1439,9 @@ namespace eastl
 	template <typename T, typename Allocator>
 	template <typename ForwardIterator>
 	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
+	vector<T, Allocator>::DoRealloc(size_type newCapacity, ForwardIterator first, ForwardIterator last, should_copy_tag)
 	{
-		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
+		T* const p = DoAllocate(newCapacity);      // p is of type T* but is not constructed. 
 		eastl::uninitialized_copy(first, last, p); // copy-constructs p from [first,last).
 		return p;
 	}
@@ -1417,9 +1450,9 @@ namespace eastl
 	template <typename T, typename Allocator>
 	template <typename ForwardIterator>
 	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
+	vector<T, Allocator>::DoRealloc(size_type newCapacity, ForwardIterator first, ForwardIterator last, should_move_tag)
 	{
-		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
+		T* const p = DoAllocate(newCapacity);                  // p is of type T* but is not constructed. 
 		eastl::uninitialized_move_if_noexcept(first, last, p); // move-constructs p from [first,last).
 		return p;
 	}
@@ -1429,7 +1462,10 @@ namespace eastl
 	template <typename Integer>
 	inline void vector<T, Allocator>::DoInit(Integer n, Integer value, true_type)
 	{
-		mpBegin    = DoAllocate((size_type)n);
+		internal::AssertValueFitsInType<size_type>(
+		    n, "Attempting to initialize a vector larger than can fit in a size_type!");
+
+		mpBegin    = DoAllocate(static_cast<size_type>(n));
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
@@ -1448,7 +1484,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
+	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag)
 	{
 		// To do: Use emplace_back instead of push_back(). Our emplace_back will work below without any ifdefs.
 		for(; first != last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
@@ -1458,10 +1494,15 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename ForwardIterator>
-	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, EASTL_ITC_NS::forward_iterator_tag)
+	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, eastl::forward_iterator_tag)
 	{
-		const size_type n = (size_type)eastl::distance(first, last);
-		mpBegin    = DoAllocate(n);
+		const auto d = eastl::distance(first, last);
+
+		internal::AssertValueFitsInType<size_type>(
+		    d, "Attempting to initialize a vector larger than can fit in a size_type!");
+
+		const size_type n = static_cast<size_type>(d);
+		mpBegin = DoAllocate(n);
 		internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
@@ -1473,6 +1514,7 @@ namespace eastl
 	template <typename Integer, bool bMove>
 	inline void vector<T, Allocator>::DoAssign(Integer n, Integer value, true_type)
 	{
+		internal::AssertValueFitsInType<size_type>(n, "Attempting to assign more values than can fit in a size_type!");
 		DoAssignValues(static_cast<size_type>(n), static_cast<value_type>(value));
 	}
 
@@ -1510,7 +1552,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator, bool bMove>
-	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
+	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, eastl::input_iterator_tag)
 	{
 		iterator position(mpBegin);
 
@@ -1529,9 +1571,12 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename RandomAccessIterator, bool bMove>
-	void vector<T, Allocator>::DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, EASTL_ITC_NS::random_access_iterator_tag)
+	void vector<T, Allocator>::DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, eastl::random_access_iterator_tag)
 	{
-		const size_type n = (size_type)eastl::distance(first, last);
+		const auto d = eastl::distance(first, last);
+		internal::AssertValueFitsInType<size_type>(d, "Attempting to assign more values than can fit in a size_type!");
+
+		const size_type n = static_cast<size_type>(d);
 
 		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
 		{
@@ -1562,6 +1607,9 @@ namespace eastl
 	template <typename Integer>
 	inline void vector<T, Allocator>::DoInsert(const_iterator position, Integer n, Integer value, true_type)
 	{
+		internal::AssertValueFitsInType<size_type>(
+		    n, "Attempting to insert more elements than can can fit in size_type!");
+
 		DoInsertValues(position, static_cast<size_type>(n), static_cast<value_type>(value));
 	}
 
@@ -1577,7 +1625,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
+	inline void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, eastl::input_iterator_tag)
 	{
 		for(; first != last; ++first, ++position)
 			position = insert(position, *first);
@@ -1586,7 +1634,7 @@ namespace eastl
 
 	template <typename T, typename Allocator>
 	template <typename BidirectionalIterator>
-	void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, EASTL_ITC_NS::bidirectional_iterator_tag)
+	void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, eastl::bidirectional_iterator_tag)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -1598,7 +1646,10 @@ namespace eastl
 
 		if(first != last)
 		{
-			const size_type n = (size_type)eastl::distance(first, last);  // n is the number of elements we are inserting.
+			const auto d = eastl::distance(first, last);
+			internal::AssertValueFitsInType<size_type>(d, "Attempting to insert more elements than can fit in a vector.");
+
+			const size_type n = static_cast<size_type>(d);  // n is the number of elements we are inserting.
 
 			if(n <= size_type(internalCapacityPtr() - mpEnd)) // If n fits within the existing capacity...
 			{
@@ -1624,9 +1675,10 @@ namespace eastl
 			else // else we need to expand our capacity.
 			{
 				const size_type nPrevSize = size_type(mpEnd - mpBegin);
-				const size_type nGrowSize = GetNewCapacity(nPrevSize);
-				const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-				pointer const   pNewData  = DoAllocate(nNewSize);
+				const size_type nGrowCapacity = GetNewCapacity(nPrevSize);
+				EASTL_ASSERT_MSG(nPrevSize <= eastl::numeric_limits<size_type>::max() - n, "Size overflow: Attempting to insert more elements than can fit in a vector.");
+				const size_type nNewCapacity = eastl::max(nGrowCapacity, nPrevSize + n);
+				pointer const   pNewData  = DoAllocate(nNewCapacity);
 
 				#if EASTL_EXCEPTIONS_ENABLED
 					pointer pNewEnd = pNewData;
@@ -1639,7 +1691,7 @@ namespace eastl
 					catch(...)
 					{
 						eastl::destruct(pNewData, pNewEnd);
-						DoFree(pNewData, nNewSize);
+						DoFree(pNewData, nNewCapacity);
 						throw;
 					}
 				#else
@@ -1653,7 +1705,7 @@ namespace eastl
 
 				mpBegin    = pNewData;
 				mpEnd      = pNewEnd;
-				internalCapacityPtr() = pNewData + nNewSize;
+				internalCapacityPtr() = pNewData + nNewCapacity;
 			}
 		}
 	}
@@ -1697,9 +1749,10 @@ namespace eastl
 		else // else n > capacity
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-			pointer const pNewData    = DoAllocate(nNewSize);
+			const size_type nGrowCapacity = GetNewCapacity(nPrevSize);
+			EASTL_ASSERT_MSG(nPrevSize <= eastl::numeric_limits<size_type>::max() - n, "Size overflow: Attempting to insert more elements than can fit in a vector.");
+			const size_type nNewCapacity  = eastl::max(nGrowCapacity, nPrevSize + n);
+			pointer const pNewData    = DoAllocate(nNewCapacity);
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;
@@ -1712,7 +1765,7 @@ namespace eastl
 				catch(...)
 				{
 					eastl::destruct(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					DoFree(pNewData, nNewCapacity);
 					throw;
 				}
 			#else
@@ -1726,7 +1779,7 @@ namespace eastl
 
 			mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			internalCapacityPtr() = pNewData + nNewCapacity;
 		}
 	}
 
@@ -1741,9 +1794,9 @@ namespace eastl
 
 
 	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoGrow(size_type n)
+	void vector<T, Allocator>::DoGrow(size_type newCapacity)
 	{
-		pointer const pNewData = DoAllocate(n);
+		pointer const pNewData = DoAllocate(newCapacity);
 
 		pointer pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData);
 
@@ -1752,7 +1805,7 @@ namespace eastl
 
 		mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		internalCapacityPtr() = pNewData + n;
+		internalCapacityPtr() = pNewData + newCapacity;
 	}
 
 
@@ -1772,9 +1825,10 @@ namespace eastl
 		if(n > size_type(internalCapacityPtr() - mpEnd))
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize = eastl::max(nGrowSize, nPrevSize + n);
-			pointer const pNewData = DoAllocate(nNewSize);
+			const size_type nGrowCapacity = GetNewCapacity(nPrevSize);
+			EASTL_ASSERT_MSG(nPrevSize <= eastl::numeric_limits<size_type>::max() - n, "Size overflow: Attempting to insert more elements than can fit in a vector.");
+			const size_type nNewCapacity = eastl::max(nGrowCapacity, nPrevSize + n);
+			pointer const pNewData = DoAllocate(nNewCapacity);
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
@@ -1785,7 +1839,7 @@ namespace eastl
 				catch(...)
 				{
 					eastl::destruct(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					DoFree(pNewData, nNewCapacity);
 					throw;
 				}
 			#else
@@ -1800,7 +1854,7 @@ namespace eastl
 
 			mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			internalCapacityPtr() = pNewData + nNewCapacity;
 		}
 		else
 		{
@@ -1815,9 +1869,10 @@ namespace eastl
 		if (n > size_type(internalCapacityPtr() - mpEnd))
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize = eastl::max(nGrowSize, nPrevSize + n);
-			pointer const pNewData = DoAllocate(nNewSize);
+			const size_type nGrowCapacity = GetNewCapacity(nPrevSize);
+			EASTL_ASSERT_MSG(nPrevSize <= eastl::numeric_limits<size_type>::max() - n, "Size overflow: Attempting to insert more elements than can fit in a vector.");
+			const size_type nNewCapacity = eastl::max(nGrowCapacity, nPrevSize + n);
+			pointer const pNewData = DoAllocate(nNewCapacity);
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
@@ -1825,7 +1880,7 @@ namespace eastl
 				catch (...)
 				{
 					eastl::destruct(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					DoFree(pNewData, nNewCapacity);
 					throw;
 				}
 			#else
@@ -1840,7 +1895,7 @@ namespace eastl
 
 			mpBegin = pNewData;
 			mpEnd = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			internalCapacityPtr() = pNewData + nNewCapacity;
 		}
 		else
 		{
@@ -1877,25 +1932,25 @@ namespace eastl
 			#else
 				value_type  value(eastl::forward<Args>(args)...);           // Need to do this before the move_backward below because maybe args refers to something within the moving range.
 			#endif
-			::new(static_cast<void*>(mpEnd)) value_type(eastl::move(*(mpEnd - 1)));      // mpEnd is uninitialized memory, so we must construct into it instead of move into it like we do with the other elements below.
+			detail::allocator_construct(internalAllocator(), mpEnd, eastl::move(*(mpEnd - 1))); // mpEnd is uninitialized memory, so we must construct into it instead of move into it like we do with the other elements below.
 			eastl::move_backward(destPosition, mpEnd - 1, mpEnd);           // We need to go backward because of potential overlap issues.
 			eastl::destruct(destPosition);
-			::new(static_cast<void*>(destPosition)) value_type(eastl::move(value));                             // Move the value argument to the given position.
+			detail::allocator_construct(internalAllocator(), destPosition, eastl::move(value)); // Move the value argument to the given position.
 			++mpEnd;
 		}
 		else // else (size == capacity)
 		{
 			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nNewSize  = GetNewCapacity(nPrevSize);
-			pointer const   pNewData  = DoAllocate(nNewSize);
+			const size_type nNewCapacity = GetNewCapacity(nPrevSize);
+			pointer const pNewData = DoAllocate(nNewCapacity);
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;
 				try
 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
 					// call eastl::destruct on the entire range if only the first part of the range was constructed.
-					::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
+					detail::allocator_construct(internalAllocator(), pNewData + nPosSize, eastl::forward<Args>(args)...); // Because the old data is potentially being moved rather than copied, we need to move.
 					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
 					pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, destPosition, pNewData);           // the value first, because it might possibly be a reference to the old data being moved.
 					pNewEnd = eastl::uninitialized_move_if_noexcept(destPosition, mpEnd, ++pNewEnd);
@@ -1906,11 +1961,11 @@ namespace eastl
 						eastl::destruct(pNewData, pNewEnd);                                         // Destroy what has been constructed so far.
 					else
 						eastl::destruct(pNewData + nPosSize);                                       // The exception occurred during the first uninitialized move, so destroy only the value at nPosSize.
-					DoFree(pNewData, nNewSize);
+				    DoFree(pNewData, nNewCapacity);
 					throw;
 				}
 			#else
-				::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);                  // Because the old data is potentially being moved rather than copied, we need to move 
+				detail::allocator_construct(internalAllocator(), pNewData + nPosSize, eastl::forward<Args>(args)...); // Because the old data is potentially being moved rather than copied, we need to move
 				pointer pNewEnd = eastl::uninitialized_move(mpBegin, destPosition, pNewData);					// the value first, because it might possibly be a reference to the old data being moved.
 				pNewEnd = eastl::uninitialized_move(destPosition, mpEnd, ++pNewEnd);
 			#endif
@@ -1920,36 +1975,49 @@ namespace eastl
 
 			mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			internalCapacityPtr() = pNewData + nNewCapacity;
 		}
 	}
 
-
+	// assumes mpEnd == internalCapacityPtr(), ie. create a new array and move existing elements into it while inserting the new element at the end.
 	template <typename T, typename Allocator>
 	template<typename... Args>
 	void vector<T, Allocator>::DoInsertValueEnd(Args&&... args)
 	{
 		const size_type nPrevSize = size_type(mpEnd - mpBegin);
-		const size_type nNewSize  = GetNewCapacity(nPrevSize);
-		pointer const   pNewData  = DoAllocate(nNewSize);
+		const size_type nNewCapacity = GetNewCapacity(nPrevSize);
+		pointer const   pNewData  = DoAllocate(nNewCapacity);
 
 		#if EASTL_EXCEPTIONS_ENABLED
-			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
+			pointer pNewEnd;
+			try
+		    {
+			    detail::allocator_construct(internalAllocator(), pNewData + nPrevSize, eastl::forward<Args>(args)...);
+			}
+			catch(...)
+		    {
+			    DoFree(pNewData, nNewCapacity);
+			    throw;
+			}
+
 			try
 			{
 				pNewEnd = eastl::uninitialized_move_if_noexcept(mpBegin, mpEnd, pNewData);
-				::new((void*)pNewEnd) value_type(eastl::forward<Args>(args)...);
 				pNewEnd++;
 			}
 			catch(...)
-			{
-				eastl::destruct(pNewData, pNewEnd);
-				DoFree(pNewData, nNewSize);
+		    {
+			    eastl::destroy_at(pNewData + nPrevSize);
+				// if uninitialized_move_if_noexcept throws, then it must also have destroyed any elements it constructed.
+				// ie. pNewData does not contain any objects here, nothing to destroy.
+				DoFree(pNewData, nNewCapacity);
 				throw;
 			}
 		#else
+			// Because args... may potentially reference an element (or its sub-object) of this vector, we need to construct
+			// the new element first, prior to moving it (leaving it in an unspecified state) with the call to uninitialized_move.
+			detail::allocator_construct(internalAllocator(), pNewData + nPrevSize, eastl::forward<Args>(args)...);
 			pointer pNewEnd = eastl::uninitialized_move(mpBegin, mpEnd, pNewData);
-			::new((void*)pNewEnd) value_type(eastl::forward<Args>(args)...);
 			pNewEnd++;
 		#endif
 
@@ -1958,7 +2026,7 @@ namespace eastl
 
 		mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		internalCapacityPtr() = pNewData + nNewSize;
+		internalCapacityPtr() = pNewData + nNewCapacity;
 	}
 
 
