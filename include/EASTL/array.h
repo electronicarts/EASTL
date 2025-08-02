@@ -668,7 +668,7 @@ namespace std
 {
 
 template<typename T, size_t N>
-struct tuple_size<eastl::array<T, N>> : public integral_constant<size_t, N> {};
+struct tuple_size<eastl::array<T, N>> : public eastl::integral_constant<size_t, N> {};
 
 template<size_t I, typename T, size_t N>
 struct tuple_element<I, eastl::array<T, N>> : public eastl::tuple_element<I, eastl::array<T, N>> {};
