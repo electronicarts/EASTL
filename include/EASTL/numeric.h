@@ -242,7 +242,7 @@ namespace eastl
 ///
 /// See: https://en.cppreference.com/w/cpp/types/is_constant_evaluated
 /// 
-#if defined(__cpp_lib_is_constant_evaluated)
+#if defined(EA_COMPILER_CPP20_ENABLED)
 namespace eastl
 {
 	[[nodiscard]] constexpr bool is_constant_evaluated() noexcept
@@ -258,7 +258,6 @@ namespace eastl
 ///
 /// Returns true if the argument is a NaN floating-point value.
 ///
-#if defined(EA_COMPILER_CPP20_ENABLED)
 namespace eastl
 {
 	[[nodiscard]] constexpr bool isnan(float f)
@@ -276,7 +275,6 @@ namespace eastl
 		return d != d;
 	}
 }
-#endif
 
 
 ///
@@ -388,7 +386,8 @@ namespace eastl
 
 namespace eastl
 {
-	#if defined(EA_COMPILER_CPP20_ENABLED)
+namespace internal
+{
 	template <class T>
 	constexpr T shared_lerp(const T a, const T b, const T t) EA_NOEXCEPT
 	{
@@ -410,6 +409,7 @@ namespace eastl
 		}
 		return (b < X) ? b : X;
 	}
+} // namespace internal
 
 	/// lerp
 	///
@@ -421,11 +421,10 @@ namespace eastl
 	/// C++ proposal paper:
 	/// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0811r3.html
 	///
-	constexpr float lerp(float a, float b, float t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
-	constexpr double lerp(double a, double b, double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
-	constexpr long double lerp(long double a, long double b, long double t) EA_NOEXCEPT { return shared_lerp(a, b, t); }
-	#endif
-}
+	constexpr float lerp(float a, float b, float t) EA_NOEXCEPT { return internal::shared_lerp(a, b, t); }
+	constexpr double lerp(double a, double b, double t) EA_NOEXCEPT { return internal::shared_lerp(a, b, t); }
+	constexpr long double lerp(long double a, long double b, long double t) EA_NOEXCEPT { return internal::shared_lerp(a, b, t); }
+} // namespace eastl
 
 
 

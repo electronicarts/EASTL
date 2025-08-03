@@ -45,42 +45,50 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 #define EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits)				\
 	EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_FIXED_WIDTH_TYPE_, bits)
 
-
-#define EASTL_ATOMIC_STORE_FUNC_IMPL(op, bits)							\
+#define EASTL_ATOMIC_STORE_FUNC_WITH_PTR_IMPL(op, bits, ptr)							\
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
 	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
-								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), ptr), \
 								   fixedWidthDesired)
 
+#define EASTL_ATOMIC_STORE_FUNC_IMPL(op, bits) \
+	EASTL_ATOMIC_STORE_FUNC_WITH_PTR_IMPL(op, bits, this->GetAtomicAddress())
 
-#define EASTL_ATOMIC_LOAD_FUNC_IMPL(op, bits)							\
+#define EASTL_ATOMIC_LOAD_FUNC_WITH_PTR_IMPL(op, bits, ptr)						\
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) retVal;					\
 	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
 								   retVal,								\
-								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress())); \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), ptr)); \
 	return EASTL_ATOMIC_TYPE_PUN_CAST(T, retVal);
 
+#define EASTL_ATOMIC_LOAD_FUNC_IMPL(op, bits)						\
+	EASTL_ATOMIC_LOAD_FUNC_WITH_PTR_IMPL(op, bits, this->GetAtomicAddress())
 
-#define EASTL_ATOMIC_EXCHANGE_FUNC_IMPL(op, bits)						\
+#define EASTL_ATOMIC_EXCHANGE_FUNC_WITH_PTR_IMPL(op, bits, ptr)					\
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) retVal;					\
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
 	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
 								   retVal,								\
-								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), ptr), \
 								   fixedWidthDesired);					\
 	return EASTL_ATOMIC_TYPE_PUN_CAST(T, retVal);
 
+#define EASTL_ATOMIC_EXCHANGE_FUNC_IMPL(op, bits)					\
+	EASTL_ATOMIC_EXCHANGE_FUNC_WITH_PTR_IMPL(op, bits, this->GetAtomicAddress())
 
-#define EASTL_ATOMIC_CMPXCHG_FUNC_IMPL(op, bits)						\
+
+#define EASTL_ATOMIC_CMPXCHG_FUNC_WITH_PTR_IMPL(op, bits, ptr)						\
 	EASTL_ATOMIC_DEFAULT_INIT(bool, retVal);					        \
 	EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits) fixedWidthDesired = EASTL_ATOMIC_TYPE_PUN_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), desired); \
 	EA_PREPROCESSOR_JOIN(op, bits)(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), \
 								   retVal,								\
-								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), this->GetAtomicAddress()), \
+								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), ptr), \
 								   EASTL_ATOMIC_TYPE_CAST(EASTL_ATOMIC_BASE_FIXED_WIDTH_TYPE(bits), &expected), \
 								   fixedWidthDesired);					\
 	return retVal;
 
+#define EASTL_ATOMIC_CMPXCHG_FUNC_IMPL(op, bits) \
+	EASTL_ATOMIC_CMPXCHG_FUNC_WITH_PTR_IMPL(op, bits, this->GetAtomicAddress())
 
 #define EASTL_ATOMIC_BASE_OP_JOIN(op, Order)						\
 	EA_PREPROCESSOR_JOIN(EA_PREPROCESSOR_JOIN(EASTL_ATOMIC_, op), Order)

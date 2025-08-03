@@ -30,12 +30,13 @@
 
 namespace eastl
 {
+	void AssertionFailureFunctionDefault(void* instructionPointer, const char* pExpression, void* pContext);
 
 	/// gpAssertionFailureFunction
-	/// 
+	///
 	/// Global assertion failure function pointer. Set by SetAssertionFailureFunction.
-	/// 
-	EASTL_API EASTL_AssertionFailureFunction gpAssertionFailureFunction        = AssertionFailureFunctionDefault;
+	///
+	EASTL_API EASTL_AssertionFailureFunctionEx gpAssertionFailureFunction        = AssertionFailureFunctionDefault;
 	EASTL_API void*                          gpAssertionFailureFunctionContext = NULL;
 
 
@@ -48,19 +49,37 @@ namespace eastl
 	/// to store a C++ 'this' pointer, though other things are possible.
 	///
 	/// There is no thread safety here, so the user needs to externally make sure that
-	/// this function is not called in a thread-unsafe way. The easiest way to do this is 
+	/// this function is not called in a thread-unsafe way. The easiest way to do this is
 	/// to just call this function once from the main thread on application startup.
 	///
 	EASTL_API void SetAssertionFailureFunction(EASTL_AssertionFailureFunction pAssertionFailureFunction, void* pContext)
 	{
-		gpAssertionFailureFunction        = pAssertionFailureFunction;
+		static EASTL_AssertionFailureFunction assertionFailureFunction_;
+		assertionFailureFunction_ = pAssertionFailureFunction;
+
+		gpAssertionFailureFunction = [](void* instructionPointer, const char* pExpression, void* pContext)
+		{
+			EA_UNUSED(instructionPointer);
+
+			if (assertionFailureFunction_)
+				assertionFailureFunction_(pExpression, pContext);
+		};
+	}
+	EASTL_API void SetAssertionFailureFunction(EASTL_AssertionFailureFunctionEx pAssertionFailureFunction, void* pContext)
+	{
+		gpAssertionFailureFunction = pAssertionFailureFunction;
 		gpAssertionFailureFunctionContext = pContext;
 	}
 
 
-
 	/// AssertionFailureFunctionDefault
 	///
+	void AssertionFailureFunctionDefault(void* instructionPointer, const char* pExpression, void* pContext)
+	{
+		EA_UNUSED(instructionPointer);
+
+		AssertionFailureFunctionDefault(pExpression, pContext);
+	}
 	EASTL_API void AssertionFailureFunctionDefault(const char* pExpression, void* /*pContext*/)
 	{
 		#if EASTL_ASSERT_ENABLED
@@ -68,7 +87,7 @@ namespace eastl
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "%s", pExpression);
 			#elif defined(EA_PLATFORM_MICROSOFT)
 				printf("%s\n", pExpression); // Write the message to stdout
-				if( ::IsDebuggerPresent())
+				if(::IsDebuggerPresent())
 				{
 					OutputDebugStringA(pExpression);
 				}
@@ -84,29 +103,18 @@ namespace eastl
 		EASTL_DEBUG_BREAK();
 	}
 
-
 	/// AssertionFailure
 	///
 	EASTL_API void AssertionFailure(const char* pExpression)
 	{
-		if(gpAssertionFailureFunction)
-			gpAssertionFailureFunction(pExpression, gpAssertionFailureFunctionContext);
+		AssertionFailure(nullptr, pExpression);
+	}
+
+	EASTL_API void AssertionFailure(void* instructionPointer, const char* pExpression)
+	{
+		if (gpAssertionFailureFunction)
+			gpAssertionFailureFunction(instructionPointer, pExpression, gpAssertionFailureFunctionContext);
 	}
 
 
 } // namespace eastl
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

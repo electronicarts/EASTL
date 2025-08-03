@@ -83,7 +83,7 @@ We provide a FAQ (frequently asked questions) list here for a number of commonly
 10. [How do I use a memory pool with a container?](#cont10-how-do-i-use-a-memory-pool-with-a-container)
 11. [How do I write a comparison (operator<()) for a struct that contains two or more members?](#cont11-how-do-i-write-a-comparison-operator-for-a-struct-that-contains-two-or-more-members)
 12. [Why doesn't container X have member function Y?](#cont12-why-doesnt-container-x-have-member-function-y)
-13. [How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.](#cont13-how-do-i-search-a-hash_map-of-strings-via-a-char-pointer-efficiently-if-i-use-mapfindhello-it-creates-a-temporary-string-which-is-inefficient)
+13. [How do I search a map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.](#cont13-how-do-i-search-a-map-of-strings-via-a-char-pointer-efficiently-if-i-use-mapfindhello-it-creates-a-temporary-string-which-is-inefficient)
 14. [Why are set and hash_set iterators const (i.e. const_iterator)?](#cont14-why-are-set-and-hash_set-iterators-const-ie-const_iterator)
 15. [How do I prevent my hash container from re-hashing?](#cont15-how-do-i-prevent-my-hash-container-from-re-hashing)
 16. [Which uses less memory, a map or a hash_map?](#cont16-which-uses-less-memory-a-map-or-a-hash_map)
@@ -1603,20 +1603,27 @@ In the case of functionality that can be had by using other member functions, no
 
 It might be noted that the EASTL string class is unique among EASTL containers in that it sometimes violates the minimum functionality rule. This is so because the std C++ string class similarly does so and EASTL aims to be compatible.
 
-### Cont.13 How do I search a hash_map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.
+### Cont.13 How do I search a map of strings via a char pointer efficiently? If I use map.find("hello") it creates a temporary string, which is inefficient.
 
 The problem is illustrated with this example:
 
 ```cpp
 map<string, Widget> swMap;
   ...
-map<string, Widget>::iterator it = swMap.find("blue"); // A temporary string object is created here.
+auto it = swMap.find("blue"); // A temporary string object is created here, which allocates.
 ```
 
-In this example, the find function expects a string object and not a string literal and so (silently!) creates a temporary string object for the duration of the find. There are two solutions to this problem:
+In this example, the find function expects a string object and not a string literal and so the compiler uses the string conversion operator to (silently!) construct a temporary string object. There are several solutions to this problem:
 
 * Make the map a map of char pointers instead of string objects. Don't forget to write a custom compare or else the default comparison function will compare pointer values instead of string contents.
-* Use the EASTL hash_map::find_as function, which allows you to find an item in a hash container via an alternative key than the one the hash table uses.
+* Declare the map type with a [transparent comparison type](https://en.cppreference.com/w/cpp/utility/functional#Transparent_function_objects) (eg. [`less<void>`](https://en.cppreference.com/w/cpp/utility/functional/less_void)). The above example becomes:
+```cpp
+map<string, Widget, less<void>> swMap;
+  ...
+auto it = swMap.find("blue"); // No string object created. Uses heterogeneous lookup, which calls less<void>::operator()(const char*).
+```
+This is advantageous over `find_as` because eastl containers support this optimization for additional member functions that take a `key_type` parameter, ie. heterogeneous lookup, insertion and erasure.
+* Use the EASTL `find_as` function, which allows you to find an item in a container via an alternative key than the one the container uses. Using a [transparent comparison type](https://en.cppreference.com/w/cpp/utility/functional#Transparent_function_objects) with the container is safer than using `find_as` because the latter requires the user specify a comparison object which must have the same semantics as the container's comparison object, otherwise the behaviour is undefined.
 
 ### Cont.14 Why are set and hash_set iterators const (i.e. const_iterator)?
 

@@ -26,6 +26,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/algorithm.h>
+#include <EASTL/bit.h>
 
 EA_DISABLE_ALL_VC_WARNINGS();
 
@@ -87,7 +88,7 @@ namespace eastl
 	namespace detail
 	{
 		template<typename T>
-		struct is_word_type : std::bool_constant<!is_const_v<T> && !is_volatile_v<T> && !is_same_v<T, bool> && is_integral_v<T> && is_unsigned_v<T>> {};
+		struct is_word_type : bool_constant<!is_const_v<T> && !is_volatile_v<T> && !is_same_v<T, bool> && is_integral_v<T> && is_unsigned_v<T>> {};
 
 		template<typename T>
 		constexpr bool is_word_type_v = is_word_type<T>::value;
@@ -123,47 +124,65 @@ namespace eastl
 			}
 		}
 
+		// This is here to work around the lack of `if constexpr` in C++14, so that calling
+		// (WordType(1) << (CHAR_BIT * sizeof(UInt))) doesn't trigger warnings/errors when
+		// sizeof(UInt) >= sizeof(WordType)
+		template<typename UInt, typename WordType, size_t NumWords, bool bAssertOnOverflow, bool bDoPartialCopy = (sizeof(UInt) < sizeof(WordType))>
+		struct to_unsigned_integral_helper
+		{};
+
+		template<typename UInt, typename WordType, size_t NumWords, bool bAssertOnOverflow>
+		struct to_unsigned_integral_helper<UInt, WordType, NumWords, bAssertOnOverflow, true>
+		{
+			static size_t copyWords(const WordType* data, UInt* result)
+			{
+				constexpr size_t bytes_to_copy = sizeof(UInt);
+				memcpy(result, data, bytes_to_copy);
+
+				// check remaining uncopied bits from the first word are zero:
+				constexpr WordType lastElemOverflowBitsMask = static_cast<WordType>(~((WordType(1) << (CHAR_BIT * sizeof(UInt))) - 1));
+				if ((data[0] & lastElemOverflowBitsMask) != 0)
+				{
+#if EASTL_EXCEPTIONS_ENABLED
+					throw std::overflow_error("target type cannot represent the full bitset.");
+#elif EASTL_ASSERT_ENABLED
+					EA_CONSTEXPR_IF(bAssertOnOverflow)
+						EASTL_FAIL_MSG("overflow_error");
+#endif
+				}
+				return 1;
+			}
+		};
+
+		template<typename UInt, typename WordType, size_t NumWords, bool bAssertOnOverflow>
+		struct to_unsigned_integral_helper<UInt, WordType, NumWords, bAssertOnOverflow, false>
+		{
+			static size_t copyWords(const WordType* data, UInt* result)
+			{
+				constexpr size_t bytes_to_copy = eastl::min_alt(NumWords * sizeof(WordType), sizeof(UInt));
+				memcpy(result, data, bytes_to_copy);
+
+				return bytes_to_copy / sizeof(WordType);
+			}
+		};
+
+
+
 		template<typename UInt, bool bAssertOnOverflow, size_t N, typename WordType>
 		eastl::enable_if_t<is_word_type_v<UInt>, UInt> to_unsigned_integral(const bitset<N, WordType>& bs)
 		{
-			constexpr size_t numWords = (N > 0) ? ((N - 1) / (CHAR_BIT * sizeof(WordType)) + 1) : 0; // BITSET_WORD_COUNT(N, WordType) but 0 for N == 0
+			constexpr size_t kNumWords = (N > 0) ? ((N - 1) / (CHAR_BIT * sizeof(WordType)) + 1) : 0; // BITSET_WORD_COUNT(N, WordType) but 0 for N == 0
 
-			EA_CONSTEXPR_IF (numWords > 0)
+			EA_CONSTEXPR_IF (kNumWords > 0)
 			{
 				const WordType* data = bs.data();
 
 				UInt result = 0;
 
-				size_t numWordsCopied;
-				EA_CONSTEXPR_IF (sizeof(UInt) < sizeof(WordType))
-				{
-					constexpr size_t bytes_to_copy = sizeof(UInt);
-					memcpy(&result, data, bytes_to_copy);
+				const size_t numWordsCopied = to_unsigned_integral_helper<UInt, WordType, kNumWords, bAssertOnOverflow>::copyWords(data, &result);
 
-					// check remaining uncopied bits from the first word are zero:
-					constexpr WordType lastElemOverflowBitsMask = static_cast<WordType>(~((WordType(1) << (CHAR_BIT * sizeof(UInt))) - 1));
-					if ((data[0] & lastElemOverflowBitsMask) != 0)
-					{
-#if EASTL_EXCEPTIONS_ENABLED
-						throw std::overflow_error("target type cannot represent the full bitset.");
-#elif EASTL_ASSERT_ENABLED
-						EA_CONSTEXPR_IF(bAssertOnOverflow)
-							EASTL_FAIL_MSG("overflow_error");
-#endif
-					}
-
-					numWordsCopied = 1;
-				}
-				else
-				{
-					constexpr size_t bytes_to_copy = eastl::min_alt(numWords * sizeof(WordType), sizeof(UInt));
-					memcpy(&result, data, bytes_to_copy);
-
-					numWordsCopied = bytes_to_copy / sizeof(WordType);
-				}
-				
 				// check any remaining uncopied words are zero (don't contain any useful information).
-				for (size_t wordIndex = numWordsCopied; wordIndex < numWords; ++wordIndex)
+				for (size_t wordIndex = numWordsCopied; wordIndex < kNumWords; ++wordIndex)
 				{
 					if (data[wordIndex] != 0)
 					{
@@ -569,6 +588,7 @@ namespace eastl
 	///
 	/// This is a fast trick way to count bits without branches nor memory accesses.
 	///
+	/// todo: Use bit.h's popcount instead?
 	template<typename UInt64>
 	eastl::enable_if_t<detail::is_word_type_v<UInt64> && sizeof(UInt64) == 8, uint32_t> BitsetCountBits(UInt64 x)
 	{
@@ -1008,28 +1028,8 @@ namespace eastl
 	BitsetBase<NW, WordType>::count() const
 	{
 		size_type n = 0;
-
 		for(size_t i = 0; i < NW; i++)
-		{
-			#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 304) && !defined(EA_PLATFORM_ANDROID) // GCC 3.4 or later
-				#if(EA_PLATFORM_WORD_SIZE == 4)
-					n += (size_type)__builtin_popcountl(mWord[i]);
-				#else
-					n += (size_type)__builtin_popcountll(mWord[i]);
-				#endif
-			#elif defined(__GNUC__) && (__GNUC__ < 3)
-				n +=  BitsetCountBits(mWord[i]); // GCC 2.x compiler inexplicably blows up on the code below.
-			#else
-				// todo: use __popcnt16, __popcnt, __popcnt64 for msvc builds
-				// https://msdn.microsoft.com/en-us/library/bb385231(v=vs.140).aspx
-				for(word_type w = mWord[i]; w; w >>= 4)
-					n += EASTL_BITSET_COUNT_STRING[w & 0xF];
-
-				// Version which seems to run slower in benchmarks:
-				// n +=  BitsetCountBits(mWord[i]);
-			#endif
-
-		}
+			n += popcount(mWord[i]);
 		return n;
 	}
 
@@ -1255,20 +1255,7 @@ EA_RESTORE_GCC_WARNING()
 	inline typename BitsetBase<1, WordType>::size_type
 	BitsetBase<1, WordType>::count() const
 	{
-		#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 304) && !defined(EA_PLATFORM_ANDROID) // GCC 3.4 or later
-			#if(EA_PLATFORM_WORD_SIZE == 4)
-				return (size_type)__builtin_popcountl(mWord[0]);
-			#else
-				return (size_type)__builtin_popcountll(mWord[0]);
-			#endif
-		#elif defined(__GNUC__) && (__GNUC__ < 3)
-			return BitsetCountBits(mWord[0]); // GCC 2.x compiler inexplicably blows up on the code below.
-		#else
-			size_type n = 0;
-			for(word_type w = mWord[0]; w; w >>= 4)
-				n += EASTL_BITSET_COUNT_STRING[w & 0xF];
-			return n;
-		#endif
+		return popcount(mWord[0]);
 	}
 
 
@@ -1462,16 +1449,7 @@ EA_RESTORE_GCC_WARNING()
 	inline typename BitsetBase<2, WordType>::size_type
 	BitsetBase<2, WordType>::count() const
 	{
-		#if (defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 304)) || defined(__clang__) // GCC 3.4 or later
-			#if(EA_PLATFORM_WORD_SIZE == 4)
-				return (size_type)__builtin_popcountl(mWord[0])  + (size_type)__builtin_popcountl(mWord[1]);
-			#else
-				return (size_type)__builtin_popcountll(mWord[0]) + (size_type)__builtin_popcountll(mWord[1]);
-			#endif
-
-		#else
-			return BitsetCountBits(mWord[0]) + BitsetCountBits(mWord[1]);
-		#endif
+		return popcount(mWord[0]) + popcount(mWord[1]);
 	}
 
 

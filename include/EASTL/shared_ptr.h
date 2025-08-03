@@ -49,6 +49,7 @@
 #include <EASTL/functional.h>
 #include <EASTL/allocator.h>
 #include <EASTL/atomic.h>
+#include <EASTL/memory.h>
 #if EASTL_RTTI_ENABLED
 	#include <typeinfo>
 #endif
@@ -164,7 +165,7 @@ namespace eastl
 		EASTL_ASSERT((mRefCount.load(memory_order_relaxed) > 0));
 		if(mRefCount.fetch_sub(1, memory_order_release) == 1)
 		{
-			atomic_thread_fence(memory_order_acquire);
+			mRefCount.acquire_fence();
 			free_value();
 		}
 
@@ -181,7 +182,7 @@ namespace eastl
 		EASTL_ASSERT(mWeakRefCount.load(memory_order_relaxed) > 0);
 		if(mWeakRefCount.fetch_sub(1, memory_order_release) == 1)
 		{
-			atomic_thread_fence(memory_order_acquire);
+			mWeakRefCount.acquire_fence();
 			free_ref_count_sp();
 		}
 	}
@@ -913,10 +914,11 @@ namespace eastl
 			#if EASTL_EXCEPTIONS_ENABLED
 				try
 				{
-					void* const pMemory = EASTLAlloc(allocator, sizeof(ref_count_type));
-					if(!pMemory) 
+					ref_count_type* const pMemory = (ref_count_type*) EASTLAlloc(allocator, sizeof(ref_count_type));
+					if(!pMemory)
 						throw std::bad_alloc();
-					mpRefCount = ::new(pMemory) ref_count_type(pValue, eastl::move(deleter), eastl::move(allocator));
+					detail::allocator_construct(allocator, pMemory, pValue, eastl::move(deleter), allocator);
+					mpRefCount = pMemory;
 					mpValue = pValue;
 					do_enable_shared_from_this(mpRefCount, pValue, pValue);
 				}
@@ -926,10 +928,11 @@ namespace eastl
 					throw;           // Throws: bad_alloc, or an implementation-defined exception when a resource other than memory could not be obtained.
 				}
 			#else
-				void* const pMemory = EASTLAlloc(allocator, sizeof(ref_count_type));
+				ref_count_type* const pMemory = (ref_count_type*)EASTLAlloc(allocator, sizeof(ref_count_type));
 				if(pMemory)
 				{
-					mpRefCount = ::new(pMemory) ref_count_type(pValue, eastl::move(deleter), eastl::move(allocator));
+					detail::allocator_construct(allocator, pMemory, pValue, eastl::move(deleter), allocator);
+					mpRefCount = pMemory;
 					mpValue = pValue;
 					do_enable_shared_from_this(mpRefCount, pValue, pValue);
 				}
@@ -1214,10 +1217,10 @@ namespace eastl
 	{
 		typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
 		shared_ptr<T> ret;
-		void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-		if(pMemory)
+		ref_count_type* pRefCount = (ref_count_type*) EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
+		if(pRefCount)
 		{
-			ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<Args>(args)...);
+			detail::allocator_construct(allocator, pRefCount, allocator, eastl::forward<Args>(args)...);
 			allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
 		}
 		return ret;
@@ -1675,8 +1678,6 @@ namespace eastl
 	template <typename T>
 	struct owner_less< shared_ptr<T> >
 	{
-		EASTL_REMOVE_AT_2024_APRIL typedef bool result_type;
-
 		bool operator()(shared_ptr<T> const& a, shared_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 
@@ -1690,8 +1691,6 @@ namespace eastl
 	template <typename T>
 	struct owner_less< weak_ptr<T> >
 	{
-		EASTL_REMOVE_AT_2024_APRIL typedef bool result_type;
-
 		bool operator()(weak_ptr<T> const& a, weak_ptr<T> const& b) const EA_NOEXCEPT
 			{ return a.owner_before(b); }
 

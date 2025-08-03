@@ -116,5 +116,7 @@ extern EASTL_API volatile CompilerBarrierDataDependencyFuncPtr gCompilerBarrierD
 
 #include "compiler_thread_fence.h"
 
+#include "compiler_acquire_fence.h"
+
 
 #endif /* EASTL_ATOMIC_INTERNAL_COMPILER_H */

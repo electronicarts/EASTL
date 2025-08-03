@@ -11,6 +11,7 @@
 #include <EASTL/hash_set.h>
 #include <EASTL/set.h>
 #include <EASTL/list.h>
+#include <EASTL/type_traits.h>
 #include <EAStdC/EAString.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -19,9 +20,6 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 // 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
 EA_DISABLE_VC_WARNING(4512 4626);
-
-// contains tests for library features that are deprecated
-EASTL_INTERNAL_DISABLE_DEPRECATED() // *: was declared deprecated
 
 namespace
 {
@@ -44,50 +42,7 @@ namespace
 	};
 
 
-	// Used for const_mem_fun_t below.
-	struct X
-	{
-		X() { }
-		void DoNothing() const { }
-	};
-
-	template <typename T>
-	void foo(typename T::argument_type arg)
-	{
-		typename T::result_type (T::*pFunction)(typename T::argument_type) const = &T::operator();
-		T t(&X::DoNothing);
-		(t.*pFunction)(arg);
-	}
-
-
-	// Used for equal_to_2 tests below.
-	struct N1{
-		N1(int x) : mX(x) { }
-		int mX;
-	};
-
-	struct N2{
-		N2(int x) : mX(x) { }
-		int mX;
-	};
-
-	bool operator==(const N1& n1, const N1& n1a){ return (n1.mX == n1a.mX); }
-	bool operator==(const N1& n1, const N2& n2) { return (n1.mX == n2.mX); }
-	bool operator==(const N2& n2, const N1& n1) { return (n2.mX == n1.mX); }
-	bool operator==(const volatile N1& n1, const volatile N1& n1a) { return (n1.mX == n1a.mX); }
-
-	bool operator!=(const N1& n1, const N1& n1a){ return (n1.mX != n1a.mX); }
-	bool operator!=(const N1& n1, const N2& n2) { return (n1.mX != n2.mX); }
-	bool operator!=(const N2& n2, const N1& n1) { return (n2.mX != n1.mX); }
-	bool operator!=(const volatile N1& n1, const volatile N1& n1a) { return (n1.mX != n1a.mX); }
-
-	bool operator< (const N1& n1, const N1& n1a){ return (n1.mX  < n1a.mX); }
-	bool operator< (const N1& n1, const N2& n2) { return (n1.mX  < n2.mX); }
-	bool operator< (const N2& n2, const N1& n1) { return (n2.mX  < n1.mX); }
-	bool operator< (const volatile N1& n1, const volatile N1& n1a) { return (n1.mX < n1a.mX); }
-
-
-	// Used for mem_fun tests below.
+	// Used for mem_fn tests below.
 	struct TestClass
 	{
 		mutable int mX;
@@ -136,14 +91,14 @@ int TestHashHelper(T val)
 {
 	int nErrorCount = 0;
 
-	EATEST_VERIFY(eastl::hash<T>()(val) == static_cast<size_t>(val));
+	if (!std::is_floating_point_v<T>)
+	{
+		// Default hash implementation for floating-point types is not static_cast<size_t>
+		EATEST_VERIFY(eastl::hash<T>()(val) == static_cast<size_t>(val));
+	}
 
 	return nErrorCount;
 }
-
-// Required to test library functions that require the binary_function interface despite our removal of them from function objects such as eastl::less<T>
-template<typename BinaryFunction, typename Arg1, typename Arg2, typename Result>
-struct binary_function_adaptor : public eastl::binary_function<Arg1, Arg2, Result>, BinaryFunction {};
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestFunctional
@@ -267,154 +222,9 @@ int TestFunctional()
 		EATEST_VERIFY(it != ss.end());
 	}
 
-	{
-		// equal_to_2
-		N1 n11(1);
-		N1 n13(3);
-		N2 n21(1);
-		N2 n22(2);
-		const N1 cn11(1);
-		const N1 cn13(3);
-		volatile N1 vn11(1);
-		volatile N1 vn13(3);
-		const volatile N1 cvn11(1);
-		const volatile N1 cvn13(3);
-
-		equal_to_2<N1, N2> e;
-		EATEST_VERIFY(e(n11, n21));
-		EATEST_VERIFY(e(n21, n11));
-
-		equal_to_2<N1, N1> es;
-		EATEST_VERIFY(es(n11, n11));
-		EATEST_VERIFY(!es(n11, n13));
-
-		equal_to_2<const N1, N1> ec;
-		EATEST_VERIFY(ec(cn11, n11));
-		EATEST_VERIFY(ec(n11, cn11));
-
-		equal_to_2<N1, const N1> ec2;
-		EATEST_VERIFY(ec2(n11, cn11));
-		EATEST_VERIFY(ec2(cn11, n11));
-
-		equal_to_2<const N1, const N1> ecc;
-		EATEST_VERIFY(ecc(cn11, cn11));
-
-		equal_to_2<volatile N1, N1> ev;
-		EATEST_VERIFY(ev(vn11, n11));
-		EATEST_VERIFY(ev(n11, vn11));
-
-		equal_to_2<N1, volatile N1> ev2;
-		EATEST_VERIFY(ev2(n11, vn11));
-		EATEST_VERIFY(ev2(vn11, n11));
-
-		equal_to_2<volatile N1, volatile N1> evv;
-		EATEST_VERIFY(evv(vn11, vn11));
-
-		equal_to_2<const volatile N1, N1> ecv;
-		EATEST_VERIFY(ecv(cvn11, n11));
-		EATEST_VERIFY(ecv(n11, cvn11));
-
-		equal_to_2<N1, const volatile N1> ecv2;
-		EATEST_VERIFY(ecv2(n11, cvn11));
-		EATEST_VERIFY(ecv2(cvn11, n11));
-
-		equal_to_2<const volatile N1, const volatile N1> ecvcv;
-		EATEST_VERIFY(ecvcv(cvn11, cvn11));
-
-		// not_equal_to_2
-		not_equal_to_2<N1, N2> n;
-		EATEST_VERIFY(n(n11, n22));
-		EATEST_VERIFY(n(n22, n11));
-
-		not_equal_to_2<N1, N1> ns;
-		EATEST_VERIFY(ns(n11, n13));
-		EATEST_VERIFY(!ns(n11, n11));
-
-		not_equal_to_2<const N1, N1> nc;
-		EATEST_VERIFY(nc(cn11, n13));
-		EATEST_VERIFY(nc(n13, cn11));
-
-		not_equal_to_2<N1, const N1> nc2;
-		EATEST_VERIFY(nc2(n13, cn11));
-		EATEST_VERIFY(nc2(cn11, n13));
-
-		not_equal_to_2<const N1, const N1> ncc;
-		EATEST_VERIFY(ncc(cn11, cn13));
-
-		not_equal_to_2<volatile N1, N1> nv;
-		EATEST_VERIFY(nv(vn11, n13));
-		EATEST_VERIFY(nv(n11, vn13));
-
-		not_equal_to_2<N1, volatile N1> nv2;
-		EATEST_VERIFY(nv2(n11, vn13));
-		EATEST_VERIFY(nv2(vn11, n13));
-
-		not_equal_to_2<volatile N1, volatile N1> nvv;
-		EATEST_VERIFY(nvv(vn11, vn13));
-
-		not_equal_to_2<const volatile N1, N1> ncv;
-		EATEST_VERIFY(ncv(cvn11, n13));
-		EATEST_VERIFY(ncv(n11, cvn13));
-
-		not_equal_to_2<N1, const volatile N1> ncv2;
-		EATEST_VERIFY(ncv2(n11, cvn13));
-		EATEST_VERIFY(ncv2(cvn11, n13));
-
-		not_equal_to_2<const volatile N1, const volatile N1> ncvcv;
-		EATEST_VERIFY(ncvcv(cvn11, cvn13));
-
-		// less_2
-		less_2<N1, N2> le;
-		EATEST_VERIFY(le(n11, n22));
-		EATEST_VERIFY(le(n22, n13));
-
-		less_2<N1, N1> les;
-		EATEST_VERIFY(les(n11, n13));
-
-		less_2<const N1, N1> lec;
-		EATEST_VERIFY(lec(cn11, n13));
-		EATEST_VERIFY(lec(n11, cn13));
-
-		less_2<N1, const N1> lec2;
-		EATEST_VERIFY(lec2(n11, cn13));
-		EATEST_VERIFY(lec2(cn11, n13));
-
-		less_2<const N1, const N1> lecc;
-		EATEST_VERIFY(lecc(cn11, cn13));
-
-		less_2<volatile N1, N1> lev;
-		EATEST_VERIFY(lev(vn11, n13));
-		EATEST_VERIFY(lev(n11, vn13));
-
-		less_2<N1, volatile N1> lev2;
-		EATEST_VERIFY(lev2(n11, vn13));
-		EATEST_VERIFY(lev2(vn11, n13));
-
-		less_2<volatile N1, volatile N1> levv;
-		EATEST_VERIFY(levv(vn11, vn13));
-
-		less_2<const volatile N1, N1> lecv;
-		EATEST_VERIFY(lecv(cvn11, n13));
-		EATEST_VERIFY(lecv(n11, cvn13));
-
-		less_2<N1, const volatile N1> lecv2;
-		EATEST_VERIFY(lecv2(n11, cvn13));
-		EATEST_VERIFY(lecv2(cvn11, n13));
-
-		less_2<const volatile N1, const volatile N1> lecvcv;
-		EATEST_VERIFY(lecvcv(cvn11, cvn13));
-	}
-
 
 	{
-		// Test defect report entry #297.
-		const X x;
-		foo< const_mem_fun_t<void, X> >(&x);
-	}
-
-
-	{
-		// mem_fun (no argument version)
+		// mem_fn (no argument version)
 		TestClass  tc0, tc1, tc2;
 		TestClass* tcArray[3] = { &tc0, &tc1, &tc2 };
 
@@ -427,7 +237,7 @@ int TestFunctional()
 
 
 	{
-		// mem_fun (one argument version)
+		// mem_fn (one argument version)
 		TestClass  tc0, tc1, tc2;
 		TestClass* tcArray[3]  = { &tc0, &tc1, &tc2 };
 		int        intArray1[3] = { -1,  0,  2 };
@@ -443,7 +253,7 @@ int TestFunctional()
 
 
 	{
-		// mem_fun_ref (no argument version)
+		// mem_fn (no argument version)
 		TestClass tcArray[3];
 
 		for_each(tcArray, tcArray + 3, mem_fn(&TestClass::Increment));
@@ -455,7 +265,7 @@ int TestFunctional()
 
 
 	{
-		// mem_fun_ref (one argument version)
+		// mem_fn (one argument version)
 		TestClass tcArray[3];
 		int       intArray1[3] = { -1,  0,  2 };
 		int       intArray2[3] = { -9, -9, -9 };
@@ -477,29 +287,6 @@ int TestFunctional()
 
 		EATEST_VERIFY(hs8.empty());
 		EATEST_VERIFY(hs16.empty());
-	}
-
-	{
-		// unary_compose
-		/*
-		eastl::vector<double> angles;
-		eastl::vector<double> sines;
-
-		eastl::transform(angles.begin(), angles.end(), sines.begin(),
-				  eastl::compose1(eastl::negate<double>(),
-						   eastl::compose1(eastl::ptr_fun(sin),
-									eastl::bind2nd(eastl::multiplies<double>(), 3.14159 / 180.0))));
-		*/
-
-		// binary_compose
-		list<int> L;
-
-		eastl::list<int>::iterator in_range =
-			eastl::find_if(L.begin(), L.end(),
-					 eastl::compose2(binary_function_adaptor<eastl::logical_and<bool>, bool, bool, bool>(),
-							  eastl::bind2nd(binary_function_adaptor<eastl::greater_equal<int>, int, int, bool>(), 1),
-							  eastl::bind2nd(binary_function_adaptor<eastl::less_equal<int>, int, int, bool>(), 10)));
-		EATEST_VERIFY(in_range == L.end());
 	}
 
 	{
@@ -1714,7 +1501,5 @@ static_assert(!eastl::is_invocable_r<int, TestCallableRefInvokeResult, void>::va
 static_assert(!eastl::is_invocable_r<void, TestCallableRefInvokeResult, int, int>::value, "incorrect value for is_invocable_r");
 static_assert(eastl::is_invocable_r<void, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
 static_assert(eastl::is_invocable_r<int, TestCallableRefInvokeResult, int>::value, "incorrect value for is_invocable_r");
-
-EASTL_INTERNAL_RESTORE_DEPRECATED()
 
 EA_RESTORE_VC_WARNING();

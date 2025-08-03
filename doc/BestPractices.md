@@ -27,7 +27,7 @@ The descriptions here are intentionally terse; this is to make them easier to vi
 19. [Make temporary references so the code can be traced/debugged.](#make-temporary-references-so-the-code-can-be-traceddebugged)
 20. [Consider bitvector or bitset instead of vector\<bool>.](#consider-bitvector-or-bitset-instead-of-vector)
 21. [Vectors can be treated as contiguous memory.](#vectors-can-be-treated-as-contiguous-memory)
-22. [Search hash_map\<string> via find_as() instead of find().](#search-hash_map-via-find_as-instead-of-find)
+22. [Search hash_map\<string> using heterogeneous lookup.](#search-hash_mapstring-using-heterogeneous-lookup)
 23. [Take advantage of type_traits.](#take-advantage-of-type_traits)
 24. [Name containers to track memory usage.](#name-containers-to-track-memory-usage)
 25. [Learn the algorithms.](#learn-the-algorithms)
@@ -452,17 +452,29 @@ struct Widget {
   quick_sort((uint64_t*)v.data(), (uint64_t*)(v.data() + v.size()));
 ```
 
-### Search hash_map<string> via find_as() instead of find().
+### Search hash_map\<string> using heterogeneous lookup
 
-EASTL hash tables offer a bonus function called find_as when lets you search a hash table by something other than the container type. This is particularly useful for hash tables of string objects that you want to search for by string literals (e.g. "hello") or char pointers. If you search for a string via the find function, your string literal will necessarily be converted to a temporary string object, which is inefficient.
+When using a hash map (or any associative container) of string objects that you want to search for by string literals (e.g. "hello") or char pointers, if you search for a string via the `find` function, your string literal will necessarily be converted to a temporary string object, which is inefficient because string allocates.
 
-To use find_as, you can use the following code:
+You can avoid creating these temporary objects declare the container type with [transparent comparison types](https://en.cppreference.com/w/cpp/utility/functional#Transparent_function_objects) (eg. [`equal_to<void>`](https://en.cppreference.com/w/cpp/utility/functional/less_void)). eg.
+```cpp
+eastl::hash_map<string, int, eastl::transparent_string_hash, eastl::equal_to<void>> hashMap;
+  ...
+auto it = hashMap.find("hello"); // No string object created. Uses heterogeneous lookup, which calls transparent_string_hash::operator()(const string&) and equal_to::operator()(const string&, const char*).
+```
+EASTL containers support this optimization for additional member functions that take a `key_type` parameter, ie. heterogeneous lookup, insertion and erasure.
+
+EASTL also has a member function called `find_as` which lets you search a hash table by something other than the container comparison type. Note that the comparison semantics must be equivalent to the container's comparison object, otherwise the behaviour is undefined.
+
+To use `find_as`, you can use the following code:
 
 ```cpp
 hash_map<string, int> hashMap;
-
-  hash_map<string, int>::iterator it = hashMap.find_as("hello"); // Using default hash and compare.
+...
+auto it = hashMap.find_as("hello", /* a hash object */, /* an equality comparison object */);
 ```
+
+Using transparent comparison types should be preferred due to the support for additional member functions and additional safety.
 
 ### Take advantage of type_traits.
 

@@ -1898,12 +1898,66 @@ int TestAlgorithm()
 		EATEST_VERIFY(pInt == intArray1 + 6);
 		EATEST_VERIFY(VerifySequence(intArray1, intArray1 + 12, int(), "remove", 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, -1));
 
-		pInt = remove(intArray2, intArray2, 1);
+		pInt = remove_if(intArray2, intArray2, [](int i) { return i == 1; });
 		EATEST_VERIFY(pInt == intArray2);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove", 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -1));
-		pInt = remove(intArray2, intArray2 + 12, 1);
+		pInt = remove_if(intArray2, intArray2 + 12, [](int i) { return i == 1; });
 		EATEST_VERIFY(pInt == intArray2 + 12);
 		EATEST_VERIFY(VerifySequence(intArray2, intArray2 + 12, int(), "remove", 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, -1));
+	}
+
+	{
+		// ForwardIterator remove(ForwardIterator first, ForwardIterator last, const T& value)
+		// OutputIterator  remove_copy(InputIterator first, InputIterator last, OutputIterator result, const T& value)
+
+		// We use the TestObject to explictly check how many times move assignment and copy assignment has been performed
+		TestObject::Reset();
+		TestObject dataArray1[5] { TestObject(1), TestObject(2), TestObject(3), TestObject(4), TestObject(5) };
+		TestObject dataArray2[5] { TestObject(1), TestObject(2), TestObject(3), TestObject(4), TestObject(5) };
+
+		// remove() should invoke eastl::move, leaving our last element swapped with our removed element (3)
+		// { 1 , 2 , 4 , 5 , 3 }
+		TestObject* end1 = remove(dataArray1, dataArray1 + 5, TestObject(3));
+		EATEST_VERIFY(end1 == dataArray1 + 4);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount == 2); // we move 4 into 3, then 5 into 4
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount == 0); // no copies
+		EATEST_VERIFY(dataArray1[4].mX == 3);
+
+		// remove_copy() should use copy assignment, leaving our last two elements with a duplicate value of (5)
+		// { 1 , 2 , 4 , 5 , 5 }
+		TestObject* target = find(dataArray2, dataArray2 + 5, TestObject(3));
+		TestObject* end2 = remove_copy(target + 1, dataArray2 + 5, target, TestObject(3));
+		EATEST_VERIFY(end2 == dataArray2 + 4);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount == 2); // the two moves from the previous test
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount == 2); // we copy 4 into 3, and then 5 into 4
+		EATEST_VERIFY(dataArray2[4].mX == 5);
+	}
+
+	{
+		// ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, const T& value)
+		// OutputIterator  remove_copy_if(InputIterator first, InputIterator last, OutputIterator result, const T& value)
+
+		// We use the TestObject to explictly check how many times move assignment and copy assignment has been performed
+		TestObject::Reset();
+		TestObject dataArray1[5] { TestObject(1), TestObject(2), TestObject(3), TestObject(4), TestObject(5) };
+		TestObject dataArray2[5] { TestObject(1), TestObject(2), TestObject(3), TestObject(4), TestObject(5) };
+
+		// remove_if() should invoke eastl::move, leaving our last element swapped with our removed element (3)
+		// { 1 , 2 , 4 , 5 , 3 }
+		TestObject* end1 = remove_if(dataArray1, dataArray1 + 5, [](const TestObject& t) { return t.mX == 3; });
+		EATEST_VERIFY(end1 == dataArray1 + 4);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount == 2); // we move 4 into 3, then 5 into 4
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount == 0); // no copies
+		EATEST_VERIFY(dataArray1[4].mX == 3);
+
+		// remove_copy_if() should use copy assignment, leaving our last two elements with a duplicate value of (5)
+		// { 1 , 2 , 4 , 5 , 5 }
+		TestObject* target = find(dataArray2, dataArray2 + 5, TestObject(3));
+		TestObject* end2 = remove_copy_if(target + 1, dataArray2 + 5, target, [](const TestObject& t) { return t.mX == 3; });
+		EATEST_VERIFY(end2 == dataArray2 + 4);
+		EATEST_VERIFY(TestObject::sTOMoveAssignCount == 2); // the two moves from the previous test
+		EATEST_VERIFY(TestObject::sTOCopyAssignCount == 2); // we copy 4 into 3, and then 5 into 4
+		EATEST_VERIFY(dataArray2[4].mX == 5);
 	}
 
 
@@ -2499,6 +2553,135 @@ int TestAlgorithm()
 			EATEST_VERIFY((only_v1 == eastl::vector<local>{{1}, {4}, {5}, {7}, {7}}));
 			EATEST_VERIFY((only_v2 == eastl::vector<local>{{6}}));
 			EATEST_VERIFY((intersection == eastl::vector<local>{{2}, {9}}));
+		}
+	}
+
+	// includes
+	{
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {1, 2, 3, 4, 5};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {1, 3, 4};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {2};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {2, 3, 4, 5};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {2, 4};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {1};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {5};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {6};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {0};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {1, 2, 3, 4, 5, 6};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {2, 6};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		{
+			eastl::vector<int> v = {1, 2, 3, 4, 5};
+			eastl::vector<int> w = {-1, 2, 3, 4, 5};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end()));
+		}
+
+		const auto& to_lower_cmp = [](auto a, auto b) { return tolower(a) < tolower(b);};
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'A', 'b', 'C', 'd', 'E'};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'B', 'C', 'd', 'E'};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'A', 'C', 'E'};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'A'};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'E'};
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'A', 'b', 'C', 'd', 'F'};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w = {'A', 'b', 'C', 'd', 'E', 'f'};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v;
+			eastl::vector<char> w = {'A', 'b', 'C', 'd', 'E', 'f'};
+			EATEST_VERIFY(!eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
+		}
+
+		{
+			eastl::vector<char> v = {'a', 'b', 'c', 'd', 'e'};
+			eastl::vector<char> w;
+			EATEST_VERIFY(eastl::includes(v.begin(), v.end(), w.begin(), w.end(), to_lower_cmp));
 		}
 	}
 

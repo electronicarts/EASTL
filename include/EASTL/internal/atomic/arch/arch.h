@@ -61,5 +61,7 @@
 
 #include "arch_thread_fence.h"
 
+#include "arch_acquire_fence.h"
+
 
 #endif /* EASTL_ATOMIC_INTERNAL_ARCH_H */

@@ -184,9 +184,9 @@ int TestIterator_moveIterator()
 
 	{
 		// Check that we support iterators yielding plain value (typically a proxy-iterator).
-		struct FakeProxyIterator 
+		struct FakeProxyIterator
 		{
-			using iterator_category = EASTL_ITC_NS::forward_iterator_tag;
+			using iterator_category = eastl::forward_iterator_tag;
 			using difference_type   = ptrdiff_t;
 			using value_type        = int;
 			using pointer           = int;  // Note that we are yielding by value.
@@ -194,11 +194,11 @@ int TestIterator_moveIterator()
 
 			reference operator*() const { return 42; }
 			pointer operator->() { return 42; }
-			FakeProxyIterator& operator++() { return *this; }  
+			FakeProxyIterator& operator++() { return *this; }
 			FakeProxyIterator operator++(int) { return {}; }
 
 			bool operator==(const FakeProxyIterator&) { return true; };
-			bool operator!=(const FakeProxyIterator&) { return false; };  
+			bool operator!=(const FakeProxyIterator&) { return false; };
 		};
 
 		FakeProxyIterator it = {};
@@ -567,7 +567,7 @@ int TestIterator()
 		auto b = eastl::cbegin(arr);
 		auto e = eastl::cend(arr);
 		EATEST_VERIFY(*b == 1);
-		
+
 		auto dist = eastl::distance(b,e);
 		EATEST_VERIFY(dist == 3);
 	}
@@ -579,15 +579,3 @@ int TestIterator()
 
 	return nErrorCount;
 }
-
-
-
-
-
-
-
-
-
-
-
-

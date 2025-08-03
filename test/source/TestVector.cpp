@@ -1395,7 +1395,7 @@ int TestVector()
 		eastl::vector<TestObject> toTest;
 
 		// InputIterator
-		demoted_iterator<TestObject*, EASTL_ITC_NS::forward_iterator_tag> toInput(&to);
+		demoted_iterator<TestObject*, eastl::forward_iterator_tag> toInput(&to);
 		toTest.assign(toInput, toInput);
 
 		// ForwardIterator
@@ -1563,8 +1563,8 @@ int TestVector()
 			// destroying containers to invoke InstanceAllocator::deallocate() checks
 		}
 
-		EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
-		InstanceAllocator::reset_all();
+		EATEST_VERIFY_MSG(InstanceAllocator::reset_all(),
+		                  "Container elements should be deallocated by the allocator that allocated it.");
 	}
 
 	{
@@ -1707,7 +1707,7 @@ int TestVector()
 		{
 			struct iterator
 			{
-				typedef EASTL_ITC_NS::input_iterator_tag iterator_category;
+				typedef eastl::input_iterator_tag iterator_category;
 				typedef int value_type;
 				typedef ptrdiff_t difference_type;
 				typedef int* pointer;
@@ -1774,8 +1774,8 @@ int TestVector()
 					// destroying containers to invoke InstanceAllocator::deallocate() checks
 				}
 
-				EATEST_VERIFY_MSG(InstanceAllocator::mMismatchCount == 0, "Container elements should be deallocated by the allocator that allocated it.");
-				InstanceAllocator::reset_all();
+				EATEST_VERIFY_MSG(InstanceAllocator::reset_all(),
+	                              "Container elements should be deallocated by the allocator that allocated it.");
 			}
 		}
 	#endif
@@ -1861,5 +1861,89 @@ int TestVector()
 			EATEST_VERIFY(VerifySequence(vec, {0, 8, 2, 6, 4}, "erase_unordered_if") );
 		}
 	}
-	return nErrorCount;
+
+// This test takes a while to run and even longer in debug builds, so for now we only do it in
+// on demand, you can define EASTL_TEST_VERY_BIG_VECTORS to enable the test.
+// This test will crash if the platform cannot allocate enough memory.
+#if defined(EASTL_TEST_VERY_BIG_VECTORS)
+    // Test we support very large vectors.
+    {
+	    {
+		    const uint32_t kMax = eastl::numeric_limits<uint32_t>::max();
+		    eastl::vector<uint32_t> v;
+		    v.reserve(kMax/2+1); // avoid some reallocations, but test that push_back() won't cause vector::GetNewCapacity() to overflow when we exceed the capacity.
+		    for (uint32_t index{0}; index < kMax; ++index)
+		    {
+			    v.push_back(index);
+		    }
+		    EATEST_VERIFY(v.size() == kMax);
+		    for (uint32_t index{0}; index < kMax; ++index)
+		    {
+			    EATEST_VERIFY(v[index] == index);
+		    }
+	    }
+	    {
+			const uint32_t kMaxForPushBack = eastl::numeric_limits<uint32_t>::max();
+		    eastl::vector<uint32_t> v;
+		    for (uint32_t index{0}; index < kMaxForPushBack; ++index)
+		    {
+			    // Do it the "slow growth" way, i.e. without reserve()
+			    v.push_back(index);
+		    }
+		    EATEST_VERIFY(v.size() == kMaxForPushBack);
+		    for (uint32_t index{0}; index < kMaxForPushBack; ++index)
+		    {
+			    EATEST_VERIFY(v[index] == index);
+		    }
+	    }
+    }
+#endif
+
+    // test emplace() with an element from the vector.
+    {
+	    const char* const str = "example";
+	    eastl::vector<eastl::string> v;
+	    v.push_back(str);
+	    EATEST_VERIFY(v.size() == v.capacity()); // emplace() will cause existing elements to be moved.
+	    v.emplace(v.end(), v.back());
+
+	    VerifySequence(v, {str, str}, "emplace() must be able to push elements from self.");
+    }
+
+    // test push_back() with an element from the vector.
+    {
+	    const char* const str = "example";
+	    eastl::vector<eastl::string> v;
+	    v.push_back(str);
+	    EATEST_VERIFY(v.size() == v.capacity()); // push_back() will cause existing elements to be moved.
+	    v.push_back(v.back());
+
+	    VerifySequence(v, {str, str}, "push_back() must be able to push elements from self.");
+    }
+
+#if EASTL_EXCEPTIONS_ENABLED
+    // test constructors & destructors called appropriate when exception thrown during modification.
+    EATEST_VERIFY(TestObject::Reset());
+
+    // emplace_back() - constructing the new element throws
+    {
+	    eastl::vector<TestObject> v;
+	    v.push_back(TestObject{});
+	    EATEST_VERIFY_THROW(v.emplace_back(TestObject::throw_on_construct));
+    }
+    EATEST_VERIFY(TestObject::Reset());
+
+    // push_back() - move constructing an element already in the container throws and capacity is exhausted.
+    {
+	    eastl::vector<TestObject> v;
+	    v.push_back(TestObject{});
+	    v.back().mbThrowOnCopy = true; // throw during construction of new element, from an element within the vector.
+	    EATEST_VERIFY(v.size() == v.capacity()); // push_back() will cause existing elements to be moved.
+	    EATEST_VERIFY_THROW(v.push_back(TestObject{}));
+    }
+    EATEST_VERIFY(TestObject::Reset());
+
+#endif
+
+    return nErrorCount;
 }

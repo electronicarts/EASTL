@@ -197,6 +197,8 @@ EA_DISABLE_CLANG_WARNING(-Watomic-alignment);
 		using Base::fetch_xor;					\
 		using Base::xor_fetch;					\
 												\
+		using Base::acquire_fence;   			\
+												\
 		using Base::operator++;					\
 		using Base::operator--;					\
 		using Base::operator+=;					\
