@@ -161,8 +161,15 @@ struct FixedWidth128
 											comparandIntegral, EASTL_ATOMIC_TYPE_PUN_CAST(integralType, (desired)), \
 											MemoryOrder, cmpxchgStrongIntrinsic); \
 																		\
-		*(expected) = EASTL_ATOMIC_TYPE_PUN_CAST(type, oldIntegral);    \
-		ret = (oldIntegral == comparandIntegral);						\
+		if (oldIntegral == comparandIntegral)							\
+		{																\
+			ret = true;													\
+		}																\
+		else															\
+		{																\
+			*(expected) = EASTL_ATOMIC_TYPE_PUN_CAST(type, oldIntegral); \
+			ret = false;												\
+		}																\
 	}
 
 /**
