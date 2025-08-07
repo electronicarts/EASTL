@@ -1210,7 +1210,7 @@ namespace eastl
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef EASTL_LIKELY
-	#if defined(__GNUC__) && (__GNUC__ >= 3)
+	#if (defined(__GNUC__) && (__GNUC__ >= 3)) || defined(__clang__)
 		#define EASTL_LIKELY(x)   __builtin_expect(!!(x), true)
 		#define EASTL_UNLIKELY(x) __builtin_expect(!!(x), false)
 	#else
