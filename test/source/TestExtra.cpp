@@ -68,6 +68,7 @@ namespace eastl
 #include <EASTL/hash_set.h>
 #include <EASTL/random.h>
 #include <EASTL/bit.h>
+#include <EASTL/unique_ptr.h>
 #include <EASTL/core_allocator_adapter.h>
 #include <EASTL/bonus/call_traits.h>
 #include <EASTL/bonus/compressed_pair.h>
@@ -677,6 +678,107 @@ static int TestPriorityQueue()
 }
 
 
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TestPriorityQueueNonCopyable
+// Test compilation of move-only type with priority_queue with custom comparator
+//
+
+
+class NonCopyableString : public eastl::string
+{
+public:
+	using Base = eastl::string;
+
+	using Base::Base;
+	EA_NON_COPYABLE(NonCopyableString);
+	NonCopyableString(NonCopyableString&&) = default;
+	NonCopyableString& operator=(NonCopyableString&&) = default;
+};
+
+
+static void TestPriorityQueueNonCopyable_DefaultComparator(int& nErrorCount)
+{
+	using Queue = eastl::priority_queue<NonCopyableString, vector<NonCopyableString>>;
+
+	Queue queue;
+	queue.push("A");
+	queue.emplace("");
+	queue.push("Mem");
+	queue.emplace("Hello World");
+
+	EATEST_VERIFY(!queue.empty());
+	EATEST_VERIFY(queue.size() == 4);
+
+	EATEST_VERIFY(queue.top() == "Mem");
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() == "Hello World");
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() == "A");
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() == "");
+
+	queue.pop();
+	EATEST_VERIFY(queue.empty());
+}
+
+
+template <typename T = void>
+struct unique_ptr_less
+{
+	bool operator()(const unique_ptr<T>& a, const unique_ptr<T>& b) const { return *a < *b; }
+};
+
+
+static void TestPriorityQueueNonCopyable_CustomComparator(int& nErrorCount)
+{
+	using Value = unique_ptr<int>;
+	using Queue = eastl::priority_queue<Value, vector<Value>, unique_ptr_less<int>>;
+
+	Queue queue;
+
+	queue.push(eastl::make_unique<int>(5));
+	queue.emplace(eastl::make_unique<int>(1));
+	queue.push(eastl::make_unique<int>(15));
+	queue.emplace(eastl::make_unique<int>(7));
+
+	EATEST_VERIFY(!queue.empty());
+	EATEST_VERIFY(queue.size() == 4);
+
+	EATEST_VERIFY(queue.top() && *queue.top() == 15);
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() && *queue.top() == 7);
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() && *queue.top() == 5);
+
+	queue.pop();
+	EATEST_VERIFY(queue.top() && *queue.top() == 1);
+
+	queue.pop();
+	EATEST_VERIFY(queue.empty());
+}
+
+
+static int TestPriorityQueueNonCopyable()
+{
+	int nErrorCount = 0;
+
+	TestObject::Reset();
+
+	TestPriorityQueueNonCopyable_DefaultComparator(nErrorCount);
+
+	TestPriorityQueueNonCopyable_CustomComparator(nErrorCount);
+
+	return nErrorCount;
+}
 
 
 
@@ -1399,6 +1501,7 @@ int TestExtra()
 	nErrorCount += TestForwardDeclarations();
 	nErrorCount += TestQueue();
 	nErrorCount += TestPriorityQueue();
+	nErrorCount += TestPriorityQueueNonCopyable();
 	nErrorCount += TestStack();
 	nErrorCount += TestCompressedPair();
 	nErrorCount += TestCallTraits();
