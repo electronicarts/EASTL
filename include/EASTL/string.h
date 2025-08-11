@@ -3544,6 +3544,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline bool operator==(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
 	{
+		if (p == nullptr)
+			return false;
 		typedef typename basic_string<T, Allocator>::size_type string_size_type;
 		const string_size_type n = (string_size_type)CharStrlen(p);
 		return ((n == b.size()) && (Compare(p, b.data(), (size_t)n) == 0));
@@ -3553,6 +3555,8 @@ namespace eastl
 	template <typename T, typename Allocator>
 	inline bool operator==(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
 	{
+		if (p == nullptr)
+			return false;
 		typedef typename basic_string<T, Allocator>::size_type string_size_type;
 		const string_size_type n = (string_size_type)CharStrlen(p);
 		return ((a.size() == n) && (Compare(a.data(), p, (size_t)n) == 0));

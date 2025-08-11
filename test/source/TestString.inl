@@ -2155,6 +2155,34 @@ int TEST_STRING_NAME()
 		VERIFY(LocalHash(sw2) == LocalHash(sw3));
 	}
 
+	// test == and != operators
+	{
+		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		StringType str2(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		StringType str3(LITERAL("Hello, world"));
+		typename StringType::value_type *nullChar{nullptr};
+		{
+			
+			VERIFY(!(str1 == nullptr));
+			VERIFY(!(nullptr == str1));
+			VERIFY(!(str1 == nullChar));
+			VERIFY(!(nullChar == str1));
+
+			VERIFY(str1 != nullptr);
+			VERIFY(nullptr != str1);
+			VERIFY(str1 != nullChar);
+			VERIFY(nullChar != str1);
+		}
+		{
+			VERIFY(str1 == str2);
+			VERIFY(str1 != str3);
+			VERIFY(str1 == str2.c_str());
+			VERIFY(str1 != str3.c_str());
+			VERIFY(str1.c_str() == str2);
+			VERIFY(str1.c_str() != str3);
+		}
+	}
+
 	// test <=> operator
 	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	{
