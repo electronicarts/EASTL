@@ -422,6 +422,7 @@ namespace eastl
 
 		bool      empty() const EA_NOEXCEPT; 
 		size_type size() const EA_NOEXCEPT;
+		size_type max_size() const EA_NOEXCEPT;
 
 		void resize(size_type n, const value_type& value);
 		void resize(size_type n);
@@ -1486,6 +1487,14 @@ namespace eastl
 	inline deque<T, Allocator, kDequeSubarraySize>::size() const EA_NOEXCEPT
 	{
 		return (size_type)(mItEnd - mItBegin);
+	}
+
+
+	template <typename T, typename Allocator, unsigned kDequeSubarraySize>
+	typename deque<T, Allocator, kDequeSubarraySize>::size_type
+	inline deque<T, Allocator, kDequeSubarraySize>::max_size() const EA_NOEXCEPT
+	{
+		return base_type::kMaxSize;
 	}
 
 
