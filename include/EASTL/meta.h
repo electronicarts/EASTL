@@ -182,17 +182,21 @@ namespace eastl
 		// overload_resolution has selected a function to run.
 		//
 
+		// Helper used to check for valid conversions that don't involve narrowing.
+		template <class T>
+		T make_overload_array(T(&&)[1]);
+
 		// a single overload of an individual type
 		template <typename T>
 		struct overload
 		{
-			// Overload is implicitly convertible to the surrogated function
-			// call for pointer to member functions (pmf). This gets around
-			// variadic pack expansion in a class using statement being a C++17
-			// language feature. It is the core mechanism of aggregating all the
+			// Overload is a functor that will be selected by overload resolution
+			// if and only if there's no narrow conversion to convert ParamType into T.
+			// This gets around variadic pack expansion in a class using statement being
+			// a C++17 language feature. It is the core mechanism of aggregating all the
 			// individual overloads into the overload_set structure.
-			using F = T (*)(T);
-			operator F() const { return nullptr; }
+			template <class ParamType, typename = decltype(make_overload_array<T>({declval<ParamType>()}))>
+			T operator()(T, ParamType&&);
 		};
 
 		template <typename...> struct overload_set_impl;
@@ -207,7 +211,9 @@ namespace eastl
 		};
 
 		EA_DISABLE_VC_WARNING(4242 4244) // conversion from 'T' to 'U', possible loss of data.
-		template <typename T, typename OverloadSet, typename ResultT = decltype(declval<OverloadSet>()(declval<T>()))>
+		template <typename T,
+		          typename OverloadSet,
+		          typename ResultT = decltype(declval<OverloadSet>()(declval<T>(), declval<T>()))>
 		struct overload_resolution
 		{
 			// capture the return type of the function the compiler selected by
