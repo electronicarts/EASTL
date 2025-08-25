@@ -4084,12 +4084,10 @@ namespace eastl
 		template<typename ForwardIterator>
 		ForwardIterator rotate_general_impl(ForwardIterator first, ForwardIterator middle, ForwardIterator last)
 		{
-			using eastl::swap;
-
 			ForwardIterator current = middle;
 
 			do {
-				swap(*first++, *current++);
+				eastl::swap(*first++, *current++);
 
 				if(first == middle)
 					middle = current;
@@ -4100,7 +4098,7 @@ namespace eastl
 
 			while(current != last)
 			{
-				swap(*first++, *current++);
+				eastl::swap(*first++, *current++);
 
 				if(first == middle)
 					middle = current;

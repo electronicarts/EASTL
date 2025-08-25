@@ -416,8 +416,7 @@ namespace eastl
 	vector_set<K, C, A, RAC>::operator=(this_type&& x)
 	{
 		base_type::operator=(eastl::move(x));
-		using eastl::swap;
-		swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
+		eastl::swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
 		return *this;
 	}
 
@@ -436,8 +435,7 @@ namespace eastl
 	inline void vector_set<K, C, A, RAC>::swap(this_type& x)
 	{
 		base_type::swap(x);
-		using eastl::swap;
-		swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
+		eastl::swap(static_cast<value_compare&>(*this), static_cast<value_compare&>(x));
 	}
 
 
