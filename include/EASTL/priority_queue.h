@@ -455,9 +455,8 @@ namespace eastl
 	inline void priority_queue<T, Container, Compare>::swap(this_type& x) EA_NOEXCEPT_IF((eastl::is_nothrow_swappable<this_type::container_type>::value && 
 																						  eastl::is_nothrow_swappable<this_type::compare_type>::value))
 	{
-		using eastl::swap;
-		swap(c, x.c);
-		swap(comp, x.comp);
+		eastl::swap(c, x.c);
+		eastl::swap(comp, x.comp);
 	}
 
 

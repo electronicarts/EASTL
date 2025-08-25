@@ -801,8 +801,7 @@ namespace eastl
 			}
 			else if (engaged && other.engaged)
 			{
-				using eastl::swap;
-				swap(**this, *other);
+				eastl::swap(**this, *other);
 			}
 			//else if (!engaged && !other.engaged)
 			//	no op
