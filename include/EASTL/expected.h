@@ -105,8 +105,7 @@ namespace eastl
 		constexpr void swap(unexpected& other) noexcept(is_nothrow_swappable_v<E>)
 		{
 			static_assert(is_swappable_v<E>, "unexpected<E> swap requires E to be swappable");
-			using eastl::swap;
-			swap(mError, other.mError);
+			eastl::swap(mError, other.mError);
 		};
 
 		friend constexpr void swap(unexpected& x, unexpected& y) noexcept(noexcept(x.swap(y)))
@@ -638,12 +637,11 @@ namespace eastl
 		                          is_nothrow_move_constructible_v<E> && is_nothrow_swappable_v<E>>
 		EA_CPP20_CONSTEXPR void swap(expected& other) noexcept(NoExcept)
 		{
-			using eastl::swap;
 			if (other.mHasValue)
 			{
 				if (this->mHasValue)
 				{
-					swap(this->mValue, other.mValue);
+					eastl::swap(this->mValue, other.mValue);
 				}
 				else
 				{
@@ -654,7 +652,7 @@ namespace eastl
 			{
 				if (!this->mHasValue)
 				{
-					swap(this->mError, other.mError);
+					eastl::swap(this->mError, other.mError);
 				}
 				else // `other` has an error and `this` has a value, we need to swap them around.
 				{
@@ -1322,7 +1320,6 @@ namespace eastl
 		          bool NoExcept = is_nothrow_move_constructible_v<E> && is_nothrow_swappable_v<E>>
 		EA_CPP20_CONSTEXPR void swap(expected& other) noexcept(NoExcept)
 		{
-			using eastl::swap;
 			if (other.mHasValue)
 			{
 				if (this->mHasValue)
@@ -1338,7 +1335,7 @@ namespace eastl
 			{
 				if (!this->mHasValue)
 				{
-					swap(this->mError, other.mError);
+					eastl::swap(this->mError, other.mError);
 				}
 				else
 				{
