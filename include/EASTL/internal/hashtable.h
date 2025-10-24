@@ -1756,7 +1756,7 @@ namespace eastl
 			try
 			{
 		#endif
-				detail::allocator_construct(mAllocator, eastl::addressof(pNode->mValue), piecewise_construct, eastl::make_tuple(key), eastl::tuple{});
+				detail::allocator_construct(mAllocator, eastl::addressof(pNode->mValue), piecewise_construct, eastl::make_tuple(key), eastl::tuple<>{});
 				pNode->mpNext = NULL;
 				return pNode;
 		#if EASTL_EXCEPTIONS_ENABLED
@@ -1782,7 +1782,7 @@ namespace eastl
 			try
 			{
 		#endif
-				detail::allocator_construct(mAllocator, eastl::addressof(pNode->mValue), piecewise_construct, eastl::forward_as_tuple(eastl::move(key)), eastl::tuple{});
+				detail::allocator_construct(mAllocator, eastl::addressof(pNode->mValue), piecewise_construct, eastl::forward_as_tuple(eastl::move(key)), eastl::tuple<>{});
 				pNode->mpNext = NULL;
 				return pNode;
 		#if EASTL_EXCEPTIONS_ENABLED
