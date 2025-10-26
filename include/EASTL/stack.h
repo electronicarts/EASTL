@@ -285,8 +285,7 @@ namespace eastl
 	template <typename T, typename Container>
 	void stack<T, Container>::swap(this_type& x) EA_NOEXCEPT_IF(eastl::is_nothrow_swappable<this_type::container_type>::value)
 	{
-		using eastl::swap;
-		swap(c, x.c);
+		eastl::swap(c, x.c);
 	}
 
 

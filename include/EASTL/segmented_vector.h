@@ -739,17 +739,16 @@ namespace eastl
 	void
 	segmented_vector<T, Count, Allocator>::swap(this_type& other)
 	{
-		using eastl::swap;
 		//
 		// EASTL doesn't have allocator_traits it has the effective
 		// behavior of propagate_on_container_swap = true for all
 		// allocators.
-		swap(mAllocator, other.mAllocator);
-		swap(mFirstSegment, other.mFirstSegment);
-		swap(mLastSegment, other.mLastSegment);
-		swap(mFreeList, other.mFreeList);
-		swap(mInUseSegmentCount, other.mInUseSegmentCount);
-		swap(mFreeListSegmentCount, other.mFreeListSegmentCount);
+		eastl::swap(mAllocator, other.mAllocator);
+		eastl::swap(mFirstSegment, other.mFirstSegment);
+		eastl::swap(mLastSegment, other.mLastSegment);
+		eastl::swap(mFreeList, other.mFreeList);
+		eastl::swap(mInUseSegmentCount, other.mInUseSegmentCount);
+		eastl::swap(mFreeListSegmentCount, other.mFreeListSegmentCount);
 	}
 
 	template <typename T, size_t Count, typename Allocator>
