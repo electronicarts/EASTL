@@ -14,7 +14,14 @@
 #include <EASTL/internal/config.h>
 
 #if defined(EA_COMPILER_MICROSOFT) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
-#include <intrin.h>
+extern "C" void __stosw(unsigned short *, unsigned short, size_t);
+extern "C" void __stosd(unsigned long *, unsigned long, size_t);
+#pragma intrinsic(__stosw)
+#pragma intrinsic(__stosd)
+#ifdef EA_PROCESSOR_X86_64
+extern "C" void __stosq(unsigned __int64 *, unsigned __int64, size_t);
+#pragma intrinsic(__stosq)
+#endif
 #endif
 
 namespace eastl
