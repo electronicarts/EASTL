@@ -27,6 +27,8 @@
 // 4217 - Member template functions cannot be used for copy-assignment or copy-construction.
 // 4512/4626 - 'class' : assignment operator could not be generated.  // This disabling would best be put elsewhere.
 EA_DISABLE_VC_WARNING(4619 4217 4512 4626);
+// Error in string's swap (error: ...‘eastl::basic_string<char, eastl::allocator>::Layout::._anon_111::raw’ is used uninitialized [-Werror=uninitialized])
+EA_DISABLE_GCC_WARNING(-Wuninitialized);
 
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -1019,6 +1021,7 @@ namespace eastl
 
 
 EA_RESTORE_VC_WARNING();
+EA_RESTORE_GCC_WARNING();
 
 
 #endif // Header include guard
