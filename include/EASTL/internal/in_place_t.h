@@ -26,7 +26,7 @@ namespace eastl
 		explicit in_place_t() = default;
 	};
 
-	inline constexpr in_place_t in_place{};
+	EASTL_CPP17_INLINE_VARIABLE constexpr in_place_t in_place{};
 
 	template<typename>
 	struct in_place_type_t
