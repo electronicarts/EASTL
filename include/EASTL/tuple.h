@@ -15,6 +15,8 @@
 EA_DISABLE_VC_WARNING(4623) // warning C4623: default constructor was implicitly defined as deleted
 EA_DISABLE_VC_WARNING(4625) // warning C4625: copy constructor was implicitly defined as deleted
 EA_DISABLE_VC_WARNING(4510) // warning C4510: default constructor could not be generated
+EA_DISABLE_VC_WARNING(5267) // warning C5267: definition of implicit copy constructor for '...' is deprecated because it has a user-provided assignment operator
+
 
 #if EASTL_TUPLE_ENABLED
 
@@ -1001,6 +1003,7 @@ constexpr T make_from_tuple(Tuple&& t)
 
 
 #endif  // EASTL_TUPLE_ENABLED
+EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()
 EA_RESTORE_VC_WARNING()
