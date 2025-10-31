@@ -73,7 +73,17 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         message(FATAL_ERROR "Building with a gcc version less than 4.7.3 is not supported.")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /W4 /permissive-")
+    # MSVC generates warnings when multiple /W# arguments are provided. If the parent project already specified a
+    # desired warning level we need to replace that instead of adding another warning level.
+    if(CMAKE_CXX_FLAGS MATCHES "[-/]W[0-4]")
+        string(REGEX REPLACE "[-/]W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+    endif()
+    # MSVC generates warnings when multiple standards are defined. The parent project may use the CMAKE_CXX_STANDARD
+    # variable to select te standard. Unset it so that our library code is still compiled with latest.
+    unset(CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /permissive-")
 endif()
 
 
