@@ -214,12 +214,21 @@ namespace eastl
 			auto* pEnd = mpBegin + mnCount;
 			if (EASTL_LIKELY(((npos - sw.size()) >= pos) && (pos + sw.size()) <= mnCount))
 			{
-				const value_type* const pTemp = eastl::search(mpBegin + pos, pEnd, sw.data(), sw.data() + sw.size());
-
-				if ((pTemp != pEnd) || (sw.size() == 0))
-					return (size_type)(pTemp - mpBegin);
+				for (size_type i =pos;i<=mnCount-sw.size();i++){
+					if(mpBegin[i]==sw[0]){
+						//if first char matches
+						size_type j=1;
+						while(j<sw.size() && mpBegin[i+j]==sw[j]){
+							++j;
+						}
+						if(j==sw.size()){
+							//if the full str matches
+							return i;
+						}
+					}
+				}
 			}
-			return npos;
+			return npos;//return val if no match is found
 		}
 
 		EA_CONSTEXPR size_type find(T c, size_type pos = 0) const EA_NOEXCEPT
