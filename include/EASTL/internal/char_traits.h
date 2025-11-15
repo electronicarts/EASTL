@@ -38,6 +38,8 @@ namespace eastl
 		{
 #if defined(EA_COMPILER_MSVC)
 			return true; // Irrelevant flag for windows.
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+			return true; // MinGW uses 2 bytes for Windows compatibility
 #elif defined(EA_PLATFORM_SONY) && defined(EA_PLATFORM_POSIX) && defined(EA_PLATFORM_CONSOLE)
 			return true; // Sony consoles use short wchar_t disregarding the flag.
 #else
