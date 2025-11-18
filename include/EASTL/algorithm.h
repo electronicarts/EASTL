@@ -255,10 +255,6 @@
 
 EA_DISABLE_ALL_VC_WARNINGS();
 
-	#if defined(EA_COMPILER_MSVC) && (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
-		#include <intrin.h>
-	#endif
-
 	#include <stddef.h>
 	#include <string.h> // memcpy, memcmp, memmove
 
