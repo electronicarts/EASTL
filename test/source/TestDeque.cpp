@@ -112,6 +112,9 @@ int TestDequeConstruction()
 		dB.clear();
 		EATEST_VERIFY(dB.size() == 0);
 		EATEST_VERIFY(dB.empty());
+
+		// max_size
+		EATEST_VERIFY(dB.max_size() == std::numeric_limits<eastl_size_t>::max() - 1u);
 	}
 
 	EATEST_VERIFY(TestObject::sTOCount == 0);

@@ -1077,8 +1077,12 @@ int TestVector()
 	{
 		using namespace eastl;
 
-		// reserve / resize / capacity / clear
 		vector<int> v(10, 17);
+
+		// max_size
+		EATEST_VERIFY(v.max_size() == std::numeric_limits<eastl_size_t>::max() - 1u);
+
+		// reserve / resize / capacity / clear
 		v.reserve(20);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v.size() == 10);
