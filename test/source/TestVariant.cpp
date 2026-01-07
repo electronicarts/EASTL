@@ -250,6 +250,18 @@ int TestVariantBasic()
 		VERIFY(*(get_if<string>(&v)) == "a");
 	}
 
+	{
+		// verify construction where only one candidate doesn't require narrow conversion
+		variant<float, long, double> v = 42;
+		VERIFY(holds_alternative<long>(v));
+		VERIFY(get<long>(v) == 42);
+
+		// and assignment operator=
+		v = 43;
+		VERIFY(holds_alternative<long>(v));
+		VERIFY(get<long>(v) == 43);
+	}
+
 	return nErrorCount;
 }
 
