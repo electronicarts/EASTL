@@ -719,6 +719,16 @@ namespace eastl
 		size_type find_last_not_of(const value_type* p, size_type position, size_type n) const;
 		size_type find_last_not_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
+		// Starts with operations
+		bool starts_with(view_type sv) const EA_NOEXCEPT;
+		bool starts_with(value_type c) const EA_NOEXCEPT;
+		bool starts_with(const value_type* p) const;
+
+		// Ends with operations
+		bool ends_with(view_type sv) const EA_NOEXCEPT;
+		bool ends_with(value_type c) const EA_NOEXCEPT;
+		bool ends_with(const value_type* p) const;
+
 		// Substring functionality
 		this_type substr(size_type position = 0, size_type n = npos) const;
 
@@ -2938,6 +2948,68 @@ namespace eastl
 				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
 		}
 		return npos;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::starts_with(view_type sv) const EA_NOEXCEPT
+	{
+		const size_type nOtherLength = sv.size();
+
+		if(nOtherLength > internalLayout().GetSize())
+			return false;
+
+		return Compare(internalLayout().BeginPtr(), sv.begin(), (size_t)nOtherLength) == 0;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::starts_with(value_type c) const EA_NOEXCEPT
+	{
+		return internalLayout().GetSize() > 0 && *internalLayout().BeginPtr() == c;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::starts_with(const value_type* p) const
+	{
+		const size_type nOtherLength = (size_type)CharStrlen(p);
+
+		if(nOtherLength > internalLayout().GetSize())
+			return false;
+
+		return Compare(internalLayout().BeginPtr(), p, (size_t)nOtherLength) == 0;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::ends_with(view_type sv) const EA_NOEXCEPT
+	{
+		const size_type nOtherLength = sv.size();
+
+		if(nOtherLength > internalLayout().GetSize())
+			return false;
+
+		return Compare(internalLayout().EndPtr() - nOtherLength, sv.begin(), (size_t)nOtherLength) == 0;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::ends_with(value_type c) const EA_NOEXCEPT
+	{
+		return internalLayout().GetSize() > 0 && *(internalLayout().EndPtr() - 1) == c;
+	}
+
+
+	template <typename T, typename Allocator>
+	bool basic_string<T, Allocator>::ends_with(const value_type* p) const
+	{
+		const size_type nOtherLength = (size_type)CharStrlen(p);
+
+		if(nOtherLength > internalLayout().GetSize())
+			return false;
+
+		return Compare(internalLayout().EndPtr() - nOtherLength, p, (size_t)nOtherLength) == 0;
 	}
 
 
