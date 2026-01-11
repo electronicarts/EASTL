@@ -1824,6 +1824,72 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_last_not_of(LITERAL('a')) == 28);
 	}
 
+	// bool starts_with(const view_type x) const EA_NOEXCEPT;
+	// bool starts_with(value_type c) const EA_NOEXCEPT;
+	// bool starts_with(const value_type* p) const;
+	{
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	    using view_type = typename StringType::view_type;
+
+	    VERIFY(str.starts_with(view_type(LITERAL("abc"))));
+	    VERIFY(str.starts_with(view_type(LITERAL("abcdef"))));
+	    VERIFY(str.starts_with(view_type(LITERAL("abcdefghijklmnopqrstuvwxyz"))));
+	    VERIFY(!str.starts_with(view_type(LITERAL("xyz"))));
+	    VERIFY(!str.starts_with(view_type(LITERAL("bcd"))));
+	    VERIFY(!str.starts_with(view_type(LITERAL("abcdefghijklmnopqrstuvwxyz123"))));
+
+		VERIFY(str.starts_with(LITERAL("abc")));
+		VERIFY(str.starts_with(LITERAL("abcdef")));
+		VERIFY(str.starts_with(LITERAL("abcdefghijklmnopqrstuvwxyz")));
+		VERIFY(!str.starts_with(LITERAL("xyz")));
+		VERIFY(!str.starts_with(LITERAL("bcd")));
+		VERIFY(!str.starts_with(LITERAL("abcdefghijklmnopqrstuvwxyz123")));
+
+		VERIFY(str.starts_with(LITERAL('a')));
+		VERIFY(!str.starts_with(LITERAL('b')));
+		VERIFY(!str.starts_with(LITERAL('z')));
+
+		StringType empty;
+		VERIFY(empty.starts_with(StringType(LITERAL(""))));
+		VERIFY(empty.starts_with(LITERAL("")));
+		VERIFY(!empty.starts_with(LITERAL('a')));
+		VERIFY(str.starts_with(StringType(LITERAL(""))));
+		VERIFY(str.starts_with(LITERAL("")));
+	}
+
+	// bool ends_with(const view_type x) const EA_NOEXCEPT;
+	// bool ends_with(value_type c) const EA_NOEXCEPT;
+	// bool ends_with(const value_type* p) const;
+	{
+		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		using view_type = typename StringType::view_type;
+
+		VERIFY(str.ends_with(view_type(LITERAL("xyz"))));
+		VERIFY(str.ends_with(view_type(LITERAL("uvwxyz"))));
+		VERIFY(str.ends_with(view_type(LITERAL("abcdefghijklmnopqrstuvwxyz"))));
+		VERIFY(!str.ends_with(view_type(LITERAL("abc"))));
+		VERIFY(!str.ends_with(view_type(LITERAL("wxy"))));
+		VERIFY(!str.ends_with(view_type(LITERAL("123abcdefghijklmnopqrstuvwxyz"))));
+
+		VERIFY(str.ends_with(LITERAL("xyz")));
+		VERIFY(str.ends_with(LITERAL("uvwxyz")));
+		VERIFY(str.ends_with(LITERAL("abcdefghijklmnopqrstuvwxyz")));
+		VERIFY(!str.ends_with(LITERAL("abc")));
+		VERIFY(!str.ends_with(LITERAL("wxy")));
+		VERIFY(!str.ends_with(LITERAL("123abcdefghijklmnopqrstuvwxyz")));
+
+		VERIFY(str.ends_with(LITERAL('z')));
+		VERIFY(!str.ends_with(LITERAL('y')));
+		VERIFY(!str.ends_with(LITERAL('a')));
+
+		StringType empty;
+		VERIFY(empty.ends_with(StringType(LITERAL(""))));
+		VERIFY(empty.ends_with(LITERAL("")));
+		VERIFY(!empty.ends_with(LITERAL('z')));
+		VERIFY(str.ends_with(StringType(LITERAL(""))));
+		VERIFY(str.ends_with(LITERAL("")));
+	}
+
 	// this_type substr(size_type position = 0, size_type n = npos) const;
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
