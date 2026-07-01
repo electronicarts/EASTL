@@ -131,6 +131,11 @@ namespace eastl
 		}
 
 		// TODO(rparolin):  Why do we prevent copies? And what about moves?
+		// Copies are likely disallowed because m_map stores iterators into m_list, so a memberwise
+		// copy would leave the copy's map referencing the source's list; a correct copy would need
+		// to rebuild those iterators against the copied list. Declaring the copy functions also
+		// suppresses the implicit move functions; moves could be supported (both members are
+		// node-based containers whose iterators remain valid across a move) but have not been needed.
 		lru_cache(const this_type&) = delete;
 		this_type &operator=(const this_type&) = delete;
 
@@ -274,11 +279,19 @@ namespace eastl
 		/// Removes the oldest entry from the cache.
 		void erase_oldest()
 		{
+			#if EASTL_ASSERT_ENABLED
+				if (EASTL_UNLIKELY(empty()))
+					EASTL_FAIL_MSG("lru_cache::erase_oldest -- empty container");
+			#endif
+
 			auto key = m_list.back();
 			m_list.pop_back();
 
 			// Delete the actual entry
 			auto iter = m_map.find(key);
+
+			// m_list and m_map must be in sync; every key in m_list exists in m_map.
+			EASTL_ASSERT(iter != m_map.end());
 			map_erase(iter);
 		}
 
@@ -304,6 +317,11 @@ namespace eastl
 		/// Touches key at iterator iter, moving it to most recently used position
 		void touch(iterator& iter)
 		{
+			#if EASTL_ASSERT_ENABLED
+				if (EASTL_UNLIKELY(iter == m_map.end()))
+					EASTL_FAIL_MSG("lru_cache::touch -- invalid iterator");
+			#endif
+
 			auto listRef = iter->second.second;
 
 			m_list.erase(listRef);
@@ -334,6 +352,11 @@ namespace eastl
 		/// Updates data at spot iter with data v.
 		void assign(iterator& iter, const value_type& v)
 		{
+			#if EASTL_ASSERT_ENABLED
+				if (EASTL_UNLIKELY(iter == m_map.end()))
+					EASTL_FAIL_MSG("lru_cache::assign -- invalid iterator");
+			#endif
+
 			if (m_delete_callback)
 				m_delete_callback(iter->second.first);
 			touch(iter);
@@ -372,7 +395,7 @@ namespace eastl
 		/// Resizes the cache.  Can be used to either expand or contract the cache.
 		/// In the case of a contraction, the oldest entries will be evicted with their respective
 		/// deletors called before completing.
-		void resize(size_type newSize)	
+		void resize(size_type newSize)
 		{
 			m_capacity = newSize;
 			trim();
@@ -415,6 +438,9 @@ namespace eastl
 
 		void make_space()
 		{
+			// A zero-capacity cache cannot hold any entries; inserting into one is invalid.
+			EASTL_ASSERT(m_capacity > 0);
+
 			if (size() == m_capacity)
 			{
 				erase_oldest();
