@@ -131,6 +131,11 @@ namespace eastl
 		}
 
 		// TODO(rparolin):  Why do we prevent copies? And what about moves?
+		// Copies are likely disallowed because m_map stores iterators into m_list, so a memberwise
+		// copy would leave the copy's map referencing the source's list; a correct copy would need
+		// to rebuild those iterators against the copied list. Declaring the copy functions also
+		// suppresses the implicit move functions; moves could be supported (both members are
+		// node-based containers whose iterators remain valid across a move) but have not been needed.
 		lru_cache(const this_type&) = delete;
 		this_type &operator=(const this_type&) = delete;
 
