@@ -57,13 +57,13 @@ namespace eastl
 		static EASTL_AssertionFailureFunction assertionFailureFunction_;
 		assertionFailureFunction_ = pAssertionFailureFunction;
 
-		gpAssertionFailureFunction = [](void* instructionPointer, const char* pExpression, void* pContext)
+		SetAssertionFailureFunction([](void* instructionPointer, const char* pExpression, void* pContext)
 		{
 			EA_UNUSED(instructionPointer);
 
 			if (assertionFailureFunction_)
 				assertionFailureFunction_(pExpression, pContext);
-		};
+		}, pContext);
 	}
 	EASTL_API void SetAssertionFailureFunction(EASTL_AssertionFailureFunctionEx pAssertionFailureFunction, void* pContext)
 	{
