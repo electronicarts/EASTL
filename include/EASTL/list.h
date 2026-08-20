@@ -276,8 +276,8 @@ namespace eastl
 
 		using base_type::get_allocator;
 
-		static_assert(!is_const<value_type>::value, "vector<T> value_type must be non-const.");
-		static_assert(!is_volatile<value_type>::value, "vector<T> value_type must be non-volatile.");
+		static_assert(!is_const<value_type>::value, "list<T> value_type must be non-const.");
+		static_assert(!is_volatile<value_type>::value, "list<T> value_type must be non-volatile.");
 
 	public:
 		list();
