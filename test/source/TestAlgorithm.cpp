@@ -2250,6 +2250,20 @@ int TestAlgorithm()
 		const char* pString1 = "Hello wwworld";
 		const char* presultult  = search_n(pString1, pString1 + strlen(pString1), 1, 'w');
 		EATEST_VERIFY(presultult == pString1 + 6);
+
+		// The random access version must not report a match that extends past 'last'.
+		// The trailing elements of these arrays are outside the searched range.
+		const int intArray1[] = { 0, 1, 0, 1, 1 };
+		const int* pIntResult = search_n(intArray1, intArray1 + 4, 2, 1);
+		EATEST_VERIFY(pIntResult == intArray1 + 4);
+		pIntResult = search_n(intArray1, intArray1 + 5, 2, 1);
+		EATEST_VERIFY(pIntResult == intArray1 + 3);
+
+		const int intArray2[] = { 0, 0, 1, 0, 1, 1, 1 };
+		pIntResult = search_n(intArray2, intArray2 + 6, 3, 1);
+		EATEST_VERIFY(pIntResult == intArray2 + 6);
+		pIntResult = search_n(intArray2, intArray2 + 7, 3, 1);
+		EATEST_VERIFY(pIntResult == intArray2 + 4);
 	}
 
 

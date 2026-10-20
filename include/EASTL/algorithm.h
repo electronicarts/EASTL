@@ -3084,7 +3084,7 @@ namespace eastl
 							if(--remainder == 0)
 								return (backTrack + 1); // success
 						}
-						tailSize -= (prevRemainder - remainder);
+						tailSize -= (prevRemainder - remainder) + 1; // +1 for the mismatched element that lookAhead now points to.
 					}
 					else
 						return last; // failure
