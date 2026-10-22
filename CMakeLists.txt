@@ -16,6 +16,7 @@ option(EASTL_STD_ITERATOR_CATEGORY_ENABLED "Enable compatibility with std:: iter
 option(EASTL_DISABLE_APRIL_2024_DEPRECATIONS "Enable use of API marked for removal in April 2024." OFF)
 option(EASTL_DISABLE_SEPT_2024_DEPRECATIONS "Enable use of API marked for removal in September 2024." OFF)
 option(EASTL_DISABLE_APRIL_2025_DEPRECATIONS "Enable use of API marked for removal in April 2025." OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags
@@ -29,6 +30,11 @@ include(CommonCppFlags)
 file(GLOB EASTL_SOURCES "source/*.cpp")
 file(GLOB_RECURSE EASTL_HEADERS "include/EASTL/**.h")
 add_library(EASTL ${EASTL_SOURCES} ${EASTL_HEADERS})
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(EASTL PUBLIC EA_DLL 
+                                     PRIVATE EA_EXPORT 
+                                     INTERFACE EA_IMPORT)
+endif()
 target_compile_features(EASTL PUBLIC cxx_std_14)
 
 # include both source and headers in the files tab in Visual Studio
@@ -72,8 +78,8 @@ target_include_directories(EASTL PUBLIC include)
 #-------------------------------------------------------------------------------------------
 FetchContent_Declare(
   EABase
-  GIT_REPOSITORY https://github.com/electronicarts/EABase.git
-  GIT_TAG        0699a15efdfd20b6cecf02153bfa5663decb653c
+  GIT_REPOSITORY https://github.com/bmarques1995/EABase.git
+  GIT_TAG        acf0158c2d3fe7246e31e0b4ec86506f3bdd403e
   GIT_SUBMODULES "" # This should be temporary until we update the cyclic submodule dependencies in EABase.
 )
 

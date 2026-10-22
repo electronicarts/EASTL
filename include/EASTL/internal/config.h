@@ -287,7 +287,7 @@ namespace eastl
 
 #ifndef EASTL_API // If the build file hasn't already defined this to be dllexport...
 	#if EASTL_DLL
-		#define EASTL_API      EA_IMPORT
+		#define EASTL_API      EA_API
 		#define EASTL_LOCAL    EA_LOCAL
 	#else
 		#define EASTL_API
@@ -303,7 +303,7 @@ namespace eastl
 //
 #ifndef EASTL_EASTDC_API
 	#if EASTL_DLL
-		#define EASTL_EASTDC_API		EA_IMPORT
+		#define EASTL_EASTDC_API		EA_API
 		#define EASTL_EASTDC_LOCAL		EA_LOCAL
 	#else
 		#define EASTL_EASTDC_API
