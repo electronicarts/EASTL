@@ -48,6 +48,38 @@ typedef eastl::multimap<Align64, Align64> VMM7;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+namespace
+{
+	// Comparator that counts how many times it is called, so that tests can tell
+	// a hinted (constant time) insertion apart from a second full tree search.
+	struct CountingLess
+	{
+		static int sCount;
+		bool operator()(int a, int b) const { ++sCount; return a < b; }
+	};
+	int CountingLess::sCount = 0;
+
+	typedef eastl::map<int, int, CountingLess> CountingMap;
+
+	// Calls operator[] with a key that is not in the map yet and returns how many more
+	// comparisons it used than a plain lower_bound() on the same key. Once the key has
+	// been located, inserting it should only need a few comparisons, not another search.
+	int OperatorBracketExtraCompares(CountingMap& m, int key, bool bUseRValue)
+	{
+		CountingLess::sCount = 0;
+		m.lower_bound(key);
+		const int nLowerBoundCompares = CountingLess::sCount;
+
+		CountingLess::sCount = 0;
+		int keyCopy = key;
+		int& value = bUseRValue ? m[eastl::move(keyCopy)] : m[key];
+		const int nOperatorBracketCompares = CountingLess::sCount;
+
+		value = key;
+		return nOperatorBracketCompares - nLowerBoundCompares;
+	}
+}
+
 int TestMap()
 {
 	int nErrorCount = 0;
@@ -228,6 +260,76 @@ int TestMap()
 //
 //        EATEST_VERIFY(p1 == p2); 
 //    }
+
+	{
+		// map::operator[] used to pass lower_bound(key) as the insertion hint, but the rbtree hint
+		// must be the element *before* the insertion point. The hint was rejected and every miss
+		// that wasn't at the end of the map searched the tree a second time.
+		// https://github.com/electronicarts/EASTL/issues/592
+		const int kCount = 1024;
+		const int kMaxExtraCompares = 6; // 1 to detect the miss, up to 3 to use the hint, up to 2 for EASTL_VALIDATE_COMPARE.
+
+		for (int pass = 0; pass < 2; ++pass)
+		{
+			const bool bUseRValue = (pass == 1);
+			CountingMap m;
+			int nSlowInserts = 0;
+
+			for (int i = 0; i < kCount; ++i)
+				m.insert(CountingMap::value_type(i * 2, i * 2)); // Even keys only; odd keys are inserted below.
+
+			// Odd keys in scrambled order, so the insertion point is all over the tree.
+			for (int i = 0; i < kCount; ++i)
+			{
+				const int key = ((i * 389) % kCount) * 2 + 1; // 389 is coprime with kCount, so this visits every odd key once.
+				if (OperatorBracketExtraCompares(m, key, bUseRValue) > kMaxExtraCompares)
+					++nSlowInserts;
+			}
+
+			// New smallest key (insert before begin()) and new largest key (insert at end()).
+			if (OperatorBracketExtraCompares(m, -1, bUseRValue) > kMaxExtraCompares)
+				++nSlowInserts;
+			if (OperatorBracketExtraCompares(m, kCount * 2, bUseRValue) > kMaxExtraCompares)
+				++nSlowInserts;
+
+			EATEST_VERIFY(nSlowInserts == 0);
+			EATEST_VERIFY(m.validate());
+			EATEST_VERIFY(m.size() == (eastl_size_t)(kCount * 2 + 2));
+
+			int expected = -1;
+			for (CountingMap::iterator it = m.begin(); it != m.end(); ++it, ++expected)
+				EATEST_VERIFY((it->first == expected) && (it->second == expected));
+		}
+
+		{
+			// Filling an empty map in descending order inserts before begin() every time.
+			CountingMap m;
+			int nSlowInserts = 0;
+
+			for (int key = kCount; key > 0; --key)
+			{
+				if (OperatorBracketExtraCompares(m, key, false) > kMaxExtraCompares)
+					++nSlowInserts;
+			}
+
+			EATEST_VERIFY(nSlowInserts == 0);
+			EATEST_VERIFY(m.validate());
+			EATEST_VERIFY(m.size() == (eastl_size_t)kCount);
+			EATEST_VERIFY((m.begin()->first == 1) && (m.rbegin()->first == kCount));
+		}
+
+		{
+			// Existing keys must not be inserted or modified.
+			CountingMap m;
+			m[1] = 10;
+			m[3] = 30;
+			EATEST_VERIFY(m[1] == 10);
+			EATEST_VERIFY(m[3] == 30);
+			EATEST_VERIFY(m[2] == 0);
+			EATEST_VERIFY(m.size() == 3);
+			EATEST_VERIFY(m.validate());
+		}
+	}
 
 	{ // Test empty base-class optimization
 		struct UnemptyLess : eastl::less<int>
