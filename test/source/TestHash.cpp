@@ -458,6 +458,51 @@ int TestHash()
 	}
 
 
+	{
+		// reserve() must not reallocate the bucket array when it already has enough buckets, and must
+		// not shrink it (which could also push the load factor above the max load factor).
+		// https://github.com/electronicarts/EASTL/issues/521
+		typedef hash_set<int, hash<int>, equal_to<int>, CountingAllocator> CountingHashSet;
+
+		CountingHashSet hashSet;
+		hashSet.reserve(1000);
+		const CountingHashSet::size_type nReservedBucketCount = hashSet.bucket_count();
+
+		uint64_t nAllocCount = CountingAllocator::getTotalAllocationCount();
+		hashSet.reserve(1000); // Same request again: the bucket count wouldn't change.
+		EATEST_VERIFY(hashSet.bucket_count() == nReservedBucketCount);
+		EATEST_VERIFY(CountingAllocator::getTotalAllocationCount() == nAllocCount);
+
+		for (int i = 0; i < 2000; ++i)
+			hashSet.insert(i);
+
+		const CountingHashSet::size_type nBucketCount = hashSet.bucket_count();
+		EATEST_VERIFY(nBucketCount > nReservedBucketCount);
+
+		nAllocCount = CountingAllocator::getTotalAllocationCount();
+		hashSet.reserve(hashSet.size()); // Already have room for this many elements.
+		hashSet.reserve(10);             // Fewer than the current element count.
+		hashSet.reserve(0);
+		EATEST_VERIFY(hashSet.bucket_count() == nBucketCount);
+		EATEST_VERIFY(CountingAllocator::getTotalAllocationCount() == nAllocCount);
+		EATEST_VERIFY(hashSet.load_factor() <= hashSet.get_max_load_factor());
+		EATEST_VERIFY(hashSet.validate());
+
+		// Inserting after a no-op reserve() must not trigger a rehash either.
+		hashSet.insert(2000);
+		EATEST_VERIFY(hashSet.bucket_count() == nBucketCount);
+		EATEST_VERIFY(CountingAllocator::getTotalAllocationCount() == nAllocCount + 1); // Just the new node.
+
+		// Growing still rehashes, with a single bucket array allocation.
+		nAllocCount = CountingAllocator::getTotalAllocationCount();
+		hashSet.reserve(nBucketCount * 4);
+		EATEST_VERIFY(hashSet.bucket_count() >= nBucketCount * 4);
+		EATEST_VERIFY(CountingAllocator::getTotalAllocationCount() == nAllocCount + 1);
+		EATEST_VERIFY(hashSet.size() == 2001);
+		EATEST_VERIFY(hashSet.validate());
+	}
+
+
 	{   // Test hash_set with cached hash code.
 
 		// insert_return_type insert(const value_type& value) ;

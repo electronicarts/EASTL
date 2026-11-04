@@ -3056,7 +3056,13 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
 	{
-		rehash(mRehashPolicy.GetBucketCount(uint32_t(nElementCount)));
+		// Like rehash_policy(), we only ever grow the bucket array here. If we already have enough
+		// buckets there's nothing to do, and shrinking could push the load factor above the max load
+		// factor for the elements we already hold. Use rehash() to explicitly set the bucket count.
+		const size_type nBucketCount = (size_type)mRehashPolicy.GetBucketCount(uint32_t(nElementCount));
+
+		if(nBucketCount > mnBucketCount)
+			rehash(nBucketCount);
 	}
 
 
