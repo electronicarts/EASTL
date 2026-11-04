@@ -41,6 +41,9 @@ jobs:
           - os: windows-latest
             compiler: msvc
             cxxflags: '/std:c++20 /Zc:char8_t'
+          - os: windows-11-arm
+            compiler: msvc
+            cxxflags: '/std:c++20 /Zc:char8_t'
           - os: ubuntu-latest
             compiler: clang
             cc: 'clang-18'
@@ -92,6 +95,9 @@ jobs:
           compiler: clang
         - os: ubuntu-latest
           compiler: msvc
+        include:  
+          - os: windows-11-arm
+            compiler: msvc
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -120,6 +126,9 @@ jobs:
           compiler: clang
         - os: ubuntu-latest
           compiler: msvc
+        include:  
+          - os: windows-11-arm
+            compiler: msvc
     runs-on: ${{ matrix.os }}
 
     steps:
